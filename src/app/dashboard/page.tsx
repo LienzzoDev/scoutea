@@ -1,9 +1,10 @@
 'use client'
 
-import { useAuthRedirect } from '@/hooks/use-auth-redirect'
+import { useAuth } from '@clerk/nextjs'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { LoadingPage } from "@/components/ui/loading-spinner"
 import { useJugadores } from "@/hooks/usePlayers"
 import { 
   Users, 
@@ -14,10 +15,11 @@ import {
   BarChart3,
   Activity
 } from "lucide-react"
-import { useState } from 'react'
 
 export default function DashboardPage() {
-  const { isSignedIn, isLoaded } = useAuthRedirect()
+  const { isSignedIn, isLoaded } = useAuth()
+  const router = useRouter()
+  const [hasRedirected, setHasRedirected] = useState(false)
   const [scrapingStatus, setScrapingStatus] = useState<'idle' | 'running' | 'completed' | 'error'>('idle')
 
   // Hook para obtener datos reales de jugadores
@@ -59,9 +61,22 @@ export default function DashboardPage() {
     }
   }
 
+  useEffect(() => {
+    if (isLoaded && !isSignedIn && !hasRedirected) {
+      setHasRedirected(true)
+      router.replace('/login')
+    }
+  }, [isLoaded, isSignedIn, router, hasRedirected])
+
   // Si no está cargado, mostrar loading
   if (!isLoaded) {
-    return <LoadingPage />
+    return (
+      <div className="min-h-screen bg-[#080F17] flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-[#D6DDE6] text-xl">Cargando...</div>
+        </div>
+      </div>
+    )
   }
 
   // Si no está autenticado, mostrar nada (ya se está redirigiendo)

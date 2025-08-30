@@ -23,10 +23,6 @@ export default function DashboardHeader() {
     setIsMenuOpen(!isMenuOpen)
   }
 
-  const closeMenu = () => {
-    setIsMenuOpen(false)
-  }
-
   const handleSignOut = () => {
     // Cerrar sesión y redirigir
     router.push('/login')
@@ -92,8 +88,13 @@ export default function DashboardHeader() {
                 }
               }}
             />
-            <SignOutButton signOutCallback={handleSignOut}>
-              <Button variant="ghost" size="sm" className="text-gray-400 hover:text-[#D6DDE6]">
+            <SignOutButton>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-gray-400 hover:text-[#D6DDE6]"
+                onClick={handleSignOut}
+              >
                 Cerrar Sesión
               </Button>
             </SignOutButton>

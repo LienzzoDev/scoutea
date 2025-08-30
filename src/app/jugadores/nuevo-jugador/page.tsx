@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Search, ChevronLeft, Edit, Settings, Plus, X, Save } from "lucide-react"
+import { ChevronLeft, Edit, Settings, Plus, X, Save } from "lucide-react"
 import { useJugadores } from "@/hooks/usePlayers"
 import { CrearJugadorData } from "@/types/player"
 
@@ -98,11 +98,11 @@ export default function NuevoJugadorPage() {
 
     setLoading(true)
     try {
-      const nuevoJugador = await crearJugador(formData)
-      if (nuevoJugador) {
-        // Redirigir a la lista de jugadores
-        router.push('/jugadores')
-      }
+              const resultado = await crearJugador(formData)
+        if (resultado) {
+          // Redirigir a la lista de jugadores
+          router.push('/jugadores')
+        }
     } catch (error) {
       console.error('Error al crear jugador:', error)
     } finally {
