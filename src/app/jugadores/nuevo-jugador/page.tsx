@@ -98,9 +98,10 @@ export default function NuevoJugadorPage() {
 
     setLoading(true)
     try {
-      const resultado = await crearJugador(formData)
-      if (resultado) {
-        router.push('/dashboard/jugadores')
+      const nuevoJugador = await crearJugador(formData)
+      if (nuevoJugador) {
+        // Redirigir a la lista de jugadores
+        router.push('/jugadores')
       }
     } catch (error) {
       console.error('Error al crear jugador:', error)

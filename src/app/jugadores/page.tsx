@@ -105,7 +105,7 @@ export default function JugadoresPage() {
           <div className="flex items-center space-x-3">
             <Button 
               className="bg-[#FF5733] hover:bg-[#E64A2B] text-white"
-              onClick={() => router.push('/dashboard/jugadores/nuevo-jugador')}
+              onClick={() => router.push('/jugadores/nuevo-jugador')}
             >
               <Plus className="h-4 w-4 mr-2" />
               Nuevo Jugador
@@ -178,7 +178,7 @@ export default function JugadoresPage() {
                 </div>
                 {!searchTerm && (
                   <Button 
-                    onClick={() => router.push('/dashboard/jugadores/nuevo-jugador')}
+                    onClick={() => router.push('/jugadores/nuevo-jugador')}
                     className="bg-[#FF5733] hover:bg-[#E64A2B] text-white"
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -226,7 +226,7 @@ export default function JugadoresPage() {
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8 text-slate-400 hover:text-[#FF5733]"
-                        onClick={() => router.push(`/dashboard/jugadores/${jugador.id}/editar`)}
+                        onClick={() => router.push(`/jugadores/${jugador.id}/editar`)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
