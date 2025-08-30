@@ -28,5 +28,8 @@
         }
       ]
     }
-  ]
+  ],
+  "env": {
+    "PRISMA_GENERATE_DATAPROXY": "true"
+  }
 }

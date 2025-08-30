@@ -3,11 +3,15 @@
 
 generator client {
   provider = "prisma-client-js"
+  // Optimización para Vercel
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // Optimización para Vercel
+  directUrl = env("DIRECT_URL")
 }
 
 // ===== MODELOS DE JUGADORES EN ESPAÑOL =====
