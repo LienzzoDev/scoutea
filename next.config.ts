@@ -1,7 +1,23 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  experimental: {
+    optimizePackageImports: [],
+  },
+  webpack: (config) => {
+    // Configuración básica de webpack para evitar errores
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+    }
+    
+    return config
+  },
+  // Configuración para evitar problemas de caché
+  onDemandEntries: {
+    maxInactiveAge: 25 * 1000,
+    pagesBufferLength: 2,
+  },
+}
 
-export default nextConfig;
+export default nextConfig

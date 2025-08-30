@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===== MODELOS DE JUGADORES EN ESPAÑOL =====
+
+// Modelo principal de jugadores
+model Jugador {
+  id              String   @id @default(cuid())
+  nombre          String
+  nombreUsuario   String   @unique
+  posicion        String
+  edad            Int
+  equipo          String
+  numeroCamiseta  Int?
+  biografia       String?
+  valoracion      String?
+  urlAvatar       String?
+  fechaCreacion   DateTime @default(now())
+  fechaActualizacion DateTime @updatedAt
+
+  // Relaciones
+  atributos       AtributoJugador[]
+  equipos         EquipoJugador[]
+  urlsScraping    UrlScraping[]
+
+  @@map("jugadores")
+  @@index([equipo])
+  @@index([posicion])
+  @@index([fechaCreacion])
+}
+
+// Atributos del jugador (flexible)
+model AtributoJugador {
+  id        String @id @default(cuid())
+  jugadorId String
+  nombre    String
+  valor     String
+  
+  // Relación
+  jugador  Jugador @relation(fields: [jugadorId], references: [id], onDelete: Cascade)
+
+  @@map("atributos_jugador")
+  @@index([jugadorId])
+}
+
+// Historial de equipos
+model EquipoJugador {
+  id            String   @id @default(cuid())
+  jugadorId     String
+  nombreEquipo  String
+  fechaInicio   DateTime
+  fechaFin      DateTime?
+  esActual      Boolean  @default(false)
+  
+  // Relación
+  jugador      Jugador @relation(fields: [jugadorId], references: [id], onDelete: Cascade)
+
+  @@map("equipos_jugador")
+  @@index([jugadorId])
+  @@index([esActual])
+}
+
+// URLs de scraping
+model UrlScraping {
+  id              String    @id @default(cuid())
+  jugadorId       String
+  url             String
+  ultimoScraping  DateTime?
+  estado          String    @default("pendiente") // pendiente, exitoso, fallido
+  
+  // Relación
+  jugador        Jugador @relation(fields: [jugadorId], references: [id], onDelete: Cascade)
+
+  @@map("urls_scraping")
+  @@index([jugadorId])
+  @@index([estado])
+}
