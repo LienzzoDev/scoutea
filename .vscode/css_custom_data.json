@@ -1,0 +1,75 @@
+{
+  "version": 1.1,
+  "atDirectives": [
+    {
+      "name": "@apply",
+      "description": "Use @apply to inline any existing utility classes into your own custom CSS.",
+      "references": [
+        {
+          "name": "Tailwind CSS @apply directive",
+          "url": "https://tailwindcss.com/docs/functions-and-directives#apply"
+        }
+      ]
+    },
+    {
+      "name": "@theme",
+      "description": "Use @theme to define custom CSS properties that can be used throughout your design system.",
+      "references": [
+        {
+          "name": "Tailwind CSS @theme directive",
+          "url": "https://tailwindcss.com/docs/functions-and-directives#theme"
+        }
+      ]
+    },
+    {
+      "name": "@custom-variant",
+      "description": "Use @custom-variant to define custom CSS selectors for Tailwind variants.",
+      "references": [
+        {
+          "name": "Tailwind CSS custom variants",
+          "url": "https://tailwindcss.com/docs/hover-focus-and-other-states#custom-variants"
+        }
+      ]
+    },
+    {
+      "name": "@layer",
+      "description": "Use @layer to tell Tailwind which 'bucket' a set of custom styles belong to.",
+      "references": [
+        {
+          "name": "Tailwind CSS @layer directive",
+          "url": "https://tailwindcss.com/docs/functions-and-directives#layer"
+        }
+      ]
+    },
+    {
+      "name": "@variants",
+      "description": "Use @variants to generate variants for your own utilities.",
+      "references": [
+        {
+          "name": "Tailwind CSS @variants directive",
+          "url": "https://tailwindcss.com/docs/functions-and-directives#variants"
+        }
+      ]
+    },
+    {
+      "name": "@responsive",
+      "description": "Use @responsive to generate responsive variants of your own classes.",
+      "references": [
+        {
+          "name": "Tailwind CSS @responsive directive",
+          "url": "https://tailwindcss.com/docs/functions-and-directives#responsive"
+        }
+      ]
+    },
+    {
+      "name": "@screen",
+      "description": "Use @screen to create media queries that reference your breakpoints by name.",
+      "references": [
+        {
+          "name": "Tailwind CSS @screen directive",
+          "url": "https://tailwindcss.com/docs/functions-and-directives#screen"
+        }
+      ]
+    }
+  ]
+}

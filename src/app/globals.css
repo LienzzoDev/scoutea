@@ -124,7 +124,7 @@
 
 /* Sobrescribir el ancho del borde por defecto */
 .border {
-  border-width: 0 !important;
+  border-width: 1 !important;
 }
 
 /* Eliminar todas las sombras de Clerk */

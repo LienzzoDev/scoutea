@@ -81,6 +81,11 @@ export async function GET(
         atributos: true,
         equipos: true,
         urlsScraping: true,
+        playerStats: true,
+        playerStatsV2: true,
+        radarMetrics: true,
+        beeswarmData: true,
+        lollipopData: true,
       },
     })
 

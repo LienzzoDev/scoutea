@@ -22,3 +22,4 @@ export function useAuthRedirect() {
 
   return { isSignedIn, isLoaded, hasRedirected }
 }
+

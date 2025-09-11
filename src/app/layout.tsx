@@ -25,8 +25,6 @@ export default function RootLayout({
       localization={{
         locale: 'es-ES'
       }}
-      afterSignInUrl="/dashboard"
-      afterSignUpUrl="/dashboard"
       appearance={{
         theme: shadcn,
         variables: {

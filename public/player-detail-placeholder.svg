@@ -1,0 +1,60 @@
+<svg width="400" height="500" viewBox="0 0 400 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fondo con gradiente -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8f7f4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e5e7eb;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="playerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8C1A10;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#A91B12;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Fondo -->
+  <rect width="400" height="500" fill="url(#bgGradient)" rx="12"/>
+  
+  <!-- Campo de fútbol de fondo -->
+  <rect x="20" y="80" width="360" height="240" fill="#22c55e" rx="8"/>
+  
+  <!-- Líneas del campo -->
+  <line x1="200" y1="80" x2="200" y2="320" stroke="white" stroke-width="3"/>
+  <circle cx="200" cy="200" r="40" fill="none" stroke="white" stroke-width="3"/>
+  <rect x="20" y="160" width="30" height="80" fill="none" stroke="white" stroke-width="3"/>
+  <rect x="350" y="160" width="30" height="80" fill="none" stroke="white" stroke-width="3"/>
+  
+  <!-- Silueta del jugador -->
+  <g transform="translate(200, 200)">
+    <!-- Cuerpo -->
+    <ellipse cx="0" cy="20" rx="25" ry="40" fill="url(#playerGradient)"/>
+    
+    <!-- Cabeza -->
+    <circle cx="0" cy="-30" r="18" fill="#fbbf24"/>
+    
+    <!-- Brazos -->
+    <ellipse cx="-30" cy="0" rx="8" ry="25" fill="#fbbf24" transform="rotate(-20 -30 0)"/>
+    <ellipse cx="30" cy="0" rx="8" ry="25" fill="#fbbf24" transform="rotate(20 30 0)"/>
+    
+    <!-- Piernas -->
+    <ellipse cx="-12" cy="50" rx="10" ry="30" fill="#1f2937"/>
+    <ellipse cx="12" cy="50" rx="10" ry="30" fill="#1f2937"/>
+    
+    <!-- Balón -->
+    <circle cx="40" cy="10" r="12" fill="white" stroke="#374151" stroke-width="2"/>
+    <path d="M32 10 L48 10 M40 2 L40 18" stroke="#374151" stroke-width="1"/>
+  </g>
+  
+  <!-- Texto placeholder -->
+  <text x="200" y="380" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="18" font-weight="600">
+    Player Photo
+  </text>
+  <text x="200" y="410" text-anchor="middle" fill="#9ca3af" font-family="Arial, sans-serif" font-size="14">
+    Coming Soon
+  </text>
+  
+  <!-- Elementos decorativos -->
+  <circle cx="50" cy="50" r="3" fill="#8C1A10" opacity="0.3"/>
+  <circle cx="350" cy="50" r="3" fill="#8C1A10" opacity="0.3"/>
+  <circle cx="50" cy="450" r="3" fill="#8C1A10" opacity="0.3"/>
+  <circle cx="350" cy="450" r="3" fill="#8C1A10" opacity="0.3"/>
+</svg>

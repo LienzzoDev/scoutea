@@ -60,14 +60,9 @@ export async function GET() {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    const jugadores = await prisma.jugador.findMany({
-      include: {
-        atributos: true,
-        equipos: true,
-        urlsScraping: true,
-      },
+    const jugadores = await prisma.Jugador.findMany({
       orderBy: {
-        fechaCreacion: 'desc',
+        createdAt: 'desc',
       },
     })
 
@@ -115,8 +110,8 @@ export async function POST(request: NextRequest) {
     } = body
 
     // Verificar si el nombreUsuario ya existe
-    const jugadorExistente = await prisma.jugador.findUnique({
-      where: { nombreUsuario: nombreUsuario!.trim() },
+    const jugadorExistente = await prisma.Jugador.findFirst({
+      where: { player_name: nombreUsuario!.trim() },
     })
 
     if (jugadorExistente) {
@@ -126,63 +121,29 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Crear el jugador con transacción para incluir atributos
-    const jugador = await prisma.$transaction(async (tx) => {
-      const nuevoJugador = await tx.jugador.create({
-        data: {
-          nombre: nombre!.trim(),
-          nombreUsuario: nombreUsuario!.trim(),
-          posicion: posicion!.trim(),
-          edad: parseInt(edad!.toString()),
-          equipo: equipo!.trim(),
-          numeroCamiseta: numeroCamiseta ? parseInt(numeroCamiseta.toString()) : null,
-          biografia: biografia ? biografia.trim() : null,
-          valoracion: valoracion ? valoracion.trim() : null,
-          urlAvatar: urlAvatar ? urlAvatar.trim() : null,
-        },
-      })
-
-      // Crear atributos si se proporcionan
-      if (atributos && Array.isArray(atributos)) {
-        for (const attr of atributos) {
-          if (attr.nombre && attr.valor && typeof attr.nombre === 'string' && typeof attr.valor === 'string') {
-            await tx.atributoJugador.create({
-              data: {
-                jugadorId: nuevoJugador.id,
-                nombre: attr.nombre.trim(),
-                valor: attr.valor.trim(),
-              },
-            })
-          }
-        }
-      }
-
-      // Crear el equipo actual
-      await tx.equipoJugador.create({
-        data: {
-          jugadorId: nuevoJugador.id,
-          nombreEquipo: equipo!.trim(),
-          fechaInicio: new Date(),
-          esActual: true,
-        },
-      })
-
-      return nuevoJugador
-    })
-
-    // Obtener el jugador con todas sus relaciones
-    const jugadorConRelaciones = await prisma.jugador.findUnique({
-      where: { id: jugador.id },
-      include: {
-        atributos: true,
-        equipos: true,
-        urlsScraping: true,
+    // Crear el jugador usando los campos correctos del modelo Jugador
+    const jugador = await prisma.Jugador.create({
+      data: {
+        player_name: nombre!.trim(),
+        complete_player_name: nombreUsuario!.trim(),
+        position_player: posicion!.trim(),
+        age: parseInt(edad!.toString()),
+        team_name: equipo!.trim(),
+        // Mapear otros campos opcionales
+        url_instagram: urlAvatar ? urlAvatar.trim() : null,
+        // Nota: El modelo Jugador no tiene campos para numeroCamiseta, biografia, valoracion, atributos
+        // Estos se podrían almacenar en campos existentes o crear nuevos campos
       },
     })
 
-    return NextResponse.json(jugadorConRelaciones, { status: 201 })
+    return NextResponse.json(jugador, { status: 201 })
   } catch (error) {
-    console.error('Error al crear jugador:', error)
+    console.error('❌ Error al crear jugador:', {
+      error: error,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorStack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    })
     
     // Manejar errores específicos de Prisma
     if (error instanceof Error) {
@@ -192,6 +153,12 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
+      
+      // Devolver el mensaje de error específico para debugging
+      return NextResponse.json(
+        { error: `Error específico: ${error.message}` },
+        { status: 500 }
+      )
     }
     
     return NextResponse.json(

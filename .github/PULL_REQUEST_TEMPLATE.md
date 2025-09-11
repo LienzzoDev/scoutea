@@ -35,3 +35,4 @@ Si es aplicable, agrega capturas de pantalla de los cambios.
 
 ## 📋 Información adicional
 Agrega cualquier otro contexto sobre el PR aquí.
+

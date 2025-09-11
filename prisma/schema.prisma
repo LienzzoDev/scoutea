@@ -1,90 +1,607 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-  provider = "prisma-client-js"
-  // Optimización para Vercel
+  provider        = "prisma-client-js"
   previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  // Optimización para Vercel
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
-// ===== MODELOS DE JUGADORES EN ESPAÑOL =====
+model Usuario {
+  id               String       @id @default(cuid())
+  clerkId          String       @unique
+  email            String       @unique
+  firstName        String
+  lastName         String
+  nationality      String?
+  dateOfBirth      DateTime?
+  location         String?
+  bio              String?
+  experience       Int?
+  specialization   String?
+  languages        String[]
+  website          String?
+  linkedin         String?
+  twitter          String?
+  profileCompleted Boolean      @default(false)
+  subscription     Json?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  playerLists      PlayerList[]
+  scoutLists       ScoutList[]
 
-// Modelo principal de jugadores
+  @@index([clerkId])
+  @@index([email])
+  @@index([profileCompleted])
+  @@map("usuarios")
+}
+
 model Jugador {
-  id              String   @id @default(cuid())
-  nombre          String
-  nombreUsuario   String   @unique
-  posicion        String
-  edad            Int
-  equipo          String
-  numeroCamiseta  Int?
-  biografia       String?
-  valoracion      String?
-  urlAvatar       String?
-  fechaCreacion   DateTime @default(now())
-  fechaActualizacion DateTime @updatedAt
+  id_player                       String          @id @default(cuid())
+  player_name                     String
+  complete_player_name            String?
+  date_of_birth                   DateTime?
+  correct_date_of_birth           DateTime?
+  age                             Int?
+  age_value                       Float?
+  age_value_percent               Float?
+  age_coeff                       Float?
+  wyscout_id_1                    String?
+  wyscout_name_1                  String?
+  wyscout_id_2                    String?
+  wyscout_name_2                  String?
+  id_fmi                          String?
+  position_player                 String?
+  correct_position_player         String?
+  position_value                  Float?
+  position_value_percent          Float?
+  foot                            String?
+  correct_foot                    String?
+  height                          Float?
+  correct_height                  Float?
+  nationality_1                   String?
+  correct_nationality_1           String?
+  nationality_value               Float?
+  nationality_value_percent       Float?
+  nationality_2                   String?
+  correct_nationality_2           String?
+  national_tier                   String?
+  rename_national_tier            String?
+  correct_national_tier           String?
+  pre_team                        String?
+  team_name                       String?
+  correct_team_name               String?
+  team_country                    String?
+  team_elo                        Float?
+  team_level                      String?
+  team_level_value                Float?
+  team_level_value_percent        Float?
+  team_competition                String?
+  competition_country             String?
+  team_competition_value          Float?
+  team_competition_value_percent  Float?
+  competition_tier                String?
+  competition_confederation       String?
+  competition_elo                 Float?
+  competition_level               String?
+  competition_level_value         Float?
+  competition_level_value_percent Float?
+  owner_club                      String?
+  owner_club_country              String?
+  owner_club_value                Float?
+  owner_club_value_percent        Float?
+  pre_team_loan_from              String?
+  team_loan_from                  String?
+  correct_team_loan_from          String?
+  on_loan                         Boolean?        @default(false)
+  agency                          String?
+  correct_agency                  String?
+  contract_end                    DateTime?
+  correct_contract_end            DateTime?
+  player_rating                   Float?
+  player_rating_norm              Float?
+  player_trfm_value               Float?
+  player_trfm_value_norm          Float?
+  total_fmi_pts_norm              Float?
+  player_elo                      Float?
+  player_level                    String?
+  player_ranking                  Int?
+  community_potential             Float?
+  stats_evo_3m                    Float?
+  photo_coverage                  String?
+  url_trfm                        String?
+  url_trfm_advisor                String?
+  url_secondary                   String?
+  url_instagram                   String?
+  video                           String?
+  existing_club                   String?
+  createdAt                       DateTime        @default(now())
+  updatedAt                       DateTime        @updatedAt
+  beeswarmData                    BeeswarmData[]
+  lollipopData                    LollipopData[]
+  playerLists                     PlayerList[]
+  playerStats                     PlayerStats[]
+  playerStatsV2                   PlayerStatsV2[]
+  radarMetrics                    RadarMetrics[]
 
-  // Relaciones
-  atributos       AtributoJugador[]
-  equipos         EquipoJugador[]
-  urlsScraping    UrlScraping[]
-
+  @@index([player_name])
+  @@index([position_player])
+  @@index([team_name])
+  @@index([nationality_1])
+  @@index([player_rating])
+  @@index([createdAt])
+  @@index([createdAt(sort: Desc), id_player], map: "idx_player_pagination")
+  @@index([player_rating(sort: Desc), createdAt(sort: Desc)], map: "idx_player_rating_created")
+  @@index([player_name, position_player, nationality_1], map: "idx_player_search_composite")
+  @@index([team_name, position_player], map: "idx_player_team_position")
   @@map("jugadores")
-  @@index([equipo])
-  @@index([posicion])
-  @@index([fechaCreacion])
 }
 
-// Atributos del jugador (flexible)
-model AtributoJugador {
-  id        String @id @default(cuid())
-  jugadorId String
-  nombre    String
-  valor     String
-  
-  // Relación
-  jugador  Jugador @relation(fields: [jugadorId], references: [id], onDelete: Cascade)
+model Equipo {
+  id_team              String   @id @default(cuid())
+  team_name            String
+  correct_team_name    String?
+  team_country         String?
+  url_trfm_advisor     String?
+  url_trfm             String?
+  owner_club           String?
+  owner_club_country   String?
+  pre_competition      String?
+  competition          String?
+  correct_competition  String?
+  competition_country  String?
+  team_trfm_value      Float?
+  team_trfm_value_norm Float?
+  team_rating          Float?
+  team_rating_norm     Float?
+  team_elo             Float?
+  team_level           String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
-  @@map("atributos_jugador")
-  @@index([jugadorId])
+  @@index([team_name])
+  @@index([team_country])
+  @@index([competition])
+  @@index([competition_country])
+  @@index([team_rating])
+  @@index([createdAt])
+  @@map("equipos")
 }
 
-// Historial de equipos
-model EquipoJugador {
-  id            String   @id @default(cuid())
-  jugadorId     String
-  nombreEquipo  String
-  fechaInicio   DateTime
-  fechaFin      DateTime?
-  esActual      Boolean  @default(false)
-  
-  // Relación
-  jugador      Jugador @relation(fields: [jugadorId], references: [id], onDelete: Cascade)
+model Competicion {
+  id_competition              String   @id @default(cuid())
+  competition_name            String
+  correct_competition_name    String?
+  competition_country         String?
+  url_trfm                    String?
+  competition_confederation   String?
+  competition_tier            String?
+  competition_trfm_value      Float?
+  competition_trfm_value_norm Float?
+  competition_rating          Float?
+  competition_rating_norm     Float?
+  competition_elo             Float?
+  competition_level           String?
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+  torneos                     Torneo[]
 
-  @@map("equipos_jugador")
-  @@index([jugadorId])
-  @@index([esActual])
+  @@index([competition_name])
+  @@index([competition_country])
+  @@index([competition_confederation])
+  @@index([competition_tier])
+  @@index([competition_rating])
+  @@index([createdAt])
+  @@map("competiciones")
 }
 
-// URLs de scraping
-model UrlScraping {
-  id              String    @id @default(cuid())
-  jugadorId       String
-  url             String
-  ultimoScraping  DateTime?
-  estado          String    @default("pendiente") // pendiente, exitoso, fallido
-  
-  // Relación
-  jugador        Jugador @relation(fields: [jugadorId], references: [id], onDelete: Cascade)
+model Torneo {
+  id_torneo                String       @id @default(cuid())
+  nombre                   String
+  descripcion              String?
+  pais                     String?
+  ciudad                   String?
+  fecha_inicio             DateTime
+  fecha_fin                DateTime
+  tipo_torneo              String
+  categoria                String?
+  genero                   String
+  estado                   String       @default("planificado")
+  max_equipos              Int?
+  equipos_inscritos        Int          @default(0)
+  premio_primero           Float?
+  premio_segundo           Float?
+  premio_tercero           Float?
+  organizador              String?
+  contacto_email           String?
+  contacto_telefono        String?
+  sitio_web                String?
+  redes_sociales           Json?
+  reglas_especiales        String?
+  requisitos_inscripcion   String?
+  fecha_limite_inscripcion DateTime?
+  imagen_url               String?
+  banner_url               String?
+  es_publico               Boolean      @default(true)
+  es_gratuito              Boolean      @default(false)
+  costo_inscripcion        Float?
+  moneda                   String       @default("EUR")
+  createdAt                DateTime     @default(now())
+  updatedAt                DateTime     @updatedAt
+  pdf_url                  String?
+  id_competition           String?
+  competition              Competicion? @relation(fields: [id_competition], references: [id_competition])
 
-  @@map("urls_scraping")
-  @@index([jugadorId])
+  @@index([nombre])
+  @@index([pais])
+  @@index([ciudad])
+  @@index([tipo_torneo])
+  @@index([categoria])
+  @@index([genero])
   @@index([estado])
+  @@index([fecha_inicio])
+  @@index([fecha_fin])
+  @@index([es_publico])
+  @@index([createdAt])
+  @@index([id_competition])
+  @@map("torneos")
+}
+
+model Reporte {
+  id_report                   String    @id @default(cuid())
+  report_status               String?
+  report_validation           String?
+  report_author               String?
+  report_date                 DateTime?
+  report_type                 String?
+  id_player                   String?
+  form_player_name            String?
+  player_name                 String?
+  form_url_reference          String?
+  url_trfm_advisor            String?
+  url_trfm                    String?
+  url_secondary               String?
+  url_instagram               String?
+  form_date_of_birth          String?
+  date_of_birth               DateTime?
+  correct_date_of_birth       DateTime?
+  age                         Int?
+  initial_age                 Int?
+  form_team_name              String?
+  pre_team                    String?
+  team_name                   String?
+  correct_team_name           String?
+  team_country                String?
+  team_elo                    Float?
+  team_level                  String?
+  initial_team                String?
+  correct_initial_team        String?
+  initial_team_elo            Float?
+  initial_team_level          String?
+  transfer_team_pts           Float?
+  form_team_competition       String?
+  team_competition            String?
+  competition_country         String?
+  competition_tier            String?
+  competition_confederation   String?
+  competition_elo             Float?
+  competition_level           String?
+  initial_competition         String?
+  initial_competition_country String?
+  initial_competition_elo     Float?
+  initial_competition_level   String?
+  transfer_competition_pts    Float?
+  owner_club                  String?
+  owner_club_country          String?
+  pre_team_loan_from          String?
+  team_loan_from              String?
+  correct_team_loan_from      String?
+  on_loan                     Boolean?
+  complete_player_name        String?
+  form_position_player        String?
+  position_player             String?
+  correct_position_player     String?
+  form_foot                   String?
+  foot                        String?
+  correct_foot                String?
+  form_height                 String?
+  height                      Float?
+  correct_height              Float?
+  form_nationality_1          String?
+  nationality_1               String?
+  correct_nationality_1       String?
+  form_nationality_2          String?
+  nationality_2               String?
+  correct_nationality_2       String?
+  form_national_tier          String?
+  national_tier               String?
+  rename_national_tier        String?
+  correct_national_tier       String?
+  form_agency                 String?
+  agency                      String?
+  correct_agency              String?
+  contract_end                DateTime?
+  correct_contract_end        DateTime?
+  player_trfm_value           Float?
+  initial_player_trfm_value   Float?
+  roi                         Float?
+  profit                      Float?
+  form_potential              String?
+  report_format               String?
+  form_url_report             String?
+  form_url_video              String?
+  form_text_report            String?
+  createdAt                   DateTime  @default(now())
+  updatedAt                   DateTime  @updatedAt
+
+  @@index([report_status])
+  @@index([report_validation])
+  @@index([report_author])
+  @@index([report_date])
+  @@index([report_type])
+  @@index([id_player])
+  @@index([player_name])
+  @@index([team_name])
+  @@index([team_country])
+  @@index([competition_country])
+  @@index([position_player])
+  @@index([nationality_1])
+  @@index([agency])
+  @@index([createdAt])
+  @@map("reportes")
+}
+
+model Scout {
+  id_scout                           String    @id @default(cuid())
+  join_date                          DateTime?
+  scout_name                         String?
+  name                               String?
+  surname                            String?
+  date_of_birth                      DateTime?
+  age                                Int?
+  nationality                        String?
+  email                              String?
+  phone                              String?
+  address                            String?
+  city                               String?
+  country                            String?
+  favourite_club                     String?
+  open_to_work                       Boolean?
+  professional_experience            String?
+  twitter_profile                    String?
+  instagram_profile                  String?
+  linkedin_profile                   String?
+  url_profile                        String?
+  total_reports                      Int?
+  total_reports_norm                 Float?
+  total_reports_rank                 Int?
+  original_reports                   Int?
+  original_reports_norm              Float?
+  original_reports_rank              Int?
+  nationality_expertise              String?
+  competition_expertise              String?
+  avg_potential                      Float?
+  avg_initial_age                    Float?
+  avg_initial_age_norm               Float?
+  total_investment                   Float?
+  total_investment_rank              Int?
+  total_investment_orig              Float?
+  total_investment_orig_rank         Int?
+  net_profits                        Float?
+  net_profits_rank                   Int?
+  net_profits_orig                   Float?
+  net_profits_orig_rank              Int?
+  roi                                Float?
+  roi_norm                           Float?
+  roi_rank                           Int?
+  roi_orig                           Float?
+  roi_orig_rank                      Int?
+  avg_initial_trfm_value             Float?
+  avg_initial_trfm_value_rank        Int?
+  avg_initial_trfm_value_orig        Float?
+  avg_initial_trfm_value_orig_rank   Int?
+  max_profit_report                  Float?
+  max_profit_report_rank             Int?
+  min_profit_report                  Float?
+  min_profit_report_rank             Int?
+  avg_profit_report                  Float?
+  avg_profit_report_norm             Float?
+  avg_profit_report_rank             Int?
+  avg_profit_report_orig             Float?
+  avg_profit_report_orig_rank        Int?
+  transfer_team_pts                  Float?
+  transfer_team_pts_norm             Float?
+  transfer_team_pts_rank             Int?
+  transfer_team_pts_orig             Float?
+  transfer_team_pts_orig_rank        Int?
+  avg_initial_team_elo               Float?
+  avg_initial_team_level             String?
+  transfer_competition_pts           Float?
+  transfer_competition_pts_norm      Float?
+  transfer_competition_pts_rank      Int?
+  transfer_competition_pts_orig      Float?
+  transfer_competition_pts_orig_rank Int?
+  avg_initial_competition_elo        Float?
+  avg_initial_competition_level      String?
+  scout_elo                          Float?
+  scout_level                        String?
+  scout_ranking                      Int?
+  createdAt                          DateTime  @default(now())
+  updatedAt                          DateTime  @updatedAt
+  scoutLists                         ScoutList[]
+
+  @@index([scout_name])
+  @@index([name])
+  @@index([surname])
+  @@index([nationality])
+  @@index([email])
+  @@index([country])
+  @@index([favourite_club])
+  @@index([open_to_work])
+  @@index([total_reports])
+  @@index([original_reports])
+  @@index([nationality_expertise])
+  @@index([competition_expertise])
+  @@index([scout_elo])
+  @@index([scout_level])
+  @@index([scout_ranking])
+  @@index([createdAt])
+  @@map("scouts")
+}
+
+model PlayerStats {
+  id           String   @id @default(cuid())
+  playerId     String
+  period       String
+  category     String
+  metricName   String
+  totalValue   Float?
+  p90Value     Float?
+  averageValue Float?
+  maximumValue Float?
+  percentile   Float?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  player       Jugador  @relation(fields: [playerId], references: [id_player], onDelete: Cascade)
+
+  @@index([playerId])
+  @@index([period])
+  @@index([category])
+  @@index([metricName])
+  @@index([playerId, period])
+  @@index([category, metricName])
+  @@map("player_stats")
+}
+
+model PlayerStatsV2 {
+  id              Int      @id @default(autoincrement())
+  player_id       String
+  period          String
+  matches         Int?
+  minutes         Int?
+  goals           Int?
+  assists         Int?
+  shots           Int?
+  shots_on_target Int?
+  general         Json?
+  attacking       Json?
+  defending       Json?
+  passing         Json?
+  goalkeeping     Json?
+  physical        Json?
+  dribbling       Json?
+  finishing       Json?
+  duels           Json?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  player          Jugador  @relation(fields: [player_id], references: [id_player], onDelete: Cascade)
+
+  @@unique([player_id, period])
+  @@index([player_id, period])
+  @@index([goals])
+  @@index([assists])
+  @@index([matches])
+  @@map("player_stats_v2")
+}
+
+model RadarMetrics {
+  id              String   @id @default(cuid())
+  playerId        String
+  position        String
+  category        String
+  playerValue     Float
+  positionAverage Float
+  percentile      Float
+  period          String
+  createdAt       DateTime @default(now())
+  player          Jugador  @relation(fields: [playerId], references: [id_player], onDelete: Cascade)
+
+  @@index([playerId])
+  @@index([position])
+  @@index([category])
+  @@index([playerId, position])
+  @@index([category, period])
+  @@map("radar_metrics")
+}
+
+model BeeswarmData {
+  id          String   @id @default(cuid())
+  metric      String
+  playerId    String
+  playerName  String
+  value       Float
+  position    String
+  age         Int
+  nationality String
+  competition String
+  trfmValue   Float?
+  isSelected  Boolean  @default(false)
+  period      String
+  createdAt   DateTime @default(now())
+  player      Jugador  @relation(fields: [playerId], references: [id_player], onDelete: Cascade)
+
+  @@index([metric])
+  @@index([position])
+  @@index([age])
+  @@index([nationality])
+  @@index([competition])
+  @@index([period])
+  @@index([metric, position])
+  @@map("beeswarm_data")
+}
+
+model LollipopData {
+  id           String   @id @default(cuid())
+  playerId     String
+  metricName   String
+  value        Float
+  rank         Int
+  totalPlayers Int
+  percentile   Float
+  category     String
+  period       String
+  position     String
+  createdAt    DateTime @default(now())
+  player       Jugador  @relation(fields: [playerId], references: [id_player], onDelete: Cascade)
+
+  @@index([playerId])
+  @@index([metricName])
+  @@index([category])
+  @@index([period])
+  @@index([playerId, period])
+  @@map("lollipop_data")
+}
+
+model PlayerList {
+  id        String   @id @default(cuid())
+  userId    String
+  playerId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  player    Jugador  @relation(fields: [playerId], references: [id_player], onDelete: Cascade)
+  user      Usuario  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, playerId])
+  @@index([userId])
+  @@index([playerId])
+  @@index([createdAt])
+  @@map("player_lists")
+}
+
+model ScoutList {
+  id        String   @id @default(cuid())
+  userId    String
+  scoutId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  scout     Scout    @relation(fields: [scoutId], references: [id_scout], onDelete: Cascade)
+  user      Usuario  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, scoutId], map: "userId_scoutId")
+  @@index([userId])
+  @@index([scoutId])
+  @@index([createdAt])
+  @@map("scout_lists")
 }

@@ -39,12 +39,41 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    environment: production
     
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Verify Vercel secrets
+      run: |
+        echo "🔍 Checking Vercel secrets configuration..."
+        if [ -z "${{ secrets.VERCEL_TOKEN }}" ]; then
+          echo "❌ VERCEL_TOKEN is not set"
+          echo "Please configure VERCEL_TOKEN in repository secrets"
+          exit 1
+        fi
+        if [ -z "${{ secrets.VERCEL_ORG_ID }}" ]; then
+          echo "❌ VERCEL_ORG_ID is not set"
+          echo "Please configure VERCEL_ORG_ID in repository secrets"
+          exit 1
+        fi
+        if [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ]; then
+          echo "❌ VERCEL_PROJECT_ID is not set"
+          echo "Please configure VERCEL_PROJECT_ID in repository secrets"
+          exit 1
+        fi
+        echo "✅ All Vercel secrets are configured"
+    
     - name: Deploy to Vercel
       uses: amondnet/vercel-action@v25
       with:
         vercel-token: ${{ secrets.VERCEL_TOKEN }}
-        vercel-org-id: ${{ secrets.ORG_ID }}
-        vercel-project-id: ${{ secrets.PROJECT_ID }}
+        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
         vercel-args: '--prod'
+      env:
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+

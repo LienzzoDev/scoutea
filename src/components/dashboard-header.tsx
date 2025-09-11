@@ -1,23 +1,26 @@
 'use client'
 
 import { UserButton, SignOutButton } from '@clerk/nextjs'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth, useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { 
-  Home, 
-  Users, 
-  BarChart3, 
-  Settings, 
   Menu,
-  X
+  X,
+  Users
 } from "lucide-react"
 import { useState } from 'react'
+import { getUserRole } from '@/lib/auth/user-role'
 
 export default function DashboardHeader() {
   const { isSignedIn } = useAuth()
+  const { user } = useUser()
   const router = useRouter()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  // Obtener el rol del usuario
+  const userRole = getUserRole(user)
+  const isAdmin = userRole === 'admin'
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
@@ -41,27 +44,29 @@ export default function DashboardHeader() {
             <div className="flex-shrink-0">
               <img
                 className="h-8 w-auto"
-                src="/Scouting.png"
+                src="/logo-nav.png"
                 alt="Scoutea Logo"
               />
             </div>
             
             {/* Navegación desktop */}
             <nav className="hidden md:ml-6 md:flex md:space-x-8">
-              <a href="/dashboard" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
-                <Home className="h-5 w-5 inline mr-2" />
+              <a href="/admin/dashboard" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
                 Dashboard
               </a>
-              <a href="/jugadores" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
-                <Users className="h-5 w-5 inline mr-2" />
+              <a href="/admin/jugadores" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
                 Jugadores
               </a>
-              <a href="/dashboard" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
-                <BarChart3 className="h-5 w-5 inline mr-2" />
+              <a href="/admin/equipos" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
+                Equipos
+              </a>
+              <a href="/admin/torneos" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
+                Torneos
+              </a>
+              <a href="/admin/dashboard" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
                 Analytics
               </a>
-              <a href="/dashboard" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
-                <Settings className="h-5 w-5 inline mr-2" />
+              <a href="/admin/dashboard" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
                 Configuración
               </a>
             </nav>
@@ -81,6 +86,18 @@ export default function DashboardHeader() {
 
           {/* Usuario y acciones */}
           <div className="flex items-center space-x-4">
+            {/* Botón para ir a la sección de miembros - Solo visible para usuarios admin */}
+            {isAdmin && (
+              <Button
+                onClick={() => router.push('/member/dashboard')}
+                className="bg-[#8c1a10] hover:bg-[#6d1410] text-white text-sm px-3 py-1.5 flex items-center gap-2"
+                size="sm"
+              >
+                <Users className="w-4 h-4" />
+                Miembros
+              </Button>
+            )}
+            
             <UserButton 
               appearance={{
                 elements: {
@@ -92,7 +109,7 @@ export default function DashboardHeader() {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="text-gray-400 hover:text-[#D6DDE6]"
+                className="text-gray-400"
                 onClick={handleSignOut}
               >
                 Cerrar Sesión
@@ -106,20 +123,36 @@ export default function DashboardHeader() {
       {isMenuOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-[#131921] border-t border-slate-700">
-            <a href="/dashboard" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
-              <Home className="h-5 w-5 inline mr-2" />
+            {/* Botón para ir a la sección de miembros - Solo visible para usuarios admin */}
+            {isAdmin && (
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false)
+                  router.push('/member/dashboard')
+                }}
+                className="w-full text-left text-[#8c1a10] hover:text-[#6d1410] block px-3 py-2 rounded-md text-base font-medium flex items-center gap-2"
+              >
+                <Users className="w-4 h-4" />
+                Ir a Miembros
+              </button>
+            )}
+            
+            <a href="/admin/dashboard" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
               Dashboard
             </a>
-            <a href="/jugadores" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
-              <Users className="h-5 w-5 inline mr-2" />
+            <a href="/admin/jugadores" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
               Jugadores
             </a>
-            <a href="/dashboard" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
-              <BarChart3 className="h-5 w-5 inline mr-2" />
+            <a href="/admin/equipos" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
+              Equipos
+            </a>
+            <a href="/admin/torneos" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
+              Torneos
+            </a>
+            <a href="/admin/dashboard" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
               Analytics
             </a>
-            <a href="/dashboard" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
-              <Settings className="h-5 w-5 inline mr-2" />
+            <a href="/admin/dashboard" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
               Configuración
             </a>
           </div>

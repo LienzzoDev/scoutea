@@ -41,3 +41,4 @@ Describe las alternativas que has considerado.
 
 ### Información adicional
 Agrega cualquier otro contexto o capturas de pantalla sobre la solicitud de funcionalidad aquí.
+

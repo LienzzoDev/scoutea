@@ -254,3 +254,4 @@ Usamos [Conventional Commits](https://www.conventionalcommits.org/):
 ---
 
 **¡Gracias por contribuir a Scoutea! 🚀**
+
