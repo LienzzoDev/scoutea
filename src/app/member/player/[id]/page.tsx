@@ -180,18 +180,21 @@ export default function PlayerProfilePage() {
                   className="object-contain opacity-40"
                 />
               </div>
-              <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/70 text-white px-2 py-1 rounded text-sm">
-                <div className="w-4 h-4 bg-[#8c1a10] rounded-full flex items-center justify-center">
-                  <span className="text-xs text-white">
-                    {player.team_name
-                      ? player.team_name.substring(0, 2).toUpperCase()
-                      : "FC"}
-                  </span>
-                </div>
-                {player.team_name || "FC Barcelona"}
+              
+              {/* Team badge overlay - Top */}
+              <div className="absolute top-4 left-4 flex items-center gap-3 bg-black/80 text-white px-3 py-2 rounded-full">
+                <span className="text-lg">⚽</span>
+                <span className="text-sm font-medium">
+                  {player.team_name || "FC Barcelona"}
+                </span>
               </div>
-              <div className="absolute bottom-4 left-4 bg-black/70 text-white px-2 py-1 rounded text-sm">
-                {player.player_name || "Player Name"}
+              
+              {/* Player name and nationality overlay - Bottom */}
+              <div className="absolute bottom-4 left-4 flex items-center gap-3 bg-black/80 text-white px-3 py-2 rounded-full">
+                <span className="text-lg">🇪🇸</span>
+                <span className="text-sm font-medium">
+                  {player.player_name || "Player Name"}
+                </span>
               </div>
             </div>
 

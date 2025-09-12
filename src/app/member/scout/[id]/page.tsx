@@ -63,12 +63,17 @@ export default function ScoutProfilePage() {
           <div className="w-80 h-fit bg-white rounded-lg p-6 space-y-6">
             {/* Scout Card */}
             <div className="relative">
-              <img
-                src="/player-detail-placeholder.svg"
-                alt="Scout"
-                className="w-full h-96 object-cover rounded-lg"
-              />
-              <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/70 text-white px-2 py-1 rounded text-sm">
+              <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-gray-200">
+                <Image
+                  src="/logo-member.svg"
+                  alt="Scoutea Member Logo"
+                  width={140}
+                  height={140}
+                  className="object-contain opacity-50"
+                  priority
+                />
+              </div>
+              <div className="absolute bottom-4 left-4 flex items-center gap-2 px-2 py-1 rounded text-sm">
                 {/* Flag */}
                 <div className="w-6 h-4 rounded-sm overflow-hidden flex-shrink-0">
                   <Image
@@ -80,7 +85,7 @@ export default function ScoutProfilePage() {
                   />
                 </div>
                 {/* Scout Name */}
-                <span>Scout Name</span>
+                <span className="text-gray-800 font-medium">Scout Name</span>
               </div>
             </div>
 

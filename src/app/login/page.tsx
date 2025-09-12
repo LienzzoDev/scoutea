@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#f8f7f4] flex items-center justify-center p-4">
       <div className="w-full max-w-md flex flex-col items-center space-y-8">
         {/* Logo */}
         <div className="flex items-center justify-center">
@@ -22,13 +22,13 @@ export default function LoginPage() {
           redirectUrl="/member/dashboard"
           appearance={{
             variables: {
-              colorPrimary: '#2563eb', // blue-600
+              colorPrimary: '#8c1a10', // Scoutea red
               colorBackground: 'transparent',
-              colorText: '#1e40af', // blue-800
-              colorTextSecondary: '#3b82f6', // blue-500
-              colorInputBackground: 'rgba(255, 255, 255, 0.9)',
-              colorBorder: 'rgba(59, 130, 246, 0.3)',
-              colorInputText: '#1e40af',
+              colorText: '#2e3138', // Dark gray
+              colorTextSecondary: '#6d6d6d', // Medium gray
+              colorInputBackground: 'rgba(255, 255, 255, 0.95)',
+              colorBorder: 'rgba(140, 26, 16, 0.2)',
+              colorInputText: '#2e3138',
               borderRadius: '0.75rem',
             },
             elements: {
@@ -40,31 +40,31 @@ export default function LoginPage() {
               headerSubtitle: "hidden",
               
               // Formulario
-              formFieldLabel: "text-blue-800 font-medium text-sm",
-              formFieldInput: "bg-white/90 border border-blue-200 text-blue-800 placeholder:text-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-lg h-12 px-4 transition-all duration-200",
+              formFieldLabel: "text-[#2e3138] font-medium text-sm",
+              formFieldInput: "bg-white/95 border border-[#e7e7e7] text-[#2e3138] placeholder:text-[#6d6d6d] focus:border-[#8c1a10] focus:ring-2 focus:ring-[#8c1a10]/20 rounded-lg h-12 px-4 transition-all duration-200",
               
               // Botón principal
-              formButtonPrimary: "bg-blue-600 hover:bg-blue-700 text-white font-semibold h-12 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl",
+              formButtonPrimary: "bg-[#8c1a10] hover:bg-[#8c1a10]/90 text-white font-semibold h-12 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl",
               
               // Botones sociales
-              socialButtonsBlockButton: "bg-white/90 border border-blue-200 text-blue-800 hover:bg-blue-50 transition-all duration-200 rounded-lg h-12",
+              socialButtonsBlockButton: "bg-white/95 border border-[#e7e7e7] text-[#2e3138] hover:bg-[#f8f7f4] transition-all duration-200 rounded-lg h-12",
               
               // Enlaces del footer - ocultar enlace predeterminado
               footerActionLink: "hidden",
               
               // Separadores
-              dividerLine: "bg-blue-300",
-              dividerText: "text-blue-500",
+              dividerLine: "bg-[#e7e7e7]",
+              dividerText: "text-[#6d6d6d]",
               
               // Mensajes de error
               formFieldError: "text-red-500 text-sm",
               
               // Checkbox
-              formFieldInputShowPasswordButton: "text-blue-800 hover:text-blue-600",
+              formFieldInputShowPasswordButton: "text-[#2e3138] hover:text-[#8c1a10]",
               
               // Otros elementos
-              formFieldInput__otp: "bg-white/90 border border-blue-200 text-blue-800 text-center text-lg font-mono tracking-widest",
-              formFieldInput__phoneNumber: "bg-white/90 border border-blue-200 text-blue-800",
+              formFieldInput__otp: "bg-white/95 border border-[#e7e7e7] text-[#2e3138] text-center text-lg font-mono tracking-widest",
+              formFieldInput__phoneNumber: "bg-white/95 border border-[#e7e7e7] text-[#2e3138]",
               
               // Footer y elementos internos - ocultar footer predeterminado
               footer: "hidden",
@@ -79,9 +79,9 @@ export default function LoginPage() {
               "cl-header": "bg-transparent shadow-none",
               "cl-form": "bg-transparent shadow-none",
               "cl-formField": "bg-transparent shadow-none",
-              "cl-formFieldLabel": "text-blue-800 font-medium text-sm",
-              "cl-formFieldInput": "bg-white/90 border border-blue-200 text-blue-800 placeholder:text-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-lg h-12 px-4 transition-all duration-200",
-              "cl-formButtonPrimary": "bg-blue-600 hover:bg-blue-700 text-white font-semibold h-12 rounded-lg transition-all duration-200 shadow-none",
+              "cl-formFieldLabel": "text-[#2e3138] font-medium text-sm",
+              "cl-formFieldInput": "bg-white/95 border border-[#e7e7e7] text-[#2e3138] placeholder:text-[#6d6d6d] focus:border-[#8c1a10] focus:ring-2 focus:ring-[#8c1a10]/20 rounded-lg h-12 px-4 transition-all duration-200",
+              "cl-formButtonPrimary": "bg-[#8c1a10] hover:bg-[#8c1a10]/90 text-white font-semibold h-12 rounded-lg transition-all duration-200 shadow-none",
               
               // Elementos específicos de Clerk que pueden tener sombra
               "cl-signIn-start": "shadow-none",
@@ -92,20 +92,20 @@ export default function LoginPage() {
         
         {/* Enlaces */}
         <div className="text-center space-y-2">
-          <p className="text-blue-600 text-sm">
+          <p className="text-[#6d6d6d] text-sm">
             ¿No tienes cuenta?{' '}
             <Link 
               href="/register" 
-              className="text-blue-700 hover:text-blue-800 font-medium transition-colors duration-200"
+              className="text-[#8c1a10] hover:text-[#8c1a10]/80 font-medium transition-colors duration-200"
             >
               Regístrate aquí
             </Link>
           </p>
-          <p className="text-blue-600 text-sm">
+          <p className="text-[#6d6d6d] text-sm">
             ¿Eres administrador?{' '}
             <Link 
               href="/admin-login" 
-              className="text-blue-700 hover:text-blue-800 font-medium transition-colors duration-200"
+              className="text-[#8c1a10] hover:text-[#8c1a10]/80 font-medium transition-colors duration-200"
             >
               Acceso administrativo
             </Link>
