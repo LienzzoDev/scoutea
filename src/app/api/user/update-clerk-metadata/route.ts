@@ -12,14 +12,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { role, profile, phone, company, position, subscription } = body
 
-      role,
-      profile,
-      phone,
-      company,
-      position,
-      subscription
-    })
-
     // Validar datos
     if (!role || !profile) {
       return NextResponse.json(

@@ -263,10 +263,6 @@ export default function RegisterPage() {
     setError(null)
 
     try {
-        company: registrationData.company,
-        position: registrationData.position
-      })
-      
       const updateResponse = await fetch('/api/user/update-clerk-metadata', {
         method: 'POST',
         headers: {
