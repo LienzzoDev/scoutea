@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSignUp, SignUp, useAuth } from '@clerk/nextjs'
 import { Button } from "@/components/ui/button"
@@ -20,7 +20,7 @@ import {
   Crown
 } from 'lucide-react'
 
-export default function RegisterPage() {
+function RegisterContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { isLoaded, signUp, setActive } = useSignUp()
@@ -691,5 +691,20 @@ export default function RegisterPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#f8f7f4] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-[#8c1a10] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[#6d6d6d]">Cargando...</p>
+        </div>
+      </div>
+    }>
+      <RegisterContent />
+    </Suspense>
   )
 }
