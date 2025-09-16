@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { CheckCircle, ArrowRight, Star, Crown } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { CheckCircle, ArrowRight, Star, Zap, Crown } from 'lucide-react'
+import { useState, useEffect } from 'react'
+
 import { Button } from "@/components/ui/button"
 export default function WelcomePlan() {
   const router = useRouter()

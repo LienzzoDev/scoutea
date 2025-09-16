@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Search, FileText } from "lucide-react";
 import Image from "next/image";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+
+import MemberNavbar from "@/components/layout/member-navbar";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Search, Calendar, MapPin, FileText, Download } from "lucide-react";
-import MemberNavbar from "@/components/member-navbar";
-import { useTournaments } from "@/hooks/useTournaments";
+import { useTournaments } from "@/hooks/tournament/useTournaments";
 
 export default function TorneosPage() {
   const [searchTerm, setSearchTerm] = useState("");

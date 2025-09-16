@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Search, Filter, X } from "lucide-react"
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+
+import MemberNavbar from "@/components/layout/member-navbar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import MemberNavbar from "@/components/member-navbar"
 
 interface Tournament {
   id: number

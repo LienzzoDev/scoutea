@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
 import { auth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+
+import { prisma } from '@/lib/db'
 
 export interface TeamFilters {
   team_name?: string

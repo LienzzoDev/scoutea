@@ -3,8 +3,8 @@
 import { useAuth } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import { getUserRole } from '@/lib/auth/user-role'
 
 interface SubscriptionPlansGuardProps {
   children: React.ReactNode

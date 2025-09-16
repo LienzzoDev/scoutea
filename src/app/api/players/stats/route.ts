@@ -3,8 +3,9 @@
 // ✅ BENEFICIO: Los admins pueden ver métricas del sistema en tiempo real
 // ✅ RUTA: GET /api/players/stats
 
-import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+
 import { PlayerService } from '@/lib/services/player-service'
 import type { PlayerStats } from '@/types/player'
 

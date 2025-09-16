@@ -1,12 +1,13 @@
 'use client'
 
-import { useAuthRedirect } from '@/hooks/use-auth-redirect'
+import { Play, Pause, RotateCcw, CheckCircle, XCircle, Clock, Database } from "lucide-react"
 import { useState } from 'react'
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { LoadingPage } from "@/components/ui/loading-spinner"
-import { Play, Pause, RotateCcw, CheckCircle, XCircle, Clock, Database } from "lucide-react"
+import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
+
 
 export default function ScrapingPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()

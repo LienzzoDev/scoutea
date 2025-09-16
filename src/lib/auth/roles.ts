@@ -1,4 +1,3 @@
-import { auth } from '@clerk/nextjs/server'
 
 export type Role = 'admin' | 'member'
 

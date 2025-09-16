@@ -3,8 +3,9 @@
 // ✅ BENEFICIO: Los dropdowns se llenan automáticamente con datos reales
 // ✅ RUTA: GET /api/players/filters
 
-import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+
 import { PlayerService } from '@/lib/services/player-service'
 import type { FilterOptions } from '@/types/player'
 

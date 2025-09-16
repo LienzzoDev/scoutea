@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
 import { auth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+
+import { prisma } from '@/lib/db'
 
 // GET /api/teams/stats - Obtener estadísticas de equipos
 export async function GET(request: NextRequest) {

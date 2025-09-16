@@ -1,12 +1,15 @@
-// 🏗️ SERVICIO CONSOLIDADO DE JUGADORES
-// ✅ PROPÓSITO: Centralizar TODA la lógica de jugadores en un solo lugar
-// ✅ BENEFICIO: Fácil de mantener, testear y reutilizar
-// ✅ REEMPLAZA: Lógica duplicada entre diferentes servicios
+/**
+ * Consolidated Player Service with intelligent caching
+ * 
+ * Centralizes all player-related business logic in a single service.
+ * Replaces duplicate logic across different services and provides
+ * intelligent caching for improved performance.
+ */
 
+import { cacheManager } from '@/lib/cache/cache-manager'
 import { prisma } from '@/lib/db'
 import type {
   Player,
-  PlayerFilters,
   PlayerSearchOptions,
   PlayerSearchResult,
   PlayerStats,
@@ -15,18 +18,20 @@ import type {
   UpdatePlayerData
 } from '@/types/player'
 
-// 🏭 CLASE PRINCIPAL DEL SERVICIO
-// Todos los métodos son estáticos para uso directo sin instanciar
+/**
+ * Main Player Service class
+ * All methods are static for direct usage without instantiation
+ */
 export class PlayerService {
   
-  // 📚 ========== OPERACIONES BÁSICAS (CRUD) ==========
+  // ========== CRUD OPERATIONS ==========
   
   /**
-   * 🔍 BUSCAR JUGADORES CON FILTROS Y PAGINACIÓN OPTIMIZADA
+   * Search players with filters and optimized pagination
    * 
-   * ✅ QUÉ HACE: Busca jugadores aplicando filtros y devuelve resultados paginados
-   * ✅ POR QUÉ: Permite búsquedas eficientes aprovechando los índices optimizados
-   * ✅ OPTIMIZACIÓN: Usa índices específicos para cada tipo de consulta
+   * Uses database indices for efficient queries and implements
+   * intelligent caching to reduce database load.
+   * 🚀 NUEVO: Sistema de caché inteligente para consultas frecuentes
    * ✅ EJEMPLO: PlayerService.searchPlayers({ page: 1, limit: 20, filters: { position_player: "CF" } })
    * 
    * @param options - Opciones de búsqueda (página, límite, filtros, ordenamiento)
@@ -34,6 +39,17 @@ export class PlayerService {
    */
   static async searchPlayers(options: PlayerSearchOptions = {}): Promise<PlayerSearchResult> {
     try {
+      // 🔑 GENERAR CLAVE DE CACHÉ ÚNICA BASADA EN PARÁMETROS
+      const cacheKey = `search:${JSON.stringify(options)}`
+      
+      // 🚀 INTENTAR OBTENER DESDE CACHÉ PRIMERO
+      const cachedResult = cacheManager.getSearchResults(cacheKey)
+      if (cachedResult) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🎯 Cache HIT para búsqueda de jugadores:', cacheKey)
+        }
+        return cachedResult
+      }
       // 🎛️ CONFIGURACIÓN POR DEFECTO
       const page = options.page || 1
       const limit = options.limit || 20
@@ -119,8 +135,8 @@ export class PlayerService {
       const hasNext = safePage < totalPages
       const hasPrev = safePage > 1
 
-      // 📤 DEVOLVER RESULTADO ESTRUCTURADO
-      return {
+      // 📤 ESTRUCTURAR RESULTADO
+      const result: PlayerSearchResult = {
         players: players as Player[],
         pagination: {
           page: safePage,
@@ -131,6 +147,15 @@ export class PlayerService {
           hasPrev
         }
       }
+
+      // 💾 GUARDAR EN CACHÉ PARA FUTURAS CONSULTAS
+      cacheManager.setSearchResults(cacheKey, result)
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('💾 Resultado guardado en caché:', cacheKey)
+      }
+
+      return result
 
     } catch (error) {
       console.error('❌ Error in searchPlayers:', {
@@ -144,10 +169,11 @@ export class PlayerService {
   }
 
   /**
-   * 👤 OBTENER UN JUGADOR ESPECÍFICO POR ID
+   * 👤 OBTENER UN JUGADOR ESPECÍFICO POR ID + CACHÉ
    * 
    * ✅ QUÉ HACE: Busca un jugador por su ID único
    * ✅ POR QUÉ: Para mostrar perfiles detallados o editar jugadores
+   * 🚀 NUEVO: Caché inteligente para detalles de jugador (10 min TTL)
    * ✅ EJEMPLO: PlayerService.getPlayerById("player_123")
    * 
    * @param id - ID único del jugador
@@ -155,10 +181,27 @@ export class PlayerService {
    */
   static async getPlayerById(id: string): Promise<Player | null> {
     try {
-      // 🔍 BUSCAR JUGADOR POR ID
+      // 🚀 INTENTAR OBTENER DESDE CACHÉ PRIMERO
+      const cachedPlayer = cacheManager.getPlayerDetails(id)
+      if (cachedPlayer) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🎯 Cache HIT para jugador:', id)
+        }
+        return cachedPlayer
+      }
+
+      // 🔍 BUSCAR JUGADOR POR ID EN BASE DE DATOS
       const player = await prisma.jugador.findUnique({
         where: { id_player: id }
       })
+
+      // 💾 GUARDAR EN CACHÉ SI SE ENCONTRÓ
+      if (player) {
+        cacheManager.setPlayerDetails(id, player as Player)
+        if (process.env.NODE_ENV === 'development') {
+          console.log('💾 Jugador guardado en caché:', id)
+        }
+      }
 
       // 📤 DEVOLVER RESULTADO (null si no se encuentra)
       return player as Player | null
@@ -169,10 +212,11 @@ export class PlayerService {
   }
 
   /**
-   * ➕ CREAR UN NUEVO JUGADOR
+   * ➕ CREAR UN NUEVO JUGADOR + INVALIDACIÓN DE CACHÉ
    * 
    * ✅ QUÉ HACE: Añade un nuevo jugador a la base de datos
    * ✅ POR QUÉ: Para que los admins puedan añadir nuevos jugadores
+   * 🚀 NUEVO: Invalidación inteligente de caché para mantener consistencia
    * ✅ EJEMPLO: PlayerService.createPlayer({ player_name: "Nuevo Jugador", age: 20 })
    * 
    * @param data - Datos del nuevo jugador
@@ -189,6 +233,15 @@ export class PlayerService {
         }
       })
 
+      // 🧹 INVALIDAR CACHÉ RELACIONADO
+      cacheManager.invalidateSearchResults()  // Limpiar búsquedas
+      cacheManager.invalidateFilterOptions()  // Limpiar opciones de filtros
+      cacheManager.invalidate('players:stats') // Limpiar estadísticas
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🧹 Caché invalidado después de crear jugador:', player.id_player)
+      }
+
       // 📤 DEVOLVER JUGADOR CREADO
       return player as Player
     } catch (error) {
@@ -198,10 +251,11 @@ export class PlayerService {
   }
 
   /**
-   * ✏️ ACTUALIZAR UN JUGADOR EXISTENTE
+   * ✏️ ACTUALIZAR UN JUGADOR EXISTENTE + INVALIDACIÓN DE CACHÉ
    * 
    * ✅ QUÉ HACE: Modifica los datos de un jugador existente
    * ✅ POR QUÉ: Para mantener la información actualizada
+   * 🚀 NUEVO: Invalidación selectiva de caché para el jugador específico
    * ✅ EJEMPLO: PlayerService.updatePlayer("player_123", { player_rating: 85 })
    * 
    * @param id - ID del jugador a actualizar
@@ -219,6 +273,23 @@ export class PlayerService {
         }
       })
 
+      // 🧹 INVALIDAR CACHÉ ESPECÍFICO DEL JUGADOR
+      cacheManager.invalidatePlayerData(id)
+      
+      // 🧹 INVALIDAR CACHÉ RELACIONADO SI CAMBIOS IMPORTANTES
+      const importantFields = ['player_name', 'position_player', 'team_name', 'nationality_1', 'player_rating']
+      const hasImportantChanges = Object.keys(data).some(key => importantFields.includes(key))
+      
+      if (hasImportantChanges) {
+        cacheManager.invalidateSearchResults()  // Limpiar búsquedas
+        cacheManager.invalidateFilterOptions()  // Limpiar opciones de filtros
+        cacheManager.invalidate('players:stats') // Limpiar estadísticas
+      }
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🧹 Caché invalidado después de actualizar jugador:', id, { hasImportantChanges })
+      }
+
       // 📤 DEVOLVER JUGADOR ACTUALIZADO
       return player as Player
     } catch (error) {
@@ -228,10 +299,11 @@ export class PlayerService {
   }
 
   /**
-   * 🗑️ ELIMINAR UN JUGADOR
+   * 🗑️ ELIMINAR UN JUGADOR + LIMPIEZA COMPLETA DE CACHÉ
    * 
    * ✅ QUÉ HACE: Elimina permanentemente un jugador de la base de datos
    * ✅ POR QUÉ: Para limpiar datos obsoletos o incorrectos
+   * 🚀 NUEVO: Limpieza completa de caché para mantener consistencia
    * ⚠️ CUIDADO: Esta operación es irreversible
    * ✅ EJEMPLO: PlayerService.deletePlayer("player_123")
    * 
@@ -243,6 +315,16 @@ export class PlayerService {
       await prisma.jugador.delete({
         where: { id_player: id }
       })
+
+      // 🧹 LIMPIEZA COMPLETA DE CACHÉ (eliminación afecta todo)
+      cacheManager.invalidatePlayerData(id)    // Datos específicos del jugador
+      cacheManager.invalidateSearchResults()   // Todas las búsquedas
+      cacheManager.invalidateFilterOptions()   // Opciones de filtros
+      cacheManager.invalidate('players:stats') // Estadísticas generales
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🧹 Caché completamente limpiado después de eliminar jugador:', id)
+      }
     } catch (error) {
       console.error('❌ Error deleting player:', error)
       throw new Error('Error al eliminar el jugador')
@@ -252,17 +334,26 @@ export class PlayerService {
   // 📊 ========== OPERACIONES AVANZADAS ==========
 
   /**
-   * 📈 OBTENER ESTADÍSTICAS GENERALES OPTIMIZADAS
+   * 📈 OBTENER ESTADÍSTICAS GENERALES OPTIMIZADAS + CACHÉ
    * 
    * ✅ QUÉ HACE: Calcula métricas para dashboards aprovechando índices optimizados
    * ✅ POR QUÉ: Los admins necesitan ver el estado general del sistema rápidamente
    * ✅ OPTIMIZACIÓN: Usa índices específicos para consultas de agregación
+   * 🚀 NUEVO: Caché de larga duración para estadísticas (30 min TTL)
    * ✅ EJEMPLO: PlayerService.getPlayerStats()
    * 
    * @returns Estadísticas completas del sistema
    */
   static async getPlayerStats(): Promise<PlayerStats> {
     try {
+      // 🚀 INTENTAR OBTENER DESDE CACHÉ PRIMERO
+      const cachedStats = cacheManager.getPlayerStats('general')
+      if (cachedStats) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🎯 Cache HIT para estadísticas generales')
+        }
+        return cachedStats
+      }
       // 🚀 EJECUTAR MÚLTIPLES CONSULTAS OPTIMIZADAS EN PARALELO
       const [
         totalPlayers,           // Total de jugadores
@@ -345,8 +436,8 @@ export class PlayerService {
         max: averageRating._max.player_rating
       }
 
-      // 📤 DEVOLVER ESTADÍSTICAS ESTRUCTURADAS Y ENRIQUECIDAS
-      return {
+      // 📊 ESTRUCTURAR ESTADÍSTICAS
+      const stats: PlayerStats = {
         totalPlayers,
         playersByPosition: playersByPosition.slice(0, 8), // Limitar a top 8 posiciones
         playersByNationality: playersByNationality.slice(0, 10), // Top 10 países
@@ -360,6 +451,16 @@ export class PlayerService {
           totalWithRating: ratingStats.count
         }
       }
+
+      // 💾 GUARDAR EN CACHÉ (TTL largo para estadísticas)
+      cacheManager.setPlayerStats('general', stats)
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('💾 Estadísticas guardadas en caché')
+      }
+
+      // 📤 DEVOLVER ESTADÍSTICAS
+      return stats
     } catch (error) {
       console.error('❌ Error getting optimized player stats:', {
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -425,17 +526,26 @@ export class PlayerService {
   }
 
   /**
-   * 🔧 OBTENER OPCIONES DISPONIBLES PARA FILTROS OPTIMIZADAS
+   * 🔧 OBTENER OPCIONES DISPONIBLES PARA FILTROS OPTIMIZADAS + CACHÉ
    * 
    * ✅ QUÉ HACE: Devuelve opciones para dropdowns aprovechando índices optimizados
    * ✅ POR QUÉ: Los filtros se llenan automáticamente con datos reales y rápidos
    * ✅ OPTIMIZACIÓN: Usa índices específicos y limita resultados para mejor UX
+   * 🚀 NUEVO: Caché de larga duración para opciones de filtros (1 hora TTL)
    * ✅ EJEMPLO: PlayerService.getAvailableFilters()
    * 
    * @returns Opciones para todos los filtros
    */
   static async getAvailableFilters(): Promise<FilterOptions> {
     try {
+      // 🚀 INTENTAR OBTENER DESDE CACHÉ PRIMERO
+      const cachedOptions = cacheManager.getFilterOptions()
+      if (cachedOptions) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🎯 Cache HIT para opciones de filtros')
+        }
+        return cachedOptions
+      }
       // 🚀 OBTENER OPCIONES OPTIMIZADAS EN PARALELO
       const [positions, nationalities, teams, competitions] = await Promise.all([
         
@@ -523,13 +633,23 @@ export class PlayerService {
           }))
           .sort((a, b) => b.count - a.count) // Ordenar por popularidad
 
-      // 📤 DEVOLVER OPCIONES OPTIMIZADAS Y FILTRADAS
-      return {
+      // 📊 ESTRUCTURAR OPCIONES
+      const options: FilterOptions = {
         positions: formatOptions(positions, 'position_player'),
         nationalities: formatOptions(nationalities, 'nationality_1'),
         teams: formatOptions(teams, 'team_name'),
         competitions: formatOptions(competitions, 'team_competition')
       }
+
+      // 💾 GUARDAR EN CACHÉ (TTL largo para opciones de filtros)
+      cacheManager.setFilterOptions(options)
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('💾 Opciones de filtros guardadas en caché')
+      }
+
+      // 📤 DEVOLVER OPCIONES
+      return options
     } catch (error) {
       console.error('❌ Error getting optimized available filters:', {
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -613,19 +733,73 @@ export class PlayerService {
   }
 
   /**
-   * 🧹 LIMPIAR CACHÉ DE CONSULTAS (UTILIDAD PARA DESARROLLO)
+   * 🧹 LIMPIAR CACHÉ DE CONSULTAS Y APLICACIÓN
    * 
    * ✅ QUÉ HACE: Fuerza la regeneración de estadísticas y limpia cachés
    * ✅ POR QUÉ: Útil durante desarrollo y testing
+   * 🚀 NUEVO: Limpia tanto caché de BD como caché de aplicación
    * ✅ EJEMPLO: PlayerService.clearQueryCache()
    */
   static async clearQueryCache(): Promise<void> {
     try {
-      // 🔄 EJECUTAR CONSULTA DUMMY PARA LIMPIAR CACHÉ
+      // 🔄 EJECUTAR CONSULTA DUMMY PARA LIMPIAR CACHÉ DE BD
       await prisma.$executeRaw`SELECT 1`
+      
+      // 🧹 LIMPIAR CACHÉ DE APLICACIÓN
+      cacheManager.invalidate()
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🧹 Caché de consultas y aplicación limpiado completamente')
+      }
     } catch (error) {
       console.error('❌ Error clearing query cache:', error)
       throw new Error('Error al limpiar caché de consultas')
+    }
+  }
+
+  /**
+   * 📊 OBTENER ESTADÍSTICAS DEL CACHÉ
+   * 
+   * ✅ QUÉ HACE: Devuelve métricas de uso del caché
+   * ✅ POR QUÉ: Para monitorear efectividad del sistema de caché
+   * ✅ EJEMPLO: PlayerService.getCacheStats()
+   * 
+   * @returns Estadísticas del caché (hits, misses, hit rate, etc.)
+   */
+  static getCacheStats() {
+    return cacheManager.getStats()
+  }
+
+  /**
+   * 🧹 INVALIDAR CACHÉ ESPECÍFICO
+   * 
+   * ✅ QUÉ HACE: Permite invalidar tipos específicos de caché
+   * ✅ POR QUÉ: Para control granular del caché
+   * ✅ EJEMPLO: PlayerService.invalidateCache('search')
+   * 
+   * @param type - Tipo de caché a invalidar
+   */
+  static invalidateCache(type: 'all' | 'search' | 'players' | 'stats' | 'filters'): void {
+    switch (type) {
+      case 'all':
+        cacheManager.invalidate()
+        break
+      case 'search':
+        cacheManager.invalidateSearchResults()
+        break
+      case 'players':
+        cacheManager.invalidatePlayerData()
+        break
+      case 'stats':
+        cacheManager.invalidate('players:stats')
+        break
+      case 'filters':
+        cacheManager.invalidateFilterOptions()
+        break
+    }
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🧹 Caché invalidado: ${type}`)
     }
   }
 }

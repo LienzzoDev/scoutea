@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Facebook, Twitter, Linkedin, Globe, Search, Filter, Bookmark, ArrowRight, X, Play } from "lucide-react"
 import Image from 'next/image'
-import { Facebook, Twitter, Linkedin, Send, Globe, Search, Filter, Bookmark, ArrowRight, X, Play } from "lucide-react"
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+
+import MemberNavbar from "@/components/layout/member-navbar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import MemberNavbar from "@/components/member-navbar"
 
 export default function ScoutProfilePage() {
   const router = useRouter()
@@ -16,31 +17,117 @@ export default function ScoutProfilePage() {
   const [activeStatsTab, setActiveStatsTab] = useState('qualitative')
   const [message, setMessage] = useState('')
   
-  // Portfolio players data
-  const portfolioPlayers = Array.from({ length: 6 }, (_, i) => ({
-    id: i + 1,
-    name: "Player Name",
-    age: "XX Años",
-    nationality: "Nationality",
-    competition: "Loren Ipsum Do...",
-    image: `/placeholder.svg?height=48&width=48&query=player portrait ${i + 1}`,
-  }))
+  // Portfolio players data - Using real player IDs
+  const portfolioPlayers = [
+    {
+      id_player: "cmfmeeqfb0001zweuke6bhyhp", // Lionel Messi
+      name: "Lionel Messi",
+      age: "36 Años",
+      nationality: "Argentina",
+      competition: "MLS",
+      image: `/placeholder.svg?height=48&width=48&query=messi`,
+    },
+    {
+      id_player: "cmfmeeqgg0005zweuz9xrsvg0", // Erling Haaland
+      name: "Erling Haaland",
+      age: "23 Años",
+      nationality: "Norway",
+      competition: "Premier League",
+      image: `/placeholder.svg?height=48&width=48&query=haaland`,
+    },
+    {
+      id_player: "cmfmeeqgb0002zweuhotgu0so", // Luka Modric
+      name: "Luka Modric",
+      age: "38 Años",
+      nationality: "Croatia",
+      competition: "La Liga",
+      image: `/placeholder.svg?height=48&width=48&query=modric`,
+    },
+    {
+      id_player: "cmfmeeqgg0006zweuwi52syzd", // Kevin De Bruyne
+      name: "Kevin De Bruyne",
+      age: "32 Años",
+      nationality: "Belgium",
+      competition: "Premier League",
+      image: `/placeholder.svg?height=48&width=48&query=debruyne`,
+    },
+    {
+      id_player: "cmfmeeqge0003zweuhorp7o1t", // Kylian Mbappé
+      name: "Kylian Mbappé",
+      age: "25 Años",
+      nationality: "France",
+      competition: "La Liga",
+      image: `/placeholder.svg?height=48&width=48&query=mbappe`,
+    },
+    {
+      id_player: "cmfmeeqgf0004zweu8ncmex9l", // Virgil van Dijk
+      name: "Virgil van Dijk",
+      age: "32 Años",
+      nationality: "Netherlands",
+      competition: "Premier League",
+      image: `/placeholder.svg?height=48&width=48&query=vandijk`,
+    }
+  ]
 
-  // Reports data
-  const reports = Array.from({ length: 4 }, (_, i) => ({
-    id: i + 1,
-    scoutName: "Gines Mesas",
-    profileType: "Tipo de perfil",
-    playerName: "Player Name",
-    age: "XX Años",
-    nationality: "Notinal",
-    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,",
-    rating: 4, // Number of filled stars
-    date: "XX/XX/XXXX",
-    hasVideo: i === 1, // Second report has video
-    playerImage: `/placeholder.svg?height=48&width=48&query=player portrait ${i + 1}`,
-    mainImage: `/placeholder.svg?height=200&width=300&query=stadium player ${i + 1}`,
-  }))
+  // Reports data - Using real player IDs
+  const reports = [
+    {
+      id_player: "cmfmeeqfb0001zweuke6bhyhp", // Lionel Messi
+      scoutName: "Gines Mesas",
+      profileType: "Extremo Derecho",
+      playerName: "Lionel Messi",
+      age: "36 Años",
+      nationality: "Argentina",
+      description: "Exceptional technical ability and vision. One of the greatest players of all time with incredible dribbling skills and playmaking ability.",
+      rating: 5,
+      date: "15/12/2023",
+      hasVideo: true,
+      playerImage: `/placeholder.svg?height=48&width=48&query=messi`,
+      mainImage: `/placeholder.svg?height=200&width=300&query=messi action`,
+    },
+    {
+      id_player: "cmfmeeqgg0005zweuz9xrsvg0", // Erling Haaland
+      scoutName: "Gines Mesas",
+      profileType: "Delantero Centro",
+      playerName: "Erling Haaland",
+      age: "23 Años",
+      nationality: "Norway",
+      description: "Clinical finisher with exceptional pace and physical presence. Perfect striker for modern football with great positioning.",
+      rating: 5,
+      date: "10/12/2023",
+      hasVideo: false,
+      playerImage: `/placeholder.svg?height=48&width=48&query=haaland`,
+      mainImage: `/placeholder.svg?height=200&width=300&query=haaland action`,
+    },
+    {
+      id_player: "cmfmeeqgb0002zweuhotgu0so", // Luka Modric
+      scoutName: "Gines Mesas",
+      profileType: "Mediocentro",
+      playerName: "Luka Modric",
+      age: "38 Años",
+      nationality: "Croatia",
+      description: "Master of midfield with incredible passing range and game intelligence. Still performing at the highest level despite his age.",
+      rating: 4,
+      date: "05/12/2023",
+      hasVideo: true,
+      playerImage: `/placeholder.svg?height=48&width=48&query=modric`,
+      mainImage: `/placeholder.svg?height=200&width=300&query=modric action`,
+    },
+    {
+      id_player: "cmfmeeqgg0006zweuwi52syzd", // Kevin De Bruyne
+      scoutName: "Gines Mesas",
+      profileType: "Mediapunta",
+      playerName: "Kevin De Bruyne",
+      age: "32 Años",
+      nationality: "Belgium",
+      description: "Outstanding playmaker with exceptional crossing and long-range shooting ability. Key player for both club and country.",
+      rating: 5,
+      date: "01/12/2023",
+      hasVideo: false,
+      playerImage: `/placeholder.svg?height=48&width=48&query=debruyne`,
+      mainImage: `/placeholder.svg?height=200&width=300&query=debruyne action`,
+    }
+  ]
   
   return (
     <div className="min-h-screen bg-[#f8f7f4]">
@@ -408,9 +495,9 @@ export default function ScoutProfilePage() {
                 <div className="space-y-4">
                   {portfolioPlayers.map((player) => (
                     <div
-                      key={player.id}
+                      key={player.id_player}
                       className="bg-[#ffffff] rounded-lg p-6 flex items-center justify-between border border-[#e7e7e7] cursor-pointer hover:bg-gray-50 transition-colors"
-                      onClick={() => router.push(`/member/player/${player.id}`)}
+                      onClick={() => router.push(`/member/player/${player.id_player}`)}
                     >
                       <div className="flex items-center gap-4">
                         <img
@@ -438,7 +525,7 @@ export default function ScoutProfilePage() {
                             className="w-5 h-5 text-[#6d6d6d] cursor-pointer hover:text-[#8c1a10] transition-colors" 
                             onClick={(e) => {
                               e.stopPropagation()
-                              router.push(`/member/player/${player.id}`)
+                              router.push(`/member/player/${player.id_player}`)
                             }}
                           />
                         </div>
@@ -539,9 +626,9 @@ export default function ScoutProfilePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {reports.map((report) => (
                     <div
-                      key={report.id}
+                      key={report.id_player}
                       className="bg-white rounded-lg border border-[#e7e7e7] overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
-                      onClick={() => router.push(`/member/player/${report.id}`)}
+                      onClick={() => router.push(`/member/player/${report.id_player}`)}
                     >
                       {/* Header */}
                       <div className="p-4 border-b border-[#e7e7e7]">

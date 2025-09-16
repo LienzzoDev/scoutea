@@ -1,25 +1,20 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { 
   Check, 
-  Star, 
-  Zap, 
-  Users, 
   BarChart3, 
-  Shield, 
-  Globe, 
-  Headphones, 
-  Trophy, 
   Target, 
   TrendingUp,
   ArrowRight,
   Crown
 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+
 
 export default function HomePage() {
   const router = useRouter()

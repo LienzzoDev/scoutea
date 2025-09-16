@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+
+import MemberNavbar from "@/components/layout/member-navbar"
 import { Button } from "@/components/ui/button"
-import MemberNavbar from "@/components/member-navbar"
 
 export default function OnDemandPage() {
   const [message, setMessage] = useState('')

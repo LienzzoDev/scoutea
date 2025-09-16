@@ -1,10 +1,13 @@
-// 🌐 ENDPOINT PRINCIPAL DE JUGADORES
-// ✅ PROPÓSITO: Maneja búsquedas de jugadores y creación de nuevos
-// ✅ BENEFICIO: Punto central para todas las operaciones de lista
-// ✅ REEMPLAZA: La API duplicada /api/jugadores
+/**
+ * Main Players API Endpoint
+ * 
+ * Handles player searches and creation operations.
+ * Replaces the duplicate /api/jugadores API.
+ */
 
-import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+
 import { PlayerService } from '@/lib/services/player-service'
 import { 
   validatePlayerSearch, 
@@ -13,14 +16,13 @@ import {
 import type { PlayerSearchResult, Player } from '@/types/player'
 
 /**
- * 🔍 GET /api/players - BUSCAR JUGADORES
+ * GET /api/players - Search players with filters and pagination
  * 
- * ✅ QUÉ HACE: Busca jugadores con filtros, paginación y ordenamiento
- * ✅ POR QUÉ: Permite búsquedas eficientes sin sobrecargar el servidor
- * ✅ EJEMPLO: GET /api/players?page=1&limit=20&filters[position_player]=CF
+ * @param request - Request with search parameters
+ * @returns Paginated list of players matching the criteria
  * 
- * @param request - Request con parámetros de búsqueda
- * @returns Lista paginada de jugadores que cumplen los criterios
+ * @example
+ * GET /api/players?page=1&limit=20&filters[position_player]=CF
  */
 export async function GET(request: NextRequest): Promise<NextResponse<PlayerSearchResult | { error: string }>> {
   try {

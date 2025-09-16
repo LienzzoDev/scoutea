@@ -11,6 +11,45 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...compat.config({
+    plugins: ["unused-imports", "import"],
+    rules: {
+      // Automatically remove unused imports
+      "@typescript-eslint/no-unused-vars": ["error", { 
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }],
+      // Remove unused imports
+      "no-unused-vars": "off",
+      "unused-imports/no-unused-imports": "error",
+      "unused-imports/no-unused-vars": [
+        "warn",
+        { 
+          "vars": "all", 
+          "varsIgnorePattern": "^_", 
+          "args": "after-used", 
+          "argsIgnorePattern": "^_" 
+        }
+      ],
+      // Organize imports
+      "import/order": ["error", {
+        "groups": [
+          "builtin",
+          "external", 
+          "internal",
+          "parent",
+          "sibling",
+          "index"
+        ],
+        "newlines-between": "always",
+        "alphabetize": {
+          "order": "asc",
+          "caseInsensitive": true
+        }
+      }]
+    }
+  })
 ];
 
 export default eslintConfig;

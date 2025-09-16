@@ -1,15 +1,15 @@
 'use client'
 
-import { useAuthRedirect } from '@/hooks/use-auth-redirect'
+import { Search, Filter, Plus, Edit, Trash2, Calendar, MapPin, Trophy, FileText } from "lucide-react"
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { Search, Filter, Download, Upload, Globe, Plus, Edit, Trash2, Calendar, MapPin, Trophy, FileText } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { LoadingPage, LoadingCard } from "@/components/ui/loading-spinner"
-import { useTournaments, TorneoFilters } from "@/hooks/useTournaments"
-import { Badge } from "@/components/ui/badge"
+import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
+import { useTournaments, TorneoFilters } from "@/hooks/tournament/useTournaments"
 
 export default function TorneosPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()

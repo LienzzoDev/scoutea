@@ -1,20 +1,21 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { Search, Filter, ArrowRight, X } from "lucide-react"
+import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback, useRef } from 'react'
+
+import BookmarkButton from "@/components/ui/bookmark-button"
+import CategorySelector from "@/components/filters/category-selector"
+import EntityTabs from "@/components/ui/entity-tabs"
+import MemberNavbar from "@/components/layout/member-navbar"
+import MultiSelectFilter from "@/components/filters/multi-select-filter"
+import RangeFilter from "@/components/filters/range-filter"
+import ScoutAvatar from "@/components/ui/scout-avatar"
+import ToggleFilter from "@/components/filters/toggle-filter"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import MemberNavbar from "@/components/member-navbar"
-import ScoutAvatar from "@/components/scout-avatar"
-import { useScouts, Scout } from "@/hooks/useScouts"
-import { useScoutList } from "@/hooks/useScoutList"
-import BookmarkButton from "@/components/bookmark-button"
-import EntityTabs from "@/components/entity-tabs"
-import CategorySelector from "@/components/category-selector"
-import MultiSelectFilter from "@/components/multi-select-filter"
-import RangeFilter from "@/components/range-filter"
-import ToggleFilter from "@/components/toggle-filter"
+import { useScoutList } from "@/hooks/scout/useScoutList"
+import { useScouts, Scout } from "@/hooks/scout/useScouts"
 
 
 // 📊 DEFINIR CATEGORÍAS DISPONIBLES PARA MOSTRAR

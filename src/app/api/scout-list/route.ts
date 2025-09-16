@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+
 import { prisma } from '@/lib/db'
 
 // GET /api/scout-list - Obtener lista de scouts del usuario

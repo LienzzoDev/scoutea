@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { auth, clerkClient } from '@clerk/nextjs/server'
-import { UserService } from '@/lib/db/user-service'
+import { NextRequest, NextResponse } from 'next/server'
+
+import { UserService } from '@/lib/services/user-service'
 
 export async function POST(request: NextRequest) {
   try {

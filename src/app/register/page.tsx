@@ -1,24 +1,24 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
 import { useSignUp, SignUp, useAuth } from '@clerk/nextjs'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { 
   Check, 
   ArrowRight,
   ArrowLeft,
   User,
-  Mail,
-  Lock,
   Building,
   Briefcase,
   Phone,
   Crown
 } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+
 
 function RegisterContent() {
   const router = useRouter()

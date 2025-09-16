@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { stripe } from '@/lib/stripe'
 import { clerkClient } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
+
+import { stripe } from '@/lib/stripe'
 
 /**
  * Webhook de Stripe para manejar eventos de pago y suscripciones

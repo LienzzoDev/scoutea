@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { TournamentService, TorneoFilters } from '@/lib/db/tournament-service'
+
+import { TournamentService, TorneoFilters } from '@/lib/services/tournament-service'
 
 // GET /api/torneos - Obtener torneos con filtros
 export async function GET(request: NextRequest) {

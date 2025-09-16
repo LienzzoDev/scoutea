@@ -1,15 +1,16 @@
 'use client'
 
-import { useAuthRedirect } from '@/hooks/use-auth-redirect'
+import { Search, Filter, Download, Upload, Globe, Plus, Edit, Trash2 } from "lucide-react"
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { Search, Filter, Download, Upload, Globe, Plus, Edit, Trash2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { LoadingPage, LoadingCard } from "@/components/ui/loading-spinner"
-import { useTeams, Team } from "@/hooks/useTeams"
+import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
+import { useTeams, Team } from "@/hooks/team/useTeams"
 
 export default function EquiposPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()

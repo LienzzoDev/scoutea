@@ -1,16 +1,18 @@
 'use client'
 
-import { useAuthRedirect } from '@/hooks/use-auth-redirect'
-import { usePlayers, Player } from '@/hooks/usePlayers'
+import { ChevronLeft, Edit, Settings, Save, ArrowLeft } from "lucide-react"
 import { useRouter, useParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { ChevronLeft, Edit, Settings, Save, ArrowLeft } from "lucide-react"
 import { LoadingPage } from "@/components/ui/loading-spinner"
+import { Textarea } from "@/components/ui/textarea"
+import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
+import { usePlayers } from '@/hooks/player/usePlayers'
+import type { Player } from '@/types/player'
 
 export default function EditarJugadorPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
@@ -71,7 +73,7 @@ export default function EditarJugadorPage() {
     if (isSignedIn) {
       loadPlayer()
     }
-  }, [params.id, isSignedIn, getPlayer])
+  }, [params.id, isSignedIn]) // Removed getPlayer from dependencies to prevent infinite loop
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target

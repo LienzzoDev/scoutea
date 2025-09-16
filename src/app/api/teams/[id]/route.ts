@@ -1,6 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
 import { auth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+
+import { prisma } from '@/lib/db'
+import { 
+  handleAPIError, 
+  extractErrorContext, 
+  requireAuth, 
+  requireParam,
+  ErrorResponses 
+} from '@/lib/errors'
 
 // GET /api/teams/[id] - Obtener un equipo por ID
 export async function GET(
@@ -8,28 +16,25 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const context = extractErrorContext(request)
     const { userId } = await auth()
     
-    if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
+    // Validaciones usando nuevas funciones
+    requireAuth(userId, context)
+    requireParam(params.id, 'id', context)
 
     const team = await prisma.equipo.findUnique({
       where: { id_team: params.id }
     })
 
     if (!team) {
-      return NextResponse.json({ error: 'Equipo no encontrado' }, { status: 404 })
+      throw ErrorResponses.TEAM_NOT_FOUND
     }
 
     return NextResponse.json(team)
 
   } catch (error) {
-    console.error('❌ Error getting team:', error)
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    )
+    return handleAPIError(error, extractErrorContext(request))
   }
 }
 
@@ -39,11 +44,12 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const context = extractErrorContext(request)
     const { userId } = await auth()
     
-    if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
+    // Validaciones usando nuevas funciones
+    requireAuth(userId, context)
+    requireParam(params.id, 'id', context)
 
     const body = await request.json()
 
@@ -75,16 +81,7 @@ export async function PUT(
     return NextResponse.json(team)
 
   } catch (error) {
-    console.error('❌ Error updating team:', error)
-    
-    if (error instanceof Error && error.message.includes('Record to update not found')) {
-      return NextResponse.json({ error: 'Equipo no encontrado' }, { status: 404 })
-    }
-    
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    )
+    return handleAPIError(error, extractErrorContext(request))
   }
 }
 
@@ -94,11 +91,12 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const context = extractErrorContext(request)
     const { userId } = await auth()
     
-    if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
+    // Validaciones usando nuevas funciones
+    requireAuth(userId, context)
+    requireParam(params.id, 'id', context)
 
     await prisma.equipo.delete({
       where: { id_team: params.id }
@@ -108,15 +106,6 @@ export async function DELETE(
     return NextResponse.json({ success: true })
 
   } catch (error) {
-    console.error('❌ Error deleting team:', error)
-    
-    if (error instanceof Error && error.message.includes('Record to delete does not exist')) {
-      return NextResponse.json({ error: 'Equipo no encontrado' }, { status: 404 })
-    }
-    
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    )
+    return handleAPIError(error, extractErrorContext(request))
   }
 }

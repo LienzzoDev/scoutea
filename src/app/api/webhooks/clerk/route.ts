@@ -1,8 +1,9 @@
+import { clerkClient } from '@clerk/nextjs/server'
+import { headers } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { Webhook } from 'svix'
-import { headers } from 'next/headers'
-import { clerkClient } from '@clerk/nextjs/server'
-import { UserService } from '@/lib/db/user-service'
+
+import { UserService } from '@/lib/services/user-service'
 
 export async function POST(req: NextRequest) {
   // Get the headers

@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { auth, clerkClient } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+
 import { stripe } from '@/lib/stripe'
 
 export async function POST(request: NextRequest) {

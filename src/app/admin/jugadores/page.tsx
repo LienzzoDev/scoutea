@@ -1,16 +1,18 @@
 'use client'
 
-import { useAuthRedirect } from '@/hooks/use-auth-redirect'
+import { Search, Filter, Download, Upload, Globe, Plus, Edit, Trash2 } from "lucide-react"
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { Search, Filter, Download, Upload, Globe, Plus, Edit, Trash2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+
+import PlayerProfileModal from "@/components/player/player-profile-modal"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { LoadingPage, LoadingCard } from "@/components/ui/loading-spinner"
-import PlayerProfileModal from "@/components/player-profile-modal"
-import { usePlayers, Player } from "@/hooks/usePlayers"
+import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
+import { usePlayers } from "@/hooks/player/usePlayers"
+import type { Player } from "@/types/player"
 
 export default function JugadoresPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()

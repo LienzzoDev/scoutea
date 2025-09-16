@@ -197,8 +197,8 @@ export type PlayerSortableFields = keyof Pick<Player,
 
 export type PlayerRequiredFields = Pick<Player, 'id_player' | 'player_name' | 'createdAt' | 'updatedAt'>
 
-// 📝 DATOS PARA CREAR JUGADOR (API LEGACY)
-// ✅ PROPÓSITO: Compatibilidad con API /api/jugadores
+// 📝 DATOS PARA CREAR JUGADOR (FORMATO LEGACY)
+// ✅ PROPÓSITO: Compatibilidad con formularios existentes
 export interface CrearJugadorData {
   nombre: string                         // Nombre del jugador (obligatorio)
   nombreUsuario: string                  // Username único (obligatorio)
@@ -217,15 +217,4 @@ export interface CrearJugadorData {
 
 // 📤 EXPORTACIONES ADICIONALES
 // Re-exportar todo para fácil importación desde otros archivos
-export type {
-  Player as default,           // Exportación por defecto
-  Player,                     // Exportación nombrada
-  PlayerFilters,
-  PlayerSearchOptions,
-  PlayerSearchResult,
-  PlayerStats,
-  FilterOptions,
-  CreatePlayerData,
-  UpdatePlayerData,
-  CrearJugadorData
-}
+export default Player

@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { CompetitionService } from '@/lib/db/competition-service'
+import { NextRequest, NextResponse } from 'next/server'
+
+import { CompetitionService } from '@/lib/services/competition-service'
 
 export async function GET(request: NextRequest) {
   try {

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
 import { useUser } from '@clerk/nextjs'
+import { useState, useEffect, useCallback } from 'react'
 
 interface EntityListItem {
   id: string

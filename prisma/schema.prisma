@@ -122,9 +122,10 @@ model Jugador {
   beeswarmData                    BeeswarmData[]
   lollipopData                    LollipopData[]
   playerLists                     PlayerList[]
-  playerStats                     PlayerStats[]
-  playerStatsV2                   PlayerStatsV2[]
+
   radarMetrics                    RadarMetrics[]
+  atributos                       Atributos?
+  playerStats3m                   PlayerStats3m?
 
   @@index([player_name])
   @@index([position_player])
@@ -451,60 +452,7 @@ model Scout {
   @@map("scouts")
 }
 
-model PlayerStats {
-  id           String   @id @default(cuid())
-  playerId     String
-  period       String
-  category     String
-  metricName   String
-  totalValue   Float?
-  p90Value     Float?
-  averageValue Float?
-  maximumValue Float?
-  percentile   Float?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  player       Jugador  @relation(fields: [playerId], references: [id_player], onDelete: Cascade)
 
-  @@index([playerId])
-  @@index([period])
-  @@index([category])
-  @@index([metricName])
-  @@index([playerId, period])
-  @@index([category, metricName])
-  @@map("player_stats")
-}
-
-model PlayerStatsV2 {
-  id              Int      @id @default(autoincrement())
-  player_id       String
-  period          String
-  matches         Int?
-  minutes         Int?
-  goals           Int?
-  assists         Int?
-  shots           Int?
-  shots_on_target Int?
-  general         Json?
-  attacking       Json?
-  defending       Json?
-  passing         Json?
-  goalkeeping     Json?
-  physical        Json?
-  dribbling       Json?
-  finishing       Json?
-  duels           Json?
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-  player          Jugador  @relation(fields: [player_id], references: [id_player], onDelete: Cascade)
-
-  @@unique([player_id, period])
-  @@index([player_id, period])
-  @@index([goals])
-  @@index([assists])
-  @@index([matches])
-  @@map("player_stats_v2")
-}
 
 model RadarMetrics {
   id              String   @id @default(cuid())
@@ -604,4 +552,486 @@ model ScoutList {
   @@index([scoutId])
   @@index([createdAt])
   @@map("scout_lists")
+}
+
+model PlayerStats3m {
+  // Identificadores
+  id_player                       String    @id
+  wyscout_id                      BigInt?
+  stats_evo_3m                    Decimal?  @db.Decimal(6,2)
+  
+  // Partidos y minutos jugados
+  matches_played_tot_3m           Int?
+  matches_played_tot_3m_norm      Decimal?  @db.Decimal(5,2)
+  matches_played_tot_3m_rank      Int?
+  minutes_played_tot_3m           Int?
+  minutes_played_tot_3m_norm      Decimal?  @db.Decimal(5,2)
+  minutes_played_tot_3m_rank      Int?
+  
+  // Goles
+  goals_p90_3m                    Decimal?  @db.Decimal(7,3)
+  goals_p90_3m_norm               Decimal?  @db.Decimal(5,2)
+  goals_p90_3m_rank               Int?
+  goals_tot_3m                    Int?
+  goals_tot_3m_norm               Decimal?  @db.Decimal(5,2)
+  
+  // Asistencias
+  assists_p90_3m                  Decimal?  @db.Decimal(7,3)
+  assists_p90_3m_norm             Decimal?  @db.Decimal(5,2)
+  assists_p90_3m_rank             Int?
+  assists_tot_3m                  Int?
+  assists_tot_3m_norm             Decimal?  @db.Decimal(5,2)
+  
+  // Tarjetas amarillas
+  yellow_cards_p90_3m             Decimal?  @db.Decimal(7,3)
+  yellow_cards_p90_3m_norm        Decimal?  @db.Decimal(5,2)
+  yellow_cards_p90_rank           Int?
+  yellow_cards_p90_3m_norm_neg    Decimal?  @db.Decimal(5,2)
+  yellow_cards_tot_3m             Int?
+  yellow_cards_tot_3m_norm        Decimal?  @db.Decimal(5,2)
+  
+  // Tarjetas rojas
+  red_cards_p90_3m                Decimal?  @db.Decimal(7,3)
+  red_cards_p90_3m_norm           Decimal?  @db.Decimal(5,2)
+  red_cards_p90_rank              Int?
+  red_cards_p90_3m_norm_neg       Decimal?  @db.Decimal(5,2)
+  red_cards_tot_3m                Int?
+  red_cards_tot_3m_norm           Decimal?  @db.Decimal(5,2)
+  
+  // Goles encajados (porteros)
+  conceded_goals_p90_3m           Decimal?  @db.Decimal(7,3)
+  conceded_goals_p90_3m_norm      Decimal?  @db.Decimal(5,2)
+  conceded_goals_p90_3m_rank      Int?
+  conceded_goals_p90_3m_norm_neg  Decimal?  @db.Decimal(5,2)
+  conceded_goals_tot_3m           Int?
+  conceded_goals_tot_3m_norm      Decimal?  @db.Decimal(5,2)
+  
+  // Goles evitados (puede ser negativo)
+  prevented_goals_p90_3m          Decimal?  @db.Decimal(7,3)
+  prevented_goals_p90_3m_norm     Decimal?  @db.Decimal(5,2)
+  prevented_goals_p90_rank        Int?
+  prevented_goals_tot_3m          Decimal?  @db.Decimal(7,3)
+  prevented_goals_tot_3m_norm     Decimal?  @db.Decimal(5,2)
+  
+  // Disparos en contra
+  shots_against_p90_3m            Decimal?  @db.Decimal(7,3)
+  shots_against_p90_3m_norm       Decimal?  @db.Decimal(5,2)
+  shots_against_p90_3m_rank       Int?
+  shots_against_tot_3m            Int?
+  shots_against_tot_3m_norm       Decimal?  @db.Decimal(5,2)
+  
+  // Porterías a cero
+  clean_sheets_percent_3m         Decimal?  @db.Decimal(5,2) @map("clean_sheets_%_3m")
+  clean_sheets_percent_3m_norm    Decimal?  @db.Decimal(5,2) @map("clean_sheets_%_3m_norm")
+  clean_sheets_percent_3m_rank    Int?      @map("clean_sheets_%_3m_rank")
+  clean_sheets_tot_3m             Int?
+  clean_sheets_tot_3m_norm        Decimal?  @db.Decimal(5,2)
+  
+  // Porcentaje de paradas
+  save_rate_percent_3m            Decimal?  @db.Decimal(5,2) @map("save_rate_%_3m")
+  save_rate_percent_3m_norm       Decimal?  @db.Decimal(5,2) @map("save_rate_%_3m_norm")
+  save_rate_percent_3m_rank       Int?      @map("save_rate_%_3m_rank")
+  
+  // Entradas
+  tackles_p90_3m                  Decimal?  @db.Decimal(7,3)
+  tackles_p90_3m_norm             Decimal?  @db.Decimal(5,2)
+  tackles_p90_3m_rank             Int?
+  tackles_tot_3m                  Int?
+  tackles_tot_3m_norm             Decimal?  @db.Decimal(5,2)
+  
+  // Intercepciones
+  interceptions_p90_3m            Decimal?  @db.Decimal(7,3)
+  interceptions_p90_3m_norm       Decimal?  @db.Decimal(5,2)
+  interceptions_p90_3m_rank       Int?
+  interceptions_tot_3m            Int?
+  interceptions_tot_3m_norm       Decimal?  @db.Decimal(5,2)
+  
+  // Faltas
+  fouls_p90_3m                    Decimal?  @db.Decimal(7,3)
+  fouls_p90_3m_norm               Decimal?  @db.Decimal(5,2)
+  fouls_p90_3m_rank               Int?
+  fouls_p90_3m_norm_neg           Decimal?  @db.Decimal(5,2)
+  fouls_tot_3m                    Int?
+  fouls_tot_3m_norm               Decimal?  @db.Decimal(5,2)
+  
+  // Pases
+  passes_p90_3m                   Decimal?  @db.Decimal(7,3)
+  passes_p90_3m_norm              Decimal?  @db.Decimal(5,2)
+  passes_p90_3m_rank              Int?
+  passes_tot_3m                   Int?
+  passes_tot_3m_norm              Decimal?  @db.Decimal(5,2)
+  
+  // Pases hacia adelante
+  forward_passes_p90_3m           Decimal?  @db.Decimal(7,3)
+  forward_passes_p90_3m_norm      Decimal?  @db.Decimal(5,2)
+  forward_passes_p90_3m_rank      Int?
+  forward_passes_tot_3m           Int?
+  forward_passes_tot_3m_norm      Decimal?  @db.Decimal(5,2)
+  
+  // Centros
+  crosses_p90_3m                  Decimal?  @db.Decimal(7,3)
+  crosses_p90_3m_norm             Decimal?  @db.Decimal(5,2)
+  crosses_p90_3m_rank             Int?
+  crosses_tot_3m                  Int?
+  crosses_tot_3m_norm             Decimal?  @db.Decimal(5,2)
+  
+  // Precisión de pases
+  accurate_passes_percent_3m      Decimal?  @db.Decimal(5,2) @map("accurate_passes_%_3m")
+  accurate_passes_percent_3m_norm Decimal?  @db.Decimal(5,2) @map("accurate_passes_%_3m_norm")
+  accurate_passes_percent_3m_rank Int?      @map("accurate_passes_%_3m_rank")
+  
+  // Disparos
+  shots_p90_3m                    Decimal?  @db.Decimal(7,3)
+  shots_p90_3m_norm               Decimal?  @db.Decimal(5,2)
+  shots_p90_3m_rank               Int?
+  shots_tot_3m                    Int?
+  shots_tot_3m_norm               Decimal?  @db.Decimal(5,2)
+  
+  // Efectividad
+  effectiveness_percent_3m        Decimal?  @db.Decimal(5,2) @map("effectiveness_%_3m")
+  effectiveness_percent_3m_norm   Decimal?  @db.Decimal(5,2) @map("effectiveness_%_3m_norm")
+  effectiveness_percent_3m_rank   Int?      @map("effectiveness_%_3m_rank")
+  
+  // Duelos ofensivos
+  off_duels_p90_3m                Decimal?  @db.Decimal(7,3)
+  off_duels_p90_3m_norm           Decimal?  @db.Decimal(5,2)
+  off_duels_p90_3m_rank           Int?
+  off_duels_tot_3m                Int?
+  off_duels_tot_3m_norm           Decimal?  @db.Decimal(5,2)
+  off_duels_won_percent_3m        Decimal?  @db.Decimal(5,2) @map("off_duels_won_%_3m")
+  off_duels_won_percent_3m_norm   Decimal?  @db.Decimal(5,2) @map("off_duels_won_%_3m_norm")
+  off_duels_won_percent_3m_rank   Int?      @map("off_duels_won_%_3m_rank")
+  
+  // Duelos defensivos
+  def_duels_p90_3m                Decimal?  @db.Decimal(7,3)
+  def_duels_p90_3m_norm           Decimal?  @db.Decimal(5,2)
+  def_duels_p90_3m_rank           Int?
+  def_duels_tot_3m                Int?
+  def_duels_tot_3m_norm           Decimal?  @db.Decimal(5,2)
+  def_duels_won_percent_3m        Decimal?  @db.Decimal(5,2) @map("def_duels_won_%_3m")
+  def_duels_won_percent_3m_norm   Decimal?  @db.Decimal(5,2) @map("def_duels_won_%_3m_norm")
+  def_duels_won_percent_3m_rank   Int?      @map("def_duels_won_%_3m_rank")
+  
+  // Duelos aéreos
+  aerials_duels_p90_3m            Decimal?  @db.Decimal(7,3)
+  aerials_duels_p90_3m_norm       Decimal?  @db.Decimal(5,2)
+  aerials_duels_p90_3m_rank       Int?
+  aerials_duels_tot_3m            Int?
+  aerials_duels_tot_3m_norm       Decimal?  @db.Decimal(5,2)
+  aerials_duels_won_percent_3m    Decimal?  @db.Decimal(5,2) @map("aerials_duels_won_%_3m")
+  aerials_duels_won_percent_3m_norm Decimal? @db.Decimal(5,2) @map("aerials_duels_won_%_3m_norm")
+  aerials_duels_won_percent_3m_rank Int?     @map("aerials_duels_won_%_3m_rank")
+  
+  // Metadatos
+  created_at                      DateTime  @default(now()) @map("created_at")
+  updated_at                      DateTime  @updatedAt @map("updated_at")
+  
+  // Relación con jugador
+  player                          Jugador   @relation(fields: [id_player], references: [id_player], onDelete: Cascade)
+  
+  // Índices
+  @@index([id_player])
+  @@index([goals_p90_3m(sort: Desc)])
+  @@index([assists_p90_3m(sort: Desc)])
+  @@index([stats_evo_3m(sort: Desc)])
+  @@index([goals_p90_3m_rank])
+  @@index([assists_p90_3m_rank])
+  @@index([clean_sheets_percent_3m(sort: Desc)])
+  @@index([save_rate_percent_3m(sort: Desc)])
+  @@index([created_at(sort: Desc)])
+  @@index([updated_at(sort: Desc)])
+  
+  @@map("player_stats_3m")
+}
+
+model Atributos {
+  // Identificadores y totales
+  id_player                        String  @id
+  id_fmi                          Int?
+  total_fmi_pts                   Int?
+  total_fmi_pts_norm              Int?
+  
+  // Habilidades técnicas (jugador de campo)
+  corners_fmi                     Int?
+  crossing_fmi                    Int?
+  dribbling_fmi                   Int?
+  finishing_fmi                   Int?
+  first_touch_fmi                 Int?
+  free_kick_taking_fmi            Int?
+  heading_fmi                     Int?
+  long_shots_fmi                  Int?
+  passing_fmi                     Int?
+  penalty_taking_fmi              Int?
+  tackling_fmi                    Int?
+  technique_fmi                   Int?
+  marking_fmi                     Int?
+  off_the_ball_fmi                Int?
+  positioning_fmi                 Int?
+  long_throws_fmi                 Int?
+  
+  // Atributos físicos
+  acceleration_fmi                Int?
+  agility_fmi                     Int?
+  balance_fmi                     Int?
+  jumping_fmi                     Int?
+  natural_fitness_fmi             Int?
+  pace_fmi                        Int?
+  stamina_fmi                     Int?
+  strength_fmi                    Int?
+  
+  // Atributos mentales
+  aggression_fmi                  Int?
+  anticipation_fmi                Int?
+  bravery_fmi                     Int?
+  composure_fmi                   Int?
+  concentration_fmi               Int?
+  decisions_fmi                   Int?
+  determination_fmi               Int?
+  flair_fmi                       Int?
+  leadership_fmi                  Int?
+  team_work_fmi                   Int?
+  vision_fmi                      Int?
+  work_rate_fmi                   Int?
+  
+  // Portero (GK)
+  aerial_ability_fmi              Int?
+  command_of_area_fmi             Int?
+  communication_fmi               Int?
+  eccentricity_fmi                Int?
+  handling_fmi                    Int?
+  kicking_fmi                     Int?
+  one_on_ones_fmi                 Int?
+  tendency_to_punch_fmi           Int?
+  reflexes_fmi                    Int?
+  rushing_out_fmi                 Int?
+  throwing_fmi                    Int?
+  
+  // Dominancia de pie
+  left_foot_fmi                   Int?
+  right_foot_fmi                  Int?
+  
+  // Consistencia, personalidad y disponibilidad
+  consistency_fmi                 Int?
+  dirtiness_fmi                   Int?
+  important_matches_fmi           Int?
+  injury_proness_fmi              Int?
+  versality_fmi                   Int?
+  adaptability_fmi                Int?
+  ambition_fmi                    Int?
+  loyalty_fmi                     Int?
+  pressure_fmi                    Int?
+  professional_fmi                Int?
+  sportsmanship_fmi               Int?
+  temperament_fmi                 Int?
+  controversy_fmi                 Int?
+  
+  // Aptitud por posición (rating + nivel)
+  goalkeeper_fmi                  Int?
+  gk_level                        Int?
+  defender_right_fmi              Int?
+  rb_level                        Int?
+  defender_central_fmi            Int?
+  cb_level                        Int?
+  defender_left_fmi               Int?
+  lb_level                        Int?
+  wing_back_right_fmi             Int?
+  rwb_level                       Int?
+  defensive_midfielder_fmi        Int?
+  dm_level                        Int?
+  wing_back_left_fmi              Int?
+  lwb_level                       Int?
+  midfielder_right_fmi            Int?
+  rm_level                        Int?
+  midfielder_central_fmi          Int?
+  cm_level                        Int?
+  midfielder_left_fmi             Int?
+  lm_level                        Int?
+  attacking_mid_right_fmi         Int?
+  rw_level                        Int?
+  attacking_mid_central_fmi       Int?
+  am_level                        Int?
+  attacking_mid_left_fmi          Int?
+  lw_level                        Int?
+  striker_fmi                     Int?
+  st_level                        Int?
+  
+  // Roles/estilos de Portero (con % de pertenencia)
+  gk_dominator                    Int?
+  gk_dominator_percent            Int?
+  gk_reactive                     Int?
+  gk_reactive_percent             Int?
+  gk_initiator                    Int?
+  gk_initiator_percent            Int?
+  
+  // Roles/estilos de Defensa Central (con %)
+  central_def_aggressor           Int?
+  central_def_aggressor_percent   Int?
+  central_def_spreader            Int?
+  central_def_spreader_percent    Int?
+  central_def_anchor              Int?
+  central_def_anchor_percent      Int?
+  
+  // Roles/estilos de Defensa/Laterales (con %)
+  wide_def_overlapper             Int?
+  wide_def_overlapper_percent     Int?
+  wide_def_progressor             Int?
+  wide_def_progressor_percent     Int?
+  wide_def_safety                 Int?
+  wide_def_safety_percent         Int?
+  
+  // Mediocentro (con %)
+  deep_mid_box_to_box             Int?
+  deep_mid_box_to_box_percent     Int?
+  deep_mid_distributor            Int?
+  deep_mid_distributor_percent    Int?
+  deep_mid_builder                Int?
+  deep_mid_builder_percent        Int?
+  
+  // Mediapunta/Interior avanzado (con %)
+  advanced_mid_box_crasher        Int?
+  advanced_mid_box_crasher_percent Int?
+  advanced_mid_creator            Int?
+  advanced_mid_creator_percent    Int?
+  advanced_mid_orchestrator       Int?
+  advanced_mid_orchestrator_percent Int?
+  
+  // Extremos/ataque por banda (con %)
+  wide_att_outlet                 Int?
+  wide_att_outlet_percent         Int?
+  wide_att_unlocker               Int?
+  wide_att_unlocker_percent       Int?
+  wide_att_threat                 Int?
+  wide_att_threat_percent         Int?
+  
+  // Delantero centro (con %)
+  central_att_roamer              Int?
+  central_att_roamer_percent      Int?
+  central_att_target              Int?
+  central_att_target_percent      Int?
+  central_att_finisher            Int?
+  central_att_finisher_percent    Int?
+  
+  // Arquetipos físico-técnicos (índice + nivel)
+  sprinter                        Int?
+  sprinter_level                  Int?
+  marathonian                     Int?
+  marathonian_level               Int?
+  bomberman                       Int?
+  bomberman_level                 Int?
+  three_sixty                     Int?    // 360º renombrado para Prisma
+  three_sixty_level               Int?    // 360º_level renombrado
+  the_rock                        Int?
+  the_rock_level                  Int?
+  air_flyer                       Int?
+  air_flyer_level                 Int?
+  one_vs_one_off                  Int?    // 1vs1_off renombrado
+  one_vs_one_off_level            Int?    // 1vs1_off_level renombrado
+  intelligence                    Int?
+  intelligence_level              Int?
+  game_pace                       Int?
+  game_pace_level                 Int?
+  striking                        Int?
+  striking_level                  Int?
+  ball_control                    Int?
+  ball_control_level              Int?
+  creativity                      Int?
+  creativity_level                Int?
+  one_vs_one_def                  Int?    // 1vs1_def renombrado
+  one_vs_one_def_level            Int?    // 1vs1_def_level renombrado
+  reliability                     Int?
+  reliability_level               Int?
+  competitiveness                 Int?
+  competitiveness_level           Int?
+  injury_resistance               Int?
+  injury_resistance_level         Int?
+  transition                      Int?
+  transition_level                Int?
+  keeping_the_ball                Int?
+  keeping_the_ball_level          Int?
+  progression                     Int?
+  progression_level               Int?
+  finishing_archetype             Int?
+  finishing_level                 Int?
+  set_piece                       Int?
+  set_piece_level                 Int?
+  aerial_play                     Int?
+  aerial_play_level               Int?
+  ball_recovery                   Int?
+  ball_recovery_level             Int?
+  defensive_shape                 Int?
+  defensive_shape_level           Int?
+  goal_saving                     Int?
+  goal_saving_level               Int?
+  
+  // Tendencias y "dominance" táctico-estilístico
+  // Ataque
+  positional_att_tendency         Int?
+  positional_att_tendency_percent Int?
+  direct_att_tendency             Int?
+  direct_att_tendency_percent     Int?
+  positional_att_dominance        Int?
+  positional_att_dominance_level  Int?
+  direct_att_dominance            Int?
+  direct_att_dominance_level      Int?
+  
+  // Defensa (altura del bloque)
+  low_block_def_tendency          Int?
+  low_block_def_tendency_percent  Int?
+  high_block_def_tendency         Int?
+  high_block_def_tendency_percent Int?
+  low_block_def_dominance         Int?
+  low_block_def_dominance_level   Int?
+  high_block_def_dominance        Int?
+  high_block_def_dominance_level  Int?
+  
+  // Influencia por fase
+  influence_off_tendency          Int?
+  influence_off_tendency_percent  Int?
+  influence_def_tendency          Int?
+  influence_def_tendency_percent  Int?
+  influence_off_dominance         Int?
+  influence_off_dominance_level   Int?
+  influence_def_dominance         Int?
+  influence_def_dominance_level   Int?
+  
+  // Espacios de juego
+  open_spaces_tendency            Int?
+  open_spaces_tendency_percent    Int?
+  tight_spaces_tendency           Int?
+  tight_spaces_tendency_percent   Int?
+  open_spaces_dominance           Int?
+  open_spaces_dominance_level     Int?
+  tight_spaces_dominance          Int?
+  tight_spaces_dominance_level    Int?
+  
+  // Perfil de pie
+  right_foot_tendency             Int?
+  right_foot_tendency_percent     Int?
+  left_foot_tendency              Int?
+  left_foot_tendency_percent      Int?
+  right_foot_dominance            Int?
+  right_foot_dominance_level      Int?
+  left_foot_dominance             Int?
+  left_foot_dominance_level       Int?
+  
+  // Timestamps
+  createdAt                       DateTime @default(now())
+  updatedAt                       DateTime @updatedAt
+  
+  // Relación con Jugador
+  player                          Jugador  @relation(fields: [id_player], references: [id_player], onDelete: Cascade)
+  
+  // Índices para optimización
+  @@index([id_fmi])
+  @@index([total_fmi_pts])
+  @@index([sprinter_level])
+  @@index([marathonian_level])
+  @@index([bomberman_level])
+  @@index([the_rock_level])
+  @@index([air_flyer_level])
+  @@index([goalkeeper_fmi])
+  @@index([striker_fmi])
+  @@index([createdAt])
+  
+  @@map("atributos")
 }

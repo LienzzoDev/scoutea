@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { ChartService } from '@/lib/db/chart-service'
+
+import { ChartService } from '@/lib/services/chart-service'
 import { ChartFilters } from '@/types/charts'
 
 export async function GET(request: NextRequest) {

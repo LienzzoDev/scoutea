@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Check, Star, Zap, Users, Shield, Globe, Headphones, ArrowLeft } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, useEffect } from 'react'
+
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Check, Star, Zap, Users, BarChart3, Shield, Globe, Headphones, ArrowLeft } from 'lucide-react'
 import { getStripe } from '@/lib/stripe'
 
 export default function SubscriptionPlansPage() {

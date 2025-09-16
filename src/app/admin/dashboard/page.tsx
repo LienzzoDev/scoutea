@@ -1,11 +1,6 @@
 'use client'
 
 import { useAuth } from '@clerk/nextjs'
-import { useRouter } from 'next/navigation'
-import { useEffect, useState, useCallback } from 'react'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { usePlayers } from "@/hooks/usePlayers"
 import { 
   Users, 
   TrendingUp, 
@@ -15,6 +10,12 @@ import {
   BarChart3,
   Activity
 } from "lucide-react"
+import { useRouter } from 'next/navigation'
+import { useEffect, useState, useCallback } from 'react'
+
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { usePlayers } from "@/hooks/player/usePlayers"
 
 export default function DashboardPage() {
   const { isSignedIn, isLoaded } = useAuth()

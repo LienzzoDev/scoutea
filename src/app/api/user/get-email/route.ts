@@ -1,13 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+
+import { handleAPIError, extractErrorContext, requireAuth } from '@/lib/errors'
 
 export async function GET(request: NextRequest) {
   try {
+    const context = extractErrorContext(request)
     const { userId } = await auth()
     
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    // Usar nueva función de validación de auth
+    requireAuth(userId, context)
 
     // Obtener el email del usuario desde los metadatos de la sesión
     const { sessionClaims } = await auth()
@@ -18,10 +20,6 @@ export async function GET(request: NextRequest) {
       userId: userId
     })
   } catch (error) {
-    console.error('Error getting user email:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleAPIError(error, extractErrorContext(request))
   }
 }

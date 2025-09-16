@@ -3,8 +3,9 @@
 // ✅ BENEFICIO: Permite operaciones CRUD completas en jugadores individuales
 // ✅ RUTAS: GET, PUT, DELETE /api/players/[id]
 
-import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+
 import { PlayerService } from '@/lib/services/player-service'
 import { 
   validatePlayerId, 

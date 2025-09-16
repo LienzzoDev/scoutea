@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Search } from "lucide-react"
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Search, ArrowRight } from "lucide-react"
+import { useState, useEffect } from 'react'
+
+import MemberNavbar from "@/components/layout/member-navbar"
+import PlayerAvatar from "@/components/ui/player-avatar"
+import ScoutAvatar from "@/components/ui/scout-avatar"
 import { Input } from "@/components/ui/input"
-import MemberNavbar from "@/components/member-navbar"
-import PlayerAvatar from "@/components/player-avatar"
-import ScoutAvatar from "@/components/scout-avatar"
 
 export default function SearchPage() {
   const router = useRouter()

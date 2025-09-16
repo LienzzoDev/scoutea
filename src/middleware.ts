@@ -5,12 +5,12 @@ import { NextResponse } from 'next/server'
 
 // Definir rutas con matchers
 const isAuthRoute = createRouteMatcher(['/login(.*)', '/register(.*)', '/admin-login(.*)'])
-const isAdminRoute = createRouteMatcher(['/admin(.*)'])
+const _isAdminRoute = createRouteMatcher(['/admin(.*)'])
 const isWelcomeRoute = createRouteMatcher(['/member/welcome(.*)'])
-const isWelcomePlanRoute = createRouteMatcher(['/member/welcome-plan(.*)'])
-const isSubscriptionRoute = createRouteMatcher(['/member/subscription-plans(.*)'])
+const _isWelcomePlanRoute = createRouteMatcher(['/member/welcome-plan(.*)'])
+const _isSubscriptionRoute = createRouteMatcher(['/member/subscription-plans(.*)'])
 const isDashboardRoute = createRouteMatcher(['/member/dashboard(.*)'])
-const isCompleteProfileRoute = createRouteMatcher(['/member/complete-profile-after-payment(.*)'])
+const _isCompleteProfileRoute = createRouteMatcher(['/member/complete-profile-after-payment(.*)'])
 const isPublicRoute = createRouteMatcher(['/'])
 
 export default clerkMiddleware(async (auth, req) => {

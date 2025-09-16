@@ -1,15 +1,16 @@
 "use client"
 
-import { useState, FormEvent } from "react"
-import { useRouter } from "next/navigation"
 import { useAuth } from "@clerk/nextjs"
+import { ChevronLeft, Edit, Settings, Plus, X, Save } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useState, FormEvent } from "react"
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { ChevronLeft, Edit, Settings, Plus, X, Save } from "lucide-react"
-import { usePlayers } from "@/hooks/usePlayers"
+import { usePlayers } from "@/hooks/player/usePlayers"
 import { CrearJugadorData } from "@/types/player"
 
 export default function NuevoJugadorPage() {

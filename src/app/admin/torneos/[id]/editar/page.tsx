@@ -1,15 +1,16 @@
 'use client'
 
-import { useAuthRedirect } from '@/hooks/use-auth-redirect'
+import { ArrowLeft, Save, Upload, X, FileText } from 'lucide-react'
 import { useRouter, useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { ArrowLeft, Save, Upload, X, FileText } from 'lucide-react'
+
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { LoadingPage } from '@/components/ui/loading-spinner'
-import { useTournaments } from '@/hooks/useTournaments'
+import { Textarea } from '@/components/ui/textarea'
+import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
+import { useTournaments } from '@/hooks/tournament/useTournaments'
 
 export default function EditarTorneoPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()

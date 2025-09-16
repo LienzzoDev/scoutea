@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
 import { useUser } from '@clerk/nextjs'
+import { Check, Star, Zap, Users, BarChart3, Shield, Globe, Headphones, Trophy, Target, TrendingUp } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
+
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Check, Star, Zap, Users, BarChart3, Shield, Globe, Headphones, Trophy, Target, TrendingUp } from 'lucide-react'
+
 
 export default function WelcomePage() {
   const router = useRouter()

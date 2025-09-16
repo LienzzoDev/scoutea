@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { CheckCircle, User, Phone, Briefcase, Star, ArrowRight, Sparkles } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { CheckCircle, User, Mail, Phone, Building, Briefcase, Star, ArrowRight, Sparkles } from 'lucide-react'
+import { useState } from 'react'
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"

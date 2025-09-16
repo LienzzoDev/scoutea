@@ -1,13 +1,14 @@
 'use client'
 
-import { useAuthRedirect } from '@/hooks/use-auth-redirect'
+import { ChevronLeft, Save } from "lucide-react"
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ChevronLeft, Save, ArrowLeft } from "lucide-react"
 import { LoadingPage } from "@/components/ui/loading-spinner"
+import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 
 export default function NuevoEquipoPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()

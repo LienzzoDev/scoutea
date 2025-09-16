@@ -3,6 +3,7 @@
 import { useAuth, useUser } from '@clerk/nextjs'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { getUserRole } from '@/lib/auth/user-role'
 

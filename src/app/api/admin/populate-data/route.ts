@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+
 import { populatePlayerData } from '@/scripts/populate-player-data'
 
 export async function POST(request: NextRequest) {

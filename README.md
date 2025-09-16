@@ -87,10 +87,13 @@ npm run dev
 - Historial de equipos
 
 ### API Endpoints
-- `GET /api/jugadores` - Listar jugadores
-- `POST /api/jugadores` - Crear jugador
-- `PUT /api/jugadores/[id]` - Actualizar jugador
-- `DELETE /api/jugadores/[id]` - Eliminar jugador
+- `GET /api/players` - Listar jugadores con filtros y paginación
+- `POST /api/players` - Crear jugador
+- `GET /api/players/[id]` - Obtener jugador específico
+- `PUT /api/players/[id]` - Actualizar jugador
+- `DELETE /api/players/[id]` - Eliminar jugador
+- `GET /api/players/stats` - Estadísticas de jugadores
+- `GET /api/players/filters` - Opciones de filtros disponibles
 
 ## 🔧 Scripts Disponibles
 
