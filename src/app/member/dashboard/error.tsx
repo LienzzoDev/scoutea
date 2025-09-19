@@ -13,7 +13,7 @@ export default function DashboardError({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('Member dashboard error:', error)
+    console.error('Member dashboard error: ', error)
   }, [error])
 
   return (

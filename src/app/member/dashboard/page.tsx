@@ -251,7 +251,7 @@ export default function MemberDashboard() {
                   label="Edad"
                   minValue={activeFilters.min_age}
                   maxValue={activeFilters.max_age}
-                  onRangeChange={(min, max) => {
+                  onRangeChange={(min, max) =>{
                     const newFilters = { ...activeFilters }
                     if (min === undefined) {
                       delete newFilters.min_age
@@ -265,10 +265,7 @@ export default function MemberDashboard() {
                     }
                     applyFilters(newFilters)
                   }}
-                  placeholder="Seleccionar rango de edad..."
-                  step="1"
-                  suffix=" años"
-                />
+                  placeholder="Seleccionar rango de edad..." step="1" suffix=" años" />
               </div>
 
               {/* Rango de Rating */}
@@ -280,7 +277,7 @@ export default function MemberDashboard() {
                   label="Rating"
                   minValue={activeFilters.min_rating}
                   maxValue={activeFilters.max_rating}
-                  onRangeChange={(min, max) => {
+                  onRangeChange={(min, max) =>{
                     const newFilters = { ...activeFilters }
                     if (min === undefined) {
                       delete newFilters.min_rating
@@ -294,9 +291,7 @@ export default function MemberDashboard() {
                     }
                     applyFilters(newFilters)
                   }}
-                  placeholder="Seleccionar rango de rating..."
-                  step="0.1"
-                />
+                  placeholder="Seleccionar rango de rating..." step="0.1" />
               </div>
 
               {/* Rango de Valor de Mercado */}
@@ -308,7 +303,7 @@ export default function MemberDashboard() {
                   label="Valor"
                   minValue={activeFilters.min_value}
                   maxValue={activeFilters.max_value}
-                  onRangeChange={(min, max) => {
+                  onRangeChange={(min, max) =>{
                     const newFilters = { ...activeFilters }
                     if (min === undefined) {
                       delete newFilters.min_value
@@ -322,10 +317,7 @@ export default function MemberDashboard() {
                     }
                     applyFilters(newFilters)
                   }}
-                  placeholder="Seleccionar rango de valor..."
-                  step="0.1"
-                  suffix="M €"
-                />
+                  placeholder="Seleccionar rango de valor..." step="0.1" suffix="M €" />
               </div>
             </div>
           </div>
@@ -335,8 +327,7 @@ export default function MemberDashboard() {
         {loading && (
           <div className="flex flex-col items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8c1a10]"></div>
-            <span className="ml-3 text-[#6d6d6d] mt-2">
-              {searchTerm
+            <span className="ml-3 text-[#6d6d6d] mt-2">{searchTerm
                 ? `Buscando "${searchTerm}"...`
                 : "Cargando jugadores..."}
             </span>
@@ -357,8 +348,7 @@ export default function MemberDashboard() {
           <div className="space-y-4">
             {filteredPlayers.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-[#6d6d6d] text-lg">
-                  {activeTab === "list"
+                <p className="text-[#6d6d6d] text-lg">{activeTab === "list"
                     ? "No tienes jugadores en tu lista"
                     : activeTab === "news"
                     ? "No hay jugadores nuevos en los últimos 7 días"
@@ -366,16 +356,14 @@ export default function MemberDashboard() {
                     ? `No se encontraron jugadores para "${searchTerm}"`
                     : "No se encontraron jugadores"}
                 </p>
-                <p className="text-[#6d6d6d] text-sm mt-2">
-                  {searchTerm
+                <p className="text-[#6d6d6d] text-sm mt-2">{searchTerm
                     ? "Intenta con otros términos de búsqueda"
                     : "No hay jugadores disponibles en este momento"}
                 </p>
                 {searchTerm && (
                   <button
                     onClick={() => handleSearch("")}
-                    className="mt-4 px-4 py-2 bg-[#8c1a10] text-white rounded-lg hover:bg-[#6d1410] transition-colors"
-                  >
+                    className="mt-4 px-4 py-2 bg-[#8c1a10] text-white rounded-lg hover:bg-[#6d1410] transition-colors">
                     Ver todos los jugadores
                   </button>
                 )}

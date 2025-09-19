@@ -198,7 +198,7 @@ export class DatabaseConnectionPool {
 
         this.stats.activeConnections--;
         return result;
-      } catch (error) {
+      } catch (_error) {
         this.stats.activeConnections--;
         lastError = error instanceof Error ? error : new Error('Unknown error');
         
@@ -267,7 +267,7 @@ export class DatabaseConnectionPool {
           timestamp: new Date().toISOString()
         }
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         status: 'unhealthy',
         details: {
@@ -286,7 +286,7 @@ export class DatabaseConnectionPool {
     try {
       await this.prismaClient.$disconnect();
       console.log('Database connection pool shut down gracefully');
-    } catch (error) {
+    } catch (_error) {
       console.error('Error during database shutdown:', error);
     }
   }

@@ -22,7 +22,7 @@ export function useErrorHandling(context?: string) {
     try {
       const result = await fetchWithErrorHandling(url, options, context)
       return result
-    } catch (error) {
+    } catch (_error) {
       if (showToast && error instanceof Object && 'message' in error) {
         showError(error as ClientErrorState)
       }
@@ -32,11 +32,11 @@ export function useErrorHandling(context?: string) {
   
   // Función para manejar errores con toast automático
   const handleErrorWithToast = useCallback((
-    error: unknown,
+    __error: unknown,
     errorContext?: string,
     showToast: boolean = true
   ) => {
-    const clientError = handleError(error, errorContext || context)
+    const _clientError = handleError(error, errorContext || context)
     
     if (showToast) {
       showError(clientError)
@@ -53,7 +53,7 @@ export function useErrorHandling(context?: string) {
   ) => {
     try {
       return await handleAPIResponse(response, errorContext || context)
-    } catch (error) {
+    } catch (_error) {
       if (showToast && error instanceof Object && 'message' in error) {
         showError(error as ClientErrorState)
       }
@@ -116,7 +116,7 @@ export function useCRUDErrorHandling(resourceName: string) {
         successMessage || `${resourceName} creado exitosamente`
       )
       return result
-    } catch (error) {
+    } catch (_error) {
       errorHandling.handleError(error, `create_${resourceName}`)
       throw error
     }
@@ -132,7 +132,7 @@ export function useCRUDErrorHandling(resourceName: string) {
         successMessage || `${resourceName} actualizado exitosamente`
       )
       return result
-    } catch (error) {
+    } catch (_error) {
       errorHandling.handleError(error, `update_${resourceName}`)
       throw error
     }
@@ -148,7 +148,7 @@ export function useCRUDErrorHandling(resourceName: string) {
         successMessage || `${resourceName} eliminado exitosamente`
       )
       return result
-    } catch (error) {
+    } catch (_error) {
       errorHandling.handleError(error, `delete_${resourceName}`)
       throw error
     }
@@ -159,7 +159,7 @@ export function useCRUDErrorHandling(resourceName: string) {
   ) => {
     try {
       return await readFn()
-    } catch (error) {
+    } catch (_error) {
       errorHandling.handleError(error, `read_${resourceName}`)
       throw error
     }
@@ -188,7 +188,7 @@ export function useFormErrorHandling(formName: string) {
         successMessage || 'Formulario enviado exitosamente'
       )
       return result
-    } catch (error) {
+    } catch (_error) {
       errorHandling.handleError(error, `submit_${formName}`)
       throw error
     }
@@ -208,7 +208,7 @@ export function useFormErrorHandling(formName: string) {
       }
       
       return result
-    } catch (error) {
+    } catch (_error) {
       errorHandling.handleError(
         error, 
         fieldName ? `validation_${formName}_${fieldName}` : `validation_${formName}`
@@ -244,7 +244,7 @@ export function useAsyncErrorHandling(operationName: string) {
       }
       
       return result
-    } catch (error) {
+    } catch (_error) {
       if (options?.errorMessage) {
         errorHandling.showError(options.errorMessage)
       } else {

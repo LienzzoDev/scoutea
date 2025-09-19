@@ -13,7 +13,7 @@ import { useTournaments } from "@/hooks/tournament/useTournaments"
 
 export default function NuevoTorneoPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
-  const router = useRouter()
+  const _router = useRouter()
   const { createTorneo, loading } = useTournaments()
 
   const [formData, setFormData] = useState({
@@ -44,7 +44,7 @@ export default function NuevoTorneoPage() {
           const data = await response.json()
           setCompeticiones(data)
         }
-      } catch (error) {
+      } catch (_error) {
         console.error('Error loading competiciones:', error)
       } finally {
         setLoadingCompeticiones(false)
@@ -84,7 +84,7 @@ export default function NuevoTorneoPage() {
       setPdfFile(file)
       setPdfPreview(URL.createObjectURL(file))
       
-    } catch (error) {
+    } catch (_error) {
       const errorMessage = error instanceof Error ? error.message : 'Error al subir el archivo'
       setErrors(prev => ({ ...prev, pdf: errorMessage }))
     } finally {
@@ -194,7 +194,7 @@ export default function NuevoTorneoPage() {
     const success = await createTorneo(torneoData)
     if (success) {
       // Añadir parámetro para forzar recarga en la página principal
-      router.push('/admin/torneos?created=true')
+      _router.push('/admin/torneos?created=true')
     }
   }
 
@@ -207,7 +207,7 @@ export default function NuevoTorneoPage() {
   }
 
   if (!isSignedIn) {
-    router.replace('/login')
+    _router.replace('/login')
     return null
   }
 
@@ -219,9 +219,8 @@ export default function NuevoTorneoPage() {
           <div className="flex items-center mb-4">
             <Button
               variant="ghost"
-              onClick={() => router.back()}
-              className="text-gray-400 hover:text-[#D6DDE6] mr-4"
-            >
+              onClick={() =>_router.back()}
+              className="text-gray-400 hover:text-[#D6DDE6] mr-4">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Volver
             </Button>
@@ -247,10 +246,8 @@ export default function NuevoTorneoPage() {
                 </label>
                 <Input
                   value={formData.nombre}
-                  onChange={(e) => handleInputChange('nombre', e.target.value)}
-                  className="bg-[#1F2937] border-slate-600 text-white"
-                  placeholder="Ej: Copa de Verano 2024"
-                />
+                  onChange={(e) =>handleInputChange('nombre', e.target.value)}
+                  className="bg-[#1F2937] border-slate-600 text-white" placeholder="Ej: Copa de Verano 2024"/>
                 {errors.nombre && <p className="text-red-400 text-sm mt-1">{errors.nombre}</p>}
               </div>
 
@@ -260,10 +257,8 @@ export default function NuevoTorneoPage() {
                 </label>
                 <Textarea
                   value={formData.descripcion}
-                  onChange={(e) => handleInputChange('descripcion', e.target.value)}
-                  className="bg-[#1F2937] border-slate-600 text-white"
-                  placeholder="Describe el torneo, sus objetivos y características especiales..."
-                  rows={3}
+                  onChange={(e) =>handleInputChange('descripcion', e.target.value)}
+                  className="bg-[#1F2937] border-slate-600 text-white" placeholder="Describe el torneo, sus objetivos y características especiales..." rows={3}
                 />
               </div>
 
@@ -274,10 +269,8 @@ export default function NuevoTorneoPage() {
                   </label>
                   <Input
                     value={formData.pais}
-                    onChange={(e) => handleInputChange('pais', e.target.value)}
-                    className="bg-[#1F2937] border-slate-600 text-white"
-                    placeholder="Ej: España"
-                  />
+                    onChange={(e) =>handleInputChange('pais', e.target.value)}
+                    className="bg-[#1F2937] border-slate-600 text-white" placeholder="Ej: España"/>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
@@ -285,10 +278,8 @@ export default function NuevoTorneoPage() {
                   </label>
                   <Input
                     value={formData.ciudad}
-                    onChange={(e) => handleInputChange('ciudad', e.target.value)}
-                    className="bg-[#1F2937] border-slate-600 text-white"
-                    placeholder="Ej: Madrid"
-                  />
+                    onChange={(e) =>handleInputChange('ciudad', e.target.value)}
+                    className="bg-[#1F2937] border-slate-600 text-white" placeholder="Ej: Madrid"/>
                 </div>
               </div>
 
@@ -298,9 +289,8 @@ export default function NuevoTorneoPage() {
                 </label>
                 <select
                   value={formData.id_competition}
-                  onChange={(e) => handleInputChange('id_competition', e.target.value)}
-                  className="w-full p-2 bg-[#1F2937] border border-slate-600 rounded-md text-white"
-                  disabled={loadingCompeticiones}
+                  onChange={(e) =>handleInputChange('id_competition', e.target.value)}
+                  className="w-full p-2 bg-[#1F2937] border border-slate-600 rounded-md text-white" disabled={loadingCompeticiones}
                 >
                   <option value="">Seleccionar competición (opcional)</option>
                   {competiciones.map((comp) => (
@@ -332,9 +322,8 @@ export default function NuevoTorneoPage() {
                   <Input
                     type="datetime-local"
                     value={formData.fecha_inicio}
-                    onChange={(e) => handleInputChange('fecha_inicio', e.target.value)}
-                    className="bg-[#1F2937] border-slate-600 text-white"
-                  />
+                    onChange={(e) =>handleInputChange('fecha_inicio', e.target.value)}
+                    className="bg-[#1F2937] border-slate-600 text-white" />
                   {errors.fecha_inicio && <p className="text-red-400 text-sm mt-1">{errors.fecha_inicio}</p>}
                 </div>
                 <div>
@@ -344,9 +333,8 @@ export default function NuevoTorneoPage() {
                   <Input
                     type="datetime-local"
                     value={formData.fecha_fin}
-                    onChange={(e) => handleInputChange('fecha_fin', e.target.value)}
-                    className="bg-[#1F2937] border-slate-600 text-white"
-                  />
+                    onChange={(e) =>handleInputChange('fecha_fin', e.target.value)}
+                    className="bg-[#1F2937] border-slate-600 text-white" />
                   {errors.fecha_fin && <p className="text-red-400 text-sm mt-1">{errors.fecha_fin}</p>}
                 </div>
               </div>
@@ -453,9 +441,8 @@ export default function NuevoTorneoPage() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(pdfPreview || '#', '_blank')}
-                        className="border-blue-600 text-blue-400 hover:bg-blue-900"
-                      >
+                        onClick={() =>window.open(pdfPreview || '#', '_blank')}
+                        className="border-blue-600 text-blue-400 hover:bg-blue-900">
                         <FileText className="h-3 w-3 mr-1" />
                         Ver PDF
                       </Button>
@@ -489,9 +476,8 @@ export default function NuevoTorneoPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.back()}
-              className="border-slate-600 text-gray-300 hover:bg-slate-700"
-            >
+              onClick={() =>_router.back()}
+              className="border-slate-600 text-gray-300 hover:bg-slate-700">
               <X className="h-4 w-4 mr-2" />
               Cancelar
             </Button>

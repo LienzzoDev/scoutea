@@ -29,7 +29,7 @@ export interface APIErrorResponse {
 // Clase para manejo centralizado de errores en cliente
 export class ClientErrorHandler {
   private static errors: Map<string, ClientErrorState> = new Map()
-  private static listeners: Set<(error: ClientErrorState) => void> = new Set()
+  private static listeners: Set<(_error: ClientErrorState) => void> = new Set()
   
   // Manejar errores de respuestas de API
   static async handleAPIResponse(response: Response, context?: string): Promise<any> {
@@ -41,12 +41,12 @@ export class ClientErrorHandler {
       } catch {
         // Si no se puede parsear JSON, crear error genérico
         errorData = {
-          error: `Error ${response.status}: ${response.statusText}`,
+          _error: `Error ${response.status}: ${response.statusText}`,
           code: this.getErrorCodeFromStatus(response.status)
         }
       }
       
-      const clientError = this.createClientError(
+      const _clientError = this.createClientError(
         errorData.error,
         errorData.code,
         errorData.details,
@@ -65,7 +65,7 @@ export class ClientErrorHandler {
   
   // Manejar errores generales de JavaScript
   static handleError(
-    error: unknown, 
+    __error: unknown, 
     context?: string,
     severity: ClientErrorState['severity'] = 'error'
   ): ClientErrorState {
@@ -77,14 +77,14 @@ export class ClientErrorHandler {
       message = error.message
       code = error.name
       details = { stack: error.stack }
-    } else if (typeof error === 'string') {
+    } else if (typeof _error === 'string') {
       message = error
     } else {
       message = 'Error desconocido'
       details = { originalError: error }
     }
     
-    const clientError = this.createClientError(message, code, details, context, severity)
+    const _clientError = this.createClientError(message, code, details, context, severity)
     
     this.logError(clientError)
     this.notifyListeners(clientError)
@@ -96,7 +96,7 @@ export class ClientErrorHandler {
   private static createClientError(
     message: string,
     code?: string,
-    details?: any,
+    details?: unknown,
     context?: string,
     severity: ClientErrorState['severity'] = 'error'
   ): ClientErrorState {
@@ -140,10 +140,10 @@ export class ClientErrorHandler {
   }
   
   // Logging estructurado para desarrollo
-  private static logError(error: ClientErrorState): void {
+  private static logError(__error: ClientErrorState): void {
     const logData = {
       timestamp: error.timestamp.toISOString(),
-      context: error.context,
+      _context: error.context,
       severity: error.severity,
       message: error.message,
       code: error.code,
@@ -166,7 +166,7 @@ export class ClientErrorHandler {
   }
   
   // Sistema de notificaciones para errores
-  private static notifyListeners(error: ClientErrorState): void {
+  private static notifyListeners(__error: ClientErrorState): void {
     this.listeners.forEach(listener => {
       try {
         listener(error)
@@ -177,18 +177,18 @@ export class ClientErrorHandler {
   }
   
   // Suscribirse a errores
-  static subscribe(listener: (error: ClientErrorState) => void): () => void {
+  static subscribe(listener: (_error: ClientErrorState) => void): () => void {
     this.listeners.add(listener)
     return () => this.listeners.delete(listener)
   }
   
   // Obtener error por contexto
-  static getError(context: string): ClientErrorState | undefined {
+  static getError(__context: string): ClientErrorState | undefined {
     return this.errors.get(context)
   }
   
   // Limpiar error específico
-  static clearError(context: string): void {
+  static clearError(__context: string): void {
     this.errors.delete(context)
   }
   
@@ -226,21 +226,21 @@ export function useErrorHandler() {
   }, [])
   
   const handleError = useCallback((
-    error: unknown, 
+    __error: unknown, 
     context?: string,
     severity: ClientErrorState['severity'] = 'error'
   ) => {
     return ClientErrorHandler.handleError(error, context, severity)
-  }, [])
+  }, [error])
   
   const handleAPIResponse = useCallback(async (response: Response, context?: string) => {
     return ClientErrorHandler.handleAPIResponse(response, context)
   }, [])
   
-  const clearError = useCallback((context: string) => {
+  const _clearError = useCallback((__context: string) => {
     ClientErrorHandler.clearError(context)
     setErrors(prev => prev.filter(error => error.context !== context))
-  }, [])
+  }, [error])
   
   const clearAllErrors = useCallback(() => {
     ClientErrorHandler.clearAllErrors()
@@ -266,7 +266,7 @@ export async function fetchWithErrorHandling(
   try {
     const response = await fetch(url, options)
     return await ClientErrorHandler.handleAPIResponse(response, context)
-  } catch (error) {
+  } catch (_error) {
     if (error instanceof ClientErrorState) {
       throw error
     }
@@ -275,7 +275,7 @@ export async function fetchWithErrorHandling(
 }
 
 // Función para formatear mensajes de error para usuarios
-export function formatErrorMessage(error: ClientErrorState): string {
+export function formatErrorMessage(__error: ClientErrorState): string {
   // Mensajes más amigables para usuarios
   const userFriendlyMessages: Record<string, string> = {
     [ErrorCode.UNAUTHORIZED]: 'Necesitas iniciar sesión para continuar',
@@ -296,7 +296,7 @@ export function formatErrorMessage(error: ClientErrorState): string {
 }
 
 // Función para determinar si un error debe mostrarse al usuario
-export function shouldShowErrorToUser(error: ClientErrorState): boolean {
+export function shouldShowErrorToUser(__error: ClientErrorState): boolean {
   // No mostrar errores de desarrollo o muy técnicos
   const hiddenCodes = [
     ErrorCode.INTERNAL_ERROR,

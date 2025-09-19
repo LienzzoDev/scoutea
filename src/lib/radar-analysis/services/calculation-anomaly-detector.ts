@@ -135,9 +135,9 @@ export class CalculationAnomalyDetector {
    * Detects anomalies in radar calculations for a specific player
    */
   async detectCalculationAnomalies(
-    playerId: string,
-    context: AnalysisContext,
-    period: string = '2023-24'
+    _playerId: string,
+    __context: AnalysisContext,
+    _period: string = '2023-24'
   ): Promise<AnomalyDetectionReport> {
     const startTime = Date.now();
     
@@ -216,7 +216,7 @@ export class CalculationAnomalyDetector {
 
       return result;
 
-    } catch (error) {
+    } catch (_error) {
       const duration = Date.now() - startTime;
       radarAnalysisLogger.logAnalysisError({
         ...context,
@@ -230,9 +230,9 @@ export class CalculationAnomalyDetector {
    * Validates that calculated values are within expected ranges
    */
   private async validateValueRanges(
-    radarData: RadarCategoryData[],
-    player: any,
-    context: AnalysisContext
+    _radarData: RadarCategoryData[],
+    ___player: unknown,
+    __context: AnalysisContext
   ): Promise<RangeValidationReport> {
     const categoryValidations = [];
     const extremeValues = [];
@@ -284,9 +284,9 @@ export class CalculationAnomalyDetector {
    * Analyzes data completeness across categories
    */
   private async analyzeDataCompleteness(
-    radarData: RadarCategoryData[],
-    player: any,
-    context: AnalysisContext
+    _radarData: RadarCategoryData[],
+    ___player: unknown,
+    __context: AnalysisContext
   ): Promise<DataCompletenessReport> {
     const categoryCompleteness = [];
     const criticalMissingData = [];
@@ -303,7 +303,7 @@ export class CalculationAnomalyDetector {
         const expectedAttributes = categoryMappings[categoryKey];
         const availableAttributes = categoryData.sourceAttributes || [];
         const missingAttributes = expectedAttributes
-          .map((attr: any) => attr.attribute)
+          .map((attr: unknown) => attr.attribute)
           .filter((attr: string) => !availableAttributes.includes(attr));
 
         const completeness = categoryData.dataCompleteness || 0;
@@ -345,9 +345,9 @@ export class CalculationAnomalyDetector {
    * Analyzes consistency between source attributes and calculated values
    */
   private async analyzeDataConsistency(
-    radarData: RadarCategoryData[],
-    player: any,
-    context: AnalysisContext
+    _radarData: RadarCategoryData[],
+    ___player: unknown,
+    __context: AnalysisContext
   ): Promise<ConsistencyReport> {
     const inconsistencies = [];
     const crossCategoryConsistencies = [];
@@ -434,8 +434,8 @@ export class CalculationAnomalyDetector {
    * Detects extreme values that might indicate calculation errors
    */
   private async detectExtremeValues(
-    radarData: RadarCategoryData[],
-    context: AnalysisContext
+    _radarData: RadarCategoryData[],
+    __context: AnalysisContext
   ): Promise<CalculationAnomaly[]> {
     const anomalies: CalculationAnomaly[] = [];
 
@@ -499,9 +499,9 @@ export class CalculationAnomalyDetector {
    * Detects calculation errors by comparing expected vs actual results
    */
   private async detectCalculationErrors(
-    radarData: RadarCategoryData[],
-    player: any,
-    context: AnalysisContext
+    _radarData: RadarCategoryData[],
+    ___player: unknown,
+    __context: AnalysisContext
   ): Promise<CalculationAnomaly[]> {
     const anomalies: CalculationAnomaly[] = [];
 
@@ -660,9 +660,9 @@ export class CalculationAnomalyDetector {
   /**
    * Get player data with attributes and statistics
    */
-  private async getPlayerData(playerId: string) {
+  private async getPlayerData(_playerId: string) {
     return await this.prisma.jugador.findUnique({
-      where: { id_player: playerId },
+      where: { id___player: playerId },
       include: {
         atributos: true,
         playerStats3m: true
@@ -673,7 +673,7 @@ export class CalculationAnomalyDetector {
   /**
    * Create an analysis issue from an anomaly
    */
-  private createIssueFromAnomaly(anomaly: CalculationAnomaly, context: AnalysisContext): AnalysisIssue {
+  private createIssueFromAnomaly(anomaly: CalculationAnomaly, __context: AnalysisContext): AnalysisIssue {
     return {
       id: anomaly.id,
       severity: anomaly.severity,

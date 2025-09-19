@@ -67,8 +67,8 @@ export class FilterPerformanceAnalyzer implements IFilterPerformanceAnalyzer {
    * Requirements: 8.2, 8.3, 2.3
    */
   async analyzeFilterPerformance(
-    filters: RadarFilters, 
-    context: AnalysisContext
+    __filters: RadarFilters, 
+    __context: AnalysisContext
   ): Promise<FilterPerformanceResult> {
     radarAnalysisLogger.logAnalysisStart(context);
     
@@ -84,12 +84,12 @@ export class FilterPerformanceAnalyzer implements IFilterPerformanceAnalyzer {
       const layerAnalysis = await this.analyzeLayerUpdateBehavior(filters, context);
       
       // Check cache efficiency
-      const cacheAnalysis = await this.analyzeCacheEfficiency(filters, context);
+      const _cacheAnalysis = await this.analyzeCacheEfficiency(filters, context);
       
       // Validate filter logic
       const logicValidation = await this.validateFilterLogic(filters, context);
 
-      const totalTime = performance.now() - startTime;
+      const _totalTime = performance.now() - startTime;
 
       // Generate issues based on performance thresholds
       if (responseMetrics.filterExecutionTime > this.performanceThresholds.maxFilterResponseTime) {
@@ -143,7 +143,7 @@ export class FilterPerformanceAnalyzer implements IFilterPerformanceAnalyzer {
         issues
       };
 
-    } catch (error) {
+    } catch (_error) {
       const issue = this.createPerformanceIssue(
         'analysis_error',
         'critical',
@@ -170,8 +170,8 @@ export class FilterPerformanceAnalyzer implements IFilterPerformanceAnalyzer {
    * Requirements: 5.1, 5.2, 5.3
    */
   async validateFilterLogic(
-    filters: RadarFilters, 
-    context: AnalysisContext
+    __filters: RadarFilters, 
+    __context: AnalysisContext
   ): Promise<ValidationResult> {
     try {
       const validation = await this.performFilterLogicValidation(filters, context);
@@ -194,7 +194,7 @@ export class FilterPerformanceAnalyzer implements IFilterPerformanceAnalyzer {
       
       return 'pass';
       
-    } catch (error) {
+    } catch (_error) {
       radarAnalysisLogger.logAnalysisError(context, error as Error);
       return 'fail';
     }
@@ -204,8 +204,8 @@ export class FilterPerformanceAnalyzer implements IFilterPerformanceAnalyzer {
    * Optimizes filters for better performance
    */
   async optimizeFilters(
-    filters: RadarFilters, 
-    context: AnalysisContext
+    __filters: RadarFilters, 
+    __context: AnalysisContext
   ): Promise<OptimizedFilters> {
     const optimized = { ...filters };
     const improvements: string[] = [];
@@ -254,18 +254,18 @@ export class FilterPerformanceAnalyzer implements IFilterPerformanceAnalyzer {
    * Measures filter response time and related metrics
    */
   private async measureFilterResponseTime(
-    filters: RadarFilters, 
-    context: AnalysisContext
+    __filters: RadarFilters, 
+    __context: AnalysisContext
   ): Promise<FilterResponseMetrics> {
     const startTime = performance.now();
     
     // Measure cache hit rate
-    const cacheKey = this.generateCacheKey(filters);
+    const _cacheKey = this.generateCacheKey(filters);
     const cacheHit = await radarCacheService.getCachedComparisonGroup(filters);
     const cacheHitRate = cacheHit ? 100 : 0;
     
     // Execute filter query
-    const comparisonGroup = await this.radarService.getComparisonGroup(filters);
+    const _comparisonGroup = await this.radarService.getComparisonGroup(filters);
     const filterExecutionTime = performance.now() - startTime;
     
     // Simulate layer update analysis
@@ -289,8 +289,8 @@ export class FilterPerformanceAnalyzer implements IFilterPerformanceAnalyzer {
    * Analyzes layer update behavior to ensure only comparison layer updates
    */
   private async analyzeLayerUpdateBehavior(
-    filters: RadarFilters, 
-    context: AnalysisContext
+    _filters: RadarFilters, 
+    __context: AnalysisContext
   ): Promise<LayerUpdateAnalysis> {
     // Get baseline radar data (without filters)
     const baselineData = await this.radarService.calculatePlayerRadarWithComparison(
@@ -324,10 +324,10 @@ export class FilterPerformanceAnalyzer implements IFilterPerformanceAnalyzer {
    * Analyzes cache efficiency for filter operations
    */
   private async analyzeCacheEfficiency(
-    filters: RadarFilters, 
-    context: AnalysisContext
+    _filters: RadarFilters, 
+    __context: AnalysisContext
   ): Promise<{ hitRate: number; responseTime: number; consistency: boolean }> {
-    const cacheKey = this.generateCacheKey(filters);
+    const _cacheKey = this.generateCacheKey(filters);
     
     // Test cache hit
     const cacheStartTime = performance.now();
@@ -355,8 +355,8 @@ export class FilterPerformanceAnalyzer implements IFilterPerformanceAnalyzer {
    * Performs detailed filter logic validation
    */
   private async performFilterLogicValidation(
-    filters: RadarFilters, 
-    context: AnalysisContext
+    __filters: RadarFilters, 
+    __context: AnalysisContext
   ): Promise<FilterLogicValidation> {
     // Test position similarity
     const positionSimilarityCorrect = filters.position ? 
@@ -391,7 +391,7 @@ export class FilterPerformanceAnalyzer implements IFilterPerformanceAnalyzer {
   /**
    * Helper methods
    */
-  private generateCacheKey(filters: RadarFilters): string {
+  private generateCacheKey(_filters: RadarFilters): string {
     return `filter_${JSON.stringify(filters)}`;
   }
 
@@ -456,8 +456,8 @@ export class FilterPerformanceAnalyzer implements IFilterPerformanceAnalyzer {
   }
 
   private async simulateLayerUpdate(
-    filters: RadarFilters, 
-    context: AnalysisContext
+    _filters: RadarFilters, 
+    __context: AnalysisContext
   ): Promise<{ playerLayerStability: boolean; comparisonLayerUpdateOnly: boolean; noFullReload: boolean }> {
     // In a real implementation, this would analyze DOM changes
     // For now, we simulate the expected behavior
@@ -468,7 +468,7 @@ export class FilterPerformanceAnalyzer implements IFilterPerformanceAnalyzer {
     };
   }
 
-  private hasPlayerLayerChanged(baseline: any[], filtered: any[]): boolean {
+  private hasPlayerLayerChanged(baseline: unknown[], filtered: unknown[]): boolean {
     // Compare player values (should not change)
     for (let i = 0; i < baseline.length; i++) {
       if (baseline[i].playerValue !== filtered[i].playerValue) {
@@ -478,7 +478,7 @@ export class FilterPerformanceAnalyzer implements IFilterPerformanceAnalyzer {
     return false;
   }
 
-  private hasComparisonLayerChanged(baseline: any[], filtered: any[]): boolean {
+  private hasComparisonLayerChanged(baseline: unknown[], filtered: unknown[]): boolean {
     // Compare comparison values (should change with filters)
     for (let i = 0; i < baseline.length; i++) {
       if (baseline[i].comparisonAverage !== filtered[i].comparisonAverage) {
@@ -493,7 +493,7 @@ export class FilterPerformanceAnalyzer implements IFilterPerformanceAnalyzer {
     return similarPositions.length > 1; // Should include similar positions
   }
 
-  private async validateMultiFilterCombination(filters: RadarFilters): boolean {
+  private async validateMultiFilterCombination(__filters: RadarFilters): boolean {
     // Test that multiple filters are combined with AND logic
     const filterCount = Object.keys(filters).filter(key => 
       filters[key as keyof RadarFilters] !== undefined
@@ -505,14 +505,14 @@ export class FilterPerformanceAnalyzer implements IFilterPerformanceAnalyzer {
     return true; // Assume correct for now
   }
 
-  private async validateAgeRangeApplication(filters: RadarFilters): boolean {
+  private async validateAgeRangeApplication(__filters: RadarFilters): boolean {
     if (!filters.ageMin && !filters.ageMax) return true;
     
     // In real implementation, would verify age range is applied correctly
     return true; // Assume correct for now
   }
 
-  private async validateRatingRangeApplication(filters: RadarFilters): boolean {
+  private async validateRatingRangeApplication(__filters: RadarFilters): boolean {
     if (!filters.ratingMin && !filters.ratingMax) return true;
     
     // In real implementation, would verify rating range is applied correctly
@@ -523,7 +523,7 @@ export class FilterPerformanceAnalyzer implements IFilterPerformanceAnalyzer {
     id: string,
     severity: AnalysisSeverity,
     description: string,
-    context: AnalysisContext
+    __context: AnalysisContext
   ): AnalysisIssue {
     return {
       id: `${context.analysisId}_${id}`,

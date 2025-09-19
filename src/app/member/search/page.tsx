@@ -10,14 +10,14 @@ import PlayerAvatar from "@/components/ui/player-avatar"
 import ScoutAvatar from "@/components/ui/scout-avatar"
 
 export default function SearchPage() {
-  const router = useRouter()
+  const _router = useRouter()
   const searchParams = useSearchParams()
   const initialQuery = searchParams.get('q') || ''
   
   const [searchTerm, setSearchTerm] = useState(initialQuery)
   const [results, setResults] = useState<{
-    players: any[]
-    scouts: any[]
+    players: unknown[]
+    scouts: unknown[]
   }>({ players: [], scouts: [] })
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'all' | 'players' | 'scouts'>('all')
@@ -43,7 +43,7 @@ export default function SearchPage() {
         players: playersData.players || [],
         scouts: scoutsData.scouts || []
       })
-    } catch (error) {
+    } catch (_error) {
       console.error('Error searching:', error)
       setResults({ players: [], scouts: [] })
     } finally {
@@ -100,9 +100,7 @@ export default function SearchPage() {
               {loading ? (
                 <p>Searching for "{searchTerm}"...</p>
               ) : (
-                <p>
-                  Found {totalResults} result{totalResults !== 1 ? 's' : ''} for "{searchTerm}"
-                  {results.players.length > 0 && ` (${results.players.length} player${results.players.length !== 1 ? 's' : ''})`}
+                <p>Found {totalResults} result{totalResults !== 1 ? 's' : ''} for "{searchTerm}"{results.players.length > 0 && ` (${results.players.length} player${results.players.length !== 1 ? 's' : ''})`}
                   {results.players.length > 0 && results.scouts.length > 0 && ', '}
                   {results.scouts.length > 0 && `${results.scouts.length} scout${results.scouts.length !== 1 ? 's' : ''}`}
                 </p>
@@ -165,7 +163,7 @@ export default function SearchPage() {
                     <div
                       key={player.id_player}
                       className="bg-white rounded-lg p-4 border border-[#e7e7e7] cursor-pointer hover:bg-gray-50 transition-colors"
-                      onClick={() => router.push(`/member/player/${player.id_player}`)}
+                      onClick={() => _router.push(`/member/player/${player.id_player}`)}
                     >
                       <div className="flex items-center gap-3 mb-3">
                         <PlayerAvatar player={player} size="md" />
@@ -201,7 +199,7 @@ export default function SearchPage() {
                     <div
                       key={scout.id_scout}
                       className="bg-white rounded-lg p-4 border border-[#e7e7e7] cursor-pointer hover:bg-gray-50 transition-colors"
-                      onClick={() => router.push(`/member/scout/${scout.id_scout}`)}
+                      onClick={() => _router.push(`/member/scout/${scout.id_scout}`)}
                     >
                       <div className="flex items-center gap-3 mb-3">
                         <ScoutAvatar scout={scout} size="md" />

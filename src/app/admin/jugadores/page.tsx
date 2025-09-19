@@ -18,7 +18,7 @@ import type { Player } from "@/types/player"
 
 export default function JugadoresPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
-  const router = useRouter()
+  const _router = useRouter()
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -58,7 +58,7 @@ export default function JugadoresPage() {
     }
 
     const handleError = (event: ErrorEvent) => {
-      console.error('Unhandled error:', event.error)
+      console.error('Unhandled __error: ', event.error)
       event.preventDefault()
     }
 
@@ -79,7 +79,7 @@ export default function JugadoresPage() {
   }, [isSignedIn, searchPlayers])
 
   // Funciones para el modal
-  const openPlayerModal = (player: Player) => {
+  const openPlayerModal = (___player: Player) => {
     setSelectedPlayer(player)
     setIsModalOpen(true)
   }
@@ -90,7 +90,7 @@ export default function JugadoresPage() {
   }
 
   // Función para eliminar jugador
-  const handleDeletePlayer = async (playerId: string) => {
+  const handleDeletePlayer = async (_playerId: string) => {
     try {
       const response = await fetch(`/api/players/${playerId}`, {
         method: 'DELETE'
@@ -103,7 +103,7 @@ export default function JugadoresPage() {
       } else {
         console.error('Error al eliminar jugador')
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Error al eliminar jugador:', error)
     }
   }
@@ -135,7 +135,7 @@ export default function JugadoresPage() {
           <div className="flex items-center space-x-3">
             <Button 
               className="bg-[#FF5733] hover:bg-[#E64A2B] text-white"
-              onClick={() => router.push('/admin/jugadores/nuevo-jugador')}
+              onClick={() => _router.push('/admin/jugadores/nuevo-jugador')}
             >
               <Plus className="h-4 w-4 mr-2" />
               Nuevo Jugador
@@ -167,8 +167,7 @@ export default function JugadoresPage() {
               placeholder="Buscar jugadores..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-[#131921] border-slate-700 text-white placeholder:text-slate-400"
-            />
+              className="pl-10 bg-[#131921] border-slate-700 text-white placeholder:text-slate-400" />
           </div>
           <AdminPlayerFilters
             showFilters={showFilters}
@@ -192,10 +191,8 @@ export default function JugadoresPage() {
           <div className="mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg">
             <p className="text-red-400">Error: {error}</p>
             <Button 
-              onClick={() => searchPlayers()}
-              variant="outline" 
-              className="mt-2 border-red-700 text-red-400 hover:bg-red-900/20"
-            >
+              onClick={() =>searchPlayers()}
+              variant="outline" className="mt-2 border-red-700 text-red-400 hover:bg-red-900/20">
               Reintentar
             </Button>
           </div>
@@ -223,9 +220,8 @@ export default function JugadoresPage() {
                 </div>
                 {!searchTerm && (
                   <Button 
-                    onClick={() => router.push('/admin/jugadores/nuevo-jugador')}
-                    className="bg-[#FF5733] hover:bg-[#E64A2B] text-white"
-                  >
+                    onClick={() =>_router.push('/admin/jugadores/nuevo-jugador')}
+                    className="bg-[#FF5733] hover:bg-[#E64A2B] text-white">
                     <Plus className="h-4 w-4 mr-2" />
                     Crear primer jugador
                   </Button>
@@ -241,8 +237,7 @@ export default function JugadoresPage() {
                     <div className="flex items-center space-x-3">
                       <Avatar className="h-10 w-10">
                         <AvatarImage src="/placeholder.svg" />
-                        <AvatarFallback>
-                          {player.player_name
+                        <AvatarFallback>{player.player_name
                             .split(" ")
                             .map((n) => n[0])
                             .join("")}
@@ -297,7 +292,7 @@ export default function JugadoresPage() {
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8 text-slate-400 hover:text-[#FF5733]"
-                        onClick={() => router.push(`/admin/jugadores/${player.id_player}/editar`)}
+                        onClick={() => _router.push(`/admin/jugadores/${player.id_player}/editar`)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -335,15 +330,13 @@ export default function JugadoresPage() {
             <div className="flex space-x-3">
               <Button 
                 variant="outline" 
-                onClick={() => setShowDeleteConfirm(null)}
-                className="flex-1 border-slate-700 text-slate-300 hover:bg-slate-700"
-              >
+                onClick={() =>setShowDeleteConfirm(null)}
+                className="flex-1 border-slate-700 text-slate-300 hover:bg-slate-700">
                 Cancelar
               </Button>
               <Button 
-                onClick={() => handleDeletePlayer(showDeleteConfirm)}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-              >
+                onClick={() =>handleDeletePlayer(showDeleteConfirm)}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white">
                 Eliminar
               </Button>
             </div>

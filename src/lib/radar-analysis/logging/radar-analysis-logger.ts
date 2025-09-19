@@ -40,7 +40,7 @@ export class RadarAnalysisLogger implements IRadarAnalysisLogger {
   /**
    * Log analysis start event
    */
-  logAnalysisStart(context: AnalysisContext): void {
+  logAnalysisStart(__context: AnalysisContext): void {
     const logEntry: AnalysisLogEntry = {
       timestamp: new Date(),
       level: 'info',
@@ -48,7 +48,7 @@ export class RadarAnalysisLogger implements IRadarAnalysisLogger {
       context,
       metadata: {
         depth: context.depth,
-        filters: context.filters
+        _filters: context.filters
       }
     };
 
@@ -56,16 +56,16 @@ export class RadarAnalysisLogger implements IRadarAnalysisLogger {
 
     logger.info('Radar analysis started', {
       analysisId: context.analysisId,
-      playerId: context.playerId,
+      _playerId: context.playerId,
       depth: context.depth,
-      filters: context.filters
+      __filters: context.filters
     });
   }
 
   /**
    * Log analysis completion
    */
-  logAnalysisComplete(context: AnalysisContext, result: RadarAnalysisResult): void {
+  logAnalysisComplete(__context: AnalysisContext, result: RadarAnalysisResult): void {
     const logEntry: AnalysisLogEntry = {
       timestamp: new Date(),
       level: 'info',
@@ -83,7 +83,7 @@ export class RadarAnalysisLogger implements IRadarAnalysisLogger {
 
     logger.info('Radar analysis completed', {
       analysisId: context.analysisId,
-      playerId: context.playerId,
+      _playerId: context.playerId,
       status: result.overallStatus,
       issueCount: result.issues.length,
       criticalIssues: result.issues.filter(i => i.severity === 'critical').length,
@@ -94,7 +94,7 @@ export class RadarAnalysisLogger implements IRadarAnalysisLogger {
   /**
    * Log analysis error
    */
-  logAnalysisError(context: AnalysisContext, error: Error): void {
+  logAnalysisError(__context: AnalysisContext, __error: Error): void {
     const logEntry: AnalysisLogEntry = {
       timestamp: new Date(),
       level: 'error',
@@ -110,8 +110,8 @@ export class RadarAnalysisLogger implements IRadarAnalysisLogger {
 
     logger.error('Radar analysis failed', {
       analysisId: context.analysisId,
-      playerId: context.playerId,
-      error: error.message,
+      _playerId: context.playerId,
+      __error: error.message,
       stack: error.stack
     });
   }
@@ -119,7 +119,7 @@ export class RadarAnalysisLogger implements IRadarAnalysisLogger {
   /**
    * Log validation result
    */
-  logValidationResult(context: AnalysisContext, result: ValidationResult): void {
+  logValidationResult(__context: AnalysisContext, result: ValidationResult): void {
     const level = result === 'fail' ? 'warn' : 'info';
     const logEntry: AnalysisLogEntry = {
       timestamp: new Date(),
@@ -135,7 +135,7 @@ export class RadarAnalysisLogger implements IRadarAnalysisLogger {
 
     logger[level]('Validation completed', {
       analysisId: context.analysisId,
-      playerId: context.playerId,
+      _playerId: context.playerId,
       result
     });
   }
@@ -143,7 +143,7 @@ export class RadarAnalysisLogger implements IRadarAnalysisLogger {
   /**
    * Log performance metrics
    */
-  logPerformanceMetrics(context: AnalysisContext, metrics: PerformanceMetrics): void {
+  logPerformanceMetrics(__context: AnalysisContext, metrics: PerformanceMetrics): void {
     // Add to metrics buffer for trend analysis
     this.metricsBuffer.push({
       timestamp: new Date(),
@@ -170,7 +170,7 @@ export class RadarAnalysisLogger implements IRadarAnalysisLogger {
 
     logger.info('Performance metrics', {
       analysisId: context.analysisId,
-      playerId: context.playerId,
+      _playerId: context.playerId,
       calculationTime: metrics.calculationTime,
       renderingTime: metrics.renderingTime,
       totalTime: metrics.totalTime,
@@ -182,7 +182,7 @@ export class RadarAnalysisLogger implements IRadarAnalysisLogger {
   /**
    * Log issue detection
    */
-  logIssueDetected(context: AnalysisContext, issue: AnalysisIssue): void {
+  logIssueDetected(__context: AnalysisContext, _issue: AnalysisIssue): void {
     const level = issue.severity === 'critical' ? 'error' : 
                   issue.severity === 'high' ? 'warn' : 'info';
 
@@ -206,7 +206,7 @@ export class RadarAnalysisLogger implements IRadarAnalysisLogger {
 
     logger[level]('Analysis issue detected', {
       analysisId: context.analysisId,
-      playerId: context.playerId,
+      _playerId: context.playerId,
       issueId: issue.id,
       severity: issue.severity,
       category: issue.category,
@@ -336,7 +336,7 @@ export class RadarAnalysisLogger implements IRadarAnalysisLogger {
         csvRows.push(row.join(','));
       }
       
-      return csvRows.join('\n');
+      return csvRows.join('\n');`
     }
   }
 

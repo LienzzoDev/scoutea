@@ -4,8 +4,8 @@ import { useState } from 'react';
 
 interface RadarDebugPanelProps {
   playerId: string;
-  basePlayerData: any[];
-  radarData: any[];
+  basePlayerData: unknown[];
+  radarData: unknown[];
   selectedPosition: string;
 }
 
@@ -21,9 +21,8 @@ export default function RadarDebugPanel({
     return (
       <div className="fixed bottom-4 right-4 z-50">
         <button
-          onClick={() => setIsVisible(true)}
-          className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm shadow-lg hover:bg-blue-700"
-        >
+          onClick={() =>setIsVisible(true)}
+          className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm shadow-lg hover:bg-blue-700">
           🐛 Debug
         </button>
       </div>
@@ -35,9 +34,8 @@ export default function RadarDebugPanel({
       <div className="flex justify-between items-center mb-3">
         <h3 className="font-semibold text-gray-900">🐛 Radar Debug</h3>
         <button
-          onClick={() => setIsVisible(false)}
-          className="text-gray-500 hover:text-gray-700"
-        >
+          onClick={() =>setIsVisible(false)}
+          className="text-gray-500 hover:text-gray-700">
           ✕
         </button>
       </div>

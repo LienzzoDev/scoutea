@@ -1,7 +1,5 @@
 "use client";
 
-import Image from "next/image";
-
 interface EntityData {
   // Player fields
   id_player?: string;
@@ -76,7 +74,7 @@ export default function EntityAvatar({
   className = "",
 }: EntityAvatarProps) {
   // Función para obtener la imagen principal
-  const getEntityImage = () => {
+  const getEntityImage = () =>{
     if (type === "player") {
       return entity.photo_coverage || "/default-avatar.svg";
     } else {
@@ -324,7 +322,7 @@ export default function EntityAvatar({
             ? "64px"
             : "96px"
         }`}
-        onError={(e) => {
+        onError={(e) =>{
           // Fallback para scouts: mostrar iniciales si no hay imagen
           if (type === "scout" && entity.url_profile) {
             const target = e.target as HTMLImageElement;
@@ -368,7 +366,7 @@ export default function EntityAvatar({
                 ? "24px"
                 : "32px"
             }`}
-            onError={(e) => {
+            onError={(e) =>{
               const parent = e.currentTarget.parentElement;
               if (parent) {
                 parent.style.display = "none";
@@ -410,7 +408,7 @@ export default function EntityAvatar({
                 ? "28px"
                 : "40px"
             }`}
-            onError={(e) => {
+            onError={(e) =>{
               const parent = e.currentTarget.parentElement;
               if (parent) {
                 parent.style.display = "none";

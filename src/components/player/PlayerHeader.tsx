@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import type { Player } from "@/types/player";
 
 interface PlayerHeaderProps {
-  player: Player;
+  _player: Player;
   isPlayerInList: boolean;
   isSaving: boolean;
   listLoading: boolean;
@@ -37,15 +37,13 @@ export default function PlayerHeader({
         <span>›</span>
         <span>Players</span>
         <span>›</span>
-        <span className="text-[#2e3138]">
-          {player.player_name || "Player Name"}
+        <span className="text-[#2e3138]">{player.player_name || "Player Name"}
         </span>
       </div>
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-[#2e3138]">
-          {player.player_name || "Player Name"}
+        <h1 className="text-3xl font-bold text-[#2e3138]">{player.player_name || "Player Name"}
         </h1>
         <Button
           onClick={onToggleList}
@@ -58,8 +56,7 @@ export default function PlayerHeader({
         >
           {isSaving ? (
             <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              {isPlayerInList ? "Removing..." : "Adding..."}
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{isPlayerInList ? "Removing...": "Adding..."}
             </>
           ) : (
             <>

@@ -54,7 +54,9 @@ export function usePlayerProfile(playerId: string) {
         "duels",
       ];
       for (const category of categories) {
-        const categoryData = statsV2[category] as any;
+        const categoryData = (statsV2 as Record<string, unknown>)[
+          category
+        ] as Record<string, Record<string, number>>;
         if (categoryData && categoryData[metricName]) {
           const value = categoryData[metricName][field];
           return value
@@ -68,10 +70,11 @@ export function usePlayerProfile(playerId: string) {
 
     // Fallback to old structure
     const stat = player?.playerStats?.find(
-      (s: any) => s.metricName.toLowerCase() === metricName.toLowerCase()
+      (s: any) =>
+        (s.metricName as string).toLowerCase() === metricName.toLowerCase()
     );
     return (
-      stat?.[field]?.toFixed(
+      (stat?.[field] as number)?.toFixed(
         field === "totalValue" || field === "maximumValue" ? 0 : 1
       ) || "-"
     );
@@ -101,12 +104,10 @@ export function usePlayerProfile(playerId: string) {
         });
 
         setPlayer(playerData);
-      } catch (error) {
-        console.error("usePlayerProfile: Error loading player:", error);
+      } catch (err) {
+        console.error("usePlayerProfile: Error loading player:", err);
 
-        setError(
-          error instanceof Error ? error.message : "Unknown error occurred"
-        );
+        setError(err instanceof Error ? err.message : "Unknown error occurred");
         setPlayer(null);
       } finally {
         setLoading(false);
@@ -145,8 +146,8 @@ export function usePlayerProfile(playerId: string) {
       } else {
         await addToList(playerId);
       }
-    } catch (error) {
-      console.error("Error toggling player list:", error);
+    } catch (err) {
+      console.error("Error toggling player list:", err);
     } finally {
       setIsSaving(false);
     }

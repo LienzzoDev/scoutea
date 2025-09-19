@@ -9,11 +9,11 @@ import PlayerAvatar from "@/components/ui/player-avatar";
 import type { Player } from "@/types/player";
 
 interface PlayerCardProps {
-  player: Player;
+  _player: Player;
   variant?: "compact" | "detailed" | "list";
   showActions?: boolean;
-  onPlayerClick?: (player: Player) => void;
-  onBookmarkToggle?: (playerId: string) => Promise<boolean>;
+  onPlayerClick?: (__player: Player) => void;
+  onBookmarkToggle?: (_playerId: string) => Promise<boolean>;
   isBookmarked?: boolean;
 }
 
@@ -36,7 +36,7 @@ const PlayerCard = memo<PlayerCardProps>(function PlayerCard({
     }
   }, [onPlayerClick, player]);
 
-  const handleBookmarkClick = useCallback(async (e: React.MouseEvent) => {
+  const _handleBookmarkClick = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onBookmarkToggle) {
       return await onBookmarkToggle(player.id_player);
@@ -110,8 +110,7 @@ const PlayerCard = memo<PlayerCardProps>(function PlayerCard({
             </div>
           )}
         </div>
-      </div>
-    );
+      </div>);
   }
 
   if (variant === "detailed") {
@@ -189,8 +188,7 @@ const PlayerCard = memo<PlayerCardProps>(function PlayerCard({
             <ArrowRight className="w-5 h-5 text-[#8c1a10]" />
           </div>
         )}
-      </div>
-    );
+      </div>);
   }
 
   if (variant === "list") {

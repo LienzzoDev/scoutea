@@ -19,22 +19,22 @@ import {
  */
 export interface IRadarVisualizationAnalyzer {
   analyzeRadarVisualization(
-    playerId: string, 
+    _playerId: string, 
     filters?: RadarFilters, 
     depth?: AnalysisDepth
   ): Promise<RadarAnalysisResult>;
   
   validateDataCoherence(
-    radarData: RadarCategoryData[], 
-    context: AnalysisContext
+    _radarData: RadarCategoryData[], 
+    __context: AnalysisContext
   ): Promise<ValidationResult>;
   
   analyzePerformance(
-    context: AnalysisContext
+    __context: AnalysisContext
   ): Promise<PerformanceAnalysisResult>;
   
   generateReport(
-    analysisResults: RadarAnalysisResult[]
+    _analysisResults: RadarAnalysisResult[]
   ): Promise<AnalysisReport>;
 }
 
@@ -43,20 +43,20 @@ export interface IRadarVisualizationAnalyzer {
  */
 export interface ILayerValidationService {
   validatePlayerLayer(
-    radarData: RadarCategoryData[], 
-    context: AnalysisContext
+    _radarData: RadarCategoryData[], 
+    __context: AnalysisContext
   ): Promise<LayerValidationResult>;
   
   validateComparisonLayer(
-    radarData: RadarCategoryData[], 
-    filters: RadarFilters, 
-    context: AnalysisContext
+    _radarData: RadarCategoryData[], 
+    __filters: RadarFilters, 
+    __context: AnalysisContext
   ): Promise<LayerValidationResult>;
   
   validateLayerInteraction(
     playerData: RadarCategoryData[], 
     comparisonData: RadarCategoryData[], 
-    context: AnalysisContext
+    __context: AnalysisContext
   ): Promise<LayerValidationResult>;
 }
 
@@ -65,23 +65,23 @@ export interface ILayerValidationService {
  */
 export interface IDataCoherenceValidator {
   validateDataCompleteness(
-    radarData: RadarCategoryData[], 
-    context: AnalysisContext
+    _radarData: RadarCategoryData[], 
+    __context: AnalysisContext
   ): Promise<ValidationResult>;
   
   validateDataConsistency(
-    radarData: RadarCategoryData[], 
-    context: AnalysisContext
+    _radarData: RadarCategoryData[], 
+    __context: AnalysisContext
   ): Promise<ValidationResult>;
   
   validateCalculationAccuracy(
-    radarData: RadarCategoryData[], 
-    context: AnalysisContext
+    _radarData: RadarCategoryData[], 
+    __context: AnalysisContext
   ): Promise<ValidationResult>;
   
   validateSourceData(
-    playerId: string, 
-    context: AnalysisContext
+    _playerId: string, 
+    __context: AnalysisContext
   ): Promise<ValidationResult>;
 }
 
@@ -90,18 +90,18 @@ export interface IDataCoherenceValidator {
  */
 export interface IFilterPerformanceAnalyzer {
   analyzeFilterPerformance(
-    filters: RadarFilters, 
-    context: AnalysisContext
+    __filters: RadarFilters, 
+    __context: AnalysisContext
   ): Promise<FilterPerformanceResult>;
   
   validateFilterLogic(
-    filters: RadarFilters, 
-    context: AnalysisContext
+    __filters: RadarFilters, 
+    __context: AnalysisContext
   ): Promise<ValidationResult>;
   
   optimizeFilters(
-    filters: RadarFilters, 
-    context: AnalysisContext
+    __filters: RadarFilters, 
+    __context: AnalysisContext
   ): Promise<OptimizedFilters>;
 }
 
@@ -109,12 +109,12 @@ export interface IFilterPerformanceAnalyzer {
  * Analysis logger interface
  */
 export interface IRadarAnalysisLogger {
-  logAnalysisStart(context: AnalysisContext): void;
-  logAnalysisComplete(context: AnalysisContext, result: RadarAnalysisResult): void;
-  logAnalysisError(context: AnalysisContext, error: Error): void;
-  logValidationResult(context: AnalysisContext, result: ValidationResult): void;
-  logPerformanceMetrics(context: AnalysisContext, metrics: PerformanceMetrics): void;
-  logIssueDetected(context: AnalysisContext, issue: AnalysisIssue): void;
+  logAnalysisStart(__context: AnalysisContext): void;
+  logAnalysisComplete(__context: AnalysisContext, result: RadarAnalysisResult): void;
+  logAnalysisError(__context: AnalysisContext, __error: Error): void;
+  logValidationResult(__context: AnalysisContext, result: ValidationResult): void;
+  logPerformanceMetrics(__context: AnalysisContext, metrics: PerformanceMetrics): void;
+  logIssueDetected(__context: AnalysisContext, _issue: AnalysisIssue): void;
   getAnalysisLogs(analysisId: string): Promise<AnalysisLogEntry[]>;
 }
 
@@ -220,8 +220,8 @@ export interface AnalysisLogEntry {
  */
 export interface IRadarAnalysisReportGenerator {
   generateConsolidatedReport(
-    analysisResults: RadarAnalysisResult[],
-    context: AnalysisContext
+    _analysisResults: RadarAnalysisResult[],
+    __context: AnalysisContext
   ): Promise<ConsolidatedReport>;
 }
 
@@ -297,12 +297,12 @@ export interface IRadarAlertSystem {
   analyzeAndAlert(report: ConsolidatedReport): Promise<AlertNotification[]>;
   registerNotificationHandler(
     channel: string, 
-    handler: (alert: any) => Promise<void>
+    handler: (alert: unknown) => Promise<void>
   ): void;
-  updateConfig(config: any): void;
-  getConfig(): any;
+  updateConfig(_config: unknown): void;
+  getConfig(): unknown;
   clearHistory(): void;
-  getHistory(): any[];
+  getHistory(): unknown[];
 }
 
 /**

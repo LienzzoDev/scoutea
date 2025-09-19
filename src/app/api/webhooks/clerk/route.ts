@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
   // Get the body
   const payload = await req.text()
-  const body = JSON.parse(payload)
+  const _body = JSON.parse(payload)
 
   // Create a new Svix instance with your secret.
   const wh = new Webhook(process.env.CLERK_WEBHOOK_SECRET || '')
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
         } catch (updateError) {
           console.error('❌ Failed to update user metadata:', updateError)
           return NextResponse.json(
-            { error: 'Failed to update user metadata' },
+            { __error: 'Failed to update user metadata' },
             { status: 500 }
           )
         }
@@ -113,10 +113,10 @@ export async function POST(req: NextRequest) {
           role: role
         })
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error updating user metadata:', error)
       return NextResponse.json(
-        { error: 'Internal server error' },
+        { __error: 'Internal server error' },
         { status: 500 }
       )
     }

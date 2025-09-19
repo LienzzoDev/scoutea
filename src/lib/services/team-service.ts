@@ -57,7 +57,7 @@ export class TeamService {
         }
       })
       return team
-    } catch (error) {
+    } catch (_error) {
       console.error('Error creating team:', error)
       throw error
     }
@@ -72,7 +72,7 @@ export class TeamService {
         where: { id_team: id }
       })
       return team
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting team by ID:', error)
       throw error
     }
@@ -91,7 +91,7 @@ export class TeamService {
         }
       })
       return team
-    } catch (error) {
+    } catch (_error) {
       console.error('Error updating team:', error)
       throw error
     }
@@ -106,7 +106,7 @@ export class TeamService {
         where: { id_team: id }
       })
       return true
-    } catch (error) {
+    } catch (_error) {
       console.error('Error deleting team:', error)
       throw error
     }
@@ -128,7 +128,7 @@ export class TeamService {
       const skip = (page - 1) * limit
 
       // Construir filtros WHERE
-      const where: any = {}
+      const where: unknown = {}
       
       if (filters.team_name) {
         where.team_name = {
@@ -185,14 +185,14 @@ export class TeamService {
 
       return {
         teams,
-        pagination: {
+        _pagination: {
           page,
           limit,
           total,
           pages: Math.ceil(total / limit)
         }
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Error searching teams:', error)
       throw error
     }
@@ -238,7 +238,7 @@ export class TeamService {
         avgRating: avgRating._avg.team_rating,
         avgValue: avgValue._avg.team_trfm_value
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting team stats:', error)
       throw error
     }
@@ -259,7 +259,7 @@ export class TeamService {
         orderBy: { team_name: 'asc' }
       })
       return teams
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting teams by country:', error)
       throw error
     }
@@ -280,7 +280,7 @@ export class TeamService {
         orderBy: { team_name: 'asc' }
       })
       return teams
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting teams by competition:', error)
       throw error
     }

@@ -47,7 +47,7 @@ const SEVERITY_IMPACT = {
 /**
  * Performance thresholds for scoring
  */
-const PERFORMANCE_THRESHOLDS = {
+const _PERFORMANCE_THRESHOLDS = {
   excellent: { calculationTime: 200, renderingTime: 100, cacheHitRate: 90, apiResponseTime: 500 },
   good: { calculationTime: 500, renderingTime: 200, cacheHitRate: 80, apiResponseTime: 1000 },
   fair: { calculationTime: 1000, renderingTime: 500, cacheHitRate: 70, apiResponseTime: 2000 },
@@ -59,8 +59,8 @@ export class RadarAnalysisReportGenerator implements IRadarAnalysisReportGenerat
    * Generate a consolidated report from multiple analysis results
    */
   async generateConsolidatedReport(
-    analysisResults: RadarAnalysisResult[],
-    context: AnalysisContext
+    _analysisResults: RadarAnalysisResult[],
+    __context: AnalysisContext
   ): Promise<ConsolidatedReport> {
     radarAnalysisLogger.logAnalysisStart({
       ...context,
@@ -111,7 +111,7 @@ export class RadarAnalysisReportGenerator implements IRadarAnalysisReportGenerat
 
       radarAnalysisLogger.logAnalysisComplete(context, {
         analysisId: reportId,
-        playerId: context.playerId,
+        _playerId: context.playerId,
         timestamp: new Date(),
         depth: context.depth,
         overallStatus: overallScore >= 80 ? 'pass' : overallScore >= 60 ? 'warning' : 'fail',
@@ -124,7 +124,7 @@ export class RadarAnalysisReportGenerator implements IRadarAnalysisReportGenerat
       });
 
       return report;
-    } catch (error) {
+    } catch (_error) {
       radarAnalysisLogger.logAnalysisError(context, error as Error);
       throw error;
     }
@@ -133,7 +133,7 @@ export class RadarAnalysisReportGenerator implements IRadarAnalysisReportGenerat
   /**
    * Calculate scores for each analysis area
    */
-  private calculateAreaScores(analysisResults: RadarAnalysisResult[]): AreaScore[] {
+  private calculateAreaScores(_analysisResults: RadarAnalysisResult[]): AreaScore[] {
     const areas: AnalysisCategory[] = ['calculation', 'visualization', 'performance', 'data'];
     
     return areas.map(area => {
@@ -197,8 +197,8 @@ export class RadarAnalysisReportGenerator implements IRadarAnalysisReportGenerat
    */
   private calculateScoreBreakdown(
     issues: AnalysisIssue[],
-    analysisResults: RadarAnalysisResult[],
-    area: AnalysisCategory
+    _analysisResults: RadarAnalysisResult[],
+    _area: AnalysisCategory
   ): ScoreBreakdown {
     const totalTests = this.countTestsByArea(analysisResults, area);
     const passedTests = totalTests - issues.length;
@@ -225,14 +225,14 @@ export class RadarAnalysisReportGenerator implements IRadarAnalysisReportGenerat
   /**
    * Consolidate issues from all analysis results
    */
-  private consolidateIssues(analysisResults: RadarAnalysisResult[]): AnalysisIssue[] {
+  private consolidateIssues(_analysisResults: RadarAnalysisResult[]): AnalysisIssue[] {
     const allIssues = analysisResults.flatMap(result => result.issues);
     
     // Group similar issues and deduplicate
     const issueGroups = new Map<string, AnalysisIssue[]>();
     
     allIssues.forEach(issue => {
-      const key = `${issue.category}-${issue.title}`;
+      const _key = `${issue.category}-${issue.title}`;
       if (!issueGroups.has(key)) {
         issueGroups.set(key, []);
       }
@@ -305,7 +305,7 @@ export class RadarAnalysisReportGenerator implements IRadarAnalysisReportGenerat
    * Generate recommendation for a specific issue
    */
   private async generateRecommendationForIssue(
-    issue: AnalysisIssue,
+    _issue: AnalysisIssue,
     priority: RecommendationPriority
   ): Promise<FixRecommendation> {
     return {
@@ -330,7 +330,7 @@ export class RadarAnalysisReportGenerator implements IRadarAnalysisReportGenerat
   /**
    * Generate area improvement recommendation
    */
-  private generateAreaImprovementRecommendation(area: AreaScore): FixRecommendation {
+  private generateAreaImprovementRecommendation(_area: AreaScore): FixRecommendation {
     return {
       issueId: `area-improvement-${area.area}`,
       title: `Improve ${area.area} area (Score: ${area.score}/100)`,
@@ -354,7 +354,7 @@ export class RadarAnalysisReportGenerator implements IRadarAnalysisReportGenerat
    * Create analysis summary
    */
   private createAnalysisSummary(
-    analysisResults: RadarAnalysisResult[],
+    _analysisResults: RadarAnalysisResult[],
     areaScores: AreaScore[]
   ): AnalysisSummary {
     const totalAnalyses = analysisResults.length;
@@ -384,7 +384,7 @@ export class RadarAnalysisReportGenerator implements IRadarAnalysisReportGenerat
   /**
    * Generate trends analysis (placeholder for future implementation)
    */
-  private async generateTrends(analysisResults: RadarAnalysisResult[]): Promise<AnalysisTrend[]> {
+  private async generateTrends(_analysisResults: RadarAnalysisResult[]): Promise<AnalysisTrend[]> {
     // TODO: Implement trends analysis when historical data storage is available
     return [];
   }
@@ -392,7 +392,7 @@ export class RadarAnalysisReportGenerator implements IRadarAnalysisReportGenerat
   // Helper methods
   
   private getIssuesByCategory(
-    analysisResults: RadarAnalysisResult[],
+    _analysisResults: RadarAnalysisResult[],
     category: AnalysisCategory
   ): AnalysisIssue[] {
     return analysisResults
@@ -400,7 +400,7 @@ export class RadarAnalysisReportGenerator implements IRadarAnalysisReportGenerat
       .filter(issue => issue.category === category);
   }
 
-  private countTestsByArea(analysisResults: RadarAnalysisResult[], area: AnalysisCategory): number {
+  private countTestsByArea(_analysisResults: RadarAnalysisResult[], _area: AnalysisCategory): number {
     // This would be based on the actual test counts from each analysis
     // For now, return a reasonable estimate
     return analysisResults.length * 5; // Assume 5 tests per area per analysis
@@ -421,7 +421,7 @@ export class RadarAnalysisReportGenerator implements IRadarAnalysisReportGenerat
     };
   }
 
-  private generateAreaRecommendations(area: AnalysisCategory, issues: AnalysisIssue[]): string[] {
+  private generateAreaRecommendations(_area: AnalysisCategory, issues: AnalysisIssue[]): string[] {
     const recommendations: string[] = [];
     
     switch (area) {
@@ -465,7 +465,7 @@ export class RadarAnalysisReportGenerator implements IRadarAnalysisReportGenerat
     return recommendations;
   }
 
-  private aggregatePerformanceMetrics(analysisResults: RadarAnalysisResult[]): PerformanceMetrics {
+  private aggregatePerformanceMetrics(_analysisResults: RadarAnalysisResult[]): PerformanceMetrics {
     if (analysisResults.length === 0) {
       return {
         calculationTime: 0,
@@ -491,7 +491,7 @@ export class RadarAnalysisReportGenerator implements IRadarAnalysisReportGenerat
     };
   }
 
-  private estimateEffort(issue: AnalysisIssue): string {
+  private estimateEffort(_issue: AnalysisIssue): string {
     switch (issue.severity) {
       case 'critical': return 'high';
       case 'high': return 'medium';
@@ -501,7 +501,7 @@ export class RadarAnalysisReportGenerator implements IRadarAnalysisReportGenerat
     }
   }
 
-  private estimateImpact(issue: AnalysisIssue): string {
+  private estimateImpact(_issue: AnalysisIssue): string {
     switch (issue.severity) {
       case 'critical': return 'high';
       case 'high': return 'high';
@@ -511,18 +511,18 @@ export class RadarAnalysisReportGenerator implements IRadarAnalysisReportGenerat
     }
   }
 
-  private suggestCodeChanges(issue: AnalysisIssue): any[] {
+  private suggestCodeChanges(_issue: AnalysisIssue): unknown[] {
     // This would analyze the issue and suggest specific code changes
     // For now, return empty array - to be implemented based on issue patterns
     return [];
   }
 
-  private suggestConfigChanges(issue: AnalysisIssue): any[] {
+  private suggestConfigChanges(_issue: AnalysisIssue): unknown[] {
     // This would analyze the issue and suggest configuration changes
     return [];
   }
 
-  private suggestDataFixes(issue: AnalysisIssue): any[] {
+  private suggestDataFixes(_issue: AnalysisIssue): unknown[] {
     // This would analyze the issue and suggest data fixes
     return [];
   }
@@ -543,7 +543,7 @@ export class RadarAnalysisReportGenerator implements IRadarAnalysisReportGenerat
     const issueCounts = new Map<string, number>();
     
     issues.forEach(issue => {
-      const key = issue.title;
+      const _key = issue.title;
       issueCounts.set(key, (issueCounts.get(key) || 0) + 1);
     });
     

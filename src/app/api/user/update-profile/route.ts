@@ -3,15 +3,15 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { UserService } from '@/lib/services/user-service'
 
-export async function POST(request: NextRequest) {
+export async function POST(__request: NextRequest) {
   try {
     const { userId } = await auth()
     
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
+    const _body = await request.json()
     const {
       firstName,
       lastName,
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     // Validar datos requeridos
     if (!firstName || !lastName || !nationality || !bio || !experience || !specialization) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { __error: 'Missing required fields' },
         { status: 400 }
       )
     }
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
         languages,
         profileCompleted: true
       })
-    } catch (error) {
+    } catch (_error) {
       // Si el usuario no existe, crearlo
       if (error.code === 'P2025') {
         console.log('🔄 Usuario no encontrado, creándolo...')
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
       })
 
       console.log('✅ Clerk metadata updated successfully for user:', userId)
-    } catch (error) {
+    } catch (_error) {
       console.warn('Warning: Could not update Clerk metadata:', error)
     }
 
@@ -96,10 +96,10 @@ export async function POST(request: NextRequest) {
       success: true,
       user: updatedUser
     })
-  } catch (error) {
+  } catch (_error) {
     console.error('Error updating user profile:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { __error: 'Internal server error' },
       { status: 500 }
     )
   }

@@ -216,8 +216,7 @@ export interface CrearJugadorData {
   atributos?: Array<{                   // Atributos personalizados (opcional)
     nombre: string                      // Nombre del atributo
     valor: string                       // Valor del atributo
-  }>
-}
+  }>}
 
 // 📊 TIPOS PARA ESTADÍSTICAS DE JUGADORES
 

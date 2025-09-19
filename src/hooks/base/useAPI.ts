@@ -13,7 +13,7 @@ export interface UseAPIOptions<T> {
   url: string
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
   body?: any
-  dependencies?: any[]
+  dependencies?: unknown[]
   cacheKey?: string
   cacheTTL?: number
   headers?: Record<string, string>
@@ -32,7 +32,7 @@ export interface UseAPIReturn<T> {
 }
 
 // Cache global simple para todas las instancias de useAPI
-const globalCache = new Map<string, { data: any; timestamp: number; ttl: number }>()
+const globalCache = new Map<string, { data: unknown; timestamp: number; ttl: number }>()
 
 /**
  * 🚀 HOOK BASE PARA LLAMADAS API
@@ -181,14 +181,14 @@ export function useAPI<T = any>(options: UseAPIOptions<T>): UseAPIReturn<T> {
         clearTimeout(timeoutId)
 
         if (!response.ok) {
-          let errorData: any = {}
+          let errorData: unknown = {}
           
           try {
             const text = await response.text()
             if (text) {
               errorData = JSON.parse(text)
             }
-          } catch (parseError) {
+          } catch (_parseError) {
             // Ignorar errores de parsing
           }
 
@@ -268,7 +268,7 @@ export function useAPI<T = any>(options: UseAPIOptions<T>): UseAPIReturn<T> {
     console.error('❌ API Error after all retries:', {
       url,
       method,
-      error: lastError,
+      __error: lastError,
       attempts: retryAttempts + 1,
       timestamp: new Date().toISOString()
     })

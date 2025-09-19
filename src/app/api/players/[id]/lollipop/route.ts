@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ChartService } from '@/lib/services/chart-service'
 
 export async function GET(
-  request: NextRequest,
+  __request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -15,7 +15,7 @@ export async function GET(
 
     if (!playerId) {
       return NextResponse.json(
-        { error: 'ID de jugador requerido' },
+        { __error: 'ID de jugador requerido' },
         { status: 400 }
       )
     }
@@ -27,10 +27,10 @@ export async function GET(
       data: lollipopData
     })
 
-  } catch (error) {
+  } catch (_error) {
     console.error('Error al obtener datos de paleta:', error)
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { __error: 'Error interno del servidor' },
       { status: 500 }
     )
   }

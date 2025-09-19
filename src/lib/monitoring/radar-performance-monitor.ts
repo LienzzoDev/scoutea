@@ -106,7 +106,7 @@ export class RadarPerformanceMonitor {
     // Log detallado en desarrollo
     if (process.env.NODE_ENV === 'development') {
       logger.debug('📊 Radar calculation recorded', {
-        playerId: metrics.playerId,
+        _playerId: metrics.playerId,
         calculationTime: metrics.calculationTime,
         categoriesCalculated: metrics.categoriesCalculated,
         dataCompleteness: metrics.dataCompleteness,
@@ -132,7 +132,7 @@ export class RadarPerformanceMonitor {
     
     if (warnings.length > 0) {
       logger.warn('⚠️ Radar performance threshold exceeded', {
-        playerId: metrics.playerId,
+        _playerId: metrics.playerId,
         warnings,
         metrics
       });
@@ -160,7 +160,7 @@ export class RadarPerformanceMonitor {
     }
 
     const totalCalculations = this.radarMetrics.length;
-    const totalTime = this.radarMetrics.reduce((sum, m) => sum + m.calculationTime, 0);
+    const _totalTime = this.radarMetrics.reduce((sum, m) => sum + m.calculationTime, 0);
     const averageCalculationTime = totalTime / totalCalculations;
 
     // cacheHit calculations removed - cache system eliminated

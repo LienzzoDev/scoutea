@@ -3,14 +3,14 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { createSampleScouts } from '@/scripts/create-sample-scouts'
 
-export async function POST(request: NextRequest) {
+export async function POST(__request: NextRequest) {
   try {
     // Verificar autenticación y permisos de admin
     const { userId, sessionClaims } = await auth()
     
     if (!userId) {
       return NextResponse.json(
-        { error: 'No autorizado' }, 
+        { __error: 'No autorizado' }, 
         { status: 401 }
       )
     }
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const userRole = sessionClaims?.public_metadata?.role
     if (userRole !== 'admin') {
       return NextResponse.json(
-        { error: 'Acceso denegado. Solo administradores.' },
+        { __error: 'Acceso denegado. Solo administradores.' },
         { status: 403 }
       )
     }
@@ -31,10 +31,10 @@ export async function POST(request: NextRequest) {
       message: 'Sample scouts created successfully' 
     })
 
-  } catch (error) {
+  } catch (_error) {
     console.error('Error creating sample scouts:', error)
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { __error: 'Error interno del servidor' },
       { status: 500 }
     )
   }

@@ -14,7 +14,7 @@ import { useTournaments } from '@/hooks/tournament/useTournaments'
 
 export default function EditarTorneoPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
-  const router = useRouter()
+  const _router = useRouter()
   const params = useParams()
   const { updateTorneo, loading } = useTournaments()
 
@@ -63,7 +63,7 @@ export default function EditarTorneoPage() {
         } else {
           console.error('Error loading torneo')
         }
-      } catch (error) {
+      } catch (_error) {
         console.error('Error loading torneo:', error)
       } finally {
         setLoadingTorneo(false)
@@ -84,7 +84,7 @@ export default function EditarTorneoPage() {
           const data = await response.json()
           setCompeticiones(data)
         }
-      } catch (error) {
+      } catch (_error) {
         console.error('Error loading competiciones:', error)
       } finally {
         setLoadingCompeticiones(false)
@@ -138,7 +138,7 @@ export default function EditarTorneoPage() {
           const errorData = await response.json()
           setErrors(prev => ({ ...prev, pdf: errorData.error || 'Error al subir el archivo' }))
         }
-      } catch (error) {
+      } catch (_error) {
         setErrors(prev => ({ ...prev, pdf: 'Error al subir el archivo' }))
       } finally {
         setUploadingPdf(false)
@@ -229,7 +229,7 @@ export default function EditarTorneoPage() {
     console.log('🔍 Debug - Resultado de actualización:', success)
     if (success) {
       // Añadir parámetro para forzar recarga en la página principal
-      router.push('/admin/torneos?updated=true')
+      _router.push('/admin/torneos?updated=true')
     }
   }
 
@@ -238,7 +238,7 @@ export default function EditarTorneoPage() {
   }
 
   if (!isSignedIn) {
-    router.replace('/login')
+    _router.replace('/login')
     return null
   }
 
@@ -248,7 +248,7 @@ export default function EditarTorneoPage() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-[#D6DDE6] mb-4">Torneo no encontrado</h1>
-            <Button onClick={() => router.push('/admin/torneos')}>
+            <Button onClick={() => _router.push('/admin/torneos')}>
               Volver a Torneos
             </Button>
           </div>
@@ -265,10 +265,8 @@ export default function EditarTorneoPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Button
-                onClick={() => router.push('/admin/torneos')}
-                variant="outline"
-                className="border-slate-600 text-gray-300 hover:bg-slate-700"
-              >
+                onClick={() =>_router.push('/admin/torneos')}
+                variant="outline" className="border-slate-600 text-gray-300 hover:bg-slate-700">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Volver
               </Button>
@@ -297,10 +295,8 @@ export default function EditarTorneoPage() {
                 </label>
                 <Input
                   value={formData.nombre}
-                  onChange={(e) => handleInputChange('nombre', e.target.value)}
-                  className="bg-[#1F2937] border-slate-600 text-white"
-                  placeholder="Ej: Copa de Verano 2024"
-                />
+                  onChange={(e) =>handleInputChange('nombre', e.target.value)}
+                  className="bg-[#1F2937] border-slate-600 text-white" placeholder="Ej: Copa de Verano 2024"/>
                 {errors.nombre && <p className="text-red-400 text-sm mt-1">{errors.nombre}</p>}
               </div>
 
@@ -310,10 +306,8 @@ export default function EditarTorneoPage() {
                 </label>
                 <Textarea
                   value={formData.descripcion}
-                  onChange={(e) => handleInputChange('descripcion', e.target.value)}
-                  className="bg-[#1F2937] border-slate-600 text-white"
-                  placeholder="Describe el torneo, sus objetivos y características especiales..."
-                  rows={3}
+                  onChange={(e) =>handleInputChange('descripcion', e.target.value)}
+                  className="bg-[#1F2937] border-slate-600 text-white" placeholder="Describe el torneo, sus objetivos y características especiales..." rows={3}
                 />
               </div>
 
@@ -324,10 +318,8 @@ export default function EditarTorneoPage() {
                   </label>
                   <Input
                     value={formData.pais}
-                    onChange={(e) => handleInputChange('pais', e.target.value)}
-                    className="bg-[#1F2937] border-slate-600 text-white"
-                    placeholder="Ej: España"
-                  />
+                    onChange={(e) =>handleInputChange('pais', e.target.value)}
+                    className="bg-[#1F2937] border-slate-600 text-white" placeholder="Ej: España"/>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
@@ -335,10 +327,8 @@ export default function EditarTorneoPage() {
                   </label>
                   <Input
                     value={formData.ciudad}
-                    onChange={(e) => handleInputChange('ciudad', e.target.value)}
-                    className="bg-[#1F2937] border-slate-600 text-white"
-                    placeholder="Ej: Madrid"
-                  />
+                    onChange={(e) =>handleInputChange('ciudad', e.target.value)}
+                    className="bg-[#1F2937] border-slate-600 text-white" placeholder="Ej: Madrid"/>
                 </div>
               </div>
 
@@ -348,9 +338,8 @@ export default function EditarTorneoPage() {
                 </label>
                 <select
                   value={formData.id_competition}
-                  onChange={(e) => handleInputChange('id_competition', e.target.value)}
-                  className="w-full p-2 bg-[#1F2937] border border-slate-600 rounded-md text-white"
-                  disabled={loadingCompeticiones}
+                  onChange={(e) =>handleInputChange('id_competition', e.target.value)}
+                  className="w-full p-2 bg-[#1F2937] border border-slate-600 rounded-md text-white" disabled={loadingCompeticiones}
                 >
                   <option value="">Seleccionar competición (opcional)</option>
                   {competiciones.map((comp) => (
@@ -382,9 +371,8 @@ export default function EditarTorneoPage() {
                   <Input
                     type="datetime-local"
                     value={formData.fecha_inicio}
-                    onChange={(e) => handleInputChange('fecha_inicio', e.target.value)}
-                    className="bg-[#1F2937] border-slate-600 text-white"
-                  />
+                    onChange={(e) =>handleInputChange('fecha_inicio', e.target.value)}
+                    className="bg-[#1F2937] border-slate-600 text-white" />
                   {errors.fecha_inicio && <p className="text-red-400 text-sm mt-1">{errors.fecha_inicio}</p>}
                 </div>
                 <div>
@@ -394,9 +382,8 @@ export default function EditarTorneoPage() {
                   <Input
                     type="datetime-local"
                     value={formData.fecha_fin}
-                    onChange={(e) => handleInputChange('fecha_fin', e.target.value)}
-                    className="bg-[#1F2937] border-slate-600 text-white"
-                  />
+                    onChange={(e) =>handleInputChange('fecha_fin', e.target.value)}
+                    className="bg-[#1F2937] border-slate-600 text-white" />
                   {errors.fecha_fin && <p className="text-red-400 text-sm mt-1">{errors.fecha_fin}</p>}
                 </div>
               </div>
@@ -505,9 +492,8 @@ export default function EditarTorneoPage() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(pdfPreview || '#', '_blank')}
-                        className="border-blue-600 text-blue-400 hover:bg-blue-900"
-                      >
+                        onClick={() =>window.open(pdfPreview || '#', '_blank')}
+                        className="border-blue-600 text-blue-400 hover:bg-blue-900">
                         <FileText className="h-3 w-3 mr-1" />
                         Ver PDF
                       </Button>
@@ -540,10 +526,8 @@ export default function EditarTorneoPage() {
           <div className="flex justify-end space-x-4">
             <Button
               type="button"
-              onClick={() => router.push('/admin/torneos')}
-              variant="outline"
-              className="border-slate-600 text-gray-300 hover:bg-slate-700"
-            >
+              onClick={() =>_router.push('/admin/torneos')}
+              variant="outline" className="border-slate-600 text-gray-300 hover:bg-slate-700">
               Cancelar
             </Button>
             <Button

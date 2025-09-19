@@ -17,7 +17,7 @@ interface Tournament {
 }
 
 export default function TournamentsPage() {
-  const router = useRouter()
+  const _router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [showFilters, setShowFilters] = useState(true)
 
@@ -112,8 +112,7 @@ export default function TournamentsPage() {
                 placeholder="Search tournaments..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-80 bg-[#ffffff] border-[#e7e7e7]"
-              />
+                className="pl-10 w-80 bg-[#ffffff] border-[#e7e7e7]" />
             </div>
             
             <Button
@@ -182,7 +181,7 @@ export default function TournamentsPage() {
             <div
               key={tournament.id}
               className="bg-white rounded-lg p-6 border border-[#e7e7e7] cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => router.push(`/member/tournament/${tournament.id}`)}
+              onClick={() => _router.push(`/member/tournament/${tournament.id}`)}
             >
               <div className="text-center">
                 {/* Tournament Emblem */}

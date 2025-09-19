@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import type { Player } from "@/types/player";
 
 interface PlayerInfoProps {
-  player: Player;
+  _player: Player;
 }
 
 export default function PlayerInfo({ player }: PlayerInfoProps) {
@@ -15,22 +15,19 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
         <div className="space-y-0">
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">Name:</span>
-            <span className="font-medium text-[#2e3138]">
-              {player.player_name || "N/A"}
+            <span className="font-medium text-[#2e3138]">{player.player_name || "N/A"}
             </span>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">Date of Birth:</span>
-            <span className="font-medium text-[#2e3138]">
-              {player.date_of_birth
+            <span className="font-medium text-[#2e3138]">{player.date_of_birth
                 ? new Date(player.date_of_birth).toLocaleDateString()
                 : "N/A"}
             </span>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">Age:</span>
-            <span className="font-medium text-[#2e3138]">
-              {player.age || "N/A"}
+            <span className="font-medium text-[#2e3138]">{player.age || "N/A"}
             </span>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
@@ -46,8 +43,7 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">Position:</span>
-            <span className="font-medium text-[#2e3138]">
-              {player.position_player || "N/A"}
+            <span className="font-medium text-[#2e3138]">{player.position_player || "N/A"}
             </span>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
@@ -63,20 +59,17 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">Foot:</span>
-            <span className="font-medium text-[#2e3138]">
-              {player.foot || "N/A"}
+            <span className="font-medium text-[#2e3138]">{player.foot || "N/A"}
             </span>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">Height:</span>
-            <span className="font-medium text-[#2e3138]">
-              {player.height ? `${player.height} cm` : "N/A"}
+            <span className="font-medium text-[#2e3138]">{player.height ? `${player.height} cm` : "N/A"}
             </span>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">Nationality:</span>
-            <span className="font-medium text-[#2e3138]">
-              {player.nationality_1 || "N/A"}
+            <span className="font-medium text-[#2e3138]">{player.nationality_1 || "N/A"}
             </span>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
@@ -92,8 +85,7 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">Nationality 2:</span>
-            <span className="font-medium text-[#2e3138]">
-              {player.nationality_2 || "N/A"}
+            <span className="font-medium text-[#2e3138]">{player.nationality_2 || "N/A"}
             </span>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
@@ -104,8 +96,7 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
           </div>
           <div className="flex justify-between items-center py-3">
             <span className="text-[#6d6d6d] text-sm">Agent:</span>
-            <span className="font-medium text-[#2e3138]">
-              {player.agency || "N/A"}
+            <span className="font-medium text-[#2e3138]">{player.agency || "N/A"}
             </span>
           </div>
         </div>
@@ -114,14 +105,12 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
         <div className="space-y-0">
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">Team:</span>
-            <span className="font-medium text-[#2e3138]">
-              {player.team_name || "N/A"}
+            <span className="font-medium text-[#2e3138]">{player.team_name || "N/A"}
             </span>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">Country:</span>
-            <span className="font-medium text-[#2e3138]">
-              {player.team_country || "N/A"}
+            <span className="font-medium text-[#2e3138]">{player.team_country || "N/A"}
             </span>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
@@ -141,8 +130,7 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">On Loan:</span>
-            <span className="font-medium text-[#2e3138]">
-              {player.on_loan ? "Yes" : "No"}
+            <span className="font-medium text-[#2e3138]">{player.on_loan ? "Yes": "No"}
             </span>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
@@ -166,16 +154,14 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">Contract End:</span>
-            <span className="font-medium text-[#2e3138]">
-              {player.contract_end
+            <span className="font-medium text-[#2e3138]">{player.contract_end
                 ? new Date(player.contract_end).toLocaleDateString()
                 : "N/A"}
             </span>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">Competition:</span>
-            <span className="font-medium text-[#2e3138]">
-              {player.team_competition || "N/A"}
+            <span className="font-medium text-[#2e3138]">{player.team_competition || "N/A"}
             </span>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
@@ -191,8 +177,7 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">Country:</span>
-            <span className="font-medium text-[#2e3138]">
-              {player.competition_country || "N/A"}
+            <span className="font-medium text-[#2e3138]">{player.competition_country || "N/A"}
             </span>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">

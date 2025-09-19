@@ -95,8 +95,8 @@ export interface PerformanceThresholds {
 export interface CalculationStep {
   step: number;
   operation: string;
-  input: any;
-  output: any;
+  input: unknown;
+  output: unknown;
   formula?: string;
   notes?: string;
 }
@@ -131,7 +131,7 @@ export interface ExpectedBehavior {
  */
 export interface ValidationCriteria {
   criterion: string;
-  validator: (result: any) => boolean;
+  validator: (result: unknown) => boolean;
   errorMessage: string;
 }
 
@@ -169,8 +169,8 @@ export interface CodeChange {
 export interface ConfigChange {
   file: string;
   setting: string;
-  currentValue: any;
-  recommendedValue: any;
+  currentValue: unknown;
+  recommendedValue: unknown;
   reason: string;
 }
 

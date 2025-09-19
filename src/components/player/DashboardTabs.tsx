@@ -25,7 +25,7 @@ export default function DashboardTabs({
             ? "text-[#000000] font-medium border-b-2 border-[#000000]"
             : "text-[#6d6d6d]"
         }`}
-        onClick={() => onTabChange("all")}
+        onClick={() =>onTabChange("all")}
       >
         All
         <span
@@ -44,7 +44,7 @@ export default function DashboardTabs({
             ? "text-[#000000] font-medium border-b-2 border-[#000000]"
             : "text-[#6d6d6d]"
         }`}
-        onClick={() => onTabChange("news")}
+        onClick={() =>onTabChange("news")}
       >
         New players
         <span
@@ -63,7 +63,7 @@ export default function DashboardTabs({
             ? "text-[#000000] font-medium border-b-2 border-[#000000]"
             : "text-[#6d6d6d]"
         }`}
-        onClick={() => onTabChange("list")}
+        onClick={() =>onTabChange("list")}
       >
         Your list
         <span

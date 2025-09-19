@@ -13,7 +13,7 @@ import { getUserRole } from '@/lib/auth/user-role'
 
 
 export default function MemberNavbar() {
-  const router = useRouter()
+  const _router = useRouter()
   const pathname = usePathname()
   const { user } = useUser()
   const [showWonderkidsDropdown, setShowWonderkidsDropdown] = useState(false)
@@ -24,8 +24,8 @@ export default function MemberNavbar() {
   // 🔍 ESTADO PARA BÚSQUEDA GLOBAL
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<{
-    players: any[]
-    scouts: any[]
+    players: unknown[]
+    scouts: unknown[]
   }>({ players: [], scouts: [] })
   const [showSearchResults, setShowSearchResults] = useState(false)
   const [searchLoading, setSearchLoading] = useState(false)
@@ -59,7 +59,7 @@ export default function MemberNavbar() {
         scouts: scoutsData.scouts || []
       })
       setShowSearchResults(true)
-    } catch (error) {
+    } catch (_error) {
       console.error('Error searching:', error)
       setSearchResults({ players: [], scouts: [] })
     } finally {
@@ -120,11 +120,7 @@ export default function MemberNavbar() {
         {/* Logo and Search */}
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
-            <img
-              src="/logo-member.svg"
-              alt="Scouted Logo"
-              className="h-10 w-auto"
-            />
+            <img src="/logo-member.svg" alt="Scouted Logo" className="h-10 w-auto" />
           </div>
 
           <div className="relative" ref={searchRef}>
@@ -142,13 +138,11 @@ export default function MemberNavbar() {
             />
             {searchTerm && (
               <button
-                onClick={() => {
+                onClick={() =>{
                   setSearchTerm('')
                   setShowSearchResults(false)
                 }}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6d6d6d] hover:text-[#000000]"
-              >
-                <X className="w-4 h-4" />
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6d6d6d] hover:text-[#000000]">                <X className="w-4 h-4" />
               </button>
             )}
 
@@ -173,7 +167,7 @@ export default function MemberNavbar() {
                             key={player.id_player}
                             className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-b-0"
                             onClick={() => {
-                              router.push(`/member/player/${player.id_player}`)
+                              _router.push(`/member/player/${player.id_player}`)
                               setShowSearchResults(false)
                               setSearchTerm('')
                             }}
@@ -209,7 +203,7 @@ export default function MemberNavbar() {
                             key={scout.id_scout}
                             className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-b-0"
                             onClick={() => {
-                              router.push(`/member/scout/${scout.id_scout}`)
+                              _router.push(`/member/scout/${scout.id_scout}`)
                               setShowSearchResults(false)
                               setSearchTerm('')
                             }}
@@ -247,14 +241,13 @@ export default function MemberNavbar() {
                       <div className="border-t border-gray-100 p-2">
                         <button
                           className="w-full text-center py-2 text-sm text-[#8c1a10] hover:bg-gray-50 rounded"
-                          onClick={() => {
+                          onClick={() =>{
                             // Navegar a una página de resultados completos
-                            router.push(`/member/search?q=${encodeURIComponent(searchTerm)}`)
+                            _router.push(`/member/search?q=${encodeURIComponent(searchTerm)}`)
                             setShowSearchResults(false)
                           }}
                         >
-                          Ver todos los resultados para "{searchTerm}"
-                        </button>
+                          Ver todos los resultados para "{searchTerm}"</button>
                       </div>
                     )}
                   </div>
@@ -289,7 +282,7 @@ export default function MemberNavbar() {
                     }`}
                     onClick={() => {
                       setShowWonderkidsDropdown(false)
-                      router.push('/member/dashboard')
+                      _router.push('/member/dashboard')
                     }}
                   >
                     Players
@@ -302,7 +295,7 @@ export default function MemberNavbar() {
                     }`}
                     onClick={() => {
                       setShowWonderkidsDropdown(false)
-                      router.push('/member/comparison')
+                      _router.push('/member/comparison')
                     }}
                   >
                     Comparison
@@ -334,7 +327,7 @@ export default function MemberNavbar() {
                     }`}
                     onClick={() => {
                       setShowWonderscoutsDropdown(false)
-                      router.push('/member/scouts')
+                      _router.push('/member/scouts')
                     }}
                   >
                     Scouts
@@ -347,7 +340,7 @@ export default function MemberNavbar() {
                     }`}
                     onClick={() => {
                       setShowWonderscoutsDropdown(false)
-                      router.push('/member/scout-comparison')
+                      _router.push('/member/scout-comparison')
                     }}
                   >
                     Comparison
@@ -359,13 +352,13 @@ export default function MemberNavbar() {
 
           <span 
             className={`cursor-pointer ${isTournamentsPage ? 'text-[#000000] font-medium' : 'text-[#6d6d6d]'}`}
-            onClick={() => router.push('/member/torneos')}
+            onClick={() => _router.push('/member/torneos')}
           >
             Torneos
           </span>
           <span 
             className={`cursor-pointer ${isOnDemandPage ? 'text-[#000000] font-medium' : 'text-[#6d6d6d]'}`}
-            onClick={() => router.push('/member/on-demand')}
+            onClick={() => _router.push('/member/on-demand')}
           >
             On Demand
           </span>
@@ -377,10 +370,8 @@ export default function MemberNavbar() {
           {/* Botón de Admin - Solo visible para usuarios admin */}
           {isAdmin && (
             <Button
-              onClick={() => router.push('/admin/dashboard')}
-              className="bg-[#8c1a10] hover:bg-[#6d1410] text-white text-sm px-3 py-1.5 flex items-center gap-2"
-              size="sm"
-            >
+              onClick={() =>_router.push('/admin/dashboard')}
+              className="bg-[#8c1a10] hover:bg-[#6d1410] text-white text-sm px-3 py-1.5 flex items-center gap-2" size="sm">
               <Shield className="w-4 h-4" />
               Admin
             </Button>

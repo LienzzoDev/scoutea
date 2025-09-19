@@ -13,7 +13,7 @@ import { useTournaments, TorneoFilters } from "@/hooks/tournament/useTournaments
 
 export default function TorneosPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
-  const router = useRouter()
+  const _router = useRouter()
   const searchParams = useSearchParams()
   const [selectedTorneo, setSelectedTorneo] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -52,9 +52,9 @@ export default function TorneosPage() {
       console.log(`🔄 Recargando torneos después de ${updated ? 'actualización' : 'creación'}`)
       searchTorneos(filters, currentPage, 10)
       // Limpiar el parámetro de la URL
-      router.replace('/admin/torneos', { scroll: false })
+      _router.replace('/admin/torneos', { scroll: false })
     }
-  }, [searchParams, isSignedIn, filters, currentPage, searchTorneos, router])
+  }, [searchParams, isSignedIn, filters, currentPage, searchTorneos, _router])
 
   // Recargar datos cuando se regresa de una edición (fallback)
   useEffect(() => {
@@ -79,7 +79,7 @@ export default function TorneosPage() {
           const options = await response.json()
           setFilterOptions(options)
         }
-      } catch (error) {
+      } catch (_error) {
         console.error('Error loading filter options:', error)
       }
     }
@@ -91,7 +91,7 @@ export default function TorneosPage() {
     setCurrentPage(1)
   }
 
-  const handleFilterChange = (key: string, value: string) => {
+  const handleFilterChange = (___key: string, value: string) => {
     setFilters(prev => ({
       ...prev,
       [key]: value === '' ? undefined : value
@@ -114,7 +114,7 @@ export default function TorneosPage() {
     }
   }
 
-  const formatDate = (date: Date | string) => {
+  const _formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString('es-ES', {
       year: 'numeric',
       month: 'short',
@@ -128,7 +128,7 @@ export default function TorneosPage() {
   }
 
   if (!isSignedIn) {
-    router.replace('/login')
+    _router.replace('/login')
     return null
   }
 
@@ -148,9 +148,8 @@ export default function TorneosPage() {
             </div>
             <div className="flex space-x-3">
               <Button
-                onClick={() => router.push('/admin/torneos/nuevo-torneo')}
-                className="bg-[#8C1A10] hover:bg-[#7A1610] text-white"
-              >
+                onClick={() =>_router.push('/admin/torneos/nuevo-torneo')}
+                className="bg-[#8C1A10] hover:bg-[#7A1610] text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 Nuevo Torneo
               </Button>
@@ -170,8 +169,7 @@ export default function TorneosPage() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                    className="pl-10 bg-[#1F2937] border-slate-600 text-white"
-                  />
+                    className="pl-10 bg-[#1F2937] border-slate-600 text-white" />
                 </div>
               </div>
               <div className="flex gap-2">
@@ -183,10 +181,8 @@ export default function TorneosPage() {
                   Buscar
                 </Button>
                 <Button
-                  onClick={() => setShowFilters(!showFilters)}
-                  variant="outline"
-                  className="border-slate-600 text-gray-300 hover:bg-slate-700"
-                >
+                  onClick={() =>setShowFilters(!showFilters)}
+                  variant="outline" className="border-slate-600 text-gray-300 hover:bg-slate-700">
                   <Filter className="h-4 w-4 mr-2" />
                   Filtros
                 </Button>
@@ -209,9 +205,8 @@ export default function TorneosPage() {
                   </label>
                   <select
                     value={filters.tipo_torneo || ''}
-                    onChange={(e) => handleFilterChange('tipo_torneo', e.target.value)}
-                    className="w-full p-2 bg-[#1F2937] border border-slate-600 rounded-md text-white"
-                  >
+                    onChange={(e) =>handleFilterChange('tipo_torneo', e.target.value)}
+                    className="w-full p-2 bg-[#1F2937] border border-slate-600 rounded-md text-white">
                     <option value="">Todos</option>
                     {filterOptions.tiposTorneo.map((tipo: string) => (
                       <option key={tipo} value={tipo}>
@@ -226,9 +221,8 @@ export default function TorneosPage() {
                   </label>
                   <select
                     value={filters.categoria || ''}
-                    onChange={(e) => handleFilterChange('categoria', e.target.value)}
-                    className="w-full p-2 bg-[#1F2937] border border-slate-600 rounded-md text-white"
-                  >
+                    onChange={(e) =>handleFilterChange('categoria', e.target.value)}
+                    className="w-full p-2 bg-[#1F2937] border border-slate-600 rounded-md text-white">
                     <option value="">Todas</option>
                     {filterOptions.categorias.map((categoria: string) => (
                       <option key={categoria} value={categoria}>
@@ -243,9 +237,8 @@ export default function TorneosPage() {
                   </label>
                   <select
                     value={filters.genero || ''}
-                    onChange={(e) => handleFilterChange('genero', e.target.value)}
-                    className="w-full p-2 bg-[#1F2937] border border-slate-600 rounded-md text-white"
-                  >
+                    onChange={(e) =>handleFilterChange('genero', e.target.value)}
+                    className="w-full p-2 bg-[#1F2937] border border-slate-600 rounded-md text-white">
                     <option value="">Todos</option>
                     {filterOptions.generos.map((genero: string) => (
                       <option key={genero} value={genero}>
@@ -260,9 +253,8 @@ export default function TorneosPage() {
                   </label>
                   <select
                     value={filters.estado || ''}
-                    onChange={(e) => handleFilterChange('estado', e.target.value)}
-                    className="w-full p-2 bg-[#1F2937] border border-slate-600 rounded-md text-white"
-                  >
+                    onChange={(e) =>handleFilterChange('estado', e.target.value)}
+                    className="w-full p-2 bg-[#1F2937] border border-slate-600 rounded-md text-white">
                     <option value="">Todos</option>
                     {filterOptions.estados.map((estado: string) => (
                       <option key={estado} value={estado}>
@@ -323,9 +315,8 @@ export default function TorneosPage() {
                 <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-400 mb-4">No se encontraron torneos</p>
                 <Button
-                  onClick={() => router.push('/admin/torneos/nuevo-torneo')}
-                  className="bg-[#8C1A10] hover:bg-[#7A1610] text-white"
-                >
+                  onClick={() =>_router.push('/admin/torneos/nuevo-torneo')}
+                  className="bg-[#8C1A10] hover:bg-[#7A1610] text-white">
                   Crear Primer Torneo
                 </Button>
               </div>
@@ -423,17 +414,15 @@ export default function TorneosPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => router.push(`/admin/torneos/${torneo.id_torneo}/editar`)}
-                              className="border-slate-600 text-gray-300 hover:bg-slate-700"
-                            >
+                              onClick={() =>_router.push(`/admin/torneos/${torneo.id_torneo}/editar`)}
+                              className="border-slate-600 text-gray-300 hover:bg-slate-700">
                               <Edit className="h-3 w-3" />
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => setShowDeleteConfirm(torneo.id_torneo)}
-                              className="border-red-600 text-red-400 hover:bg-red-900"
-                            >
+                              onClick={() =>setShowDeleteConfirm(torneo.id_torneo)}
+                              className="border-red-600 text-red-400 hover:bg-red-900">
                               <Trash2 className="h-3 w-3" />
                             </Button>
                           </div>
@@ -452,22 +441,18 @@ export default function TorneosPage() {
           <div className="mt-6 flex justify-center">
             <div className="flex space-x-2">
               <Button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                onClick={() =>setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                variant="outline"
-                className="border-slate-600 text-gray-300 hover:bg-slate-700"
-              >
+                variant="outline" className="border-slate-600 text-gray-300 hover:bg-slate-700">
                 Anterior
               </Button>
               <span className="flex items-center px-4 py-2 text-sm text-gray-400">
                 Página {currentPage} de {totalPages}
               </span>
               <Button
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                onClick={() =>setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                variant="outline"
-                className="border-slate-600 text-gray-300 hover:bg-slate-700"
-              >
+                variant="outline" className="border-slate-600 text-gray-300 hover:bg-slate-700">
                 Siguiente
               </Button>
             </div>
@@ -487,16 +472,13 @@ export default function TorneosPage() {
                 </p>
                 <div className="flex space-x-3">
                   <Button
-                    onClick={() => setShowDeleteConfirm(null)}
-                    variant="outline"
-                    className="flex-1 border-slate-600 text-gray-300 hover:bg-slate-700"
-                  >
+                    onClick={() =>setShowDeleteConfirm(null)}
+                    variant="outline" className="flex-1 border-slate-600 text-gray-300 hover:bg-slate-700">
                     Cancelar
                   </Button>
                   <Button
-                    onClick={() => handleDelete(showDeleteConfirm)}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-                  >
+                    onClick={() =>handleDelete(showDeleteConfirm)}
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white">
                     Eliminar
                   </Button>
                 </div>

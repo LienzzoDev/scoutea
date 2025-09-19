@@ -35,8 +35,8 @@ export interface ViewInconsistency {
   sourceView: string;
   targetView: string;
   field: string;
-  sourceValue: any;
-  targetValue: any;
+  sourceValue: unknown;
+  targetValue: unknown;
   discrepancy: number;
   tolerance: number;
   description: string;
@@ -68,7 +68,7 @@ export interface ViewComparisonConfig {
 export interface FieldMapping {
   sourceField: string;
   targetField: string;
-  transformFunction?: (value: any) => any;
+  transformFunction?: (value: unknown) => any;
   comparisonType: 'exact' | 'numeric' | 'percentage' | 'categorical';
   tolerance?: number;
 }
@@ -152,8 +152,8 @@ export class ViewInconsistencyDetector {
    * Detect inconsistencies between radar and other player views
    */
   async detectViewInconsistencies(
-    playerId: string,
-    context: AnalysisContext
+    _playerId: string,
+    __context: AnalysisContext
   ): Promise<ViewInconsistencyResult> {
     const startTime = Date.now();
     
@@ -246,7 +246,7 @@ export class ViewInconsistencyDetector {
 
       return result;
 
-    } catch (error) {
+    } catch (_error) {
       const duration = Date.now() - startTime;
       radarAnalysisLogger.logAnalysisError({
         ...context,
@@ -260,9 +260,9 @@ export class ViewInconsistencyDetector {
    * Compare radar data with player profile
    */
   private async compareRadarWithProfile(
-    radarData: RadarCategoryData[],
-    playerProfile: any,
-    context: AnalysisContext
+    _radarData: RadarCategoryData[],
+    playerProfile: unknown,
+    __context: AnalysisContext
   ): Promise<ViewInconsistency[]> {
     const inconsistencies: ViewInconsistency[] = [];
 
@@ -301,7 +301,7 @@ export class ViewInconsistencyDetector {
     if (playerProfile.age) {
       // Check if radar calculations are using the correct age for age-based comparisons
       // This is more of a data integrity check
-      const expectedAgeRange = { min: playerProfile.age - 1, max: playerProfile.age + 1 };
+      const _expectedAgeRange = { min: playerProfile.age - 1, max: playerProfile.age + 1 };
       
       // In a real implementation, you would check if the radar calculations
       // are using the correct age for percentile calculations
@@ -315,9 +315,9 @@ export class ViewInconsistencyDetector {
    * Compare radar data with player statistics
    */
   private async compareRadarWithStats(
-    radarData: RadarCategoryData[],
-    playerStats: any,
-    context: AnalysisContext
+    _radarData: RadarCategoryData[],
+    playerStats: unknown,
+    __context: AnalysisContext
   ): Promise<ViewInconsistency[]> {
     const inconsistencies: ViewInconsistency[] = [];
 
@@ -421,16 +421,16 @@ export class ViewInconsistencyDetector {
   /**
    * Get player statistics data
    */
-  private async getPlayerStats(playerId: string) {
+  private async getPlayerStats(_playerId: string) {
     return await this.prisma.playerStats3m.findUnique({
-      where: { id_player: playerId }
+      where: { id___player: playerId }
     });
   }
 
   /**
    * Calculate total number of comparisons made
    */
-  private calculateTotalComparisons(radarData: RadarCategoryData[]): number {
+  private calculateTotalComparisons(_radarData: RadarCategoryData[]): number {
     // Base comparisons: overall rating + category-specific comparisons
     let totalComparisons = 1; // Overall rating comparison
 
@@ -445,7 +445,7 @@ export class ViewInconsistencyDetector {
    * Create inconsistency alert
    */
   private createInconsistencyAlert(
-    playerId: string,
+    _playerId: string,
     inconsistency: ViewInconsistency
   ): InconsistencyAlert {
     return {

@@ -4,24 +4,24 @@ import { NextRequest, NextResponse } from 'next/server'
 import { PlayerService } from '@/lib/services/player-service'
 
 export async function GET(
-  request: NextRequest,
+  __request: NextRequest,
   { params }: { params: Promise<{ teamName: string }> }
 ) {
   try {
     const { userId } = await auth()
     
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
     }
 
     const { teamName } = await params
     const players = await PlayerService.getPlayersByTeam(teamName)
     
     return NextResponse.json(players)
-  } catch (error) {
+  } catch (_error) {
     console.error('Error getting players by team:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { __error: 'Internal server error' },
       { status: 500 }
     )
   }

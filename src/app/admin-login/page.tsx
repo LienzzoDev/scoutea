@@ -8,11 +8,7 @@ export default function AdminLoginPage() {
         {/* Logo */}
         <div className="flex items-center justify-center">
           <div className="flex items-center p-6">
-            <img 
-              src="/logo.png" 
-              alt="Scoutea" 
-              className="h-16 w-auto object-contain"
-            />
+            <img src="/logo.png" alt="Scoutea" className="h-16 w-auto object-contain" />
           </div>
         </div>
 

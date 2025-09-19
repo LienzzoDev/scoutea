@@ -133,7 +133,7 @@ export class ScoutService {
         }
       })
       return scout
-    } catch (error) {
+    } catch (_error) {
       console.error('Error creating scout:', error)
       throw error
     }
@@ -148,7 +148,7 @@ export class ScoutService {
         where: { id_scout: id }
       })
       return scout
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting scout by ID:', error)
       throw error
     }
@@ -167,7 +167,7 @@ export class ScoutService {
         }
       })
       return scout
-    } catch (error) {
+    } catch (_error) {
       console.error('Error updating scout:', error)
       throw error
     }
@@ -182,7 +182,7 @@ export class ScoutService {
         where: { id_scout: id }
       })
       return true
-    } catch (error) {
+    } catch (_error) {
       console.error('Error deleting scout:', error)
       throw error
     }
@@ -204,7 +204,7 @@ export class ScoutService {
       const skip = (page - 1) * limit
 
       // Construir filtros WHERE
-      const where: any = {}
+      const where: unknown = {}
       
       // Búsqueda general (para navbar)
       if (filters.search) {
@@ -380,14 +380,14 @@ export class ScoutService {
 
       return {
         scouts,
-        pagination: {
+        _pagination: {
           page,
           limit,
           total,
           pages: Math.ceil(total / limit)
         }
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Error searching scouts:', error)
       throw error
     }
@@ -446,7 +446,7 @@ export class ScoutService {
           _avg: { original_reports: true }
         }),
         prisma.scout.aggregate({
-          _avg: { roi: true }
+          _avg: { ro_i: true }
         }),
         prisma.scout.aggregate({
           _avg: { net_profits: true }
@@ -469,7 +469,7 @@ export class ScoutService {
         avgNetProfits: avgNetProfits._avg.net_profits,
         avgScoutElo: avgScoutElo._avg.scout_elo
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting scout stats:', error)
       throw error
     }
@@ -490,7 +490,7 @@ export class ScoutService {
         orderBy: { scout_ranking: 'asc' }
       })
       return scouts
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting scouts by nationality:', error)
       throw error
     }
@@ -511,7 +511,7 @@ export class ScoutService {
         orderBy: { scout_ranking: 'asc' }
       })
       return scouts
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting scouts by country:', error)
       throw error
     }
@@ -532,7 +532,7 @@ export class ScoutService {
         orderBy: { scout_ranking: 'asc' }
       })
       return scouts
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting scouts by level:', error)
       throw error
     }
@@ -548,7 +548,7 @@ export class ScoutService {
         orderBy: { scout_ranking: 'asc' }
       })
       return scouts
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting available scouts:', error)
       throw error
     }
@@ -569,7 +569,7 @@ export class ScoutService {
         take: limit
       })
       return scouts
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting scout ranking:', error)
       throw error
     }

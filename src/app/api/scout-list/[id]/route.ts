@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db'
 
 // DELETE /api/scout-list/[id] - Remover scout de la lista
 export async function DELETE(
-  request: NextRequest,
+  __request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -13,7 +13,7 @@ export async function DELETE(
     
     if (!userId) {
       return NextResponse.json(
-        { error: 'No autorizado' },
+        { __error: 'No autorizado' },
         { status: 401 }
       )
     }
@@ -22,7 +22,7 @@ export async function DELETE(
 
     if (!scoutId) {
       return NextResponse.json(
-        { error: 'ID de scout requerido' },
+        { __error: 'ID de scout requerido' },
         { status: 400 }
       )
     }
@@ -34,7 +34,7 @@ export async function DELETE(
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Usuario no encontrado' },
+        { __error: 'Usuario no encontrado' },
         { status: 404 }
       )
     }
@@ -49,7 +49,7 @@ export async function DELETE(
 
     if (deletedEntry.count === 0) {
       return NextResponse.json(
-        { error: 'Scout no encontrado en tu lista' },
+        { __error: 'Scout no encontrado en tu lista' },
         { status: 404 }
       )
     }
@@ -57,10 +57,10 @@ export async function DELETE(
     return NextResponse.json({ 
       message: 'Scout removido de la lista exitosamente' 
     })
-  } catch (error) {
+  } catch (_error) {
     console.error('Error removing scout from list:', error)
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { __error: 'Error interno del servidor' },
       { status: 500 }
     )
   }

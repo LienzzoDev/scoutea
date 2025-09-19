@@ -23,24 +23,24 @@ export interface TeamSearchOptions {
 }
 
 // GET /api/teams - Buscar equipos con filtros
-export async function GET(request: NextRequest) {
+export async function GET(__request: NextRequest) {
   try {
     const { userId } = await auth()
     
     if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+      return NextResponse.json({ __error: 'No autorizado' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
     
     // Parsear parámetros de búsqueda
-    const page = parseInt(searchParams.get('page') || '1')
+    const _page = parseInt(searchParams.get('page') || '1')
     const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100)
     const sortBy = searchParams.get('sortBy') || 'team_name'
     const sortOrder = (searchParams.get('sortOrder') || 'asc') as 'asc' | 'desc'
     
     // Parsear filtros
-    const filters: TeamFilters = {}
+    const _filters: TeamFilters = {}
     
     if (searchParams.get('filters[team_name]')) {
       filters.team_name = searchParams.get('filters[team_name]')!
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     // Construir filtros WHERE
-    const where: any = {}
+    const where: unknown = {}
     
     if (filters.team_name) {
       where.team_name = {
@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       teams,
-      pagination: {
+      _pagination: {
         page,
         limit,
         total,
@@ -139,30 +139,30 @@ export async function GET(request: NextRequest) {
       }
     })
 
-  } catch (error) {
+  } catch (_error) {
     console.error('❌ Error searching teams:', error)
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { __error: 'Error interno del servidor' },
       { status: 500 }
     )
   }
 }
 
 // POST /api/teams - Crear un nuevo equipo
-export async function POST(request: NextRequest) {
+export async function POST(__request: NextRequest) {
   try {
     const { userId } = await auth()
     
     if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+      return NextResponse.json({ __error: 'No autorizado' }, { status: 401 })
     }
 
-    const body = await request.json()
+    const _body = await request.json()
     
     // Validar datos requeridos
     if (!body.team_name || typeof body.team_name !== 'string') {
       return NextResponse.json(
-        { error: 'El nombre del equipo es requerido' },
+        { __error: 'El nombre del equipo es requerido' },
         { status: 400 }
       )
     }
@@ -193,18 +193,18 @@ export async function POST(request: NextRequest) {
     console.log('✅ Equipo creado exitosamente:', team.team_name)
     return NextResponse.json(team, { status: 201 })
 
-  } catch (error) {
+  } catch (_error) {
     console.error('❌ Error creating team:', error)
     
     if (error instanceof Error) {
       return NextResponse.json(
-        { error: `Error específico: ${error.message}` },
+        { __error: `Error específico: ${error.message}` },
         { status: 500 }
       )
     }
     
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { __error: 'Error interno del servidor' },
       { status: 500 }
     )
   }

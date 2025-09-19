@@ -14,12 +14,12 @@ import { DataPopulationService } from '@/lib/services/DataPopulationService';
 
 const prisma = new PrismaClient();
 
-export async function POST(request: NextRequest) {
+export async function POST(__request: NextRequest) {
   try {
     // Check authentication and admin role
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get user and check admin role
@@ -28,16 +28,16 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ __error: 'User not found' }, { status: 404 });
     }
 
     // For now, we'll allow any authenticated user. In production, add admin role check
     // if (user.role !== 'admin') {
-    //   return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    //   return NextResponse.json({ __error: 'Admin access required' }, { status: 403 });
     // }
 
     // Parse request body
-    const body = await request.json();
+    const _body = await request.json();
     const {
       dryRun = true,
       batchSize = 50,
@@ -48,15 +48,15 @@ export async function POST(request: NextRequest) {
 
     // Validate input
     if (positions && !Array.isArray(positions)) {
-      return NextResponse.json({ error: 'positions must be an array' }, { status: 400 });
+      return NextResponse.json({ __error: 'positions must be an array' }, { status: 400 });
     }
 
     if (playerIds && !Array.isArray(playerIds)) {
-      return NextResponse.json({ error: 'playerIds must be an array' }, { status: 400 });
+      return NextResponse.json({ __error: 'playerIds must be an array' }, { status: 400 });
     }
 
     if (batchSize < 1 || batchSize > 100) {
-      return NextResponse.json({ error: 'batchSize must be between 1 and 100' }, { status: 400 });
+      return NextResponse.json({ __error: 'batchSize must be between 1 and 100' }, { status: 400 });
     }
 
     // Initialize service
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     const validation = await populationService.validateGenerators();
     if (!validation.atributosValid || !validation.statsValid) {
       return NextResponse.json({
-        error: 'Data generators validation failed',
+        __error: 'Data generators validation failed',
         details: validation.errors
       }, { status: 500 });
     }
@@ -93,10 +93,10 @@ export async function POST(request: NextRequest) {
         : 'Data population completed successfully.'
     });
 
-  } catch (error) {
-    console.error('Data population error:', error);
+  } catch (_error) {
+    console.error('Data population __error: ', error);
     return NextResponse.json({
-      error: 'Internal server error',
+      __error: 'Internal server error',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   } finally {
@@ -104,12 +104,12 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(__request: NextRequest) {
   try {
     // Check authentication
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 });
     }
 
     // Initialize service
@@ -131,10 +131,10 @@ export async function GET(request: NextRequest) {
       }
     });
 
-  } catch (error) {
-    console.error('Get population stats error:', error);
+  } catch (_error) {
+    console.error('Get population stats __error: ', error);
     return NextResponse.json({
-      error: 'Internal server error',
+      __error: 'Internal server error',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   } finally {

@@ -268,7 +268,7 @@ export const PlayerIdSchema = z.object({
  * ✅ USO: En GET /api/players/stats
  */
 export const PlayerStatsSchema = z.object({
-  period: z.enum(['week', 'month', 'year', 'all']).default('all'),
+  _period: z.enum(['week', 'month', 'year', 'all']).default('all'),
   position: positionSchema.optional(),
   nationality: nationalitySchema.optional()
 }).strict()
@@ -295,7 +295,7 @@ export const AvailableFiltersSchema = z.object({
 export function validatePlayerCreate(data: unknown) {
   try {
     return PlayerCreateSchema.parse(data)
-  } catch (error) {
+  } catch (_error) {
     if (error instanceof z.ZodError) {
       // 📋 FORMATEAR ERRORES DE VALIDACIÓN
       const formattedErrors = error.errors.map(err => ({
@@ -316,7 +316,7 @@ export function validatePlayerCreate(data: unknown) {
 export function validatePlayerUpdate(data: unknown) {
   try {
     return PlayerUpdateSchema.parse(data)
-  } catch (error) {
+  } catch (_error) {
     if (error instanceof z.ZodError) {
       const formattedErrors = error.errors.map(err => ({
         field: err.path.join('.'),
@@ -336,7 +336,7 @@ export function validatePlayerUpdate(data: unknown) {
 export function validatePlayerSearch(params: unknown) {
   try {
     return PlayerSearchSchema.parse(params)
-  } catch (error) {
+  } catch (_error) {
     if (error instanceof z.ZodError) {
       const formattedErrors = error.errors.map(err => ({
         field: err.path.join('.'),
@@ -356,7 +356,7 @@ export function validatePlayerSearch(params: unknown) {
 export function validatePlayerId(id: unknown) {
   try {
     return PlayerIdSchema.parse({ id }).id
-  } catch (error) {
+  } catch (_error) {
     if (error instanceof z.ZodError) {
       throw new Error(`ID de jugador inválido: ${error.errors[0]?.message}`)
     }

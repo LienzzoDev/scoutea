@@ -2,15 +2,15 @@
 
 interface PlayerTabsProps {
   activeTab: string;
-  onTabChange: (tab: string) => void;
+  onTabChange: (tab: string) =>void;
 }
 
 export default function PlayerTabs({ activeTab, onTabChange }: PlayerTabsProps) {
   const tabs = [
     { id: "info", label: "Info" },
     { id: "reports", label: "Reports" },
-    { id: "stats", label: "Stats" },
-    { id: "features", label: "Features" },
+    { id: "stats", label: "Stats"},
+    { id: "features", label: "Features"},
   ];
 
   return (

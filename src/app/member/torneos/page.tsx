@@ -1,7 +1,6 @@
 "use client";
 
 import { Search, FileText } from "lucide-react";
-import Image from "next/image";
 import { useState, useEffect } from "react";
 
 import MemberNavbar from "@/components/layout/member-navbar";
@@ -17,7 +16,7 @@ export default function TorneosPage() {
     useTournaments();
 
   // Cargar torneos iniciales al montar el componente
-  useEffect(() => {
+  useEffect(() =>{
     searchTorneos({ es_publico: true }, 1);
   }, [searchTorneos]);
 
@@ -37,7 +36,7 @@ export default function TorneosPage() {
   }, [searchTerm, searchTorneos]);
 
   // Formatear fecha
-  const formatDate = (dateString: string) => {
+  const _formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("es-ES", {
       year: "numeric",
       month: "long",
@@ -46,7 +45,7 @@ export default function TorneosPage() {
   };
 
   // Obtener color del estado
-  const getEstadoColor = (estado: string) => {
+  const _getEstadoColor = (estado: string) => {
     switch (estado) {
       case "planificado":
         return "bg-blue-100 text-blue-800";
@@ -100,8 +99,7 @@ export default function TorneosPage() {
               placeholder="Buscar torneos por nombre..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white border-gray-300"
-            />
+              className="pl-10 bg-white border-gray-300" />
           </div>
         </div>
 
@@ -132,7 +130,7 @@ export default function TorneosPage() {
                     ? "cursor-pointer hover:scale-105 hover:border-purple-300"
                     : "cursor-not-allowed opacity-60"
                 }`}
-                onClick={() => {
+                onClick={() =>{
                   if (torneo.pdf_url) {
                     window.open(torneo.pdf_url, "_blank");
                   }
@@ -178,10 +176,8 @@ export default function TorneosPage() {
             {torneos.length < total && (
               <div className="col-span-full text-center mt-8">
                 <Button
-                  onClick={() => loadMore()}
-                  variant="outline"
-                  className="border-purple-300 text-purple-700 hover:bg-purple-50"
-                >
+                  onClick={() =>loadMore()}
+                  variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-50">
                   Load More Tournaments
                 </Button>
               </div>

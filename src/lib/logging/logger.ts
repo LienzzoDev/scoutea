@@ -65,8 +65,8 @@ class Logger {
   private logBuffer: LogEntry[] = []
   private flushInterval?: NodeJS.Timeout
 
-  constructor(config: Partial<LoggerConfig> = {}) {
-    this.config = { ...DEFAULT_CONFIG, ...config }
+  constructor(_config: Partial<LoggerConfig> = {}) {
+    this.config = { ...DEFAULT_CONFIG, ..._config }
     
     // Configurar flush automático cada 5 segundos
     if (typeof window === 'undefined') { // Solo en servidor
@@ -77,7 +77,7 @@ class Logger {
   }
 
   // Método principal de logging
-  private log(level: LogLevel, message: string, context?: string, metadata?: any): void {
+  private log(level: LogLevel, message: string, context?: string, metadata?: unknown): void {
     // Filtrar por nivel
     if (level < this.config.level) {
       return
@@ -109,35 +109,35 @@ class Logger {
   }
 
   // Métodos públicos por nivel
-  debug(message: string, context?: string, metadata?: any): void {
+  debug(message: string, context?: string, metadata?: unknown): void {
     this.log(LogLevel.DEBUG, message, context, metadata)
   }
 
-  info(message: string, context?: string, metadata?: any): void {
+  info(message: string, context?: string, metadata?: unknown): void {
     this.log(LogLevel.INFO, message, context, metadata)
   }
 
-  warn(message: string, context?: string, metadata?: any): void {
+  warn(message: string, context?: string, metadata?: unknown): void {
     this.log(LogLevel.WARN, message, context, metadata)
   }
 
-  error(message: string, context?: string, metadata?: any): void {
+  error(message: string, context?: string, metadata?: unknown): void {
     this.log(LogLevel.ERROR, message, context, metadata)
   }
 
-  critical(message: string, context?: string, metadata?: any): void {
+  critical(message: string, context?: string, metadata?: unknown): void {
     this.log(LogLevel.CRITICAL, message, context, metadata)
   }
 
   // Método específico para errores con stack trace
-  logError(error: Error, context?: string, metadata?: any): void {
+  logError(__error: Error, context?: string, metadata?: unknown): void {
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level: LogLevel.ERROR,
       message: error.message,
       context,
       metadata: this.sanitizeMetadata(metadata),
-      error: {
+      _error: {
         name: error.name,
         message: error.message,
         stack: error.stack,
@@ -158,8 +158,7 @@ class Logger {
     operation: string, 
     duration: number, 
     context?: string, 
-    metadata?: any
-  ): void {
+    metadata?: unknown): void {
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level: LogLevel.INFO,
@@ -187,8 +186,7 @@ class Logger {
     statusCode: number,
     duration: number,
     context?: string,
-    metadata?: any
-  ): void {
+    metadata?: unknown): void {
     const level = statusCode >= 500 ? LogLevel.ERROR : 
                  statusCode >= 400 ? LogLevel.WARN : LogLevel.INFO
 
@@ -196,9 +194,9 @@ class Logger {
       timestamp: new Date().toISOString(),
       level,
       message: `${method} ${url} - ${statusCode}`,
-      context: context || 'HTTP',
+      _context: context || 'HTTP',
       metadata: this.sanitizeMetadata(metadata),
-      request: {
+      _request: {
         method,
         url,
         userAgent: metadata?.userAgent,
@@ -236,7 +234,7 @@ class Logger {
   }
 
   // Sanitizar metadatos removiendo campos sensibles
-  private sanitizeMetadata(metadata: any): any {
+  private sanitizeMetadata(metadata: unknown): any {
     if (!metadata || typeof metadata !== 'object') {
       return metadata
     }
@@ -318,7 +316,7 @@ class Logger {
           },
           body: JSON.stringify({ logs: logsToFlush })
         })
-      } catch (error) {
+      } catch (_error) {
         console.error('Failed to send logs to remote endpoint:', error)
       }
     }
@@ -358,27 +356,27 @@ class Logger {
 export const logger = new Logger()
 
 // Función helper para crear loggers con contexto
-export function createLogger(context: string, config?: Partial<LoggerConfig>): Logger {
+export function createLogger(__context: string, config?: Partial<LoggerConfig>): Logger {
   const contextLogger = new Logger(config)
   
   // Wrapper que añade contexto automáticamente
   return {
-    debug: (message: string, metadata?: any) => contextLogger.debug(message, context, metadata),
-    info: (message: string, metadata?: any) => contextLogger.info(message, context, metadata),
-    warn: (message: string, metadata?: any) => contextLogger.warn(message, context, metadata),
-    error: (message: string, metadata?: any) => contextLogger.error(message, context, metadata),
-    critical: (message: string, metadata?: any) => contextLogger.critical(message, context, metadata),
-    logError: (error: Error, metadata?: any) => contextLogger.logError(error, context, metadata),
-    logPerformance: (operation: string, duration: number, metadata?: any) => 
+    debug: (message: string, metadata?: unknown) => contextLogger.debug(message, context, metadata),
+    info: (message: string, metadata?: unknown) => contextLogger.info(message, context, metadata),
+    warn: (message: string, metadata?: unknown) => contextLogger.warn(message, context, metadata),
+    _error: (message: string, metadata?: unknown) => contextLogger.error(message, context, metadata),
+    critical: (message: string, metadata?: unknown) => contextLogger.critical(message, context, metadata),
+    logError: (_error: Error, metadata?: unknown) => contextLogger.logError(error, context, metadata),
+    logPerformance: (operation: string, duration: number, metadata?: unknown) => 
       contextLogger.logPerformance(operation, duration, context, metadata),
-    logRequest: (method: string, url: string, statusCode: number, duration: number, metadata?: any) =>
+    logRequest: (method: string, url: string, statusCode: number, duration: number, metadata?: unknown) =>
       contextLogger.logRequest(method, url, statusCode, duration, context, metadata)
   } as any
 }
 
 // Middleware para logging automático de requests
 export function createRequestLogger() {
-  return (req: any, res: any, next: any) => {
+  return (req: unknown, res: unknown, next: unknown) => {
     const startTime = Date.now()
     const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     
@@ -386,7 +384,7 @@ export function createRequestLogger() {
     ;(globalThis as any).requestId = requestId
     
     // Log del request
-    logger.info(`Incoming request: ${req.method} ${req.url}`, 'HTTP', {
+    logger.info(`Incoming __request: ${req.method} ${req.url}`, 'HTTP', {
       requestId,
       method: req.method,
       url: req.url,
@@ -396,7 +394,7 @@ export function createRequestLogger() {
     
     // Interceptar la respuesta
     const originalSend = res.send
-    res.send = function(body: any) {
+    res.send = function(body: unknown) {
       const duration = Date.now() - startTime
       
       logger.logRequest(
@@ -423,7 +421,7 @@ export function setupGlobalErrorHandling(): void {
   // Errores no capturados en Node.js
   if (typeof process !== 'undefined') {
     process.on('uncaughtException', (error) => {
-      logger.critical('Uncaught Exception', 'GLOBAL', { error: error.message, stack: error.stack })
+      logger.critical('Uncaught Exception', 'GLOBAL', { __error: error.message, stack: error.stack })
       process.exit(1)
     })
     

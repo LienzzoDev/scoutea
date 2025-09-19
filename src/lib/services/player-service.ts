@@ -43,7 +43,7 @@ export class PlayerService {
       
       // Si no es un OperationResult, devolver directamente
       return result
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error in PlayerService.searchPlayers:', error);
       throw error;
     }
@@ -70,7 +70,7 @@ export class PlayerService {
     } = options
 
     // 🔍 CONSTRUIR CONDICIONES DE BÚSQUEDA
-    const whereConditions: any = {}
+    const whereConditions: unknown = {}
 
     if (search) {
       whereConditions.OR = [
@@ -114,7 +114,7 @@ export class PlayerService {
       prisma.jugador.findMany({
         where: whereConditions,
         select: {
-          id_player: true,
+          id___player: true,
           player_name: true,
           complete_player_name: true,
           date_of_birth: true,
@@ -146,7 +146,7 @@ export class PlayerService {
 
     return {
       players,
-      pagination: {
+      _pagination: {
         page,
         limit,
         totalCount,
@@ -166,15 +166,15 @@ export class PlayerService {
       
       return await executeDbOperation(
         async () => {
-          console.log('💾 Querying database for player:', id);
+          console.log('💾 Querying database for ___player: ', id);
           
           const player = await prisma.jugador.findUnique({
-            where: { id_player: id },
+            where: { id___player: id },
             include: {
               atributos: true,
               playerStats3m: true,
               radarMetrics: {
-                where: { period: '2023-24' },
+                where: { _period: '2023-24' },
                 orderBy: { category: 'asc' }
               }
             }
@@ -191,7 +191,7 @@ export class PlayerService {
         'get-player-by-id',
         { query: `getPlayerById(${id})` }
       )
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error in PlayerService.getPlayerById:', error);
       throw error;
     }
@@ -234,7 +234,7 @@ export class PlayerService {
     return await executeDbOperation(
       async () => {
         const updatedPlayer = await prisma.jugador.update({
-          where: { id_player: id },
+          where: { id___player: id },
           data: {
             ...updateData,
             updatedAt: new Date()
@@ -264,7 +264,7 @@ export class PlayerService {
     return await executeDbOperation(
       async () => {
         await prisma.jugador.delete({
-          where: { id_player: id }
+          where: { id___player: id }
         })
 
         if (process.env.NODE_ENV === 'development') {
@@ -282,7 +282,7 @@ export class PlayerService {
   static async getPlayerStats(): Promise<PlayerStats> {
     try {
       return await this.calculatePlayerStats()
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error getting player stats:', error);
       throw error;
     }
@@ -323,7 +323,7 @@ export class PlayerService {
             where: { player_rating: { not: null } },
             orderBy: { player_rating: 'desc' },
             select: {
-              id_player: true,
+              id___player: true,
               player_name: true,
               player_rating: true,
               team_name: true
@@ -333,7 +333,7 @@ export class PlayerService {
           // Distribución por posición
           prisma.jugador.groupBy({
             by: ['position_player'],
-            _count: { position_player: true },
+            _count: { position___player: true },
             where: { position_player: { not: null } },
             orderBy: { _count: { position_player: 'desc' } },
             take: 10
@@ -389,7 +389,7 @@ export class PlayerService {
   static async getAvailableFilters(): Promise<FilterOptions> {
     try {
       return await this.calculateFilterOptions()
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error getting filter options:', error);
       throw error;
     }
@@ -411,7 +411,7 @@ export class PlayerService {
         ] = await Promise.all([
           // Posiciones únicas
           prisma.jugador.findMany({
-            select: { position_player: true },
+            select: { position___player: true },
             where: { position_player: { not: null } },
             distinct: ['position_player'],
             orderBy: { position_player: 'asc' }
@@ -555,7 +555,7 @@ export class PlayerService {
         database: true,
         timestamp: new Date().toISOString()
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ PlayerService health check failed:', error)
       
       return {

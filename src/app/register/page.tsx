@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label"
 
 
 function RegisterContent() {
-  const router = useRouter()
+  const _router = useRouter()
   const searchParams = useSearchParams()
   const { isLoaded, signUp, setActive } = useSignUp()
   const { isSignedIn } = useAuth()
@@ -47,7 +47,7 @@ function RegisterContent() {
       })
       
       if (updateResponse.ok) {
-        const responseData = await updateResponse.json()
+        const _responseData = await updateResponse.json()
         setRegistrationStep(2)
       } else {
         const errorData = await updateResponse.json()
@@ -166,7 +166,7 @@ function RegisterContent() {
     }))
   }
 
-  const handleStep1Submit = async () => {
+  const _handleStep1Submit = async () => {
     if (!isLoaded || !signUp) {
       setError('Clerk no está cargado correctamente. Intenta recargar la página.')
       return
@@ -217,7 +217,7 @@ function RegisterContent() {
           })
           
           if (updateResponse.ok) {
-            const responseData = await updateResponse.json()
+            const _responseData = await updateResponse.json()
           } else {
             const errorData = await updateResponse.json()
             console.error('❌ Error asignando rol member:', errorData)
@@ -235,7 +235,7 @@ function RegisterContent() {
       } else {
         setError('Error inesperado en el registro. Estado: ' + result.status)
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error detallado en el registro:', err)
       console.error('Errores específicos:', err.errors)
       
@@ -254,7 +254,7 @@ function RegisterContent() {
   }
 
   const handleBackToPlans = () => {
-    router.push('/')
+    _router.push('/')
   }
 
 
@@ -278,7 +278,7 @@ function RegisterContent() {
       })
       
       if (updateResponse.ok) {
-        const responseData = await updateResponse.json()
+        const _responseData = await updateResponse.json()
         setProfileCompleted(true)
         handleRegistrationStep(3)
       } else {
@@ -312,7 +312,7 @@ function RegisterContent() {
       })
       
       if (updateResponse.ok) {
-        const responseData = await updateResponse.json()
+        const _responseData = await updateResponse.json()
         setProfileCompleted(false)
         handleRegistrationStep(3)
       } else {
@@ -456,10 +456,8 @@ function RegisterContent() {
                       type="text"
                       placeholder="Tu nombre"
                       value={registrationData.firstName}
-                      onChange={(e) => handleRegistrationData('firstName', e.target.value)}
-                      className="pl-12 bg-white border-[#e7e7e7] text-[#000000] placeholder:text-[#6d6d6d] focus:border-[#8c1a10] focus:ring-2 focus:ring-[#8c1a10]/20 rounded-lg h-14 text-lg"
-                      required
-                    />
+                      onChange={(e) =>handleRegistrationData('firstName', e.target.value)}
+                      className="pl-12 bg-white border-[#e7e7e7] text-[#000000] placeholder:text-[#6d6d6d] focus:border-[#8c1a10] focus:ring-2 focus:ring-[#8c1a10]/20 rounded-lg h-14 text-lg" required                    />
                   </div>
                 </div>
                 <div>
@@ -473,9 +471,8 @@ function RegisterContent() {
                       type="text"
                       placeholder="Tu apellido"
                       value={registrationData.lastName}
-                      onChange={(e) => handleRegistrationData('lastName', e.target.value)}
-                      className="pl-12 bg-white border-[#e7e7e7] text-[#000000] placeholder:text-[#6d6d6d] focus:border-[#8c1a10] focus:ring-2 focus:ring-[#8c1a10]/20 rounded-lg h-14 text-lg"
-                      required
+                      onChange={(e) =>handleRegistrationData('lastName', e.target.value)}
+                      className="pl-12 bg-white border-[#e7e7e7] text-[#000000] placeholder:text-[#6d6d6d] focus:border-[#8c1a10] focus:ring-2 focus:ring-[#8c1a10]/20 rounded-lg h-14 text-lg" required
                     />
                   </div>
                 </div>
@@ -491,9 +488,8 @@ function RegisterContent() {
                     type="tel"
                     placeholder="+34 123 456 789"
                     value={registrationData.phone}
-                    onChange={(e) => handleRegistrationData('phone', e.target.value)}
-                    className="pl-12 bg-white border-[#e7e7e7] text-[#000000] placeholder:text-[#6d6d6d] focus:border-[#8c1a10] focus:ring-2 focus:ring-[#8c1a10]/20 rounded-lg h-14 text-lg"
-                  />
+                    onChange={(e) =>handleRegistrationData('phone', e.target.value)}
+                    className="pl-12 bg-white border-[#e7e7e7] text-[#000000] placeholder:text-[#6d6d6d] focus:border-[#8c1a10] focus:ring-2 focus:ring-[#8c1a10]/20 rounded-lg h-14 text-lg" />
                 </div>
               </div>
               <div>
@@ -507,9 +503,8 @@ function RegisterContent() {
                     type="text"
                     placeholder="Tu empresa"
                     value={registrationData.company}
-                    onChange={(e) => handleRegistrationData('company', e.target.value)}
-                    className="pl-12 bg-white border-[#e7e7e7] text-[#000000] placeholder:text-[#6d6d6d] focus:border-[#8c1a10] focus:ring-2 focus:ring-[#8c1a10]/20 rounded-lg h-14 text-lg"
-                  />
+                    onChange={(e) =>handleRegistrationData('company', e.target.value)}
+                    className="pl-12 bg-white border-[#e7e7e7] text-[#000000] placeholder:text-[#6d6d6d] focus:border-[#8c1a10] focus:ring-2 focus:ring-[#8c1a10]/20 rounded-lg h-14 text-lg" />
                 </div>
               </div>
               <div>
@@ -523,18 +518,15 @@ function RegisterContent() {
                     type="text"
                     placeholder="Scout, Analista, etc."
                     value={registrationData.position}
-                    onChange={(e) => handleRegistrationData('position', e.target.value)}
-                    className="pl-12 bg-white border-[#e7e7e7] text-[#000000] placeholder:text-[#6d6d6d] focus:border-[#8c1a10] focus:ring-2 focus:ring-[#8c1a10]/20 rounded-lg h-14 text-lg"
-                  />
+                    onChange={(e) =>handleRegistrationData('position', e.target.value)}
+                    className="pl-12 bg-white border-[#e7e7e7] text-[#000000] placeholder:text-[#6d6d6d] focus:border-[#8c1a10] focus:ring-2 focus:ring-[#8c1a10]/20 rounded-lg h-14 text-lg" />
                 </div>
               </div>
               <div className="flex flex-col gap-4 pt-4">
                 <div className="flex gap-4">
                   <Button
-                    onClick={() => handleRegistrationStep(1)}
-                    variant="outline"
-                    className="flex-1 border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white font-semibold h-14 rounded-lg transition-all duration-200 text-lg"
-                  >
+                    onClick={() =>handleRegistrationStep(1)}
+                    variant="outline" className="flex-1 border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white font-semibold h-14 rounded-lg transition-all duration-200 text-lg">
                     <ArrowLeft className="mr-2 w-5 h-5" />
                     Volver
                   </Button>
@@ -638,15 +630,13 @@ function RegisterContent() {
             
             <div className="flex gap-4 max-w-2xl mx-auto">
               <Button
-                onClick={() => handleRegistrationStep(2)}
-                variant="outline"
-                className="flex-1 border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white font-semibold h-14 rounded-lg transition-all duration-200 text-lg"
-              >
+                onClick={() =>handleRegistrationStep(2)}
+                variant="outline" className="flex-1 border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white font-semibold h-14 rounded-lg transition-all duration-200 text-lg">
                 <ArrowLeft className="mr-2 w-5 h-5" />
                 Volver
               </Button>
               <Button
-                onClick={async () => {
+                onClick={async () =>{
                   try {
                     console.log('💳 Iniciando proceso de pago para plan:', selectedPlan)
                     
@@ -674,15 +664,14 @@ function RegisterContent() {
                     } else {
                       throw new Error('No se recibió URL de pago')
                     }
-                  } catch (error) {
+                  } catch (_error) {
                     console.error('Error al procesar el pago:', error)
                     // Fallback: redirigir a la página de planes
-                    router.push(`/member/subscription-plans?plan=${selectedPlan || 'basic'}`)
+                    _router.push(`/member/subscription-plans?plan=${selectedPlan || 'basic'}`)
                   }
                 }}
                 disabled={!selectedPlan}
-                className="flex-1 bg-[#8c1a10] hover:bg-[#6d1410] text-white font-semibold h-14 rounded-lg transition-all duration-200 text-lg disabled:opacity-50"
-              >
+                className="flex-1 bg-[#8c1a10] hover:bg-[#6d1410] text-white font-semibold h-14 rounded-lg transition-all duration-200 text-lg disabled:opacity-50">
                 Continuar al pago
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>

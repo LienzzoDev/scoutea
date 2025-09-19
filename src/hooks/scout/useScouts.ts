@@ -226,7 +226,7 @@ export function useScouts() {
   }, [])
 
   // Crear un nuevo scout
-  const createScout = useCallback(async (data: any): Promise<Scout | null> => {
+  const createScout = useCallback(async (data: unknown): Promise<Scout | null> => {
     try {
       setLoading(true)
       setError(null)

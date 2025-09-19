@@ -14,13 +14,13 @@ interface AdminGuardProps {
 export default function AdminGuard({ children }: AdminGuardProps) {
   const { isLoaded, userId } = useAuth()
   const { user } = useUser()
-  const router = useRouter()
+  const _router = useRouter()
   const [isChecking, setIsChecking] = useState(true)
 
   useEffect(() => {
     if (isLoaded) {
       if (!userId) {
-        router.push('/login')
+        _router.push('/login')
         return
       }
 
@@ -29,14 +29,14 @@ export default function AdminGuard({ children }: AdminGuardProps) {
       if (userRole === 'admin') {
         setIsChecking(false)
       } else if (userRole === 'member') {
-        router.replace('/member/dashboard')
+        _router.replace('/member/dashboard')
         return
       } else {
-        router.replace('/login')
+        _router.replace('/login')
         return
       }
     }
-  }, [isLoaded, userId, user, router])
+  }, [isLoaded, userId, user, _router])
 
   if (!isLoaded || isChecking) {
     return (

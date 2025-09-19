@@ -9,7 +9,7 @@ import { stripe } from '@/lib/stripe'
  * Este endpoint recibe notificaciones de Stripe cuando ocurren eventos importantes
  * como pagos exitosos, cancelaciones, actualizaciones de suscripción, etc.
  */
-export async function POST(request: NextRequest) {
+export async function POST(__request: NextRequest) {
   console.log('🔔 Webhook de Stripe recibido - Iniciando procesamiento...')
   
   // ===== VALIDACIÓN INICIAL =====
@@ -17,18 +17,18 @@ export async function POST(request: NextRequest) {
   // Verificar que Stripe esté configurado correctamente
   if (!stripe) {
     console.error('❌ Stripe no está configurado')
-    return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 })
+    return NextResponse.json({ __error: 'Stripe not configured' }, { status: 500 })
   }
 
   // Obtener el cuerpo de la petición como texto plano
-  const body = await request.text()
+  const _body = await request.text()
   
   // Obtener la firma de Stripe para verificar la autenticidad del webhook
   const signature = request.headers.get('stripe-signature')
 
   // Verificar que la firma esté presente
   if (!signature) {
-    return NextResponse.json({ error: 'No signature' }, { status: 400 })
+    return NextResponse.json({ __error: 'No signature' }, { status: 400 })
   }
 
   let event: Stripe.Event
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     console.log('✅ Firma del webhook verificada correctamente')
   } catch (err) {
     console.error('❌ Error verificando firma del webhook:', err)
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
+    return NextResponse.json({ __error: 'Invalid signature' }, { status: 400 })
   }
 
   // ===== PROCESAMIENTO DE EVENTOS =====
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
             let subscriptionStatus = 'active' // Por defecto activa para checkout completado
             if (session.subscription && typeof session.subscription === 'string') {
               try {
-                const subscription = await stripe.subscriptions.retrieve(session.subscription)
+                const _subscription = await stripe.subscriptions.retrieve(session.subscription)
                 subscriptionStatus = subscription.status
                 console.log('📋 Estado de suscripción desde Stripe:', subscriptionStatus)
               } catch (subscriptionError) {
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
       // ===== CREACIÓN DE SUSCRIPCIÓN =====
       case 'customer.subscription.created': {
         // Este evento se dispara cuando se crea una nueva suscripción
-        const subscription = event.data.object as Stripe.Subscription
+        const _subscription = event.data.object as Stripe.Subscription
         console.log('🆕 Nueva suscripción creada:', subscription.id)
         
         try {
@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
           } else {
             console.log(`⚠️ No se encontró usuario para customer ID: ${subscription.customer}`)
           }
-        } catch (error) {
+        } catch (_error) {
           console.error('❌ Error procesando nueva suscripción:', error)
         }
         break
@@ -195,7 +195,7 @@ export async function POST(request: NextRequest) {
       case 'customer.subscription.updated': {
         // Este evento se dispara cuando hay cambios en una suscripción existente
         // (upgrade, downgrade, cambio de plan, etc.)
-        const subscription = event.data.object as Stripe.Subscription
+        const _subscription = event.data.object as Stripe.Subscription
         console.log('🔄 Subscription updated:', subscription.id, 'Status:', subscription.status)
         
         try {
@@ -231,7 +231,7 @@ export async function POST(request: NextRequest) {
           } else {
             console.log(`⚠️ No se encontró usuario para customer ID: ${subscription.customer}`)
           }
-        } catch (error) {
+        } catch (_error) {
           console.error('❌ Error actualizando suscripción:', error)
         }
         break
@@ -240,7 +240,7 @@ export async function POST(request: NextRequest) {
       // ===== CANCELACIÓN DE SUSCRIPCIÓN =====
       case 'customer.subscription.deleted': {
         // Este evento se dispara cuando una suscripción es cancelada
-        const subscription = event.data.object as Stripe.Subscription
+        const _subscription = event.data.object as Stripe.Subscription
         console.log('🗑️ Subscription canceled:', subscription.id)
         
         try {
@@ -275,7 +275,7 @@ export async function POST(request: NextRequest) {
           } else {
             console.log(`⚠️ No se encontró usuario para customer ID: ${subscription.customer}`)
           }
-        } catch (error) {
+        } catch (_error) {
           console.error('❌ Error cancelando suscripción:', error)
         }
         break
@@ -320,7 +320,7 @@ export async function POST(request: NextRequest) {
           } else {
             console.log(`⚠️ No se encontró usuario para customer ID: ${invoice.customer}`)
           }
-        } catch (error) {
+        } catch (_error) {
           console.error('❌ Error manejando pago fallido:', error)
         }
         break
@@ -336,12 +336,12 @@ export async function POST(request: NextRequest) {
     // Devolver respuesta exitosa a Stripe para confirmar que procesamos el webhook
     return NextResponse.json({ received: true })
     
-  } catch (error) {
+  } catch (_error) {
     // ===== MANEJO DE ERRORES =====
     // Log del error y respuesta de error a Stripe
     console.error('Error processing webhook:', error)
     return NextResponse.json(
-      { error: 'Webhook processing failed' },
+      { __error: 'Webhook processing failed' },
       { status: 500 }
     )
   }

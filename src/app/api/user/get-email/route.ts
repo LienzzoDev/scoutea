@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { handleAPIError, extractErrorContext, requireAuth } from '@/lib/errors'
 
-export async function GET(request: NextRequest) {
+export async function GET(__request: NextRequest) {
   try {
     const context = extractErrorContext(request)
     const { userId } = await auth()
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       email: email,
       userId: userId
     })
-  } catch (error) {
+  } catch (_error) {
     return handleAPIError(error, extractErrorContext(request))
   }
 }

@@ -23,7 +23,7 @@ export async function GET() {
       
       // Posiciones más comunes
       prisma.jugador.findMany({
-        select: { position_player: true },
+        select: { position___player: true },
         where: { position_player: { not: null } },
         distinct: ['position_player'],
         orderBy: { position_player: 'asc' }
@@ -81,10 +81,10 @@ export async function GET() {
     }
 
     return NextResponse.json(filterOptions)
-  } catch (error) {
+  } catch (_error) {
     console.error('Error fetching filter options:', error)
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { __error: 'Error interno del servidor' },
       { status: 500 }
     )
   }

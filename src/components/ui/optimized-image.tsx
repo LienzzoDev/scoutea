@@ -4,7 +4,6 @@
 
 "use client";
 
-import Image from 'next/image';
 import React, { memo, useState, useCallback, useMemo } from 'react';
 
 interface OptimizedImageProps {
@@ -65,7 +64,7 @@ const OptimizedImage = memo<OptimizedImageProps>(function OptimizedImage({
 
   // 📊 MEMOIZAR PROPS DE IMAGEN
   const imageProps = useMemo(() => {
-    const props: any = {
+    const props: unknown = {
       alt,
       quality,
       onLoad: handleLoad,
@@ -119,7 +118,7 @@ const OptimizedImage = memo<OptimizedImageProps>(function OptimizedImage({
   ]);
 
   // 🛡️ GENERAR PLACEHOLDER BLUR AUTOMÁTICO
-  const generateBlurDataURL = useCallback((w: number, h: number) => {
+  const _generateBlurDataURL = useCallback((w: number, h: number) => {
     const canvas = document.createElement('canvas');
     canvas.width = w;
     canvas.height = h;
@@ -168,7 +167,7 @@ const OptimizedImage = memo<OptimizedImageProps>(function OptimizedImage({
       <Image
         {...imageProps}
         src={src}
-      />
+       alt="" />
     </>
   );
 });

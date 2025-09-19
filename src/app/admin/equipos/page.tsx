@@ -14,7 +14,7 @@ import { useTeams, Team } from "@/hooks/team/useTeams"
 
 export default function EquiposPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
-  const router = useRouter()
+  const _router = useRouter()
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -36,7 +36,7 @@ export default function EquiposPage() {
     }
 
     const handleError = (event: ErrorEvent) => {
-      console.error('Unhandled error:', event.error)
+      console.error('Unhandled __error: ', event.error)
       event.preventDefault()
     }
 
@@ -62,7 +62,7 @@ export default function EquiposPage() {
     setIsModalOpen(true)
   }
 
-  const closeTeamModal = () => {
+  const _closeTeamModal = () => {
     setIsModalOpen(false)
     setSelectedTeam(null)
   }
@@ -81,7 +81,7 @@ export default function EquiposPage() {
       } else {
         console.error('Error al eliminar equipo')
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Error al eliminar equipo:', error)
     }
   }
@@ -113,7 +113,7 @@ export default function EquiposPage() {
           <div className="flex items-center space-x-3">
             <Button 
               className="bg-[#FF5733] hover:bg-[#E64A2B] text-white"
-              onClick={() => router.push('/admin/equipos/nuevo-equipo')}
+              onClick={() => _router.push('/admin/equipos/nuevo-equipo')}
             >
               <Plus className="h-4 w-4 mr-2" />
               Nuevo Equipo
@@ -145,8 +145,7 @@ export default function EquiposPage() {
               placeholder="Buscar equipos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-[#131921] border-slate-700 text-white placeholder:text-slate-400"
-            />
+              className="pl-10 bg-[#131921] border-slate-700 text-white placeholder:text-slate-400" />
           </div>
           <Button variant="outline" className="border-slate-700 bg-[#131921] text-white hover:bg-slate-700">
             <Filter className="h-4 w-4 mr-2" />
@@ -159,10 +158,8 @@ export default function EquiposPage() {
           <div className="mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg">
             <p className="text-red-400">Error: {error}</p>
             <Button 
-              onClick={() => searchTeams()}
-              variant="outline" 
-              className="mt-2 border-red-700 text-red-400 hover:bg-red-900/20"
-            >
+              onClick={() =>searchTeams()}
+              variant="outline" className="mt-2 border-red-700 text-red-400 hover:bg-red-900/20">
               Reintentar
             </Button>
           </div>
@@ -190,9 +187,8 @@ export default function EquiposPage() {
                 </div>
                 {!searchTerm && (
                   <Button 
-                    onClick={() => router.push('/admin/equipos/nuevo-equipo')}
-                    className="bg-[#FF5733] hover:bg-[#E64A2B] text-white"
-                  >
+                    onClick={() =>_router.push('/admin/equipos/nuevo-equipo')}
+                    className="bg-[#FF5733] hover:bg-[#E64A2B] text-white">
                     <Plus className="h-4 w-4 mr-2" />
                     Crear primer equipo
                   </Button>
@@ -208,8 +204,7 @@ export default function EquiposPage() {
                     <div className="flex items-center space-x-3">
                       <Avatar className="h-10 w-10">
                         <AvatarImage src="/placeholder.svg" />
-                        <AvatarFallback>
-                          {team.team_name
+                        <AvatarFallback>{team.team_name
                             .split(" ")
                             .map((n) => n[0])
                             .join("")}
@@ -270,7 +265,7 @@ export default function EquiposPage() {
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8 text-slate-400 hover:text-[#FF5733]"
-                        onClick={() => router.push(`/admin/equipos/${team.id_team}/editar`)}
+                        onClick={() => _router.push(`/admin/equipos/${team.id_team}/editar`)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -302,15 +297,13 @@ export default function EquiposPage() {
             <div className="flex space-x-3">
               <Button 
                 variant="outline" 
-                onClick={() => setShowDeleteConfirm(null)}
-                className="flex-1 border-slate-700 text-slate-300 hover:bg-slate-700"
-              >
+                onClick={() =>setShowDeleteConfirm(null)}
+                className="flex-1 border-slate-700 text-slate-300 hover:bg-slate-700">
                 Cancelar
               </Button>
               <Button 
-                onClick={() => handleDeleteTeam(showDeleteConfirm)}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-              >
+                onClick={() =>handleDeleteTeam(showDeleteConfirm)}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white">
                 Eliminar
               </Button>
             </div>

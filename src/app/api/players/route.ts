@@ -27,7 +27,7 @@ import type { PlayerSearchResult, Player } from '@/types/player'
  * @example
  * GET /api/players?page=1&limit=20&filters[position_player]=CF
  */
-export async function GET(request: NextRequest): Promise<NextResponse<PlayerSearchResult | { error: string; code?: string; details?: any }>> {
+export async function GET(__request: NextRequest): Promise<NextResponse<PlayerSearchResult | { _error: string; code?: string; details?: any }>> {
   const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const startTime = Date.now();
   
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<PlayerSear
       
       const response = NextResponse.json(
         { 
-          error: 'Demasiadas solicitudes. Por favor, intenta nuevamente más tarde.',
+          __error: 'Demasiadas solicitudes. Por favor, intenta nuevamente más tarde.',
           code: 'RATE_LIMIT_EXCEEDED',
           details: {
             retryAfter: rateLimitResult.retryAfter,
@@ -72,17 +72,17 @@ export async function GET(request: NextRequest): Promise<NextResponse<PlayerSear
     try {
       const authResult = await auth();
       userId = authResult.userId;
-    } catch (error) {
+    } catch (_error) {
       authError = error instanceof Error ? error : new Error(String(error));
       console.error(`❌ [${requestId}] Authentication failed:`, {
-        error: authError.message,
+        __error: authError.message,
         stack: authError.stack,
         timestamp: new Date().toISOString()
       });
       
       return NextResponse.json(
         { 
-          error: 'Error de autenticación. Por favor, inicia sesión nuevamente.',
+          __error: 'Error de autenticación. Por favor, inicia sesión nuevamente.',
           code: 'AUTH_ERROR',
           details: process.env.NODE_ENV === 'development' ? authError.message : undefined
         }, 
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<PlayerSear
       console.warn(`⚠️ [${requestId}] Unauthorized access attempt`);
       return NextResponse.json(
         { 
-          error: 'No autorizado. Debes iniciar sesión para acceder a los jugadores.',
+          __error: 'No autorizado. Debes iniciar sesión para acceder a los jugadores.',
           code: 'UNAUTHORIZED'
         }, 
         { status: 401 }
@@ -124,7 +124,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<PlayerSear
       
       return NextResponse.json(
         { 
-          error: sanitizationResult.blocked 
+          __error: sanitizationResult.blocked 
             ? 'Solicitud bloqueada por razones de seguridad.'
             : `Parámetros inválidos: ${sanitizationResult.errors.join(', ')}`,
           code: errorCode,
@@ -147,7 +147,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<PlayerSear
         limit: validatedParams.limit,
         sortBy: validatedParams.sortBy,
         sortOrder: validatedParams.sortOrder,
-        filters: {
+        _filters: {
           player_name: validatedParams['filters[player_name]'],
           position_player: validatedParams['filters[position_player]'],
           team_name: validatedParams['filters[team_name]'],
@@ -161,14 +161,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<PlayerSear
       };
     } catch (transformError) {
       console.error(`❌ [${requestId}] Parameter transformation failed:`, {
-        error: transformError instanceof Error ? transformError.message : String(transformError),
+        __error: transformError instanceof Error ? transformError.message : String(transformError),
         validatedParams,
         userId
       });
       
       return NextResponse.json(
         { 
-          error: 'Error al procesar parámetros de búsqueda.',
+          __error: 'Error al procesar parámetros de búsqueda.',
           code: 'PARAM_TRANSFORM_ERROR'
         },
         { status: 400 }
@@ -182,7 +182,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<PlayerSear
         userId,
         searchOptions: {
           ...searchOptions,
-          filters: Object.keys(searchOptions.filters).length > 0 ? '...' : 'none'
+          __filters: Object.keys(searchOptions.filters).length > 0 ? '...' : 'none'
         }
       });
       
@@ -197,10 +197,10 @@ export async function GET(request: NextRequest): Promise<NextResponse<PlayerSear
       
     } catch (serviceError) {
       // Enhanced service error handling with classification
-      const error = serviceError instanceof Error ? serviceError : new Error(String(serviceError));
+      const _error = serviceError instanceof Error ? serviceError : new Error(String(serviceError));
       
       console.error(`❌ [${requestId}] Player service failed:`, {
-        error: error.message,
+        __error: error.message,
         stack: error.stack,
         searchOptions,
         userId,
@@ -211,7 +211,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<PlayerSear
       if (error.message.includes('timeout')) {
         return NextResponse.json(
           { 
-            error: 'La búsqueda está tardando más de lo esperado. Por favor, intenta nuevamente.',
+            __error: 'La búsqueda está tardando más de lo esperado. Por favor, intenta nuevamente.',
             code: 'SERVICE_TIMEOUT'
           },
           { status: 504 }
@@ -221,7 +221,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<PlayerSear
       if (error.message.includes('connection') || error.message.includes('database')) {
         return NextResponse.json(
           { 
-            error: 'Error de conexión con la base de datos. Por favor, intenta nuevamente.',
+            __error: 'Error de conexión con la base de datos. Por favor, intenta nuevamente.',
             code: 'DATABASE_ERROR'
           },
           { status: 503 }
@@ -231,7 +231,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<PlayerSear
       if (error.message.includes('cache')) {
         return NextResponse.json(
           { 
-            error: 'Error en el sistema de caché. Los datos se están obteniendo directamente.',
+            __error: 'Error en el sistema de caché. Los datos se están obteniendo directamente.',
             code: 'CACHE_ERROR'
           },
           { status: 200 } // Still return 200 as this might be recoverable
@@ -241,7 +241,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<PlayerSear
       // Generic service error
       return NextResponse.json(
         { 
-          error: 'Error interno del servicio. Por favor, inténtalo de nuevo más tarde.',
+          __error: 'Error interno del servicio. Por favor, inténtalo de nuevo más tarde.',
           code: 'SERVICE_ERROR',
           details: process.env.NODE_ENV === 'development' ? error.message : undefined
         },
@@ -281,26 +281,26 @@ export async function GET(request: NextRequest): Promise<NextResponse<PlayerSear
       
     } catch (responseError) {
       console.error(`❌ [${requestId}] Response formatting failed:`, {
-        error: responseError instanceof Error ? responseError.message : String(responseError),
+        __error: responseError instanceof Error ? responseError.message : String(responseError),
         result: typeof result === 'object' ? Object.keys(result) : typeof result,
         userId
       });
       
       return NextResponse.json(
         { 
-          error: 'Error al formatear la respuesta del servidor.',
+          __error: 'Error al formatear la respuesta del servidor.',
           code: 'RESPONSE_FORMAT_ERROR'
         },
         { status: 500 }
       );
     }
 
-  } catch (error) {
+  } catch (_error) {
     // 🚨 ULTIMATE ERROR BOUNDARY - CATCHES ANY UNHANDLED ERRORS
     const finalError = error instanceof Error ? error : new Error(String(error));
     
     console.error(`❌ [${requestId}] Unhandled error in GET /api/players:`, {
-      error: finalError.message,
+      __error: finalError.message,
       stack: finalError.stack,
       url: request.url,
       method: request.method,
@@ -321,7 +321,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<PlayerSear
     // Log error for monitoring/alerting systems
     console.error(`🚨 [${requestId}] CRITICAL ERROR - Players API failure:`, {
       userId,
-      error: finalError.message,
+      __error: finalError.message,
       requestId,
       timestamp: new Date().toISOString()
     });
@@ -329,7 +329,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<PlayerSear
     // Return safe, generic error response
     return NextResponse.json(
       { 
-        error: 'Error interno del servidor. Por favor, inténtalo de nuevo más tarde.',
+        __error: 'Error interno del servidor. Por favor, inténtalo de nuevo más tarde.',
         code: 'INTERNAL_SERVER_ERROR',
         requestId: requestId // Include request ID for support
       },
@@ -354,7 +354,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<PlayerSear
  * @param request - Request con datos del nuevo jugador
  * @returns El jugador creado con su ID asignado
  */
-export async function POST(request: NextRequest): Promise<NextResponse<Player | { error: string; code?: string; details?: any }>> {
+export async function POST(__request: NextRequest): Promise<NextResponse<Player | { _error: string; code?: string; details?: any }>> {
   const requestId = `post_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const startTime = Date.now();
   
@@ -371,7 +371,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Player | 
       
       const response = NextResponse.json(
         { 
-          error: 'Demasiadas solicitudes de creación. Por favor, intenta nuevamente más tarde.',
+          __error: 'Demasiadas solicitudes de creación. Por favor, intenta nuevamente más tarde.',
           code: 'RATE_LIMIT_EXCEEDED',
           details: {
             retryAfter: rateLimitResult.retryAfter,
@@ -394,7 +394,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Player | 
 
     // 🔐 ENHANCED AUTHENTICATION WITH DETAILED ERROR HANDLING
     let userId: string | null = null;
-    let sessionClaims: any = null;
+    let sessionClaims: unknown = null;
     
     try {
       const authResult = await auth();
@@ -402,13 +402,13 @@ export async function POST(request: NextRequest): Promise<NextResponse<Player | 
       sessionClaims = authResult.sessionClaims;
     } catch (authError) {
       console.error(`❌ [${requestId}] Authentication failed in POST:`, {
-        error: authError instanceof Error ? authError.message : String(authError),
+        __error: authError instanceof Error ? authError.message : String(authError),
         timestamp: new Date().toISOString()
       });
       
       return NextResponse.json(
         { 
-          error: 'Error de autenticación. Por favor, inicia sesión nuevamente.',
+          __error: 'Error de autenticación. Por favor, inicia sesión nuevamente.',
           code: 'AUTH_ERROR'
         }, 
         { status: 401 }
@@ -419,7 +419,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Player | 
       console.warn(`⚠️ [${requestId}] Unauthorized player creation attempt`);
       return NextResponse.json(
         { 
-          error: 'No autorizado. Debes iniciar sesión para crear jugadores.',
+          __error: 'No autorizado. Debes iniciar sesión para crear jugadores.',
           code: 'UNAUTHORIZED'
         }, 
         { status: 401 }
@@ -440,7 +440,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Player | 
         
         return NextResponse.json(
           { 
-            error: 'Acceso denegado. Solo los administradores pueden crear jugadores.',
+            __error: 'Acceso denegado. Solo los administradores pueden crear jugadores.',
             code: 'INSUFFICIENT_PERMISSIONS'
           },
           { status: 403 }
@@ -448,14 +448,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<Player | 
       }
     } catch (roleError) {
       console.error(`❌ [${requestId}] Role verification failed:`, {
-        error: roleError instanceof Error ? roleError.message : String(roleError),
+        __error: roleError instanceof Error ? roleError.message : String(roleError),
         userId,
         sessionClaims
       });
       
       return NextResponse.json(
         { 
-          error: 'Error al verificar permisos de usuario.',
+          __error: 'Error al verificar permisos de usuario.',
           code: 'ROLE_VERIFICATION_ERROR'
         },
         { status: 403 }
@@ -485,7 +485,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Player | 
       
       return NextResponse.json(
         { 
-          error: sanitizationResult.blocked 
+          __error: sanitizationResult.blocked 
             ? 'Solicitud bloqueada por razones de seguridad.'
             : `Datos inválidos: ${sanitizationResult.errors.join(', ')}`,
           code: errorCode,
@@ -503,7 +503,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Player | 
     // ➕ ENHANCED PLAYER CREATION WITH COMPREHENSIVE ERROR HANDLING
     let newPlayer: Player;
     try {
-      console.log(`🔄 [${requestId}] Creating new player:`, {
+      console.log(`🔄 [${requestId}] Creating new __player:`, {
         userId,
         playerName: validatedData.player_name,
         userRole
@@ -512,7 +512,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Player | 
       newPlayer = await PlayerService.createPlayer(validatedData);
       
       console.log(`✅ [${requestId}] Player created successfully:`, {
-        playerId: newPlayer.id_player,
+        _playerId: newPlayer.id_player,
         playerName: newPlayer.player_name,
         createdBy: userId,
         duration: Date.now() - startTime,
@@ -521,10 +521,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<Player | 
       
     } catch (serviceError) {
       // Enhanced service error handling with classification
-      const error = serviceError instanceof Error ? serviceError : new Error(String(serviceError));
+      const _error = serviceError instanceof Error ? serviceError : new Error(String(serviceError));
       
       console.error(`❌ [${requestId}] Player creation service failed:`, {
-        error: error.message,
+        __error: error.message,
         stack: error.stack,
         validatedData: process.env.NODE_ENV === 'development' ? validatedData : '[hidden]',
         userId,
@@ -535,7 +535,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Player | 
       if (error.message.includes('Unique constraint') || error.message.includes('duplicate')) {
         return NextResponse.json(
           { 
-            error: 'Ya existe un jugador con ese nombre. Por favor, usa un nombre diferente.',
+            __error: 'Ya existe un jugador con ese nombre. Por favor, usa un nombre diferente.',
             code: 'DUPLICATE_PLAYER'
           },
           { status: 409 }
@@ -545,7 +545,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Player | 
       if (error.message.includes('Foreign key constraint')) {
         return NextResponse.json(
           { 
-            error: 'Error de referencia de datos. Verifica que todos los datos relacionados existan.',
+            __error: 'Error de referencia de datos. Verifica que todos los datos relacionados existan.',
             code: 'FOREIGN_KEY_ERROR'
           },
           { status: 400 }
@@ -555,7 +555,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Player | 
       if (error.message.includes('timeout')) {
         return NextResponse.json(
           { 
-            error: 'La creación del jugador está tardando más de lo esperado. Por favor, intenta nuevamente.',
+            __error: 'La creación del jugador está tardando más de lo esperado. Por favor, intenta nuevamente.',
             code: 'SERVICE_TIMEOUT'
           },
           { status: 504 }
@@ -565,7 +565,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Player | 
       if (error.message.includes('connection') || error.message.includes('database')) {
         return NextResponse.json(
           { 
-            error: 'Error de conexión con la base de datos. Por favor, intenta nuevamente.',
+            __error: 'Error de conexión con la base de datos. Por favor, intenta nuevamente.',
             code: 'DATABASE_ERROR'
           },
           { status: 503 }
@@ -575,7 +575,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Player | 
       // Generic service error
       return NextResponse.json(
         { 
-          error: 'Error interno del servicio al crear el jugador. Por favor, inténtalo de nuevo más tarde.',
+          __error: 'Error interno del servicio al crear el jugador. Por favor, inténtalo de nuevo más tarde.',
           code: 'SERVICE_ERROR',
           details: process.env.NODE_ENV === 'development' ? error.message : undefined
         },
@@ -601,26 +601,26 @@ export async function POST(request: NextRequest): Promise<NextResponse<Player | 
       
     } catch (responseError) {
       console.error(`❌ [${requestId}] Response formatting failed for player creation:`, {
-        error: responseError instanceof Error ? responseError.message : String(responseError),
+        __error: responseError instanceof Error ? responseError.message : String(responseError),
         newPlayer: typeof newPlayer === 'object' ? Object.keys(newPlayer) : typeof newPlayer,
         userId
       });
       
       return NextResponse.json(
         { 
-          error: 'Jugador creado pero error al formatear la respuesta.',
+          __error: 'Jugador creado pero error al formatear la respuesta.',
           code: 'RESPONSE_FORMAT_ERROR'
         },
         { status: 201 } // Still 201 because player was created
       );
     }
 
-  } catch (error) {
+  } catch (_error) {
     // 🚨 ULTIMATE ERROR BOUNDARY FOR POST
     const finalError = error instanceof Error ? error : new Error(String(error));
     
     console.error(`❌ [${requestId}] Unhandled error in POST /api/players:`, {
-      error: finalError.message,
+      __error: finalError.message,
       stack: finalError.stack,
       url: request.url,
       method: request.method,
@@ -640,7 +640,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Player | 
     // Log critical error
     console.error(`🚨 [${requestId}] CRITICAL ERROR - Player creation API failure:`, {
       userId,
-      error: finalError.message,
+      __error: finalError.message,
       requestId,
       timestamp: new Date().toISOString()
     });
@@ -648,7 +648,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Player | 
     // Return safe, generic error response
     return NextResponse.json(
       { 
-        error: 'Error interno del servidor. Por favor, inténtalo de nuevo más tarde.',
+        __error: 'Error interno del servidor. Por favor, inténtalo de nuevo más tarde.',
         code: 'INTERNAL_SERVER_ERROR',
         requestId: requestId
       },

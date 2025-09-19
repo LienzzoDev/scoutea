@@ -26,7 +26,7 @@ interface UseEntityListReturn {
   refreshList: () => Promise<void>
 }
 
-export function useEntityList(config: UseEntityListConfig): UseEntityListReturn {
+export function useEntityList(_config: UseEntityListConfig): UseEntityListReturn {
   const { user, isLoaded } = useUser()
   const [entityList, setEntityList] = useState<EntityListItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -69,7 +69,7 @@ export function useEntityList(config: UseEntityListConfig): UseEntityListReturn 
           if (text) {
             errorData = JSON.parse(text)
           }
-        } catch (parseError) {
+        } catch (_parseError) {
           // Silently handle parse errors
         }
         
@@ -144,7 +144,7 @@ export function useEntityList(config: UseEntityListConfig): UseEntityListReturn 
           if (text) {
             errorData = JSON.parse(text)
           }
-        } catch (parseError) {
+        } catch (_parseError) {
           // Silently handle parse errors
         }
         
@@ -213,7 +213,7 @@ export function useEntityList(config: UseEntityListConfig): UseEntityListReturn 
           if (text) {
             errorData = JSON.parse(text)
           }
-        } catch (parseError) {
+        } catch (_parseError) {
           // Silently handle parse errors
         }
         

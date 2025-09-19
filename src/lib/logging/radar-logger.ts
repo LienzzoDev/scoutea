@@ -38,7 +38,7 @@ export interface CacheOperationLogContext {
 
 export class RadarLogger {
   private static instance: RadarLogger;
-  private logBuffer: any[] = [];
+  private logBuffer: unknown[] = [];
   private bufferSize = 100;
   private flushInterval?: NodeJS.Timeout;
 
@@ -56,7 +56,7 @@ export class RadarLogger {
   /**
    * Log radar calculation events
    */
-  logRadarCalculation(context: RadarLogContext): void {
+  logRadarCalculation(__context: RadarLogContext): void {
     const logEntry = {
       timestamp: new Date().toISOString(),
       type: 'radar_calculation',
@@ -68,7 +68,7 @@ export class RadarLogger {
 
     if (context.success) {
       logger.info('Radar calculation completed', {
-        playerId: context.playerId,
+        _playerId: context.playerId,
         operation: context.operation,
         category: context.category,
         duration: context.duration,
@@ -76,10 +76,10 @@ export class RadarLogger {
       });
     } else {
       logger.error('Radar calculation failed', {
-        playerId: context.playerId,
+        _playerId: context.playerId,
         operation: context.operation,
         category: context.category,
-        error: context.error,
+        __error: context.error,
         metadata: context.metadata
       });
     }
@@ -88,7 +88,7 @@ export class RadarLogger {
   /**
    * Log data population events
    */
-  logDataPopulation(context: DataPopulationLogContext): void {
+  logDataPopulation(__context: DataPopulationLogContext): void {
     const logEntry = {
       timestamp: new Date().toISOString(),
       type: 'data_population',
@@ -100,7 +100,7 @@ export class RadarLogger {
 
     if (context.success) {
       logger.info('Data population completed', {
-        playerId: context.playerId,
+        _playerId: context.playerId,
         tableName: context.tableName,
         fieldsPopulated: context.fieldsPopulated,
         populationMethod: context.populationMethod,
@@ -108,10 +108,10 @@ export class RadarLogger {
       });
     } else {
       logger.error('Data population failed', {
-        playerId: context.playerId,
+        _playerId: context.playerId,
         tableName: context.tableName,
         populationMethod: context.populationMethod,
-        error: context.error
+        __error: context.error
       });
     }
   }
@@ -119,7 +119,7 @@ export class RadarLogger {
   /**
    * Log cache operations
    */
-  logCacheOperation(context: CacheOperationLogContext): void {
+  logCacheOperation(__context: CacheOperationLogContext): void {
     const logEntry = {
       timestamp: new Date().toISOString(),
       type: 'cache_operation',
@@ -136,7 +136,7 @@ export class RadarLogger {
       operation: context.operation,
       cacheKey: context.cacheKey,
       duration: context.duration,
-      error: context.error,
+      __error: context.error,
       metadata: context.metadata
     });
   }
@@ -174,7 +174,7 @@ export class RadarLogger {
    * Log comparison group operations
    */
   logComparisonGroup(
-    filters: Record<string, any>,
+    __filters: Record<string, any>,
     groupSize: number,
     duration: number,
     success: boolean,
@@ -310,7 +310,7 @@ export class RadarLogger {
   /**
    * Get recent logs for debugging
    */
-  getRecentLogs(count: number = 50, type?: string): any[] {
+  getRecentLogs(count: number = 50, type?: string): unknown[] {
     let logs = [...this.logBuffer];
     
     if (type) {
@@ -330,13 +330,13 @@ export class RadarLogger {
     logsByType: Record<string, number>;
     logsByLevel: Record<string, number>;
     errorRate: number;
-    recentErrors: any[];
+    recentErrors: unknown[];
   } {
     const totalLogs = this.logBuffer.length;
     const logsByType: Record<string, number> = {};
     const logsByLevel: Record<string, number> = {};
     let errorCount = 0;
-    const recentErrors: any[] = [];
+    const recentErrors: unknown[] = [];
 
     for (const log of this.logBuffer) {
       // Count by type
@@ -389,7 +389,7 @@ export class RadarLogger {
   /**
    * Add log entry to buffer
    */
-  private addToBuffer(logEntry: any): void {
+  private addToBuffer(logEntry: unknown): void {
     this.logBuffer.push(logEntry);
     
     // Keep buffer size manageable

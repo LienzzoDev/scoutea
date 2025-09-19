@@ -1,11 +1,9 @@
 "use client";
 
-import { Play } from "lucide-react";
-
-import type { Player } from "@/types/player";
+import { Play } from "lucide-react";import type { Player } from "@/types/player";
 
 interface PlayerReportsProps {
-  player: Player;
+  _player: Player;
 }
 
 export default function PlayerReports({ player }: PlayerReportsProps) {
@@ -46,11 +44,7 @@ export default function PlayerReports({ player }: PlayerReportsProps) {
               ))}
             </div>
           </div>
-          <img
-            src="/player-detail-placeholder.svg"
-            alt="Player"
-            className="w-full h-32 object-cover rounded-lg mb-3"
-          />
+          <img src="/player-detail-placeholder.svg" alt="Player" className="w-full h-32 object-cover rounded-lg mb-3" />
           <p className="text-sm text-[#6d6d6d] mb-3">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit.
           </p>
@@ -103,11 +97,7 @@ export default function PlayerReports({ player }: PlayerReportsProps) {
             </div>
           </div>
           <div className="relative mb-3">
-            <img
-              src="/player-detail-placeholder.svg"
-              alt="Player"
-              className="w-full h-32 object-cover rounded-lg"
-            />
+            <img src="/player-detail-placeholder.svg" alt="Player" className="w-full h-32 object-cover rounded-lg" />
             <button className="absolute bottom-2 right-2 bg-[#8c1a10] text-white px-3 py-1 rounded-lg flex items-center gap-1">
               <Play className="w-3 h-3" />
               <span className="text-xs">Play</span>
@@ -137,11 +127,7 @@ export default function PlayerReports({ player }: PlayerReportsProps) {
             </div>
           </div>
           <div className="relative mb-3">
-            <img
-              src="/player-detail-placeholder.svg"
-              alt="Player"
-              className="w-full h-32 object-cover rounded-lg"
-            />
+            <img src="/player-detail-placeholder.svg" alt="Player" className="w-full h-32 object-cover rounded-lg" />
           </div>
           <p className="text-sm text-[#6d6d6d]">Lorem ipsum dolor sit amet...</p>
         </div>

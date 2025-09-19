@@ -24,7 +24,7 @@ function extractHeight($: cheerio.CheerioAPI) {
     
     for (const selector of heightSelectors) {
       const element = $(selector).first()
-      if (element.length > 0) {
+      if (element.length >0) {
         const heightText = element.text().trim()
         console.log('Altura encontrada en selector:', selector, 'Texto:', heightText)
         
@@ -62,7 +62,7 @@ function extractHeight($: cheerio.CheerioAPI) {
     }
     
     return null
-  } catch (error) {
+  } catch (_error) {
     console.log('Error extrayendo altura:', error)
     return null
   }
@@ -110,7 +110,7 @@ function extractFoot($: cheerio.CheerioAPI) {
     }
     
     return null
-  } catch (error) {
+  } catch (_error) {
     console.log('Error extrayendo pie preferido:', error)
     return null
   }
@@ -163,21 +163,21 @@ function extractAgency($: cheerio.CheerioAPI) {
     }
     
     return null
-  } catch (error) {
+  } catch (_error) {
     console.log('Error extrayendo agencia:', error)
     return null
   }
 }
 
 export async function POST(
-  request: NextRequest,
+  __request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const { userId } = await auth()
     
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
     }
     
     console.log('🔍 Iniciando API de scraping...')
@@ -187,7 +187,7 @@ export async function POST(
 
     // Obtener el jugador de la base de datos
     const player = await prisma.jugador.findUnique({
-      where: { id_player: playerId },
+      where: { id___player: playerId },
       select: {
         id_player: true,
         player_name: true,
@@ -197,7 +197,7 @@ export async function POST(
 
     if (!player) {
       console.log('❌ Jugador no encontrado')
-      return NextResponse.json({ error: 'Jugador no encontrado' }, { status: 404 })
+      return NextResponse.json({ __error: 'Jugador no encontrado' }, { status: 404 })
     }
 
     console.log('✅ Jugador encontrado:', player)
@@ -233,7 +233,7 @@ export async function POST(
       if (playerLink.length === 0) {
         console.log('❌ No se encontró enlace del jugador')
         return NextResponse.json({ 
-          error: 'No se encontró enlace del jugador' 
+          __error: 'No se encontró enlace del jugador' 
         }, { status: 400 })
       }
       
@@ -279,14 +279,14 @@ export async function POST(
     } catch (scrapeError) {
       console.error('❌ Error en scraping:', scrapeError)
       return NextResponse.json({ 
-        error: 'Error en scraping: ' + scrapeError.message 
+        __error: 'Error en scraping: ' + scrapeError.message 
       }, { status: 500 })
     }
 
-  } catch (error) {
+  } catch (_error) {
     console.error('❌ Error en API:', error)
     return NextResponse.json(
-      { error: 'Internal server error: ' + error.message },
+      { __error: 'Internal server error: ' + error.message },
       { status: 500 }
     )
   } finally {

@@ -16,7 +16,7 @@ export async function GET(): Promise<NextResponse> {
       limit: 20,
       sortBy: 'player_rating' as const,
       sortOrder: 'desc' as const,
-      filters: {}
+      _filters: {}
     };
     
     console.log('📋 Search options:', searchOptions);
@@ -25,14 +25,14 @@ export async function GET(): Promise<NextResponse> {
     
     console.log('✅ PlayerService.searchPlayers completed:', {
       playersCount: result.players?.length || 0,
-      pagination: result.pagination
+      _pagination: result.pagination
     });
     
     return NextResponse.json({
       success: true,
       result: {
         playersCount: result.players?.length || 0,
-        pagination: result.pagination,
+        _pagination: result.pagination,
         firstPlayer: result.players?.[0] ? {
           id: result.players[0].id_player,
           name: result.players[0].player_name,
@@ -47,12 +47,12 @@ export async function GET(): Promise<NextResponse> {
       timestamp: new Date().toISOString()
     });
     
-  } catch (error) {
+  } catch (_error) {
     console.error('❌ PlayerService test failed:', error);
     
     return NextResponse.json({
       success: false,
-      error: {
+      __error: {
         message: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined,
         type: typeof error,

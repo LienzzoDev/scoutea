@@ -3,7 +3,7 @@ import type { Player } from '@/types/player'
 import EntityAvatar from './entity-avatar'
 
 interface PlayerAvatarProps {
-  player: Player
+  _player: Player
   size?: 'sm' | 'md' | 'lg' | 'xl'
   showFlag?: boolean
   showBadge?: boolean

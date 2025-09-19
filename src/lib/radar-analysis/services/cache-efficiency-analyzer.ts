@@ -50,8 +50,8 @@ export interface ConsistencyReport {
 
 export interface DataInconsistency {
   cacheKey: string;
-  cachedData: any;
-  freshData: any;
+  cachedData: unknown;
+  freshData: unknown;
   difference: string;
   severity: 'low' | 'medium' | 'high';
 }
@@ -89,9 +89,9 @@ export class CacheEfficiencyAnalyzer {
    * Requirements: 8.1, 8.5
    */
   async analyzeCacheEfficiency(
-    playerId: string,
+    _playerId: string,
     testFilters: RadarFilters[],
-    context: AnalysisContext
+    __context: AnalysisContext
   ): Promise<CacheEfficiencyAnalysisResult> {
     radarAnalysisLogger.logAnalysisStart(context);
     
@@ -173,7 +173,7 @@ export class CacheEfficiencyAnalyzer {
         recommendations
       };
 
-    } catch (error) {
+    } catch (_error) {
       const issue = this.createCacheIssue(
         'analysis_error',
         'critical',
@@ -203,9 +203,9 @@ export class CacheEfficiencyAnalyzer {
    * Measures cache hit rate and response times for different operations
    */
   private async measureCacheMetrics(
-    playerId: string,
+    _playerId: string,
     testFilters: RadarFilters[],
-    context: AnalysisContext
+    __context: AnalysisContext
   ): Promise<CacheMetrics> {
     let totalRequests = 0;
     let cacheHits = 0;
@@ -274,9 +274,9 @@ export class CacheEfficiencyAnalyzer {
    * Tests cache consistency by comparing cached data with fresh data
    */
   private async testCacheConsistency(
-    playerId: string,
+    _playerId: string,
     testFilters: RadarFilters[],
-    context: AnalysisContext
+    __context: AnalysisContext
   ): Promise<ConsistencyReport> {
     let totalComparisons = 0;
     let consistentResults = 0;
@@ -341,9 +341,9 @@ export class CacheEfficiencyAnalyzer {
    * Compares performance with and without cache
    */
   private async comparePerformance(
-    playerId: string,
+    _playerId: string,
     testFilters: RadarFilters[],
-    context: AnalysisContext
+    __context: AnalysisContext
   ): Promise<PerformanceComparison> {
     const cacheEnabledMetrics = await this.measurePerformanceWithCache(playerId, testFilters);
     const cacheDisabledMetrics = await this.measurePerformanceWithoutCache(playerId, testFilters);
@@ -368,7 +368,7 @@ export class CacheEfficiencyAnalyzer {
    * Measures performance with cache enabled
    */
   private async measurePerformanceWithCache(
-    playerId: string,
+    _playerId: string,
     testFilters: RadarFilters[]
   ): Promise<PerformanceMetrics> {
     const responseTimes: number[] = [];
@@ -402,7 +402,7 @@ export class CacheEfficiencyAnalyzer {
    * Measures performance without cache (fresh data only)
    */
   private async measurePerformanceWithoutCache(
-    playerId: string,
+    _playerId: string,
     testFilters: RadarFilters[]
   ): Promise<PerformanceMetrics> {
     const responseTimes: number[] = [];
@@ -453,12 +453,12 @@ export class CacheEfficiencyAnalyzer {
     };
   }
 
-  private areArraysEqual(arr1: any[], arr2: any[]): boolean {
+  private areArraysEqual(arr1: unknown[], arr2: unknown[]): boolean {
     if (arr1.length !== arr2.length) return false;
     return arr1.every((item, index) => item === arr2[index]);
   }
 
-  private areRadarDataEqual(cached: any[], fresh: any[]): boolean {
+  private areRadarDataEqual(cached: unknown[], fresh: unknown[]): boolean {
     if (cached.length !== fresh.length) return false;
     
     return cached.every((cachedItem, index) => {
@@ -469,7 +469,7 @@ export class CacheEfficiencyAnalyzer {
     });
   }
 
-  private calculateInconsistencySeverity(cached: any, fresh: any): 'low' | 'medium' | 'high' {
+  private calculateInconsistencySeverity(cached: unknown, fresh: unknown): 'low' | 'medium' | 'high' {
     if (Array.isArray(cached) && Array.isArray(fresh)) {
       const sizeDifference = Math.abs(cached.length - fresh.length);
       if (sizeDifference === 0) return 'low';
@@ -479,7 +479,7 @@ export class CacheEfficiencyAnalyzer {
     return 'medium';
   }
 
-  private generateCacheKey(type: string, data: any): string {
+  private generateCacheKey(type: string, data: unknown): string {
     return `${type}_${JSON.stringify(data)}`;
   }
 
@@ -504,7 +504,7 @@ export class CacheEfficiencyAnalyzer {
     id: string,
     severity: AnalysisSeverity,
     description: string,
-    context: AnalysisContext
+    __context: AnalysisContext
   ): AnalysisIssue {
     return {
       id: `${context.analysisId}_${id}`,

@@ -15,11 +15,11 @@ export class ChartService {
    * Obtiene estadísticas detalladas de un jugador por período y categoría
    */
   static async getPlayerStats(
-    playerId: string, 
-    period: string = 'current', 
+    _playerId: string, 
+    _period: string = 'current', 
     category?: string
   ): Promise<PlayerStats[]> {
-    const whereClause: any = {
+    const whereClause: unknown = {
       playerId,
       period
     }
@@ -37,8 +37,8 @@ export class ChartService {
     })
 
     return stats.map(stat => ({
-      playerId: stat.playerId,
-      period: stat.period as 'current' | '6months' | '12months',
+      _playerId: stat.playerId,
+      _period: stat.period as 'current' | '6months' | '12months',
       category: stat.category as 'general' | 'goalkeeping' | 'defending' | 'passing' | 'finishing',
       metrics: {
         total: stat.totalValue || 0,
@@ -54,8 +54,8 @@ export class ChartService {
    * Obtiene estadísticas completas de un jugador organizadas por categoría
    */
   static async getAllPlayerStats(
-    playerId: string, 
-    period: string = 'current'
+    _playerId: string, 
+    _period: string = 'current'
   ): Promise<AllPlayerStats> {
     const stats = await this.getPlayerStats(playerId, period)
     
@@ -127,9 +127,9 @@ export class ChartService {
    * Obtiene datos de radar para un jugador específico
    */
   static async getRadarData(
-    playerId: string, 
+    _playerId: string, 
     position: string, 
-    period: string = 'current'
+    _period: string = 'current'
   ): Promise<RadarData> {
     const radarMetrics = await prisma.radarMetrics.findMany({
       where: {
@@ -160,10 +160,10 @@ export class ChartService {
    */
   static async getBeeswarmData(
     metric: string, 
-    filters: ChartFilters = {},
+    __filters: ChartFilters = {},
     selectedPlayerId?: string
   ): Promise<BeeswarmData> {
-    const whereClause: any = {
+    const whereClause: unknown = {
       metric
     }
 
@@ -208,7 +208,7 @@ export class ChartService {
     return {
       metric,
       players: beeswarmData.map(data => ({
-        playerId: data.playerId,
+        _playerId: data.playerId,
         playerName: data.playerName,
         value: data.value,
         position: data.position,
@@ -232,11 +232,11 @@ export class ChartService {
    * Obtiene datos de paleta para un jugador específico
    */
   static async getLollipopData(
-    playerId: string, 
-    period: string = 'current',
+    _playerId: string, 
+    _period: string = 'current',
     position?: string
   ): Promise<LollipopData> {
-    const whereClause: any = {
+    const whereClause: unknown = {
       playerId,
       period
     }
@@ -284,7 +284,7 @@ export class ChartService {
    */
   static async getAvailablePositions(): Promise<string[]> {
     const positions = await prisma.jugador.findMany({
-      select: { position_player: true },
+      select: { position___player: true },
       distinct: ['position_player'],
       where: {
         position_player: {

@@ -370,7 +370,7 @@ export enum GradoAtributo {
 }
 
 // Función helper para convertir índice FMI a grado
-export function fmiToGrade(fmi: number): GradoAtributo {
+export function fmiToGrade(__fm__i: number): GradoAtributo {
   if (fmi >= 90) return GradoAtributo.A_PLUS;
   if (fmi >= 80) return GradoAtributo.A;
   if (fmi >= 70) return GradoAtributo.B;
@@ -381,7 +381,7 @@ export function fmiToGrade(fmi: number): GradoAtributo {
 }
 
 // Función helper para convertir índice FMI a nivel
-export function fmiToLevel(fmi: number): NivelAtributo {
+export function fmiToLevel(__fm__i: number): NivelAtributo {
   if (fmi >= 80) return NivelAtributo.MUY_ALTO;
   if (fmi >= 70) return NivelAtributo.ALTO;
   if (fmi >= 60) return NivelAtributo.MEDIO;

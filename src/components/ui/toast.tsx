@@ -23,7 +23,7 @@ interface ToastContextType {
   toasts: ToastMessage[]
   addToast: (toast: Omit<ToastMessage, 'id'>) => void
   removeToast: (id: string) => void
-  showError: (error: ClientErrorState | string, duration?: number) => void
+  showError: (_error: ClientErrorState | string, duration?: number) => void
   showSuccess: (message: string, duration?: number) => void
   showWarning: (message: string, duration?: number) => void
   showInfo: (message: string, duration?: number) => void
@@ -52,8 +52,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts(prev => prev.filter(toast => toast.id !== id))
   }, [])
   
-  const showError = useCallback((error: ClientErrorState | string, duration?: number) => {
-    const message = typeof error === 'string' 
+  const showError = useCallback((__error: ClientErrorState | string, duration?: number) => {
+    const message = typeof _error === 'string' 
       ? error 
       : formatErrorMessage(error)
     
@@ -250,7 +250,7 @@ export function useErrorToast() {
     // Suscribirse a errores globales del ClientErrorHandler
     const { ClientErrorHandler } = require('@/lib/errors/client-errors')
     
-    const unsubscribe = ClientErrorHandler.subscribe((error: ClientErrorState) => {
+    const unsubscribe = ClientErrorHandler.subscribe((__error: ClientErrorState) => {
       if (shouldShowErrorToUser(error)) {
         showError(error)
       }

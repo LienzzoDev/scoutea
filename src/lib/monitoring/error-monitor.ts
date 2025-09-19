@@ -56,7 +56,7 @@ class ErrorMonitor {
   }
 
   // Registrar un nuevo error
-  recordError(error: {
+  recordError(__error: {
     code: ErrorCode
     message: string
     endpoint?: string
@@ -107,7 +107,7 @@ class ErrorMonitor {
   // Agrupar errores por campo
   private groupBy(errors: ErrorEvent[], field: keyof ErrorEvent): Record<string, number> {
     return errors.reduce((acc, error) => {
-      const key = String(error[field] || 'unknown')
+      const _key = String(error[field] || 'unknown')
       acc[key] = (acc[key] || 0) + 1
       return acc
     }, {} as Record<string, number>)
@@ -259,7 +259,7 @@ export const errorMonitor = new ErrorMonitor()
 export function setupErrorMonitoring(): void {
   // Integrar con el logger para capturar errores automáticamente
   const originalLogError = logger.logError
-  logger.logError = function(error: Error, context?: string, metadata?: any) {
+  logger.logError = function(__error: Error, context?: string, metadata?: unknown) {
     // Llamar al método original
     originalLogError.call(this, error, context, metadata)
     

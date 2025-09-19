@@ -3,7 +3,7 @@
 import type { Player } from "@/types/player";
 
 interface PlayerFeaturesProps {
-  player: Player;
+  _player: Player;
   activeFeaturesTab: string;
   onFeaturesTabChange: (tab: string) => void;
 }
@@ -23,7 +23,7 @@ export default function PlayerFeatures({
               ? "border-b-2 border-[#8c1a10] text-[#2e3138]"
               : "text-[#6d6d6d]"
           }`}
-          onClick={() => onFeaturesTabChange("on-the-pitch")}
+          onClick={() =>onFeaturesTabChange("on-the-pitch")}
         >
           On the Pitch
         </button>
@@ -33,7 +33,7 @@ export default function PlayerFeatures({
               ? "border-b-2 border-[#8c1a10] text-[#2e3138]"
               : "text-[#6d6d6d]"
           }`}
-          onClick={() => onFeaturesTabChange("player-role")}
+          onClick={() =>onFeaturesTabChange("player-role")}
         >
           Player Role
         </button>
@@ -43,7 +43,7 @@ export default function PlayerFeatures({
               ? "border-b-2 border-[#8c1a10] text-[#2e3138]"
               : "text-[#6d6d6d]"
           }`}
-          onClick={() => onFeaturesTabChange("performance")}
+          onClick={() =>onFeaturesTabChange("performance")}
         >
           Performance
         </button>
@@ -53,13 +53,11 @@ export default function PlayerFeatures({
               ? "border-b-2 border-[#8c1a10] text-[#2e3138]"
               : "text-[#6d6d6d]"
           }`}
-          onClick={() => onFeaturesTabChange("mode")}
+          onClick={() =>onFeaturesTabChange("mode")}
         >
           Mode
         </button>
-      </div>
-
-      {/* Features Content */}
+      </div>{/* Features Content */}
       {activeFeaturesTab === "on-the-pitch" && (
         <div className="space-y-8">
           {/* On the Pitch */}
@@ -444,8 +442,7 @@ export default function PlayerFeatures({
                         >
                           Group {i + 1}
                         </text>
-                      </g>
-                    );
+                      </g>);
                   })}
 
                   {/* Data segments */}
@@ -457,9 +454,9 @@ export default function PlayerFeatures({
                     { angle: 144, length: 70, color: "#8b5cf6" },
                     { angle: 180, length: 50, color: "#dc2626" },
                     { angle: 216, length: 45, color: "#ea580c" },
-                    { angle: 252, length: 65, color: "#22c55e" },
-                    { angle: 288, length: 35, color: "#3b82f6" },
-                    { angle: 324, length: 55, color: "#8b5cf6" },
+                    { angle: 252, length: 65, color: "#22c55e"},
+                    { angle: 288, length: 35, color: "#3b82f6"},
+                    { angle: 324, length: 55, color: "#8b5cf6"},
                   ].map((segment, i) => {
                     const x =
                       100 +
@@ -590,8 +587,7 @@ export default function PlayerFeatures({
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </div>)}
 
       {activeFeaturesTab === "player-role" && (
         <div className="space-y-8">
@@ -602,8 +598,7 @@ export default function PlayerFeatures({
             </div>
             <p className="text-[#6d6d6d]">Player role content coming soon...</p>
           </div>
-        </div>
-      )}
+        </div>)}
 
       {activeFeaturesTab === "performance" && (
         <div className="space-y-8">
@@ -614,8 +609,7 @@ export default function PlayerFeatures({
             </div>
             <p className="text-[#6d6d6d]">Performance content coming soon...</p>
           </div>
-        </div>
-      )}
+        </div>)}
 
       {activeFeaturesTab === "mode" && (
         <div className="space-y-8">

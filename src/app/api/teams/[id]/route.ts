@@ -12,7 +12,7 @@ import {
 
 // GET /api/teams/[id] - Obtener un equipo por ID
 export async function GET(
-  request: NextRequest,
+  __request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -33,14 +33,14 @@ export async function GET(
 
     return NextResponse.json(team)
 
-  } catch (error) {
+  } catch (_error) {
     return handleAPIError(error, extractErrorContext(request))
   }
 }
 
 // PUT /api/teams/[id] - Actualizar un equipo
 export async function PUT(
-  request: NextRequest,
+  __request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -51,7 +51,7 @@ export async function PUT(
     requireAuth(userId, context)
     requireParam(params.id, 'id', context)
 
-    const body = await request.json()
+    const _body = await request.json()
 
     const team = await prisma.equipo.update({
       where: { id_team: params.id },
@@ -80,14 +80,14 @@ export async function PUT(
     console.log('✅ Equipo actualizado exitosamente:', team.team_name)
     return NextResponse.json(team)
 
-  } catch (error) {
+  } catch (_error) {
     return handleAPIError(error, extractErrorContext(request))
   }
 }
 
 // DELETE /api/teams/[id] - Eliminar un equipo
 export async function DELETE(
-  request: NextRequest,
+  __request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -105,7 +105,7 @@ export async function DELETE(
     console.log('✅ Equipo eliminado exitosamente:', params.id)
     return NextResponse.json({ success: true })
 
-  } catch (error) {
+  } catch (_error) {
     return handleAPIError(error, extractErrorContext(request))
   }
 }

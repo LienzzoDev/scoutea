@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
 export async function GET(
-  request: NextRequest,
+  __request: NextRequest,
   { params }: { params: { id: string } }
 ): Promise<NextResponse> {
   try {
@@ -22,7 +22,7 @@ export async function GET(
     } catch (dbError) {
       console.error('❌ Database connection failed:', dbError);
       return NextResponse.json({
-        error: 'Database connection failed',
+        __error: 'Database connection failed',
         details: dbError instanceof Error ? dbError.message : 'Unknown DB error'
       }, { status: 500 });
     }
@@ -31,13 +31,13 @@ export async function GET(
     let player;
     try {
       player = await prisma.jugador.findUnique({
-        where: { id_player: playerId }
+        where: { id___player: playerId }
       });
       console.log('📊 Direct query result:', !!player);
     } catch (queryError) {
       console.error('❌ Query failed:', queryError);
       return NextResponse.json({
-        error: 'Query failed',
+        __error: 'Query failed',
         details: queryError instanceof Error ? queryError.message : 'Unknown query error'
       }, { status: 500 });
     }
@@ -47,7 +47,7 @@ export async function GET(
     try {
       similarPlayers = await prisma.jugador.findMany({
         where: {
-          id_player: {
+          id___player: {
             contains: playerId.substring(0, 10) // Primeros 10 caracteres
           }
         },
@@ -105,10 +105,10 @@ export async function GET(
       }
     });
 
-  } catch (error) {
-    console.error('❌ Debug endpoint error:', error);
+  } catch (_error) {
+    console.error('❌ Debug endpoint __error: ', error);
     return NextResponse.json({
-      error: 'Debug endpoint failed',
+      __error: 'Debug endpoint failed',
       details: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     }, { status: 500 });

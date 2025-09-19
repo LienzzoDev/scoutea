@@ -13,7 +13,7 @@ interface ToggleFilterProps {
   label: string
   options: ToggleOption[]
   selectedValue?: any
-  onSelectionChange: (value?: any) => void
+  onSelectionChange: (value?: unknown) =>void
   placeholder?: string
 }
 
@@ -40,7 +40,7 @@ export default function ToggleFilter({
   }, [])
 
   // Manejar selección
-  const handleSelection = (value: any) => {
+  const handleSelection = (value: unknown) => {
     if (selectedValue === value) {
       // Si ya está seleccionado, deseleccionar
       onSelectionChange(undefined)
@@ -64,9 +64,8 @@ export default function ToggleFilter({
     <div className="relative" ref={dropdownRef}>
       {/* Campo principal */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors min-h-[44px]"
-      >
+        onClick={() =>setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors min-h-[44px]">
         <div className="flex-1 text-left">
           {selectedOption ? (
             <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-200 text-gray-800 text-xs rounded-md">
@@ -119,12 +118,11 @@ export default function ToggleFilter({
             {selectedOption && (
               <div className="pt-2 border-t border-gray-100">
                 <button
-                  onClick={() => {
+                  onClick={() =>{
                     onSelectionChange(undefined)
                     setIsOpen(false)
                   }}
-                  className="text-sm text-gray-600 hover:text-gray-800 font-medium cursor-pointer"
-                >
+                  className="text-sm text-gray-600 hover:text-gray-800 font-medium cursor-pointer">
                   Limpiar selección
                 </button>
               </div>

@@ -28,7 +28,7 @@ interface PlayerFiltersProps {
   onTeamsChange: (values: string[]) => void;
   onCompetitionsChange: (values: string[]) => void;
   onAgesChange: (values: string[]) => void;
-  onApplyFilters: (filters: Record<string, unknown>) => void;
+  onApplyFilters: (_filters: Record<string, unknown>) => void;
   onClearFilters: () => void;
 }
 

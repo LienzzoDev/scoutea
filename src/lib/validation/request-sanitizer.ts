@@ -95,7 +95,7 @@ export class RequestSanitizer {
    * Sanitize and validate a complete request
    */
   async sanitizeRequest<T>(
-    request: NextRequest,
+    __request: NextRequest,
     schema: z.ZodSchema<T>,
     context?: Partial<ValidationContext>
   ): Promise<SanitizationResult<T>> {
@@ -114,7 +114,7 @@ export class RequestSanitizer {
       warnings: [],
       sanitized: false,
       blocked: false,
-      context: fullContext
+      _context: fullContext
     }
 
     try {
@@ -142,7 +142,7 @@ export class RequestSanitizer {
         } else {
           rawData = await request.json()
         }
-      } catch (error) {
+      } catch (_error) {
         result.errors.push('Invalid request format or malformed JSON')
         result.blocked = true
         return result
@@ -165,7 +165,7 @@ export class RequestSanitizer {
         result.success = true
         result.data = validatedData
         return result
-      } catch (error) {
+      } catch (_error) {
         if (error instanceof z.ZodError) {
           result.errors.push(...(error.errors || []).map(err => 
             `${(err.path || []).join('.')}: ${err.message || 'Validation error'}`
@@ -176,7 +176,7 @@ export class RequestSanitizer {
         return result
       }
 
-    } catch (error) {
+    } catch (_error) {
       result.errors.push(`Sanitization failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
       return result
     }
@@ -186,7 +186,7 @@ export class RequestSanitizer {
    * Sanitize data recursively
    */
   private sanitizeData(
-    data: any,
+    data: unknown,
     depth: number = 0
   ): {
     data: any
@@ -246,7 +246,7 @@ export class RequestSanitizer {
     }
 
     if (data && typeof data === 'object') {
-      const sanitizedObject: any = {}
+      const sanitizedObject: unknown = {}
       let objectSanitized = false
 
       for (const [key, value] of Object.entries(data)) {
@@ -369,7 +369,7 @@ export class RequestSanitizer {
       // Encode HTML entities
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
+      .replace(/"/g, '"')
       .replace(/'/g, '&#x27;')
       .replace(/\//g, '&#x2F;')
   }
@@ -391,7 +391,7 @@ export class RequestSanitizer {
   /**
    * Validate request size
    */
-  private async validateRequestSize(request: NextRequest): Promise<{
+  private async validateRequestSize(__request: NextRequest): Promise<{
     valid: boolean
     error?: string
   }> {
@@ -402,7 +402,7 @@ export class RequestSanitizer {
       if (size > this.config.maxRequestSize) {
         return {
           valid: false,
-          error: `Request size (${size} bytes) exceeds maximum allowed (${this.config.maxRequestSize} bytes)`
+          _error: `Request size (${size} bytes) exceeds maximum allowed (${this.config.maxRequestSize} bytes)`
         }
       }
     }
@@ -413,7 +413,7 @@ export class RequestSanitizer {
   /**
    * Validate content type
    */
-  private validateContentType(request: NextRequest): {
+  private validateContentType(_request: NextRequest): {
     valid: boolean
     error?: string
   } {
@@ -423,7 +423,7 @@ export class RequestSanitizer {
       if (!contentType) {
         return {
           valid: false,
-          error: 'Content-Type header is required for non-GET requests'
+          _error: 'Content-Type header is required for non-GET requests'
         }
       }
 
@@ -440,7 +440,7 @@ export class RequestSanitizer {
       if (!isAllowed) {
         return {
           valid: false,
-          error: `Content-Type '${contentType}' is not allowed`
+          _error: `Content-Type '${contentType}' is not allowed`
         }
       }
     }
@@ -451,7 +451,7 @@ export class RequestSanitizer {
   /**
    * Extract query parameters safely
    */
-  private extractQueryParams(request: NextRequest): Record<string, string> {
+  private extractQueryParams(_request: NextRequest): Record<string, string> {
     const params: Record<string, string> = {}
     const url = new URL(request.url)
     
@@ -468,7 +468,7 @@ export class RequestSanitizer {
   /**
    * Get client IP address safely
    */
-  private getClientIP(request: NextRequest): string {
+  private getClientIP(__request: NextRequest): string {
     // Check various headers for IP address
     const forwarded = request.headers.get('x-forwarded-for')
     const realIP = request.headers.get('x-real-ip')
@@ -493,7 +493,7 @@ export class RequestSanitizer {
   /**
    * Create rate limiting key for the request
    */
-  createRateLimitKey(request: NextRequest, userId?: string): string {
+  createRateLimitKey(__request: NextRequest, userId?: string): string {
     const ip = this.getClientIP(request)
     const userAgent = request.headers.get('user-agent') || 'unknown'
     
@@ -508,7 +508,7 @@ export class RequestSanitizer {
   /**
    * Validate request headers for security
    */
-  validateSecurityHeaders(request: NextRequest): {
+  validateSecurityHeaders(__request: NextRequest): {
     valid: boolean
     warnings: string[]
     errors: string[]
@@ -595,7 +595,7 @@ export function resetRequestSanitizer(): void {
  * Convenience function to sanitize a request
  */
 export async function sanitizeRequest<T>(
-  request: NextRequest,
+  __request: NextRequest,
   schema: z.ZodSchema<T>,
   context?: Partial<ValidationContext>
 ): Promise<SanitizationResult<T>> {
@@ -610,7 +610,7 @@ export function createSanitizationMiddleware(config?: Partial<SanitizationConfig
   const sanitizer = new RequestSanitizer(config)
   
   return async function sanitizationMiddleware<T>(
-    request: NextRequest,
+    __request: NextRequest,
     schema: z.ZodSchema<T>,
     context?: Partial<ValidationContext>
   ): Promise<SanitizationResult<T>> {

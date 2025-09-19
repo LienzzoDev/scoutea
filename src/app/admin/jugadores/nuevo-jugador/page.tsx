@@ -15,7 +15,7 @@ import { CrearJugadorData } from "@/types/player"
 
 export default function NuevoJugadorPage() {
   const { isSignedIn, isLoaded } = useAuth()
-  const router = useRouter()
+  const _router = useRouter()
   const { crearJugador } = usePlayers()
   
   // Estado del formulario
@@ -102,11 +102,11 @@ export default function NuevoJugadorPage() {
       const resultado = await crearJugador(formData)
       if (resultado) {
         // Redirigir a la lista de jugadores
-        router.push('/admin/jugadores')
+        _router.push('/admin/jugadores')
       } else {
         console.error('❌ No se pudo crear el jugador - resultado null')
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error al crear jugador:', error)
     } finally {
       setLoading(false)
@@ -127,7 +127,7 @@ export default function NuevoJugadorPage() {
               variant="ghost" 
               size="icon" 
               className="text-slate-400 hover:text-white"
-              onClick={() => router.back()}
+              onClick={() => _router.back()}
             >
               <ChevronLeft className="w-6 h-6" />
             </Button>
@@ -182,9 +182,8 @@ export default function NuevoJugadorPage() {
                 <Input
                   id="nombreUsuario"
                   value={formData.nombreUsuario}
-                  onChange={(e) => handleInputChange('nombreUsuario', e.target.value)}
-                  placeholder="Nombre de usuario único"
-                  className={`bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 ${
+                  onChange={(e) =>handleInputChange('nombreUsuario', e.target.value)}
+                  placeholder="Nombre de usuario único" className={`bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 ${
                     errors.nombreUsuario ? 'border-red-500' : ''
                   }`}
                 />
@@ -201,9 +200,8 @@ export default function NuevoJugadorPage() {
                   <Input
                     id="nombre"
                     value={formData.nombre}
-                    onChange={(e) => handleInputChange('nombre', e.target.value)}
-                    placeholder="Nombre completo del jugador"
-                    className={`bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 ${
+                    onChange={(e) =>handleInputChange('nombre', e.target.value)}
+                    placeholder="Nombre completo del jugador" className={`bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 ${
                       errors.nombre ? 'border-red-500' : ''
                     }`}
                   />
@@ -218,9 +216,8 @@ export default function NuevoJugadorPage() {
                   <Input
                     id="posicion"
                     value={formData.posicion}
-                    onChange={(e) => handleInputChange('posicion', e.target.value)}
-                    placeholder="Posición en el campo"
-                    className={`bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 ${
+                    onChange={(e) =>handleInputChange('posicion', e.target.value)}
+                    placeholder="Posición en el campo" className={`bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 ${
                       errors.posicion ? 'border-red-500' : ''
                     }`}
                   />
@@ -257,9 +254,8 @@ export default function NuevoJugadorPage() {
                   <Input
                     id="equipo"
                     value={formData.equipo}
-                    onChange={(e) => handleInputChange('equipo', e.target.value)}
-                    placeholder="Nombre del equipo"
-                    className={`bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 ${
+                    onChange={(e) =>handleInputChange('equipo', e.target.value)}
+                    placeholder="Nombre del equipo" className={`bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 ${
                       errors.equipo ? 'border-red-500' : ''
                     }`}
                   />
@@ -280,10 +276,8 @@ export default function NuevoJugadorPage() {
                     min="1"
                     max="99"
                     value={formData.numeroCamiseta || ''}
-                    onChange={(e) => handleInputChange('numeroCamiseta', e.target.value ? parseInt(e.target.value) : undefined)}
-                    placeholder="Número"
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
-                  />
+                    onChange={(e) =>handleInputChange('numeroCamiseta', e.target.value ? parseInt(e.target.value) : undefined)}
+                    placeholder="Número" className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400" />
                 </div>
                 <div>
                   <Label htmlFor="valoracion" className="text-sm text-slate-300 mb-2 block">
@@ -292,10 +286,8 @@ export default function NuevoJugadorPage() {
                   <Input
                     id="valoracion"
                     value={formData.valoracion}
-                    onChange={(e) => handleInputChange('valoracion', e.target.value)}
-                    placeholder="Ej: 250k, 1.5M"
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
-                  />
+                    onChange={(e) =>handleInputChange('valoracion', e.target.value)}
+                    placeholder="Ej: 250k, 1.5M" className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400" />
                 </div>
               </div>
 
@@ -306,10 +298,8 @@ export default function NuevoJugadorPage() {
                 <Input
                   id="urlAvatar"
                   value={formData.urlAvatar}
-                  onChange={(e) => handleInputChange('urlAvatar', e.target.value)}
-                  placeholder="URL de la imagen del jugador"
-                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
-                />
+                  onChange={(e) =>handleInputChange('urlAvatar', e.target.value)}
+                  placeholder="URL de la imagen del jugador" className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400" />
               </div>
 
               <div>
@@ -319,10 +309,8 @@ export default function NuevoJugadorPage() {
                 <Textarea
                   id="biografia"
                   value={formData.biografia}
-                  onChange={(e) => handleInputChange('biografia', e.target.value)}
-                  placeholder="Escribe una breve biografía del jugador"
-                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 min-h-[100px]"
-                />
+                  onChange={(e) =>handleInputChange('biografia', e.target.value)}
+                  placeholder="Escribe una breve biografía del jugador" className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 min-h-[100px]" />
               </div>
             </div>
           </section>
@@ -338,16 +326,14 @@ export default function NuevoJugadorPage() {
                     placeholder="Nombre del atributo"
                     value={newAttribute.nombre}
                     onChange={(e) => setNewAttribute(prev => ({ ...prev, nombre: e.target.value }))}
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
-                  />
+                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400" />
                 </div>
                 <div className="flex-1">
                   <Input
                     placeholder="Valor del atributo"
                     value={newAttribute.valor}
                     onChange={(e) => setNewAttribute(prev => ({ ...prev, valor: e.target.value }))}
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
-                  />
+                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400" />
                 </div>
                 <Button
                   type="button"
@@ -372,9 +358,8 @@ export default function NuevoJugadorPage() {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        onClick={() => removeAttribute(index)}
-                        className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                      >
+                        onClick={() =>removeAttribute(index)}
+                        className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-900/20">
                         <X className="h-4 w-4" />
                       </Button>
                     </div>

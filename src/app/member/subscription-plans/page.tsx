@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getStripe } from '@/lib/stripe'
 
 export default function SubscriptionPlansPage() {
-  const router = useRouter()
+  const _router = useRouter()
   const searchParams = useSearchParams()
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly')
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
@@ -122,7 +122,7 @@ export default function SubscriptionPlansPage() {
         console.error('Stripe not loaded')
         alert('Error al cargar Stripe. Por favor, recarga la página e inténtalo de nuevo.')
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Error selecting plan:', error)
       alert('Error al procesar el pago. Por favor, inténtalo de nuevo.')
     }
@@ -312,9 +312,8 @@ export default function SubscriptionPlansPage() {
             <div>
               <Button
                 variant="ghost"
-                onClick={() => router.push('/login')}
-                className="text-[#6d6d6d] hover:text-[#8c1a10]"
-              >
+                onClick={() =>_router.push('/login')}
+                className="text-[#6d6d6d] hover:text-[#8c1a10]">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Iniciar sesión
               </Button>

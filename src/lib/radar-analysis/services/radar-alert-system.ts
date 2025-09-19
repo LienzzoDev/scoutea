@@ -171,7 +171,7 @@ export class RadarAlertSystem implements IRadarAlertSystem {
       }
 
       return notifications;
-    } catch (error) {
+    } catch (_error) {
       radarAnalysisLogger.logAnalysisError(report.context, error as Error);
       throw error;
     }
@@ -232,7 +232,7 @@ export class RadarAlertSystem implements IRadarAlertSystem {
       title: `${threshold.metric} threshold exceeded`,
       message: `${threshold.metric} is ${value}, which ${threshold.operator} ${threshold.value}`,
       category: 'performance',
-      context: report.context,
+      _context: report.context,
       issues: [],
       timestamp: new Date(),
       escalationLevel,
@@ -262,7 +262,7 @@ export class RadarAlertSystem implements IRadarAlertSystem {
       title: `${criticalIssues.length} Critical Issues Detected`,
       message: `Critical issues found in radar analysis: ${criticalIssues.map(i => i.title).join(', ')}`,
       category: 'data',
-      context: report.context,
+      _context: report.context,
       issues: criticalIssues,
       timestamp: new Date(),
       escalationLevel: 3,
@@ -303,7 +303,7 @@ export class RadarAlertSystem implements IRadarAlertSystem {
       title: 'Performance Degradation Detected',
       message: `Performance issues detected: ${issues.join(', ')}`,
       category: 'performance',
-      context: report.context,
+      _context: report.context,
       issues: [],
       timestamp: new Date(),
       escalationLevel: 2,
@@ -335,7 +335,7 @@ export class RadarAlertSystem implements IRadarAlertSystem {
       title: 'System Failures Detected',
       message: `System failures detected: ${systemFailures.map(i => i.title).join(', ')}`,
       category: 'data',
-      context: report.context,
+      _context: report.context,
       issues: systemFailures,
       timestamp: new Date(),
       escalationLevel: 3,
@@ -363,7 +363,7 @@ export class RadarAlertSystem implements IRadarAlertSystem {
         } else {
           errors.push(`No handler configured for channel: ${channel}`);
         }
-      } catch (error) {
+      } catch (_error) {
         errors.push(`Failed to send to ${channel}: ${error}`);
       }
     }
@@ -383,7 +383,7 @@ export class RadarAlertSystem implements IRadarAlertSystem {
 
     radarAnalysisLogger.logAnalysisComplete(alert.context, {
       analysisId: alert.id,
-      playerId: alert.context.playerId,
+      _playerId: alert.context.playerId,
       timestamp: alert.timestamp,
       depth: alert.context.depth,
       overallStatus: 'warning',
@@ -551,7 +551,7 @@ export class RadarAlertSystem implements IRadarAlertSystem {
   /**
    * Update alert configuration
    */
-  updateConfig(config: Partial<AlertConfig>): void {
+  updateConfig(_config: Partial<AlertConfig>): void {
     this.config = { ...this.config, ...config };
   }
 

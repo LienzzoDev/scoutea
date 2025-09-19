@@ -11,42 +11,42 @@ import type { Player } from "@/types/player";
 // 🎯 CATEGORÍAS DISPONIBLES PARA MOSTRAR
 const AVAILABLE_CATEGORIES = [
   {
-    key: "rating",
+    _key: "rating",
     label: "Rating",
-    getValue: (player: Player) => player.player_rating,
-    format: (value: any) => (value ? `${value}/100` : "N/A"),
+    getValue: (__player: Player) =>player.player_rating,
+    format: (value: unknown) => (value ? `${value}/100` : "N/A"),
   },
   {
-    key: "age",
+    _key: "age",
     label: "Age",
-    getValue: (player: Player) => player.age,
-    format: (value: any) => (value ? `${value} años` : "N/A"),
+    getValue: (__player: Player) => player.age,
+    format: (value: unknown) => (value ? `${value} años` : "N/A"),
   },
   {
-    key: "position",
+    _key: "position",
     label: "Position",
-    getValue: (player: Player) => player.position_player,
+    getValue: (__player: Player) => player.position_player,
   },
   {
-    key: "team",
+    _key: "team",
     label: "Team",
-    getValue: (player: Player) => player.team_name,
+    getValue: (__player: Player) => player.team_name,
   },
   {
-    key: "competition",
+    _key: "competition",
     label: "Competition",
-    getValue: (player: Player) => player.team_competition,
+    getValue: (__player: Player) => player.team_competition,
   },
   {
-    key: "nationality",
+    _key: "nationality",
     label: "Nationality",
-    getValue: (player: Player) => player.nationality_1,
+    getValue: (__player: Player) => player.nationality_1,
   },
   {
-    key: "contract_end",
+    _key: "contract_end",
     label: "Contract End",
-    getValue: (player: Player) => player.contract_end,
-    format: (value: any) => {
+    getValue: (__player: Player) => player.contract_end,
+    format: (value: unknown) => {
       if (!value) return "N/A";
       try {
         const date = new Date(value);
@@ -61,10 +61,10 @@ const AVAILABLE_CATEGORIES = [
     },
   },
   {
-    key: "market_value",
+    _key: "market_value",
     label: "Market Value",
-    getValue: (player: Player) => player.player_trfm_value,
-    format: (value: any) => {
+    getValue: (__player: Player) => player.player_trfm_value,
+    format: (value: unknown) => {
       if (!value) return "N/A";
       if (value >= 1000000) return `€${(value / 1000000).toFixed(1)}M`;
       if (value >= 1000) return `€${(value / 1000).toFixed(0)}K`;
@@ -72,21 +72,21 @@ const AVAILABLE_CATEGORIES = [
     },
   },
   {
-    key: "height",
+    _key: "height",
     label: "Height",
-    getValue: (player: Player) => player.height,
-    format: (value: any) => (value ? `${value} cm` : "N/A"),
+    getValue: (__player: Player) => player.height,
+    format: (value: unknown) => (value ? `${value} cm` : "N/A"),
   },
   {
-    key: "agency",
+    _key: "agency",
     label: "Agency",
-    getValue: (player: Player) => player.agency,
+    getValue: (__player: Player) => player.agency,
   },
-  { key: "foot", label: "Foot", getValue: (player: Player) => player.foot },
+  { _key: "foot", label: "Foot", getValue: (__player: Player) => player.foot },
   {
-    key: "loan_status",
+    _key: "loan_status",
     label: "Loan Status",
-    getValue: (player: Player) => (player.on_loan ? "En Préstamo" : "Propio"),
+    getValue: (__player: Player) => (player.on_loan ? "En Préstamo" : "Propio"),
   },
 ];
 
@@ -150,7 +150,7 @@ export function useDashboardState() {
             JSON.stringify(defaultCategories)
           );
         }
-      } catch (error) {
+      } catch (_error) {
         setSelectedCategories(defaultCategories);
         localStorage.setItem(
           "dashboard-selected-categories",
@@ -201,14 +201,14 @@ export function useDashboardState() {
         limit: 20,
         sortBy: "player_rating" as const,
         sortOrder: "desc" as const,
-        filters: {},
+        _filters: {},
       };
 
       try {
         await searchPlayersRef.current(initialSearchOptions);
         console.log('useDashboardState: Initial players loaded');
         setInitialLoadCompleted(true);
-      } catch (error) {
+      } catch (_error) {
         console.error('useDashboardState: Error loading initial players:', error);
       }
       
@@ -238,7 +238,7 @@ export function useDashboardState() {
         };
         setFilterOptions(fallbackOptions);
       }
-    } catch (error) {
+    } catch (_error) {
       const fallbackOptions = {
         nationalities: ["Spain", "Brazil", "Argentina", "France", "Germany", "Italy", "England", "Portugal", "Netherlands", "Belgium"],
         positions: ["GK", "CB", "LB", "RB", "CDM", "CM", "CAM", "LW", "RW", "ST", "CF", "LM", "RM"],
@@ -301,7 +301,7 @@ export function useDashboardState() {
                             selectedAges.length > 0;
 
     if (hasActiveFilters) {
-      console.log('🔍 Applying player filters:', {
+      console.log('🔍 Applying player __filters: ', {
         activeFilters,
         selectedNationalities,
         selectedPositions,
@@ -352,7 +352,7 @@ export function useDashboardState() {
         if (activeFilters.min_value && (!player.player_trfm_value || (player.player_trfm_value / 1000000) < activeFilters.min_value)) {
           return false;
         }
-        if (activeFilters.max_value && (!player.player_trfm_value || (player.player_trfm_value / 1000000) > activeFilters.max_value)) {
+        if (activeFilters.max_value && (!player.player_trfm_value || (player.player_trfm_value / 1000000) >activeFilters.max_value)) {
           return false;
         }
         
@@ -392,7 +392,7 @@ export function useDashboardState() {
           limit: 20,
           sortBy: "player_rating" as const,
           sortOrder: "desc" as const,
-          filters: { player_name: term.trim() },
+          _filters: { player_name: term.trim() },
         };
 
         searchPlayersRef.current(searchOptions);
@@ -424,7 +424,7 @@ export function useDashboardState() {
         limit: 20,
         sortBy: "player_rating" as const,
         sortOrder: "desc" as const,
-        filters: {
+        _filters: {
           ...newFilters,
           ...(searchTerm ? { player_name: searchTerm } : {}),
           ...(selectedNationalities.length > 0
@@ -474,7 +474,7 @@ export function useDashboardState() {
           "dashboard-selected-categories",
           JSON.stringify(newCategories)
         );
-      } catch (error) {
+      } catch (_error) {
         console.error("❌ Error saving categories to localStorage:", error);
       }
 

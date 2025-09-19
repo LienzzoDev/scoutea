@@ -61,7 +61,7 @@ export async function getOrCreateUser(clerkId: string) {
       throw new Error(`Error al crear usuario en la base de datos: ${createError instanceof Error ? createError.message : 'Error desconocido'}`)
     }
     
-  } catch (error) {
+  } catch (_error) {
     console.error('❌ Error en getOrCreateUser:', error)
     throw error
   }

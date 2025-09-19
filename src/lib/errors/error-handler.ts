@@ -20,7 +20,7 @@ export interface ErrorContext {
 
 // Función principal para manejar errores de API
 export function handleAPIError(
-  error: unknown, 
+  __error: unknown, 
   context?: ErrorContext
 ): NextResponse {
   const timestamp = new Date()
@@ -46,7 +46,7 @@ export function handleAPIError(
         endpoint: fullContext.endpoint,
         userId: fullContext.userId,
         statusCode: error.statusCode,
-        context: error.context || fullContext.endpoint,
+        __context: error.context || fullContext.endpoint,
         metadata: error.details
       })
     }
@@ -150,7 +150,7 @@ export function handleAPIError(
 }
 
 // Función para manejar errores específicos de Prisma
-function handlePrismaError(error: Prisma.PrismaClientKnownRequestError, endpoint?: string): APIError {
+function handlePrismaError(__error: Prisma.PrismaClientKnownRequestError, endpoint?: string): APIError {
   switch (error.code) {
     case 'P2002':
       // Violación de constraint único
@@ -223,8 +223,8 @@ function formatZodErrors(zodError: ZodError): any {
 }
 
 // Función para crear respuesta de error consistente
-function createErrorResponse(error: APIError, requestId: string): NextResponse {
-  const response: any = {
+function createErrorResponse(__error: APIError, requestId: string): NextResponse {
+  const response: unknown = {
     error: error.message,
     code: error.code,
     requestId,
@@ -240,7 +240,7 @@ function createErrorResponse(error: APIError, requestId: string): NextResponse {
 }
 
 // Función para logging estructurado de errores
-function logError(error: unknown, context: ErrorContext): void {
+function logError(__error: unknown, __context: ErrorContext): void {
   const logData = {
     timestamp: context.timestamp?.toISOString(),
     requestId: context.requestId,
@@ -249,7 +249,7 @@ function logError(error: unknown, context: ErrorContext): void {
     method: context.method,
     userAgent: context.userAgent,
     ip: context.ip,
-    error: {
+    _error: {
       name: error instanceof Error ? error.name : 'UnknownError',
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
@@ -285,14 +285,14 @@ export function withErrorHandler<T extends any[], R>(
   return async (...args: T): Promise<R | NextResponse> => {
     try {
       return await handler(...args)
-    } catch (error) {
+    } catch (_error) {
       return handleAPIError(error, context as ErrorContext)
     }
   }
 }
 
 // Función helper para extraer contexto de Request
-export function extractErrorContext(request: Request): ErrorContext {
+export function extractErrorContext(__request: Request): ErrorContext {
   const url = new URL(request.url)
   return {
     endpoint: url.pathname,
@@ -332,7 +332,7 @@ export function requireRole(userRole: string | undefined, requiredRole: string, 
 }
 
 // Función para validar parámetros requeridos
-export function requireParam(param: any, paramName: string, context?: ErrorContext): asserts param is NonNullable<typeof param> {
+export function requireParam(param: unknown, paramName: string, context?: ErrorContext): asserts param is NonNullable<typeof param> {
   if (param === undefined || param === null || param === '') {
     throw new APIError(
       400,

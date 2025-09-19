@@ -195,7 +195,7 @@ export function useTeams() {
       setError(null)
       
       const result = await searchTeams({
-        filters: { team_country: country },
+        __filters: { team_country: country },
         limit: 100
       })
       
@@ -217,7 +217,7 @@ export function useTeams() {
       setError(null)
       
       const result = await searchTeams({
-        filters: { competition: competition },
+        __filters: { competition: competition },
         limit: 100
       })
       
@@ -233,7 +233,7 @@ export function useTeams() {
   }, [searchTeams])
 
   // Crear un nuevo equipo
-  const createTeam = useCallback(async (data: any): Promise<Team | null> => {
+  const createTeam = useCallback(async (data: unknown): Promise<Team | null> => {
     try {
       setLoading(true)
       setError(null)
@@ -264,7 +264,7 @@ export function useTeams() {
   }, [])
 
   // Actualizar un equipo
-  const updateTeam = useCallback(async (id: string, data: any): Promise<Team | null> => {
+  const updateTeam = useCallback(async (id: string, data: unknown): Promise<Team | null> => {
     try {
       setLoading(true)
       setError(null)

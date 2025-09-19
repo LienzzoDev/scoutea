@@ -8,7 +8,7 @@ import { RadarCalculationService } from '../lib/services/RadarCalculationService
 
 const prisma = new PrismaClient();
 
-async function analyzePlayerRadar(playerId: string, playerName: string) {
+async function analyzePlayerRadar(_playerId: string, playerName: string) {
   console.log(`\n🔍 ANÁLISIS EXHAUSTIVO DEL RADAR: ${playerName}`);
   console.log("=".repeat(50));
   
@@ -17,7 +17,7 @@ async function analyzePlayerRadar(playerId: string, playerName: string) {
   try {
     // 1. Verificar existencia del jugador
     const player = await prisma.jugador.findUnique({
-      where: { id_player: playerId },
+      where: { id___player: playerId },
       include: {
         atributos: true,
         playerStats3m: true
@@ -107,7 +107,7 @@ async function analyzePlayerRadar(playerId: string, playerName: string) {
       // Verificar que los percentiles sean lógicos
       if (global.percentile && filtered.percentile) {
         // El percentil en grupo filtrado debería poder ser diferente al global
-        if (global.percentile < 0 || global.percentile > 100 || filtered.percentile < 0 || filtered.percentile > 100) {
+        if (global.percentile < 0 || global.percentile > 100 || filtered.percentile < 0 || filtered.percentile >100) {
           console.log(`❌ Percentiles fuera de rango en ${basic.category}: Global=${global.percentile}%, Filtrado=${filtered.percentile}%`);
           coherenceIssues++;
         }
@@ -162,7 +162,7 @@ async function analyzePlayerRadar(playerId: string, playerName: string) {
       console.log(`❌ Rangos: PROBLEMAS - ${rangeIssues} valores fuera de rango`);
     }
     
-  } catch (error) {
+  } catch (_error) {
     console.error(`❌ Error durante el análisis:`, error);
   }
 }

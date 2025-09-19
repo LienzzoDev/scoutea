@@ -334,7 +334,7 @@ async function createSampleScouts() {
     const totalScouts = await prisma.scout.count()
     console.log(`📊 Total scouts in database: ${totalScouts}`)
 
-  } catch (error) {
+  } catch (_error) {
     console.error('❌ Error creating sample scouts:', error)
   } finally {
     await prisma.$disconnect()

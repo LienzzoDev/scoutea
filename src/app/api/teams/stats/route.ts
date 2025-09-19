@@ -4,12 +4,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
 // GET /api/teams/stats - Obtener estadísticas de equipos
-export async function GET(request: NextRequest) {
+export async function GET(__request: NextRequest) {
   try {
     const { userId } = await auth()
     
     if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+      return NextResponse.json({ __error: 'No autorizado' }, { status: 401 })
     }
 
     const [
@@ -84,10 +84,10 @@ export async function GET(request: NextRequest) {
       topRatedTeams
     })
 
-  } catch (error) {
+  } catch (_error) {
     console.error('❌ Error getting team stats:', error)
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { __error: 'Error interno del servidor' },
       { status: 500 }
     )
   }

@@ -4,74 +4,74 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ScoutService } from '@/lib/services/scout-service'
 
 export async function GET(
-  request: NextRequest,
+  __request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const { userId } = await auth()
     
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
     }
 
     const scout = await ScoutService.getScoutById(params.id)
     
     if (!scout) {
-      return NextResponse.json({ error: 'Scout not found' }, { status: 404 })
+      return NextResponse.json({ __error: 'Scout not found' }, { status: 404 })
     }
     
     return NextResponse.json(scout)
-  } catch (error) {
+  } catch (_error) {
     console.error('Error getting scout:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { __error: 'Internal server error' },
       { status: 500 }
     )
   }
 }
 
 export async function PUT(
-  request: NextRequest,
+  __request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const { userId } = await auth()
     
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
+    const _body = await request.json()
     const scout = await ScoutService.updateScout(params.id, body)
     
     return NextResponse.json(scout)
-  } catch (error) {
+  } catch (_error) {
     console.error('Error updating scout:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { __error: 'Internal server error' },
       { status: 500 }
     )
   }
 }
 
 export async function DELETE(
-  request: NextRequest,
+  __request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const { userId } = await auth()
     
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
     }
 
     await ScoutService.deleteScout(params.id)
     
     return NextResponse.json({ message: 'Scout deleted successfully' })
-  } catch (error) {
+  } catch (_error) {
     console.error('Error deleting scout:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { __error: 'Internal server error' },
       { status: 500 }
     )
   }

@@ -19,8 +19,8 @@ export interface OptimizedPlayerData {
   team_competition: string | null;
   age: number | null;
   player_rating: number | null;
-  atributos: any;
-  playerStats3m: any;
+  atributos: unknown;
+  playerStats3m: unknown;
 }
 
 export interface ComparisonGroupStats {
@@ -40,10 +40,10 @@ export class RadarQueryOptimizer {
   /**
    * Optimized query to get player data with all required attributes and stats
    */
-  async getPlayerWithRadarData(playerId: string): Promise<OptimizedPlayerData | null> {
+  async getPlayerWithRadarData(_playerId: string): Promise<OptimizedPlayerData | null> {
     try {
       const player = await this.prisma.jugador.findUnique({
-        where: { id_player: playerId },
+        where: { id___player: playerId },
         select: {
           id_player: true,
           player_name: true,
@@ -57,7 +57,7 @@ export class RadarQueryOptimizer {
           atributos: {
             select: {
               // Technical attributes
-              corners_fmi: true,
+              corners___fm_i: true,
               crossing_fmi: true,
               dribbling_fmi: true,
               finishing_fmi: true,
@@ -104,7 +104,7 @@ export class RadarQueryOptimizer {
       });
 
       return player as OptimizedPlayerData | null;
-    } catch (error) {
+    } catch (_error) {
       console.error(`Error fetching player data for ${playerId}:`, error);
       throw new Error(`Failed to fetch player data: ${error}`);
     }
@@ -113,20 +113,20 @@ export class RadarQueryOptimizer {
   /**
    * Optimized query to get comparison group with minimal data transfer
    */
-  async getOptimizedComparisonGroup(filters: RadarFilters = {}): Promise<string[]> {
+  async getOptimizedComparisonGroup(__filters: RadarFilters = {}): Promise<string[]> {
     try {
       const whereClause = this.buildOptimizedWhereClause(filters);
 
       const players = await this.prisma.jugador.findMany({
         where: whereClause,
-        select: { id_player: true },
+        select: { id___player: true },
         orderBy: { player_rating: 'desc' },
         // Limit to prevent excessive memory usage
         take: 5000
       });
 
       return players.map(p => p.id_player);
-    } catch (error) {
+    } catch (_error) {
       console.error('Error fetching optimized comparison group:', error);
       throw new Error(`Failed to fetch comparison group: ${error}`);
     }
@@ -146,7 +146,7 @@ export class RadarQueryOptimizer {
         
         const players = await this.prisma.jugador.findMany({
           where: {
-            id_player: { in: chunk },
+            id___player: { in: chunk },
             atributos: { isNot: null } // Only players with atributos data
           },
           select: {
@@ -162,7 +162,7 @@ export class RadarQueryOptimizer {
             atributos: {
               select: {
                 // Only select attributes needed for radar calculations
-                corners_fmi: true,
+                corners___fm_i: true,
                 crossing_fmi: true,
                 dribbling_fmi: true,
                 finishing_fmi: true,
@@ -208,7 +208,7 @@ export class RadarQueryOptimizer {
       }
 
       return results;
-    } catch (error) {
+    } catch (_error) {
       console.error('Error in batch get players with radar data:', error);
       throw new Error(`Failed to batch fetch player data: ${error}`);
     }
@@ -219,13 +219,13 @@ export class RadarQueryOptimizer {
    */
   async batchGetCachedRadarMetrics(
     playerIds: string[], 
-    period: string = '2023-24'
+    _period: string = '2023-24'
   ): Promise<Map<string, any[]>> {
     try {
       const radarMetrics = await this.prisma.radarMetrics.findMany({
         where: {
-          playerId: { in: playerIds },
-          period: period
+          _playerId: { in: playerIds },
+          _period: period
         },
         select: {
           playerId: true,
@@ -256,7 +256,7 @@ export class RadarQueryOptimizer {
       }
 
       return groupedMetrics;
-    } catch (error) {
+    } catch (_error) {
       console.error('Error fetching cached radar metrics:', error);
       throw new Error(`Failed to fetch cached radar metrics: ${error}`);
     }
@@ -265,7 +265,7 @@ export class RadarQueryOptimizer {
   /**
    * Get comparison group statistics for analysis
    */
-  async getComparisonGroupStats(filters: RadarFilters = {}): Promise<ComparisonGroupStats> {
+  async getComparisonGroupStats(__filters: RadarFilters = {}): Promise<ComparisonGroupStats> {
     try {
       const whereClause = this.buildOptimizedWhereClause(filters);
 
@@ -284,7 +284,7 @@ export class RadarQueryOptimizer {
           by: ['position_player'],
           where: {
             ...whereClause,
-            position_player: { not: null }
+            position___player: { not: null }
           },
           _count: true
         }),
@@ -320,7 +320,7 @@ export class RadarQueryOptimizer {
         positionDistribution,
         nationalityDistribution
       };
-    } catch (error) {
+    } catch (_error) {
       console.error('Error fetching comparison group stats:', error);
       throw new Error(`Failed to fetch comparison group stats: ${error}`);
     }
@@ -332,7 +332,7 @@ export class RadarQueryOptimizer {
   async checkDataCompleteness(playerIds: string[]): Promise<Map<string, { hasAtributos: boolean; hasStats: boolean }>> {
     try {
       const results = await this.prisma.jugador.findMany({
-        where: { id_player: { in: playerIds } },
+        where: { id___player: { in: playerIds } },
         select: {
           id_player: true,
           atributos: { select: { id_player: true } },
@@ -350,7 +350,7 @@ export class RadarQueryOptimizer {
       }
 
       return completenessMap;
-    } catch (error) {
+    } catch (_error) {
       console.error('Error checking data completeness:', error);
       throw new Error(`Failed to check data completeness: ${error}`);
     }
@@ -359,8 +359,8 @@ export class RadarQueryOptimizer {
   /**
    * Build optimized WHERE clause for comparison group queries
    */
-  private buildOptimizedWhereClause(filters: RadarFilters): any {
-    const whereClause: any = {
+  private buildOptimizedWhereClause(__filters: RadarFilters): any {
+    const whereClause: unknown = {
       // Always require atributos data for radar calculations
       atributos: { isNot: null }
     };
@@ -445,10 +445,10 @@ export class RadarQueryOptimizer {
   /**
    * Execute raw SQL for complex aggregations when needed
    */
-  async executeRawQuery(query: string, params: any[] = []): Promise<any[]> {
+  async executeRawQuery(query: string, params: unknown[] = []): Promise<any[]> {
     try {
       return await this.prisma.$queryRawUnsafe(query, ...params);
-    } catch (error) {
+    } catch (_error) {
       console.error('Error executing raw query:', error);
       throw new Error(`Raw query execution failed: ${error}`);
     }
@@ -465,11 +465,11 @@ export class RadarQueryOptimizer {
         status: 'connected',
         timestamp: new Date().toISOString()
       };
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting connection pool status:', error);
       return {
         status: 'error',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        _error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       };
     }

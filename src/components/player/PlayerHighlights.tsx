@@ -5,7 +5,7 @@ import { Play } from "lucide-react";
 import type { Player } from "@/types/player";
 
 interface PlayerHighlightsProps {
-  player: Player;
+  _player: Player;
 }
 
 export default function PlayerHighlights({ player }: PlayerHighlightsProps) {

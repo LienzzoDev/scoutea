@@ -63,7 +63,7 @@ class EnvironmentDetectorImpl implements EnvironmentDetector {
       }
 
       return false;
-    } catch (error) {
+    } catch (_error) {
       // If any error occurs, assume server-side for safety
       if (typeof console !== 'undefined' && console.warn) {
         console.warn('Environment detection error, assuming server-side:', error);
@@ -79,7 +79,7 @@ class EnvironmentDetectorImpl implements EnvironmentDetector {
   isClient(): boolean {
     try {
       return !this.isServer() && this.isBrowser();
-    } catch (error) {
+    } catch (_error) {
       // If detection fails, assume not client for safety
       console.warn('Client detection error, assuming not client:', error);
       return false;
@@ -104,7 +104,7 @@ class EnvironmentDetectorImpl implements EnvironmentDetector {
       // Additional browser environment checks
       const hasLocation = typeof window.location !== 'undefined';
       const hasHistory = typeof window.history !== 'undefined';
-      const hasLocalStorage = (() => {
+      const _hasLocalStorage = (() => {
         try {
           return typeof window.localStorage !== 'undefined';
         } catch {
@@ -114,10 +114,10 @@ class EnvironmentDetectorImpl implements EnvironmentDetector {
 
       // Check for DOM readiness
       const hasDocumentElement = document.documentElement !== null;
-      const hasBody = document.body !== null || document.readyState !== 'loading';
+      const _hasBody = document.body !== null || document.readyState !== 'loading';
 
       return hasWindow && hasDocument && hasNavigator && hasLocation && hasHistory && hasDocumentElement;
-    } catch (error) {
+    } catch (_error) {
       // If any check fails, assume not browser
       console.warn('Browser detection error, assuming not browser:', error);
       return false;
@@ -181,7 +181,7 @@ class EnvironmentDetectorImpl implements EnvironmentDetector {
 
       // Default to not hydrating if we can't determine state
       return false;
-    } catch (error) {
+    } catch (_error) {
       // If hydration detection fails, assume not hydrating for safety
       console.warn('Hydration detection error, assuming not hydrating:', error);
       return false;
@@ -282,7 +282,7 @@ class EnvironmentDetectorImpl implements EnvironmentDetector {
         isHydrated: this._isHydrated
       });
       return true;
-    } catch (error) {
+    } catch (_error) {
       // If any check fails, default to not using cache for safety
       console.warn('Cache safety check error, disabling cache:', error);
       return false;
@@ -388,7 +388,7 @@ class EnvironmentDetectorImpl implements EnvironmentDetector {
         }
       }
 
-    } catch (error) {
+    } catch (_error) {
       console.warn('Error initializing hydration tracking:', error);
       // Fallback: mark as hydrated immediately to prevent blocking
       setTimeout(() => {
@@ -441,7 +441,7 @@ class EnvironmentDetectorImpl implements EnvironmentDetector {
           }
         }
       }
-    } catch (error) {
+    } catch (_error) {
       console.warn('Error marking hydration as complete:', error);
       // Ensure hydration is marked complete even if event dispatch fails
       this._isHydrated = true;
@@ -460,7 +460,7 @@ class EnvironmentDetectorImpl implements EnvironmentDetector {
     if (typeof window !== 'undefined') {
       try {
         delete (window as any).__HYDRATION_COMPLETE__;
-      } catch (error) {
+      } catch (_error) {
         console.warn('Failed to clear hydration flag:', error);
       }
     }
@@ -508,7 +508,7 @@ class EnvironmentDetectorImpl implements EnvironmentDetector {
 
       // Check hydration state
       return this._isHydrated && !this._hydrationStarted;
-    } catch (error) {
+    } catch (_error) {
       console.warn('Environment stability check failed:', error);
       return false;
     }
@@ -540,7 +540,7 @@ class EnvironmentDetectorImpl implements EnvironmentDetector {
         documentReadyState: typeof document !== 'undefined' ? document.readyState : undefined,
         userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined
       };
-    } catch (error) {
+    } catch (_error) {
       console.warn('Failed to get environment info:', error);
       return {
         isServer: true, // Safe default

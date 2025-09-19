@@ -8,11 +8,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="flex items-center justify-center">
           <div className="flex items-center p-6">
-            <img 
-              src="/logo-member.svg" 
-              alt="Scoutea" 
-              className="h-16 w-auto object-contain"
-            />
+            <img src="/logo-member.svg" alt="Scoutea" className="h-16 w-auto object-contain" />
           </div>
         </div>
         

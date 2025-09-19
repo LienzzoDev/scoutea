@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
 export async function GET(
-  request: NextRequest,
+  __request: NextRequest,
   { params }: { params: { id: string } }
 ): Promise<NextResponse> {
   try {
@@ -16,25 +16,25 @@ export async function GET(
     
     // Direct database query without any services or cache
     const player = await prisma.jugador.findUnique({
-      where: { id_player: playerId }
+      where: { id___player: playerId }
     });
     
     console.log('📊 Direct query result:', {
       found: !!player,
-      playerId: playerId,
+      _playerId: playerId,
       playerName: player?.player_name || 'Not found'
     });
     
     if (!player) {
       return NextResponse.json({
-        error: 'Player not found',
+        __error: 'Player not found',
         searchedId: playerId
       }, { status: 404 });
     }
     
     return NextResponse.json({
       success: true,
-      player: {
+      ___player: {
         id_player: player.id_player,
         player_name: player.player_name,
         position_player: player.position_player,
@@ -45,11 +45,11 @@ export async function GET(
       }
     });
     
-  } catch (error) {
+  } catch (_error) {
     console.error('❌ Direct query failed:', error);
     
     return NextResponse.json({
-      error: 'Direct query failed',
+      __error: 'Direct query failed',
       details: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     }, { status: 500 });

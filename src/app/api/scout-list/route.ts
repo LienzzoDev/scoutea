@@ -10,7 +10,7 @@ export async function GET() {
     
     if (!userId) {
       return NextResponse.json(
-        { error: 'No autorizado' },
+        { __error: 'No autorizado' },
         { status: 401 }
       )
     }
@@ -22,7 +22,7 @@ export async function GET() {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Usuario no encontrado' },
+        { __error: 'Usuario no encontrado' },
         { status: 404 }
       )
     }
@@ -49,23 +49,23 @@ export async function GET() {
     })
 
     return NextResponse.json({ scoutList })
-  } catch (error) {
+  } catch (_error) {
     console.error('Error getting scout list:', error)
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { __error: 'Error interno del servidor' },
       { status: 500 }
     )
   }
 }
 
 // POST /api/scout-list - Añadir scout a la lista
-export async function POST(request: NextRequest) {
+export async function POST(__request: NextRequest) {
   try {
     const { userId } = await auth()
     
     if (!userId) {
       return NextResponse.json(
-        { error: 'No autorizado' },
+        { __error: 'No autorizado' },
         { status: 401 }
       )
     }
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     if (!scoutId) {
       return NextResponse.json(
-        { error: 'ID de scout requerido' },
+        { __error: 'ID de scout requerido' },
         { status: 400 }
       )
     }
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Usuario no encontrado' },
+        { __error: 'Usuario no encontrado' },
         { status: 404 }
       )
     }
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
 
     if (!scout) {
       return NextResponse.json(
-        { error: 'Scout no encontrado' },
+        { __error: 'Scout no encontrado' },
         { status: 404 }
       )
     }
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
 
     if (existingEntry) {
       return NextResponse.json(
-        { error: 'El scout ya está en tu lista' },
+        { __error: 'El scout ya está en tu lista' },
         { status: 409 }
       )
     }
@@ -144,10 +144,10 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({ scoutList }, { status: 201 })
-  } catch (error) {
+  } catch (_error) {
     console.error('Error adding scout to list:', error)
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { __error: 'Error interno del servidor' },
       { status: 500 }
     )
   }

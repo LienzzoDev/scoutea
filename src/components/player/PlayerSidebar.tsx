@@ -1,13 +1,11 @@
 "use client";
 
 import { Facebook, Twitter, Linkedin, Send } from "lucide-react";
-import Image from "next/image";
-
 import { Button } from "@/components/ui/button";
 import type { Player } from "@/types/player";
 
 interface PlayerSidebarProps {
-  player: Player;
+  _player: Player;
 }
 
 export default function PlayerSidebar({ player }: PlayerSidebarProps) {
@@ -28,16 +26,14 @@ export default function PlayerSidebar({ player }: PlayerSidebarProps) {
         {/* Team badge overlay - Top */}
         <div className="absolute top-4 left-4 flex items-center gap-3 bg-black/80 text-white px-3 py-2 rounded-full">
           <span className="text-lg">⚽</span>
-          <span className="text-sm font-medium">
-            {player.team_name || "FC Barcelona"}
+          <span className="text-sm font-medium">{player.team_name || "FC Barcelona"}
           </span>
         </div>
         
         {/* Player name and nationality overlay - Bottom */}
         <div className="absolute bottom-4 left-4 flex items-center gap-3 bg-black/80 text-white px-3 py-2 rounded-full">
           <span className="text-lg">🇪🇸</span>
-          <span className="text-sm font-medium">
-            {player.player_name || "Player Name"}
+          <span className="text-sm font-medium">{player.player_name || "Player Name"}
           </span>
         </div>
       </div>

@@ -16,7 +16,7 @@ import type { Player } from '@/types/player'
 
 export default function EditarJugadorPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
-  const router = useRouter()
+  const _router = useRouter()
   const params = useParams()
   const { getPlayer, loading, error } = usePlayers()
   
@@ -52,7 +52,7 @@ export default function EditarJugadorPage() {
             // Información Personal - Mapeo directo de la BD
             player_name: playerData.player_name || '',
             complete_player_name: playerData.complete_player_name || '',
-            position_player: playerData.position_player || '',
+            position___player: playerData.position_player || '',
             team_name: playerData.team_name || '',
             jersey_number: '', // Campo personalizado, no existe en BD
             biografia: '', // Campo personalizado, no existe en BD
@@ -122,13 +122,13 @@ export default function EditarJugadorPage() {
       
       if (response.ok) {
         alert('Jugador actualizado correctamente!')
-        router.push('/admin/jugadores')
+        _router.push('/admin/jugadores')
       } else {
-        const error = await response.json()
+        const _error = await response.json()
         console.error('Error al guardar:', error)
         alert(`Error al guardar: ${error.error || 'Error desconocido'}`)
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Error al guardar:', error)
       alert('Error al guardar los cambios')
     }
@@ -169,7 +169,7 @@ export default function EditarJugadorPage() {
         console.error('Error en scraping:', result.error)
         alert(`Error en scraping: ${result.error}`)
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Error al realizar scraping:', error)
       alert('Error al realizar scraping')
     } finally {
@@ -198,7 +198,7 @@ export default function EditarJugadorPage() {
       <div className="min-h-screen text-white flex items-center justify-center" style={{ backgroundColor: '#131921' }}>
         <div className="text-center">
           <h1 className="text-2xl font-semibold mb-4">Jugador no encontrado</h1>
-          <Button onClick={() => router.push('/admin/jugadores')} className="bg-orange-500 hover:bg-orange-600 text-white">
+          <Button onClick={() =>_router.push('/admin/jugadores')} className="bg-orange-500 hover:bg-orange-600 text-white">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Volver a Jugadores
           </Button>
@@ -215,16 +215,14 @@ export default function EditarJugadorPage() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <button 
-              onClick={() => router.push('/admin/jugadores')}
-              className="text-gray-400 hover:text-white"
-            >
+              onClick={() =>_router.push('/admin/jugadores')}
+              className="text-gray-400 hover:text-white">
               <ChevronLeft className="w-6 h-6" />
             </button>
             <div className="relative">
               <Avatar className="w-16 h-16">
                 <AvatarImage src="/placeholder.svg" />
-                <AvatarFallback>
-                  {player.player_name
+                <AvatarFallback>{player.player_name
                     ?.split(" ")
                     .map((n) => n[0])
                     .join("") || "J"}

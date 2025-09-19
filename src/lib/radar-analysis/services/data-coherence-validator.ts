@@ -142,15 +142,15 @@ export class DataCoherenceValidator implements IDataCoherenceValidator {
    * Validates data completeness across radar categories
    */
   async validateDataCompleteness(
-    radarData: RadarCategoryData[], 
-    context: AnalysisContext
+    _radarData: RadarCategoryData[], 
+    __context: AnalysisContext
   ): Promise<ValidationResult> {
     const startTime = Date.now();
     
     try {
       radarAnalysisLogger.logAnalysisStart({
         ...context,
-        metadata: { operation: 'validate_data_completeness', playerId: context.playerId }
+        metadata: { operation: 'validate_data_completeness', _playerId: context.playerId }
       });
 
       // Get player data to validate completeness calculations
@@ -197,7 +197,7 @@ export class DataCoherenceValidator implements IDataCoherenceValidator {
 
       return result;
 
-    } catch (error) {
+    } catch (_error) {
       const duration = Date.now() - startTime;
       radarAnalysisLogger.logAnalysisError({
         ...context,
@@ -211,15 +211,15 @@ export class DataCoherenceValidator implements IDataCoherenceValidator {
    * Validates data consistency across different views
    */
   async validateDataConsistency(
-    radarData: RadarCategoryData[], 
-    context: AnalysisContext
+    _radarData: RadarCategoryData[], 
+    __context: AnalysisContext
   ): Promise<ValidationResult> {
     const startTime = Date.now();
     
     try {
       radarAnalysisLogger.logAnalysisStart({
         ...context,
-        metadata: { operation: 'validate_data_consistency', playerId: context.playerId }
+        metadata: { operation: 'validate_data_consistency', _playerId: context.playerId }
       });
 
       // Compare radar values with other player views
@@ -242,7 +242,7 @@ export class DataCoherenceValidator implements IDataCoherenceValidator {
 
       return result;
 
-    } catch (error) {
+    } catch (_error) {
       const duration = Date.now() - startTime;
       radarAnalysisLogger.logAnalysisError({
         ...context,
@@ -256,15 +256,15 @@ export class DataCoherenceValidator implements IDataCoherenceValidator {
    * Validates calculation accuracy of radar values
    */
   async validateCalculationAccuracy(
-    radarData: RadarCategoryData[], 
-    context: AnalysisContext
+    _radarData: RadarCategoryData[], 
+    __context: AnalysisContext
   ): Promise<ValidationResult> {
     const startTime = Date.now();
     
     try {
       radarAnalysisLogger.logAnalysisStart({
         ...context,
-        metadata: { operation: 'validate_calculation_accuracy', playerId: context.playerId }
+        metadata: { operation: 'validate_calculation_accuracy', _playerId: context.playerId }
       });
 
       // Validate percentile consistency
@@ -291,7 +291,7 @@ export class DataCoherenceValidator implements IDataCoherenceValidator {
 
       return result;
 
-    } catch (error) {
+    } catch (_error) {
       const duration = Date.now() - startTime;
       radarAnalysisLogger.logAnalysisError({
         ...context,
@@ -305,8 +305,8 @@ export class DataCoherenceValidator implements IDataCoherenceValidator {
    * Validates source data integrity
    */
   async validateSourceData(
-    playerId: string, 
-    context: AnalysisContext
+    _playerId: string, 
+    __context: AnalysisContext
   ): Promise<ValidationResult> {
     const startTime = Date.now();
     
@@ -387,7 +387,7 @@ export class DataCoherenceValidator implements IDataCoherenceValidator {
 
       return result;
 
-    } catch (error) {
+    } catch (_error) {
       const duration = Date.now() - startTime;
       radarAnalysisLogger.logAnalysisError({
         ...context,
@@ -401,9 +401,9 @@ export class DataCoherenceValidator implements IDataCoherenceValidator {
    * Comprehensive data coherence validation
    */
   async validateDataCoherence(
-    playerId: string,
-    context: AnalysisContext,
-    period: string = '2023-24'
+    _playerId: string,
+    __context: AnalysisContext,
+    _period: string = '2023-24'
   ): Promise<DataCoherenceValidationResult> {
     const startTime = Date.now();
     
@@ -492,7 +492,7 @@ export class DataCoherenceValidator implements IDataCoherenceValidator {
 
       return result;
 
-    } catch (error) {
+    } catch (_error) {
       const duration = Date.now() - startTime;
       radarAnalysisLogger.logAnalysisError({
         ...context,
@@ -506,8 +506,8 @@ export class DataCoherenceValidator implements IDataCoherenceValidator {
    * Compare radar values with other player views
    */
   private async compareWithOtherViews(
-    playerId: string,
-    radarData: RadarCategoryData[]
+    _playerId: string,
+    _radarData: RadarCategoryData[]
   ): Promise<RadarViewComparisonResult[]> {
     const results: RadarViewComparisonResult[] = [];
 
@@ -558,8 +558,8 @@ export class DataCoherenceValidator implements IDataCoherenceValidator {
    * Validate percentile consistency with rankings
    */
   private async validatePercentileConsistency(
-    playerId: string,
-    radarData: RadarCategoryData[],
+    _playerId: string,
+    _radarData: RadarCategoryData[],
     filters?: RadarFilters
   ): Promise<PercentileConsistencyResult[]> {
     const results: PercentileConsistencyResult[] = [];
@@ -606,8 +606,8 @@ export class DataCoherenceValidator implements IDataCoherenceValidator {
    * Validate completeness accuracy
    */
   private async validateCompletenessAccuracy(
-    playerId: string,
-    radarData: RadarCategoryData[]
+    _playerId: string,
+    _radarData: RadarCategoryData[]
   ): Promise<CompletenessValidationResult[]> {
     const results: CompletenessValidationResult[] = [];
 
@@ -664,9 +664,8 @@ export class DataCoherenceValidator implements IDataCoherenceValidator {
    */
   private async calculateActualCompleteness(
     category: string,
-    atributos: any,
-    playerStats: any
-  ): Promise<number> {
+    atributos: unknown,
+    playerStats: unknown): Promise<number> {
     // Get category mapping - using the same mappings as RadarCalculationService
     const categoryMappings = this.getCategoryMappings();
     const mapping = categoryMappings[category];
@@ -698,9 +697,9 @@ export class DataCoherenceValidator implements IDataCoherenceValidator {
   /**
    * Get player data with attributes and statistics
    */
-  private async getPlayerData(playerId: string) {
+  private async getPlayerData(_playerId: string) {
     return await this.prisma.jugador.findUnique({
-      where: { id_player: playerId },
+      where: { id___player: playerId },
       include: {
         atributos: true,
         playerStats3m: true
@@ -713,7 +712,7 @@ export class DataCoherenceValidator implements IDataCoherenceValidator {
    */
   private createViewInconsistencyIssue(
     comparison: RadarViewComparisonResult,
-    context: AnalysisContext
+    __context: AnalysisContext
   ): AnalysisIssue {
     return {
       id: uuidv4(),
@@ -740,7 +739,7 @@ export class DataCoherenceValidator implements IDataCoherenceValidator {
    */
   private createPercentileInconsistencyIssue(
     result: PercentileConsistencyResult,
-    context: AnalysisContext
+    __context: AnalysisContext
   ): AnalysisIssue {
     return {
       id: uuidv4(),
@@ -769,7 +768,7 @@ export class DataCoherenceValidator implements IDataCoherenceValidator {
    */
   private createCompletenessIssue(
     result: CompletenessValidationResult,
-    context: AnalysisContext
+    __context: AnalysisContext
   ): AnalysisIssue {
     return {
       id: uuidv4(),

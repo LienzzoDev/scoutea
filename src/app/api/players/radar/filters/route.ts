@@ -13,7 +13,7 @@ export async function GET() {
         }
       },
       select: {
-        position_player: true,
+        position___player: true,
         nationality_1: true,
         team_country: true,
         age: true,
@@ -89,10 +89,10 @@ export async function GET() {
       }
     });
 
-  } catch (error) {
+  } catch (_error) {
     console.error('Error fetching filter options:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { __error: 'Internal server error' },
       { status: 500 }
     );
   }

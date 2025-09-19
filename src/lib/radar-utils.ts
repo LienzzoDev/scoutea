@@ -20,7 +20,7 @@ export interface RadarFilters {
 }
 
 // Obtener datos de radar para un jugador específico
-export async function getPlayerRadarData(playerId: string): Promise<RadarComparisonData[]> {
+export async function getPlayerRadarData(_playerId: string): Promise<RadarComparisonData[]> {
   // Implementar llamada a API
   const response = await fetch(`/api/players/${playerId}/radar`);
   return response.json();
@@ -28,8 +28,8 @@ export async function getPlayerRadarData(playerId: string): Promise<RadarCompari
 
 // Comparar jugador con grupo filtrado
 export async function comparePlayerWithFilters(
-  playerId: string, 
-  filters: RadarFilters
+  _playerId: string, 
+  __filters: RadarFilters
 ): Promise<RadarComparisonData[]> {
   const queryParams = new URLSearchParams();
   if (filters.position) queryParams.append('position', filters.position);

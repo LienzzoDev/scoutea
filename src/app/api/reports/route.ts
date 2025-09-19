@@ -3,24 +3,24 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { ReportService } from '@/lib/services/report-service'
 
-export async function GET(request: NextRequest) {
+export async function GET(__request: NextRequest) {
   try {
     const { userId } = await auth()
     
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
     
     // Parámetros de búsqueda
-    const page = parseInt(searchParams.get('page') || '1')
+    const _page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const sortBy = searchParams.get('sortBy') || 'createdAt'
     const sortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc'
     
     // Filtros
-    const filters: any = {}
+    const _filters: unknown = {}
     if (searchParams.get('report_status')) {
       filters.report_status = searchParams.get('report_status')
     }
@@ -102,31 +102,31 @@ export async function GET(request: NextRequest) {
     const result = await ReportService.searchReports(options)
     
     return NextResponse.json(result)
-  } catch (error) {
+  } catch (_error) {
     console.error('Error getting reports:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { __error: 'Internal server error' },
       { status: 500 }
     )
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(__request: NextRequest) {
   try {
     const { userId } = await auth()
     
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
+    const _body = await request.json()
     const report = await ReportService.createReport(body)
     
     return NextResponse.json(report, { status: 201 })
-  } catch (error) {
+  } catch (_error) {
     console.error('Error creating report:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { __error: 'Internal server error' },
       { status: 500 }
     )
   }

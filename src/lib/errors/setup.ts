@@ -25,7 +25,7 @@ export function setupErrorHandling(): void {
     
     console.log('🎉 Sistema de manejo de errores configurado exitosamente')
     
-  } catch (error) {
+  } catch (_error) {
     console.error('❌ Error configurando sistema de manejo de errores:', error)
   }
 }
@@ -48,7 +48,7 @@ function setupFetchInterceptor(): void {
       }
       
       return response
-    } catch (error) {
+    } catch (_error) {
       const duration = Date.now() - startTime
       
       // Log de error de fetch

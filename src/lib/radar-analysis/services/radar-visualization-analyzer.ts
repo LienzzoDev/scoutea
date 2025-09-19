@@ -43,12 +43,12 @@ export class RadarVisualizationAnalyzer implements IRadarVisualizationAnalyzer {
    * Analyze radar visualization for a specific player
    */
   async analyzeRadarVisualization(
-    playerId: string, 
+    _playerId: string, 
     filters?: RadarFilters, 
     depth: AnalysisDepth = 'comprehensive'
   ): Promise<RadarAnalysisResult> {
     const analysisId = uuidv4();
-    const context: AnalysisContext = {
+    const _context: AnalysisContext = {
       playerId,
       analysisId,
       timestamp: new Date(),
@@ -94,7 +94,7 @@ export class RadarVisualizationAnalyzer implements IRadarVisualizationAnalyzer {
         }
       }
 
-      const totalTime = Date.now() - startTime;
+      const _totalTime = Date.now() - startTime;
       const performanceMetrics: PerformanceMetrics = {
         calculationTime: performanceAnalysis?.metrics.calculationTime || 0,
         renderingTime: performanceAnalysis?.metrics.renderingTime || 0,
@@ -138,7 +138,7 @@ export class RadarVisualizationAnalyzer implements IRadarVisualizationAnalyzer {
 
       return result;
 
-    } catch (error) {
+    } catch (_error) {
       radarAnalysisLogger.logAnalysisError(context, error as Error);
       throw error;
     }
@@ -148,8 +148,8 @@ export class RadarVisualizationAnalyzer implements IRadarVisualizationAnalyzer {
    * Validate data coherence
    */
   async validateDataCoherence(
-    radarData: RadarCategoryData[], 
-    context: AnalysisContext
+    _radarData: RadarCategoryData[], 
+    __context: AnalysisContext
   ): Promise<ValidationResult> {
     try {
       // Check data completeness
@@ -199,7 +199,7 @@ export class RadarVisualizationAnalyzer implements IRadarVisualizationAnalyzer {
 
       return 'pass';
 
-    } catch (error) {
+    } catch (_error) {
       radarAnalysisLogger.logAnalysisError(context, error as Error);
       return 'fail';
     }
@@ -208,7 +208,7 @@ export class RadarVisualizationAnalyzer implements IRadarVisualizationAnalyzer {
   /**
    * Analyze performance metrics
    */
-  async analyzePerformance(context: AnalysisContext): Promise<PerformanceAnalysisResult> {
+  async analyzePerformance(__context: AnalysisContext): Promise<PerformanceAnalysisResult> {
     const startTime = Date.now();
     
     try {
@@ -297,7 +297,7 @@ export class RadarVisualizationAnalyzer implements IRadarVisualizationAnalyzer {
         issues
       };
 
-    } catch (error) {
+    } catch (_error) {
       radarAnalysisLogger.logAnalysisError(context, error as Error);
       throw error;
     }
@@ -306,7 +306,7 @@ export class RadarVisualizationAnalyzer implements IRadarVisualizationAnalyzer {
   /**
    * Generate comprehensive analysis report
    */
-  async generateReport(analysisResults: RadarAnalysisResult[]): Promise<AnalysisReport> {
+  async generateReport(_analysisResults: RadarAnalysisResult[]): Promise<AnalysisReport> {
     const reportId = uuidv4();
     const generatedAt = new Date();
 
@@ -361,7 +361,7 @@ export class RadarVisualizationAnalyzer implements IRadarVisualizationAnalyzer {
   /**
    * Get radar data for analysis
    */
-  private async getRadarData(playerId: string, filters?: RadarFilters): Promise<RadarCategoryData[]> {
+  private async getRadarData(_playerId: string, filters?: RadarFilters): Promise<RadarCategoryData[]> {
     // This would typically fetch from the actual radar service
     // For now, return mock data
     return [
@@ -392,10 +392,9 @@ export class RadarVisualizationAnalyzer implements IRadarVisualizationAnalyzer {
    * Perform data validation
    */
   private async performDataValidation(
-    radarData: RadarCategoryData[], 
-    context: AnalysisContext,
-    config: any
-  ) {
+    _radarData: RadarCategoryData[], 
+    __context: AnalysisContext,
+    _config: unknown) {
     const issues: AnalysisIssue[] = [];
     
     const completeness = await this.validateDataCoherence(radarData, context);
@@ -417,9 +416,9 @@ export class RadarVisualizationAnalyzer implements IRadarVisualizationAnalyzer {
    * Perform layer validation
    */
   private async performLayerValidation(
-    radarData: RadarCategoryData[], 
-    filters: RadarFilters | undefined, 
-    context: AnalysisContext
+    _radarData: RadarCategoryData[], 
+    __filters: RadarFilters | undefined, 
+    __context: AnalysisContext
   ) {
     return {
       playerLayer: 'pass' as ValidationResult,
@@ -434,7 +433,7 @@ export class RadarVisualizationAnalyzer implements IRadarVisualizationAnalyzer {
   /**
    * Perform performance analysis
    */
-  private async performPerformanceAnalysis(context: AnalysisContext): Promise<PerformanceAnalysisResult> {
+  private async performPerformanceAnalysis(_context: AnalysisContext): Promise<PerformanceAnalysisResult> {
     return this.analyzePerformance(context);
   }
 
@@ -442,8 +441,8 @@ export class RadarVisualizationAnalyzer implements IRadarVisualizationAnalyzer {
    * Generate recommendation for an issue
    */
   private async generateRecommendation(
-    issue: AnalysisIssue, 
-    context: AnalysisContext
+    _issue: AnalysisIssue, 
+    __context: AnalysisContext
   ): Promise<FixRecommendation | null> {
     return {
       issueId: issue.id,

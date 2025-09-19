@@ -30,7 +30,7 @@ export default function BookmarkButton({
     setIsLoading(true)
     try {
       await onToggle(entityId)
-    } catch (error) {
+    } catch (_error) {
       console.error('Error toggling bookmark:', error)
     } finally {
       setIsLoading(false)

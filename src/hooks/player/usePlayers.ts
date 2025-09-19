@@ -28,7 +28,7 @@ export function usePlayers() {
   const [loading, setLoading] = useState(false)
   
   // Error simplificado usando el hook base
-  const error = getError('players')?.message || null
+  const _error = getError('players')?.message || null
 
   /**
    * 🔍 BUSCAR JUGADORES CON FILTROS
@@ -102,12 +102,12 @@ export function usePlayers() {
     } catch (err) {
       console.error('usePlayers.searchPlayers: Error occurred:', err);
       
-      const error = err instanceof Error ? err : new Error(
+      const _error = err instanceof Error ? err : new Error(
         typeof err === 'string' ? err : 'Error al buscar jugadores'
       )
       
-      handleError(error, { 
-        context: 'players',
+      handleError(_error, { 
+        __context: 'players',
         logErrors: true,
         retryable: true
       });
@@ -115,7 +115,7 @@ export function usePlayers() {
       setPlayers([])
       setPagination(null)
       
-      throw error
+      throw _error
     } finally {
       setLoading(false)
     }
@@ -174,17 +174,17 @@ export function usePlayers() {
     } catch (err) {
       console.error('usePlayers.getPlayer: Error occurred:', err);
       
-      const error = err instanceof Error ? err : new Error(
+      const _error = err instanceof Error ? err : new Error(
         typeof err === 'string' ? err : 'Error al obtener jugador'
       )
       
-      handleError(error, { 
-        context: 'players',
+      handleError(_error, { 
+        __context: 'players',
         logErrors: true,
         retryable: true
       });
       
-      throw error
+      throw _error
     } finally {
       setLoading(false)
     }
@@ -193,7 +193,7 @@ export function usePlayers() {
   /**
    * 📊 OBTENER ESTADÍSTICAS DE UN JUGADOR
    */
-  const getPlayerStats = useCallback(async (playerId: string): Promise<PlayerStats | null> => {
+  const getPlayerStats = useCallback(async (_playerId: string): Promise<PlayerStats | null> => {
     if (!playerId || typeof playerId !== 'string' || playerId.trim().length === 0) {
       throw new Error('ID de jugador inválido')
     }
@@ -234,17 +234,17 @@ export function usePlayers() {
     } catch (err) {
       console.error('usePlayers.getPlayerStats: Error occurred:', err);
       
-      const error = err instanceof Error ? err : new Error(
+      const _error = err instanceof Error ? err : new Error(
         typeof err === 'string' ? err : 'Error al obtener estadísticas del jugador'
       )
       
-      handleError(error, { 
-        context: 'players',
+      handleError(_error, { 
+        __context: 'players',
         logErrors: true,
         retryable: true
       });
       
-      throw error
+      throw _error
     } finally {
       setLoading(false)
     }
@@ -292,17 +292,17 @@ export function usePlayers() {
     } catch (err) {
       console.error('usePlayers.createPlayer: Error occurred:', err);
       
-      const error = err instanceof Error ? err : new Error(
+      const _error = err instanceof Error ? err : new Error(
         typeof err === 'string' ? err : 'Error al crear jugador'
       )
       
-      handleError(error, { 
-        context: 'players',
+      handleError(_error, { 
+        __context: 'players',
         logErrors: true,
         retryable: true
       });
       
-      throw error
+      throw _error
     } finally {
       setLoading(false)
     }

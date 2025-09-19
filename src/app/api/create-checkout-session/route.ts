@@ -3,22 +3,22 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { stripe } from '@/lib/stripe'
 
-export async function POST(request: NextRequest) {
+export async function POST(__request: NextRequest) {
   try {
     const { userId } = await auth()
     
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
     }
 
     if (!stripe) {
-      return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 })
+      return NextResponse.json({ __error: 'Stripe not configured' }, { status: 500 })
     }
 
     const { plan, billing } = await request.json()
 
     if (!plan || !billing) {
-      return NextResponse.json({ error: 'Plan and billing are required' }, { status: 400 })
+      return NextResponse.json({ __error: 'Plan and billing are required' }, { status: 400 })
     }
 
     // Definir precios según el plan y billing
@@ -98,10 +98,10 @@ export async function POST(request: NextRequest) {
       sessionId: session.id,
       url: session.url 
     })
-  } catch (error) {
+  } catch (_error) {
     console.error('Error creating checkout session:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { __error: 'Internal server error' },
       { status: 500 }
     )
   }

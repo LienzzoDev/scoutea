@@ -20,10 +20,10 @@ import { useScouts, Scout } from "@/hooks/scout/useScouts"
 
 // 📊 DEFINIR CATEGORÍAS DISPONIBLES PARA MOSTRAR
 interface DisplayCategory {
-  key: string
+  _key: string
   label: string
   getValue: (scout: Scout) => string | number | null
-  format?: (value: any) => string
+  format?: (value: unknown) => string
 }
 
 const AVAILABLE_CATEGORIES: DisplayCategory[] = [
@@ -34,25 +34,25 @@ const AVAILABLE_CATEGORIES: DisplayCategory[] = [
     format: (value) => value || 'N/A'
   },
   {
-    key: 'scout_elo',
+    _key: 'scout_elo',
     label: 'Scout ELO',
     getValue: (scout) => scout.scout_elo,
     format: (value) => value ? value.toFixed(0) : 'N/A'
   },
   {
-    key: 'total_reports',
+    _key: 'total_reports',
     label: 'Total Reports',
     getValue: (scout) => scout.total_reports,
     format: (value) => value ? value.toString() : '0'
   },
   {
-    key: 'roi',
+    _key: 'roi',
     label: 'ROI',
     getValue: (scout) => scout.roi,
     format: (value) => value ? `${value.toFixed(1)}%` : 'N/A'
   },
   {
-    key: 'max_profit',
+    _key: 'max_profit',
     label: 'Max Profit',
     getValue: (scout) => scout.max_profit_report,
     format: (value) => {
@@ -63,43 +63,43 @@ const AVAILABLE_CATEGORIES: DisplayCategory[] = [
     }
   },
   {
-    key: 'nationality',
+    _key: 'nationality',
     label: 'Nationality',
     getValue: (scout) => scout.nationality,
     format: (value) => value || 'N/A'
   },
   {
-    key: 'country',
+    _key: 'country',
     label: 'Country',
     getValue: (scout) => scout.country,
     format: (value) => value || 'N/A'
   },
   {
-    key: 'expertise',
+    _key: 'expertise',
     label: 'Expertise',
     getValue: (scout) => scout.nationality_expertise,
     format: (value) => value || 'N/A'
   },
   {
-    key: 'competition',
+    _key: 'competition',
     label: 'Competition',
     getValue: (scout) => scout.competition_expertise,
     format: (value) => value || 'N/A'
   },
   {
-    key: 'age',
+    _key: 'age',
     label: 'Age',
     getValue: (scout) => scout.age,
     format: (value) => value ? `${value} años` : 'N/A'
   },
   {
-    key: 'ranking',
+    _key: 'ranking',
     label: 'Ranking',
     getValue: (scout) => scout.scout_ranking,
     format: (value) => value ? `#${value}` : 'N/A'
   },
   {
-    key: 'availability',
+    _key: 'availability',
     label: 'Availability',
     getValue: (scout) => scout.open_to_work,
     format: (value) => {
@@ -111,7 +111,7 @@ const AVAILABLE_CATEGORIES: DisplayCategory[] = [
 ]
 
 export default function ScoutsPage() {
-  const router = useRouter()
+  const _router = useRouter()
   const [showFilters, setShowFilters] = useState(false)
   const [activeTab, setActiveTab] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
@@ -182,7 +182,7 @@ export default function ScoutsPage() {
           localStorage.setItem('scouts-selected-categories', JSON.stringify(defaultCategories))
 
         }
-      } catch (error) {
+      } catch (_error) {
         console.error('❌ Error parsing saved scout categories:', error)
         const defaultCategories = ['scout_level', 'scout_elo', 'total_reports']
         setSelectedCategories(defaultCategories)
@@ -215,7 +215,7 @@ export default function ScoutsPage() {
       try {
         localStorage.setItem('scouts-selected-categories', JSON.stringify(newCategories))
         console.log('✅ Scout categories saved to localStorage:', newCategories)
-      } catch (error) {
+      } catch (_error) {
         console.error('❌ Error saving scout categories to localStorage:', error)
       }
       
@@ -265,7 +265,7 @@ export default function ScoutsPage() {
         setFilterOptions(options)
         console.log('✅ Scout filter options loaded:', options)
       // }
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error loading scout filter options:', error)
       // Fallback básico
       const fallbackOptions = {
@@ -279,9 +279,9 @@ export default function ScoutsPage() {
   }, [])
 
   // 🔍 APLICAR FILTROS (INTELIGENTE: LOCAL + API)
-  const applyFilters = useCallback((newFilters: any) => {
+  const applyFilters = useCallback((newFilters: unknown) => {
     setActiveFilters(newFilters)
-    console.log('🔍 Applying scout filters:', newFilters)
+    console.log('🔍 Applying scout __filters: ', newFilters)
     
     // Si hay filtros activos y pocos scouts cargados, hacer llamada a API
     const hasActiveFilters = Object.keys(newFilters).length > 0 || 
@@ -297,13 +297,13 @@ export default function ScoutsPage() {
         limit: 100, // Cargar más datos para filtrado local
         sortBy: 'scout_elo' as const,
         sortOrder: 'desc' as const,
-        filters: {
+        _filters: {
           ...newFilters,
           ...(searchTerm ? { search: searchTerm } : {})
         }
       }
       
-      console.log('🔍 Making API call with scout filters:', searchOptions)
+      console.log('🔍 Making API call with scout __filters: ', searchOptions)
       searchScouts(searchOptions)
     }
     
@@ -322,7 +322,7 @@ export default function ScoutsPage() {
   }, [])
 
   // 🎛️ TOGGLE DROPDOWN DE FILTRO
-  const toggleFilterDropdown = useCallback((filterKey: string) => {
+  const _toggleFilterDropdown = useCallback((filterKey: string) => {
     setShowFilterDropdowns(prev => ({
       ...prev,
       [filterKey]: !prev[filterKey]
@@ -448,7 +448,7 @@ export default function ScoutsPage() {
       })
     }
 
-    console.log('🔍 Filtered scouts:', filtered.length, 'from', scouts.length, 'with filters:', {
+    console.log('🔍 Filtered scouts:', filtered.length, 'from', scouts.length, 'with __filters: ', {
       activeFilters,
       selectedNationalities,
       selectedLevels,
@@ -470,9 +470,9 @@ export default function ScoutsPage() {
       searchScouts({
         page: 1,
         limit: 100, // Cargar más datos para mejor filtrado local
-        filters: { search: term.trim() }
+        __filters: { search: term.trim() }
       }).catch(err => {
-        console.error('Search error:', err)
+        console.error('Search __error: ', err)
       })
       console.log('🔍 Making API search call for scouts term:', term)
     } else if (!term.trim()) {
@@ -484,7 +484,7 @@ export default function ScoutsPage() {
           sortBy: 'scout_elo',
           sortOrder: 'desc'
         }).catch(err => {
-          console.error('Search error:', err)
+          console.error('Search __error: ', err)
         })
       }
       console.log('🔍 Search cleared for scouts')
@@ -524,9 +524,9 @@ export default function ScoutsPage() {
         <div className="flex items-center justify-between mb-8">
           <EntityTabs
             tabs={[
-              { key: 'all', label: 'All' },
-              { key: 'news', label: 'New scouts' },
-              { key: 'your-list', label: 'Your list', count: scoutList.length }
+              { ___key: 'all', label: 'All' },
+              { _key: 'news', label: 'New scouts' },
+              { _key: 'your-list', label: 'Your list', count: scoutList.length }
             ]}
             activeTab={activeTab}
             onTabChange={setActiveTab}
@@ -657,7 +657,7 @@ export default function ScoutsPage() {
                     { value: false, label: 'No Disponible' }
                   ]}
                   selectedValue={activeFilters.open_to_work}
-                  onSelectionChange={(value) => {
+                  onSelectionChange={(value) =>{
                     const newFilters = { ...activeFilters }
                     if (value === undefined) {
                       delete newFilters.open_to_work
@@ -666,8 +666,7 @@ export default function ScoutsPage() {
                     }
                     applyFilters(newFilters)
                   }}
-                  placeholder="Seleccionar disponibilidad..."
-                />
+                  placeholder="Seleccionar disponibilidad..."/>
               </div>
 
               {/* Rango de ELO */}
@@ -679,7 +678,7 @@ export default function ScoutsPage() {
                   label="ELO"
                   minValue={activeFilters.min_elo}
                   maxValue={activeFilters.max_elo}
-                  onRangeChange={(min, max) => {
+                  onRangeChange={(min, max) =>{
                     const newFilters = { ...activeFilters }
                     if (min === undefined) {
                       delete newFilters.min_elo
@@ -693,9 +692,7 @@ export default function ScoutsPage() {
                     }
                     applyFilters(newFilters)
                   }}
-                  placeholder="Seleccionar rango de ELO..."
-                  step="1"
-                />
+                  placeholder="Seleccionar rango de ELO..." step="1" />
               </div>
 
               {/* Rango de Edad */}
@@ -707,7 +704,7 @@ export default function ScoutsPage() {
                   label="Edad"
                   minValue={activeFilters.min_age}
                   maxValue={activeFilters.max_age}
-                  onRangeChange={(min, max) => {
+                  onRangeChange={(min, max) =>{
                     const newFilters = { ...activeFilters }
                     if (min === undefined) {
                       delete newFilters.min_age
@@ -721,10 +718,7 @@ export default function ScoutsPage() {
                     }
                     applyFilters(newFilters)
                   }}
-                  placeholder="Seleccionar rango de edad..."
-                  step="1"
-                  suffix=" años"
-                />
+                  placeholder="Seleccionar rango de edad..." step="1" suffix=" años" />
               </div>
             </div>
           </div>
@@ -749,8 +743,7 @@ export default function ScoutsPage() {
         {!loading && !error && (
           <div className="space-y-4">
             {/* Results count */}
-            <div className="text-[#6d6d6d] text-sm mb-4">
-              Showing {filteredScouts.length} scout{filteredScouts.length !== 1 ? 's' : ''}
+            <div className="text-[#6d6d6d] text-sm mb-4">Showing {filteredScouts.length} scout{filteredScouts.length !== 1 ? 's' : ''}
               {activeTab === 'news' && ' (New scouts - last 7 days)'}
               {activeTab === 'your-list' && ` (Your saved scouts - ${scoutList.length} total)`}
               {searchTerm && ` for "${searchTerm}"`}
@@ -758,8 +751,7 @@ export default function ScoutsPage() {
             
             {filteredScouts.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-[#6d6d6d] text-lg">
-                  {searchTerm 
+                <p className="text-[#6d6d6d] text-lg">{searchTerm 
                     ? `No scouts found for "${searchTerm}"` 
                     : activeTab === 'news'
                     ? 'No new scouts in the last 7 days'
@@ -770,9 +762,8 @@ export default function ScoutsPage() {
                 </p>
                 {searchTerm && (
                   <button 
-                    onClick={() => handleSearch('')}
-                    className="mt-4 px-4 py-2 bg-[#8c1a10] text-white rounded-lg hover:bg-[#6d1410] transition-colors"
-                  >
+                    onClick={() =>handleSearch('')}
+                    className="mt-4 px-4 py-2 bg-[#8c1a10] text-white rounded-lg hover:bg-[#6d1410] transition-colors">
                     Clear search
                   </button>
                 )}
@@ -821,7 +812,7 @@ export default function ScoutsPage() {
                     <div
                       key={scout.id_scout}
                       className="flex cursor-pointer hover:bg-gray-50 transition-colors"
-                      onClick={() => router.push(`/member/scout/${scout.id_scout}`)}
+                      onClick={() => _router.push(`/member/scout/${scout.id_scout}`)}
                     >
                       {/* Columna fija - Scout Info */}
                       <div className="w-80 p-4 border-r border-[#e7e7e7] flex-shrink-0">
@@ -845,11 +836,10 @@ export default function ScoutsPage() {
                       
                       {/* Valores scrolleables */}
                       <div 
-                        ref={(el) => {
+                        ref={(el) =>{
                           if (el) rowScrollRefs.current[index] = el
                         }}
-                        className="flex-1 overflow-x-auto scrollbar-hide"
-                        onScroll={(e) => handleScroll(e.currentTarget.scrollLeft)}
+                        className="flex-1 overflow-x-auto scrollbar-hide" onScroll={(e) => handleScroll(e.currentTarget.scrollLeft)}
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                       >
                         <div className="flex" style={{ minWidth: `${Math.max(getSelectedCategoriesData().length * 140, 100)}px` }}>
@@ -895,7 +885,7 @@ export default function ScoutsPage() {
                             className="w-4 h-4 text-[#8c1a10] cursor-pointer hover:text-[#8c1a10]/80" 
                             onClick={(e) => {
                               e.stopPropagation()
-                              router.push(`/member/scout/${scout.id_scout}`)
+                              _router.push(`/member/scout/${scout.id_scout}`)
                             }}
                           />
                         </div>

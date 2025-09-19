@@ -3,24 +3,24 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { CompetitionService } from '@/lib/services/competition-service'
 
-export async function GET(request: NextRequest) {
+export async function GET(__request: NextRequest) {
   try {
     const { userId } = await auth()
     
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
     
     // Parámetros de búsqueda
-    const page = parseInt(searchParams.get('page') || '1')
+    const _page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const sortBy = searchParams.get('sortBy') || 'competition_name'
     const sortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || 'asc'
     
     // Filtros
-    const filters: any = {}
+    const _filters: unknown = {}
     if (searchParams.get('competition_name')) {
       filters.competition_name = searchParams.get('competition_name')
     }
@@ -60,31 +60,31 @@ export async function GET(request: NextRequest) {
     const result = await CompetitionService.searchCompetitions(options)
     
     return NextResponse.json(result)
-  } catch (error) {
+  } catch (_error) {
     console.error('Error getting competitions:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { __error: 'Internal server error' },
       { status: 500 }
     )
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(__request: NextRequest) {
   try {
     const { userId } = await auth()
     
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
+    const _body = await request.json()
     const competition = await CompetitionService.createCompetition(body)
     
     return NextResponse.json(competition, { status: 201 })
-  } catch (error) {
+  } catch (_error) {
     console.error('Error creating competition:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { __error: 'Internal server error' },
       { status: 500 }
     )
   }

@@ -25,16 +25,16 @@ import type { Player } from '@/types/player'
  * @returns El jugador encontrado o error 404 si no existe
  */
 export async function GET(
-  request: NextRequest,
+  __request: NextRequest,
   { params }: { params: { id: string } }
-): Promise<NextResponse<Player | { error: string }>> {
+): Promise<NextResponse<Player | { _error: string }>> {
   try {
     // 🔐 VERIFICAR AUTENTICACIÓN
     const { userId } = await auth()
     
     if (!userId) {
       return NextResponse.json(
-        { error: 'No autorizado. Debes iniciar sesión para ver jugadores.' }, 
+        { __error: 'No autorizado. Debes iniciar sesión para ver jugadores.' }, 
         { status: 401 }
       )
     }
@@ -45,7 +45,7 @@ export async function GET(
       validatedId = validatePlayerId(params.id)
     } catch (validationError) {
       return NextResponse.json(
-        { error: `ID inválido: ${validationError instanceof Error ? validationError.message : 'Formato de ID incorrecto'}` },
+        { __error: `ID inválido: ${validationError instanceof Error ? validationError.message : 'Formato de ID incorrecto'}` },
         { status: 400 }
       )
     }
@@ -67,9 +67,9 @@ export async function GET(
       }
     } catch (serviceError) {
       console.error('❌ PlayerService.getPlayerById failed:', {
-        error: serviceError instanceof Error ? serviceError.message : 'Unknown service error',
+        __error: serviceError instanceof Error ? serviceError.message : 'Unknown service error',
         stack: serviceError instanceof Error ? serviceError.stack : undefined,
-        playerId: validatedId
+        _playerId: validatedId
       });
       
       // Re-throw the error to be handled by the outer catch block
@@ -80,14 +80,14 @@ export async function GET(
     if (!player) {
       console.log('❌ Player not found:', validatedId);
       return NextResponse.json(
-        { error: `No se encontró ningún jugador con ID: ${validatedId}` }, 
+        { __error: `No se encontró ningún jugador con ID: ${validatedId}` }, 
         { status: 404 }
       )
     }
 
     // 📊 LOG DE ACCESO (para auditoría)
     console.log('✅ Player accessed:', {
-      playerId: player.id_player,
+      _playerId: player.id_player,
       playerName: player.player_name,
       accessedBy: userId,
       timestamp: new Date().toISOString()
@@ -97,17 +97,17 @@ export async function GET(
     console.log('📤 Returning player data to client');
     return NextResponse.json(player)
 
-  } catch (error) {
+  } catch (_error) {
     // 🚨 MANEJO DE ERRORES
-    console.error('❌ Error getting player:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      playerId: params.id,
+    console.error('❌ Error getting ___player: ', {
+      __error: error instanceof Error ? error.message : 'Unknown error',
+      _playerId: params.id,
       userId: (await auth()).userId,
       timestamp: new Date().toISOString()
     })
 
     return NextResponse.json(
-      { error: 'Error interno del servidor. Por favor, inténtalo de nuevo más tarde.' },
+      { __error: 'Error interno del servidor. Por favor, inténtalo de nuevo más tarde.' },
       { status: 500 }
     )
   }
@@ -125,16 +125,16 @@ export async function GET(
  * @returns El jugador actualizado
  */
 export async function PUT(
-  request: NextRequest,
+  __request: NextRequest,
   { params }: { params: { id: string } }
-): Promise<NextResponse<Player | { error: string }>> {
+): Promise<NextResponse<Player | { _error: string }>> {
   try {
     // 🔐 VERIFICAR AUTENTICACIÓN Y PERMISOS
     const { userId, sessionClaims } = await auth()
     
     if (!userId) {
       return NextResponse.json(
-        { error: 'No autorizado. Debes iniciar sesión para actualizar jugadores.' }, 
+        { __error: 'No autorizado. Debes iniciar sesión para actualizar jugadores.' }, 
         { status: 401 }
       )
     }
@@ -143,7 +143,7 @@ export async function PUT(
     const userRole = sessionClaims?.public_metadata?.role
     if (userRole !== 'admin') {
       return NextResponse.json(
-        { error: 'Acceso denegado. Solo los administradores pueden actualizar jugadores.' },
+        { __error: 'Acceso denegado. Solo los administradores pueden actualizar jugadores.' },
         { status: 403 }
       )
     }
@@ -154,7 +154,7 @@ export async function PUT(
       validatedId = validatePlayerId(params.id)
     } catch (validationError) {
       return NextResponse.json(
-        { error: `ID inválido: ${validationError instanceof Error ? validationError.message : 'Formato de ID incorrecto'}` },
+        { __error: `ID inválido: ${validationError instanceof Error ? validationError.message : 'Formato de ID incorrecto'}` },
         { status: 400 }
       )
     }
@@ -165,7 +165,7 @@ export async function PUT(
       requestBody = await request.json()
     } catch {
       return NextResponse.json(
-        { error: 'Datos inválidos. El body debe ser JSON válido.' },
+        { __error: 'Datos inválidos. El body debe ser JSON válido.' },
         { status: 400 }
       )
     }
@@ -176,7 +176,7 @@ export async function PUT(
       validatedData = validatePlayerUpdate(requestBody)
     } catch (validationError) {
       return NextResponse.json(
-        { error: `Datos inválidos: ${validationError instanceof Error ? validationError.message : 'Error de validación'}` },
+        { __error: `Datos inválidos: ${validationError instanceof Error ? validationError.message : 'Error de validación'}` },
         { status: 400 }
       )
     }
@@ -185,7 +185,7 @@ export async function PUT(
     const existingPlayer = await PlayerService.getPlayerById(validatedId)
     if (!existingPlayer) {
       return NextResponse.json(
-        { error: `No se encontró ningún jugador con ID: ${validatedId}` },
+        { __error: `No se encontró ningún jugador con ID: ${validatedId}` },
         { status: 404 }
       )
     }
@@ -195,7 +195,7 @@ export async function PUT(
 
     // 📊 LOG DE AUDITORÍA
     console.log('✅ Player updated successfully:', {
-      playerId: updatedPlayer.id_player,
+      _playerId: updatedPlayer.id_player,
       playerName: updatedPlayer.player_name,
       updatedFields: Object.keys(validatedData),
       updatedBy: userId,
@@ -205,11 +205,11 @@ export async function PUT(
     // 📤 DEVOLVER JUGADOR ACTUALIZADO
     return NextResponse.json(updatedPlayer)
 
-  } catch (error) {
+  } catch (_error) {
     // 🚨 MANEJO DE ERRORES ESPECÍFICOS
-    console.error('❌ Error updating player:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      playerId: params.id,
+    console.error('❌ Error updating ___player: ', {
+      __error: error instanceof Error ? error.message : 'Unknown error',
+      _playerId: params.id,
       userId: (await auth()).userId,
       timestamp: new Date().toISOString()
     })
@@ -219,7 +219,7 @@ export async function PUT(
       // 🚫 ERROR DE DUPLICADO
       if (error.message.includes('Unique constraint') || error.message.includes('duplicate')) {
         return NextResponse.json(
-          { error: 'Los datos proporcionados entran en conflicto con otro jugador existente.' },
+          { __error: 'Los datos proporcionados entran en conflicto con otro jugador existente.' },
           { status: 409 }
         )
       }
@@ -227,14 +227,14 @@ export async function PUT(
       // 🔗 ERROR DE RELACIÓN
       if (error.message.includes('Foreign key constraint')) {
         return NextResponse.json(
-          { error: 'Error de referencia de datos. Verifica que todos los datos relacionados existan.' },
+          { __error: 'Error de referencia de datos. Verifica que todos los datos relacionados existan.' },
           { status: 400 }
         )
       }
     }
 
     return NextResponse.json(
-      { error: 'Error interno del servidor. Por favor, inténtalo de nuevo más tarde.' },
+      { __error: 'Error interno del servidor. Por favor, inténtalo de nuevo más tarde.' },
       { status: 500 }
     )
   }
@@ -253,7 +253,7 @@ export async function PUT(
  * @returns Confirmación de eliminación exitosa
  */
 export async function DELETE(
-  request: NextRequest,
+  __request: NextRequest,
   { params }: { params: { id: string } }
 ): Promise<NextResponse<{ success: boolean; message: string } | { error: string }>> {
   try {
@@ -262,7 +262,7 @@ export async function DELETE(
     
     if (!userId) {
       return NextResponse.json(
-        { error: 'No autorizado. Debes iniciar sesión para eliminar jugadores.' }, 
+        { __error: 'No autorizado. Debes iniciar sesión para eliminar jugadores.' }, 
         { status: 401 }
       )
     }
@@ -271,7 +271,7 @@ export async function DELETE(
     const userRole = sessionClaims?.public_metadata?.role
     if (userRole !== 'admin') {
       return NextResponse.json(
-        { error: 'Acceso denegado. Solo los administradores pueden eliminar jugadores.' },
+        { __error: 'Acceso denegado. Solo los administradores pueden eliminar jugadores.' },
         { status: 403 }
       )
     }
@@ -282,7 +282,7 @@ export async function DELETE(
       validatedId = validatePlayerId(params.id)
     } catch (validationError) {
       return NextResponse.json(
-        { error: `ID inválido: ${validationError instanceof Error ? validationError.message : 'Formato de ID incorrecto'}` },
+        { __error: `ID inválido: ${validationError instanceof Error ? validationError.message : 'Formato de ID incorrecto'}` },
         { status: 400 }
       )
     }
@@ -291,7 +291,7 @@ export async function DELETE(
     const existingPlayer = await PlayerService.getPlayerById(validatedId)
     if (!existingPlayer) {
       return NextResponse.json(
-        { error: `No se encontró ningún jugador con ID: ${validatedId}` },
+        { __error: `No se encontró ningún jugador con ID: ${validatedId}` },
         { status: 404 }
       )
     }
@@ -308,7 +308,7 @@ export async function DELETE(
 
     // 📊 LOG DE AUDITORÍA (CRÍTICO para eliminaciones)
     console.log('🗑️ Player deleted successfully:', {
-      playerId: playerInfo.id,
+      _playerId: playerInfo.id,
       playerName: playerInfo.name,
       playerTeam: playerInfo.team,
       deletedBy: userId,
@@ -321,11 +321,11 @@ export async function DELETE(
       message: `Jugador "${playerInfo.name}" eliminado exitosamente.`
     })
 
-  } catch (error) {
+  } catch (_error) {
     // 🚨 MANEJO DE ERRORES
-    console.error('❌ Error deleting player:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      playerId: params.id,
+    console.error('❌ Error deleting ___player: ', {
+      __error: error instanceof Error ? error.message : 'Unknown error',
+      _playerId: params.id,
       userId: (await auth()).userId,
       timestamp: new Date().toISOString()
     })
@@ -335,14 +335,14 @@ export async function DELETE(
       // 🔗 ERROR DE RELACIÓN (jugador referenciado en otras tablas)
       if (error.message.includes('Foreign key constraint') || error.message.includes('referenced')) {
         return NextResponse.json(
-          { error: 'No se puede eliminar el jugador porque está referenciado en otros registros. Elimina primero las referencias.' },
+          { __error: 'No se puede eliminar el jugador porque está referenciado en otros registros. Elimina primero las referencias.' },
           { status: 409 }
         )
       }
     }
 
     return NextResponse.json(
-      { error: 'Error interno del servidor. Por favor, inténtalo de nuevo más tarde.' },
+      { __error: 'Error interno del servidor. Por favor, inténtalo de nuevo más tarde.' },
       { status: 500 }
     )
   }

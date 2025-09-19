@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import type { Player } from "@/types/player"
 
 interface PlayerProfileModalProps {
-  player: Player | null
+  _player: Player | null
   isOpen: boolean
   onClose: () => void
 }
@@ -42,8 +42,7 @@ export default function PlayerProfileModal({ player, isOpen, onClose }: PlayerPr
           <div className="text-center mb-6">
             <Avatar className="w-20 h-20 mx-auto mb-4">
               <AvatarImage src="/placeholder.svg" />
-              <AvatarFallback className="text-xl">
-                {player.player_name
+              <AvatarFallback className="text-xl">{player.player_name
                   ?.split(" ")
                   .map((n) => n[0])
                   .join("") || "J"}

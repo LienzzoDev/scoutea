@@ -97,10 +97,10 @@ export interface TorneoFilters {
 
 export class TournamentService {
   // Obtener todos los torneos con filtros
-  static async getTorneos(filters: TorneoFilters = {}, page = 1, limit = 10) {
+  static async getTorneos(_filters: TorneoFilters = {}, page = 1, limit = 10) {
     const skip = (page - 1) * limit
     
-    const where: any = {}
+    const where: unknown = {}
     
     if (filters.search) {
       where.OR = [
@@ -211,7 +211,7 @@ export class TournamentService {
           moneda: data.moneda || 'EUR'
         }
       })
-    } catch (error) {
+    } catch (_error) {
       console.error('Error creating torneo in database:', error)
       throw error
     }
@@ -276,7 +276,7 @@ export class TournamentService {
   }
   
   // Obtener torneos públicos para mostrar a los miembros
-  static async getTorneosPublicos(filters: Omit<TorneoFilters, 'es_publico'> = {}, page = 1, limit = 10) {
+  static async getTorneosPublicos(__filters: Omit<TorneoFilters, 'es_publico'> = {}, page = 1, limit = 10) {
     return await this.getTorneos({ ...filters, es_publico: true }, page, limit)
   }
   

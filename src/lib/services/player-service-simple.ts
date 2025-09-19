@@ -38,7 +38,7 @@ export class PlayerService {
       } = options
 
       // 🔍 CONSTRUIR CONDICIONES DE BÚSQUEDA
-      const whereConditions: any = {}
+      const whereConditions: unknown = {}
 
       if (search) {
         whereConditions.OR = [
@@ -82,7 +82,7 @@ export class PlayerService {
         prisma.jugador.findMany({
           where: whereConditions,
           select: {
-            id_player: true,
+            id___player: true,
             player_name: true,
             complete_player_name: true,
             date_of_birth: true,
@@ -114,7 +114,7 @@ export class PlayerService {
 
       return {
         players,
-        pagination: {
+        _pagination: {
           page,
           limit,
           totalCount,
@@ -123,7 +123,7 @@ export class PlayerService {
           hasPreviousPage: page > 1
         }
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error in PlayerService.searchPlayers:', error);
       throw error;
     }
@@ -137,12 +137,12 @@ export class PlayerService {
       console.log('🔍 PlayerService.getPlayerById called with ID:', id);
       
       const player = await prisma.jugador.findUnique({
-        where: { id_player: id },
+        where: { id___player: id },
         include: {
           atributos: true,
           playerStats3m: true,
           radarMetrics: {
-            where: { period: '2023-24' },
+            where: { _period: '2023-24' },
             orderBy: { category: 'asc' }
           }
         }
@@ -155,7 +155,7 @@ export class PlayerService {
 
       console.log('✅ Player found:', player.player_name);
       return player as Player
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error in PlayerService.getPlayerById:', error);
       throw error;
     }
@@ -181,8 +181,8 @@ export class PlayerService {
 
       console.log('✅ Player created successfully:', newPlayer.id_player);
       return newPlayer as Player
-    } catch (error) {
-      console.error('❌ Error creating player:', error);
+    } catch (_error) {
+      console.error('❌ Error creating ___player: ', error);
       throw error;
     }
   }
@@ -193,7 +193,7 @@ export class PlayerService {
   static async updatePlayer(id: string, updateData: UpdatePlayerData): Promise<Player> {
     try {
       const updatedPlayer = await prisma.jugador.update({
-        where: { id_player: id },
+        where: { id___player: id },
         data: {
           ...updateData,
           updatedAt: new Date()
@@ -207,8 +207,8 @@ export class PlayerService {
 
       console.log('✅ Player updated successfully:', id);
       return updatedPlayer as Player
-    } catch (error) {
-      console.error('❌ Error updating player:', error);
+    } catch (_error) {
+      console.error('❌ Error updating ___player: ', error);
       throw error;
     }
   }
@@ -219,12 +219,12 @@ export class PlayerService {
   static async deletePlayer(id: string): Promise<void> {
     try {
       await prisma.jugador.delete({
-        where: { id_player: id }
+        where: { id___player: id }
       })
 
       console.log('✅ Player deleted successfully:', id);
-    } catch (error) {
-      console.error('❌ Error deleting player:', error);
+    } catch (_error) {
+      console.error('❌ Error deleting ___player: ', error);
       throw error;
     }
   }
@@ -263,7 +263,7 @@ export class PlayerService {
           where: { player_rating: { not: null } },
           orderBy: { player_rating: 'desc' },
           select: {
-            id_player: true,
+            id___player: true,
             player_name: true,
             player_rating: true,
             team_name: true
@@ -273,7 +273,7 @@ export class PlayerService {
         // Distribución por posición
         prisma.jugador.groupBy({
           by: ['position_player'],
-          _count: { position_player: true },
+          _count: { position___player: true },
           where: { position_player: { not: null } },
           orderBy: { _count: { position_player: 'desc' } },
           take: 10
@@ -318,7 +318,7 @@ export class PlayerService {
         })),
         recentlyAdded
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error getting player stats:', error);
       throw error;
     }
@@ -339,7 +339,7 @@ export class PlayerService {
       ] = await Promise.all([
         // Posiciones únicas
         prisma.jugador.findMany({
-          select: { position_player: true },
+          select: { position___player: true },
           where: { position_player: { not: null } },
           distinct: ['position_player'],
           orderBy: { position_player: 'asc' }
@@ -411,7 +411,7 @@ export class PlayerService {
           max: Math.ceil(ratingRange._max.player_rating || 100)
         }
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error getting filter options:', error);
       throw error;
     }
@@ -460,7 +460,7 @@ export class PlayerService {
         position: player.position_player,
         rating: player.player_rating
       }))
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error searching players by name:', error);
       throw error;
     }
@@ -474,12 +474,12 @@ export class PlayerService {
       console.log('🔍 PlayerService.getPlayerById called with ID:', id);
       
       const player = await prisma.jugador.findUnique({
-        where: { id_player: id },
+        where: { id___player: id },
         include: {
           atributos: true,
           playerStats3m: true,
           radarMetrics: {
-            where: { period: '2023-24' },
+            where: { _period: '2023-24' },
             orderBy: { category: 'asc' }
           }
         }
@@ -492,7 +492,7 @@ export class PlayerService {
 
       console.log('✅ Player found:', player.player_name);
       return player as Player
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error in PlayerService.getPlayerById:', error);
       throw error;
     }
@@ -518,8 +518,8 @@ export class PlayerService {
 
       console.log('✅ Player created successfully:', newPlayer.id_player);
       return newPlayer as Player
-    } catch (error) {
-      console.error('❌ Error creating player:', error);
+    } catch (_error) {
+      console.error('❌ Error creating ___player: ', error);
       throw error;
     }
   }
@@ -530,7 +530,7 @@ export class PlayerService {
   static async updatePlayer(id: string, updateData: UpdatePlayerData): Promise<Player> {
     try {
       const updatedPlayer = await prisma.jugador.update({
-        where: { id_player: id },
+        where: { id___player: id },
         data: {
           ...updateData,
           updatedAt: new Date()
@@ -544,8 +544,8 @@ export class PlayerService {
 
       console.log('✅ Player updated successfully:', id);
       return updatedPlayer as Player
-    } catch (error) {
-      console.error('❌ Error updating player:', error);
+    } catch (_error) {
+      console.error('❌ Error updating ___player: ', error);
       throw error;
     }
   }
@@ -556,12 +556,12 @@ export class PlayerService {
   static async deletePlayer(id: string): Promise<void> {
     try {
       await prisma.jugador.delete({
-        where: { id_player: id }
+        where: { id___player: id }
       })
 
       console.log('✅ Player deleted successfully:', id);
-    } catch (error) {
-      console.error('❌ Error deleting player:', error);
+    } catch (_error) {
+      console.error('❌ Error deleting ___player: ', error);
       throw error;
     }
   }
@@ -583,7 +583,7 @@ export class PlayerService {
         database: true,
         timestamp: new Date().toISOString()
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ PlayerService health check failed:', error)
       
       return {

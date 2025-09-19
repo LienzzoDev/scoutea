@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
 export default function ScoutProfilePage() {
-  const router = useRouter()
+  const _router = useRouter()
   const [activeTab, setActiveTab] = useState('info')
   const [showFilters, setShowFilters] = useState(false)
   const [activeReportsTab, setActiveReportsTab] = useState('qualitative')
@@ -439,9 +439,8 @@ export default function ScoutProfilePage() {
                         </div>
                       </div>
                       <button 
-                        onClick={() => setShowFilters(false)}
-                        className="text-gray-400 hover:text-gray-600"
-                      >
+                        onClick={() =>setShowFilters(false)}
+                        className="text-gray-400 hover:text-gray-600">
                         <X className="w-5 h-5" />
                       </button>
                     </div>
@@ -497,7 +496,7 @@ export default function ScoutProfilePage() {
                     <div
                       key={player.id_player}
                       className="bg-[#ffffff] rounded-lg p-6 flex items-center justify-between border border-[#e7e7e7] cursor-pointer hover:bg-gray-50 transition-colors"
-                      onClick={() => router.push(`/member/player/${player.id_player}`)}
+                      onClick={() => _router.push(`/member/player/${player.id_player}`)}
                     >
                       <div className="flex items-center gap-4">
                         <img
@@ -525,7 +524,7 @@ export default function ScoutProfilePage() {
                             className="w-5 h-5 text-[#6d6d6d] cursor-pointer hover:text-[#8c1a10] transition-colors" 
                             onClick={(e) => {
                               e.stopPropagation()
-                              router.push(`/member/player/${player.id_player}`)
+                              _router.push(`/member/player/${player.id_player}`)
                             }}
                           />
                         </div>
@@ -570,9 +569,8 @@ export default function ScoutProfilePage() {
                         </div>
                       </div>
                       <button 
-                        onClick={() => setShowFilters(false)}
-                        className="text-gray-400 hover:text-gray-600"
-                      >
+                        onClick={() =>setShowFilters(false)}
+                        className="text-gray-400 hover:text-gray-600">
                         <X className="w-5 h-5" />
                       </button>
                     </div>
@@ -628,7 +626,7 @@ export default function ScoutProfilePage() {
                     <div
                       key={report.id_player}
                       className="bg-white rounded-lg border border-[#e7e7e7] overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
-                      onClick={() => router.push(`/member/player/${report.id_player}`)}
+                      onClick={() => _router.push(`/member/player/${report.id_player}`)}
                     >
                       {/* Header */}
                       <div className="p-4 border-b border-[#e7e7e7]">
@@ -772,20 +770,17 @@ export default function ScoutProfilePage() {
                       <textarea
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
-                        placeholder="Send message to Scout Name..."
-                        className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#8c1a10] focus:border-transparent"
-                      />
+                        placeholder="Send message to Scout Name..." className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#8c1a10] focus:border-transparent" />
                     </div>
                     
                     <div className="flex justify-end">
                       <Button
-                        onClick={() => {
+                        onClick={() =>{
                           // Handle send message logic here
                           console.log('Sending message:', message)
                           setMessage('')
                         }}
-                        className="bg-[#8c1a10] hover:bg-[#6d1410] text-white"
-                      >
+                        className="bg-[#8c1a10] hover:bg-[#6d1410] text-white">
                         Send
                       </Button>
                     </div>

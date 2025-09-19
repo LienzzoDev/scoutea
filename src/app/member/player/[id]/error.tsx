@@ -13,7 +13,7 @@ export default function PlayerProfileError({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('Player profile error:', error)
+    console.error('Player profile error: ', error)
   }, [error])
 
   return (

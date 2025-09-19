@@ -20,7 +20,7 @@ import {
 
 
 export interface ComparisonGroupValidationResult {
-  filters: RadarFilters;
+  _filters: RadarFilters;
   expectedGroupSize: number;
   actualGroupSize: number;
   isAppropriate: boolean;
@@ -62,7 +62,7 @@ export interface EmptyGroupHandlingResult {
 
 export interface FilterAppropriateness {
   filter: string;
-  value: any;
+  value: unknown;
   isAppropriate: boolean;
   resultingGroupSize: number;
   minimumRecommendedSize: number;
@@ -102,9 +102,9 @@ export class ComparisonGroupValidator {
    * Validates the integrity of comparison groups for given filters
    */
   async validateComparisonGroupIntegrity(
-    playerId: string,
-    filters: RadarFilters,
-    context: AnalysisContext
+    _playerId: string,
+    __filters: RadarFilters,
+    __context: AnalysisContext
   ): Promise<ComparisonGroupValidationResult> {
     const startTime = Date.now();
     
@@ -115,7 +115,7 @@ export class ComparisonGroupValidator {
       });
 
       // Get the actual comparison group based on filters
-      const comparisonGroup = await this.getComparisonGroup(playerId, filters);
+      const _comparisonGroup = await this.getComparisonGroup(playerId, filters);
       
       // Validate group appropriateness
       const groupComposition = await this.analyzeGroupComposition(comparisonGroup, filters);
@@ -185,7 +185,7 @@ export class ComparisonGroupValidator {
 
       return result;
 
-    } catch (error) {
+    } catch (_error) {
       const duration = Date.now() - startTime;
       radarAnalysisLogger.logAnalysisError({
         ...context,
@@ -199,8 +199,8 @@ export class ComparisonGroupValidator {
    * Validates that filter combinations produce appropriate comparison groups
    */
   async validateFilterAppropriateness(
-    filters: RadarFilters,
-    context: AnalysisContext
+    __filters: RadarFilters,
+    __context: AnalysisContext
   ): Promise<FilterAppropriateness[]> {
     const results: FilterAppropriateness[] = [];
 
@@ -263,8 +263,8 @@ export class ComparisonGroupValidator {
   /**
    * Get comparison group based on filters
    */
-  private async getComparisonGroup(playerId: string, filters: RadarFilters): Promise<any[]> {
-    const whereClause: any = {
+  private async getComparisonGroup(_playerId: string, __filters: RadarFilters): Promise<any[]> {
+    const whereClause: unknown = {
       id_player: { not: playerId } // Exclude the target player
     };
 
@@ -307,8 +307,8 @@ export class ComparisonGroupValidator {
   /**
    * Get group size for given filters (without including player data)
    */
-  private async getGroupSize(filters: RadarFilters): Promise<number> {
-    const whereClause: any = {};
+  private async getGroupSize(__filters: RadarFilters): Promise<number> {
+    const whereClause: unknown = {};
 
     if (filters.position) {
       const similarPositions = this.POSITION_SIMILARITIES[filters.position] || [filters.position];
@@ -342,8 +342,8 @@ export class ComparisonGroupValidator {
    * Analyze group composition for representativeness
    */
   private async analyzeGroupComposition(
-    comparisonGroup: any[],
-    filters: RadarFilters
+    comparisonGroup: unknown[],
+    __filters: RadarFilters
   ): Promise<GroupComposition> {
     if (comparisonGroup.length === 0) {
       return {
@@ -423,7 +423,7 @@ export class ComparisonGroupValidator {
     groupSize: number,
     positionDistribution: Record<string, number>,
     nationalityDistribution: Record<string, number>,
-    filters: RadarFilters
+    __filters: RadarFilters
   ): number {
     let score = 0;
     let factors = 0;
@@ -456,9 +456,9 @@ export class ComparisonGroupValidator {
    * Validate average calculations for the comparison group
    */
   private async validateAverageCalculations(
-    playerId: string,
-    comparisonGroup: any[],
-    filters: RadarFilters
+    _playerId: string,
+    comparisonGroup: unknown[],
+    __filters: RadarFilters
   ): Promise<AverageValidationResult[]> {
     const results: AverageValidationResult[] = [];
 
@@ -525,7 +525,7 @@ export class ComparisonGroupValidator {
   /**
    * Validate empty group handling
    */
-  private async validateEmptyGroupHandling(filters: RadarFilters): Promise<EmptyGroupHandlingResult> {
+  private async validateEmptyGroupHandling(__filters: RadarFilters): Promise<EmptyGroupHandlingResult> {
     const emptyFilterCombinations: string[] = [];
     
     // Test various filter combinations that might result in empty groups
@@ -562,7 +562,7 @@ export class ComparisonGroupValidator {
   /**
    * Calculate expected group size based on filters
    */
-  private calculateExpectedGroupSize(filters: RadarFilters): number {
+  private calculateExpectedGroupSize(_filters: RadarFilters): number {
     // This is a simplified calculation - in reality, you'd use historical data
     let expectedSize = 1000; // Base expectation
 
@@ -578,7 +578,7 @@ export class ComparisonGroupValidator {
   /**
    * Determine if group is appropriate for comparison
    */
-  private isGroupAppropriate(composition: GroupComposition, filters: RadarFilters): boolean {
+  private isGroupAppropriate(composition: GroupComposition, __filters: RadarFilters): boolean {
     return composition.totalPlayers >= this.MIN_GROUP_SIZE && 
            composition.isRepresentative;
   }
@@ -588,8 +588,8 @@ export class ComparisonGroupValidator {
    */
   private createGroupAppropriatenessIssue(
     composition: GroupComposition,
-    filters: RadarFilters,
-    context: AnalysisContext
+    __filters: RadarFilters,
+    __context: AnalysisContext
   ): AnalysisIssue {
     return {
       id: uuidv4(),
@@ -615,7 +615,7 @@ export class ComparisonGroupValidator {
    */
   private createAverageCalculationIssue(
     result: AverageValidationResult,
-    context: AnalysisContext
+    __context: AnalysisContext
   ): AnalysisIssue {
     return {
       id: uuidv4(),
@@ -643,7 +643,7 @@ export class ComparisonGroupValidator {
    */
   private createEmptyGroupHandlingIssue(
     result: EmptyGroupHandlingResult,
-    context: AnalysisContext
+    __context: AnalysisContext
   ): AnalysisIssue {
     return {
       id: uuidv4(),
@@ -670,7 +670,7 @@ export class ComparisonGroupValidator {
     composition: GroupComposition,
     averageValidation: AverageValidationResult[],
     emptyGroupHandling: EmptyGroupHandlingResult,
-    filters: RadarFilters
+    __filters: RadarFilters
   ): string[] {
     const recommendations: string[] = [];
 

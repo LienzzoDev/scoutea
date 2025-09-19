@@ -55,9 +55,8 @@ export class DatabaseError extends Error {
     code: string,
     isRetryable: boolean,
     isTemporary: boolean,
-    context: DatabaseErrorContext,
-    originalError?: any
-  ) {
+    __context: DatabaseErrorContext,
+    originalError?: unknown) {
     super(message)
     this.name = 'DatabaseError'
     this.code = code
@@ -108,11 +107,11 @@ export class DatabaseErrorHandler {
    */
   async executeWithRetry<T>(
     operation: () => Promise<T>,
-    context: Omit<DatabaseErrorContext, 'timestamp'>
+    _context: Omit<DatabaseErrorContext, 'timestamp'>
   ): Promise<DatabaseOperationResult<T>> {
     const startTime = Date.now()
-    const lastError: any = null
-    const retryCount = 0
+    const lastError: unknown = null
+    const _retryCount = 0
 
     const fullContext: DatabaseErrorContext = {
       ...context,
@@ -126,17 +125,17 @@ export class DatabaseErrorHandler {
       return {
         success: true,
         data: result.data,
-        error: undefined,
+        _error: undefined,
         retryCount: result.retryCount,
         duration: Date.now() - startTime
       }
-    } catch (error) {
+    } catch (_error) {
       const dbError = this.classifyError(error, fullContext)
       
       return {
         success: false,
         data: undefined,
-        error: dbError,
+        _error: dbError,
         retryCount,
         duration: Date.now() - startTime
       }
@@ -148,11 +147,11 @@ export class DatabaseErrorHandler {
    */
   private async executeWithRetryLogic<T>(
     operation: () => Promise<T>,
-    context: DatabaseErrorContext,
+    _context: DatabaseErrorContext,
     initialRetryCount: number
   ): Promise<{ data: T; retryCount: number }> {
     let retryCount = initialRetryCount
-    let lastError: any = null
+    let lastError: unknown = null
 
     for (let attempt = 0; attempt <= this.config.maxRetries; attempt++) {
       try {
@@ -163,7 +162,7 @@ export class DatabaseErrorHandler {
         }
         
         return { data, retryCount: attempt }
-      } catch (error) {
+      } catch (_error) {
         lastError = error
         retryCount = attempt
 
@@ -222,7 +221,7 @@ export class DatabaseErrorHandler {
   /**
    * Classify database errors for appropriate handling
    */
-  private classifyError(error: any, context: DatabaseErrorContext): DatabaseError {
+  private classifyError(__error: unknown, __context: DatabaseErrorContext): DatabaseError {
     let code = 'UNKNOWN_ERROR'
     let isRetryable = false
     let isTemporary = false
@@ -290,7 +289,7 @@ export class DatabaseErrorHandler {
   /**
    * Get user-friendly message for Prisma errors
    */
-  private getPrismaErrorMessage(error: Prisma.PrismaClientKnownRequestError): string {
+  private getPrismaErrorMessage(__error: Prisma.PrismaClientKnownRequestError): string {
     switch (error.code) {
       case 'P1001':
         return 'No se puede conectar al servidor de base de datos'
@@ -324,7 +323,7 @@ export class DatabaseErrorHandler {
   /**
    * Log database error with appropriate level
    */
-  private logError(error: DatabaseError, attempt: number): void {
+  private logError(__error: DatabaseError, attempt: number): void {
     const logLevel = error.isRetryable ? 'warn' : 'error'
     const logMethod = logLevel === 'warn' ? console.warn : console.error
 
@@ -358,10 +357,10 @@ export class DatabaseErrorHandler {
   createFallbackResponse<T>(
     operation: string,
     defaultValue: T,
-    error: DatabaseError
+    __error: DatabaseError
   ): T {
     console.warn(`🔄 Creating fallback response for ${operation}:`, {
-      error: error.message,
+      __error: error.message,
       code: error.code,
       defaultValue: typeof defaultValue
     })
@@ -398,11 +397,11 @@ export class DatabaseErrorHandler {
         isHealthy: true,
         latency: Date.now() - startTime
       }
-    } catch (error) {
+    } catch (_error) {
       return {
         isHealthy: false,
         latency: Date.now() - startTime,
-        error: error instanceof Error ? error.message : String(error)
+        _error: error instanceof Error ? error.message : String(error)
       }
     }
   }
@@ -464,7 +463,7 @@ export async function executeDbOperationWithFallback<T>(
 ): Promise<T> {
   try {
     return await executeDbOperation(operation, operationName, context)
-  } catch (error) {
+  } catch (_error) {
     if (error instanceof DatabaseError) {
       return databaseErrorHandler.createFallbackResponse(operationName, fallback, error)
     }

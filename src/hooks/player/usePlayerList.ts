@@ -18,9 +18,9 @@ interface PlayerList {
 
 interface UsePlayerListReturn {
   playerList: PlayerList[]
-  isInList: (playerId: string) => boolean
-  addToList: (playerId: string) => Promise<boolean>
-  removeFromList: (playerId: string) => Promise<boolean>
+  isInList: (_playerId: string) => boolean
+  addToList: (_playerId: string) => Promise<boolean>
+  removeFromList: (_playerId: string) => Promise<boolean>
   loading: boolean
   error: string | null
   refreshList: () => Promise<void>
@@ -42,7 +42,7 @@ export function usePlayerList(): UsePlayerListReturn {
   const { handleError, clearError, getError, setRetryAction } = useErrorHandler()
   
   // Error simplificado
-  const error = getError('playerList')?.message || null
+  const _error = getError('playerList')?.message || null
 
   /**
    * 📋 CARGAR LISTA DE JUGADORES
@@ -93,12 +93,12 @@ export function usePlayerList(): UsePlayerListReturn {
       
     } catch (err) {
       // Ensure we have a proper error object
-      const error = err instanceof Error ? err : new Error(
+      const _error = err instanceof Error ? err : new Error(
         typeof err === 'string' ? err : 'Error al cargar lista de jugadores'
       )
       
       handleError(error, { 
-        context: 'playerList',
+        __context: 'playerList',
         logErrors: true,
         retryable: true
       })
@@ -115,26 +115,26 @@ export function usePlayerList(): UsePlayerListReturn {
   /**
    * ❓ VERIFICAR SI JUGADOR ESTÁ EN LA LISTA
    */
-  const isInList = useCallback((playerId: string): boolean => {
+  const isInList = useCallback((_playerId: string): boolean => {
     return playerList.some(item => item.playerId === playerId)
   }, [playerList])
 
   /**
    * ➕ AÑADIR JUGADOR A LA LISTA CON OPTIMISTIC UPDATE
    */
-  const addToList = useCallback(async (playerId: string): Promise<boolean> => {
+  const addToList = useCallback(async (_playerId: string): Promise<boolean> => {
     if (!user?.id) {
-      handleError('Usuario no autenticado', { context: 'playerList' })
+      handleError('Usuario no autenticado', { __context: 'playerList' })
       return false
     }
 
     if (!playerId || typeof playerId !== 'string' || playerId.trim().length === 0) {
-      handleError('ID de jugador inválido', { context: 'playerList' })
+      handleError('ID de jugador inválido', { __context: 'playerList' })
       return false
     }
 
     if (isInList(playerId)) {
-      handleError('El jugador ya está en tu lista', { context: 'playerList' })
+      handleError('El jugador ya está en tu lista', { __context: 'playerList' })
       return false
     }
 
@@ -144,7 +144,7 @@ export function usePlayerList(): UsePlayerListReturn {
       userId: user.id,
       playerId: playerId.trim(),
       createdAt: new Date().toISOString(),
-      player: {
+      _player: {
         id_player: playerId.trim(),
         player_name: 'Cargando...',
         team_name: '',
@@ -169,7 +169,7 @@ export function usePlayerList(): UsePlayerListReturn {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ playerId: playerId.trim() }),
+        body: JSON.stringify({ _playerId: playerId.trim() }),
       })
 
       if (!response.ok) {
@@ -200,12 +200,12 @@ export function usePlayerList(): UsePlayerListReturn {
       console.error('Error original en addToList:', err)
       
       // Ensure we have a proper error object
-      const error = err instanceof Error ? err : new Error(
+      const _error = err instanceof Error ? err : new Error(
         typeof err === 'string' ? err : 'Error al añadir jugador a la lista'
       )
       
       handleError(error, { 
-        context: 'playerList',
+        __context: 'playerList',
         logErrors: true,
         retryable: true
       })
@@ -222,25 +222,25 @@ export function usePlayerList(): UsePlayerListReturn {
   /**
    * 🗑️ REMOVER JUGADOR DE LA LISTA CON OPTIMISTIC UPDATE
    */
-  const removeFromList = useCallback(async (playerId: string): Promise<boolean> => {
+  const removeFromList = useCallback(async (_playerId: string): Promise<boolean> => {
     if (!user?.id) {
-      handleError('Usuario no autenticado', { context: 'playerList' })
+      handleError('Usuario no autenticado', { __context: 'playerList' })
       return false
     }
 
     if (!playerId || typeof playerId !== 'string' || playerId.trim().length === 0) {
-      handleError('ID de jugador inválido', { context: 'playerList' })
+      handleError('ID de jugador inválido', { __context: 'playerList' })
       return false
     }
 
     if (!isInList(playerId)) {
-      handleError('El jugador no está en tu lista', { context: 'playerList' })
+      handleError('El jugador no está en tu lista', { __context: 'playerList' })
       return false
     }
 
     // 🚀 OPTIMISTIC UPDATE - Remover temporalmente de la lista
     const previousList = [...playerList]
-    const itemToRemove = playerList.find(item => item.playerId === playerId)
+    const _itemToRemove = playerList.find(item => item.playerId === playerId)
     setPlayerList(prev => prev.filter(item => item.playerId !== playerId))
 
     setLoading(true)
@@ -273,12 +273,12 @@ export function usePlayerList(): UsePlayerListReturn {
       setPlayerList(previousList)
       
       // Ensure we have a proper error object
-      const error = err instanceof Error ? err : new Error(
+      const _error = err instanceof Error ? err : new Error(
         typeof err === 'string' ? err : 'Error al remover jugador de la lista'
       )
       
       handleError(error, { 
-        context: 'playerList',
+        __context: 'playerList',
         logErrors: true,
         retryable: true
       })

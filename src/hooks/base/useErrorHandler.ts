@@ -17,18 +17,18 @@ export interface ErrorHandlerOptions {
   logErrors?: boolean
   showToast?: boolean
   retryable?: boolean
-  onError?: (error: ErrorState) => void
+  onError?: (_error: ErrorState) => void
 }
 
 export interface UseErrorHandlerReturn {
   errors: Record<string, ErrorState>
   hasError: (context?: string) => boolean
   getError: (context?: string) => ErrorState | null
-  handleError: (error: unknown, options?: ErrorHandlerOptions) => ErrorState
+  handleError: (_error: unknown, options?: ErrorHandlerOptions) => ErrorState
   clearError: (context?: string) => void
   clearAllErrors: () => void
   retryLastAction: (context?: string) => void
-  setRetryAction: (context: string, action: () => Promise<void>) => void
+  setRetryAction: (_context: string, action: () => Promise<void>) => void
 }
 
 // Store global para acciones de retry
@@ -82,7 +82,7 @@ export function useErrorHandler(): UseErrorHandlerReturn {
   /**
    * 🔧 FORMATEAR ERROR
    */
-  const formatError = useCallback((error: unknown, options: ErrorHandlerOptions = {}): ErrorState => {
+  const formatError = useCallback((__error: unknown, options: ErrorHandlerOptions = {}): ErrorState => {
     const { context = 'general', retryable = false } = options
     
     let errorState: ErrorState = {
@@ -102,7 +102,7 @@ export function useErrorHandler(): UseErrorHandlerReturn {
         errorState.code = 'NETWORK_ERROR'
       }
       
-    } else if (typeof error === 'object' && error !== null) {
+    } else if (typeof _error === 'object' && error !== null) {
       // Error de API estructurado
       const apiError = error as any
       
@@ -115,7 +115,7 @@ export function useErrorHandler(): UseErrorHandlerReturn {
         retryable: apiError.retryable || isRetryableStatus(apiError.status)
       }
       
-    } else if (typeof error === 'string') {
+    } else if (typeof _error === 'string') {
       errorState.message = error
     }
 
@@ -161,7 +161,7 @@ export function useErrorHandler(): UseErrorHandlerReturn {
   /**
    * ⚠️ MANEJAR ERROR
    */
-  const handleError = useCallback((error: unknown, options: ErrorHandlerOptions = {}): ErrorState => {
+  const handleError = useCallback((__error: unknown, options: ErrorHandlerOptions = {}): ErrorState => {
     const { 
       context = 'general', 
       logErrors = true, 
@@ -183,7 +183,7 @@ export function useErrorHandler(): UseErrorHandlerReturn {
     if (logErrors) {
       const logLevel = getLogLevel(errorState)
       const logData = {
-        error: errorState,
+        _error: errorState,
         context,
         timestamp: errorState.timestamp.toISOString(),
         userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'server',
@@ -257,7 +257,7 @@ export function useErrorHandler(): UseErrorHandlerReturn {
   /**
    * 🔄 CONFIGURAR ACCIÓN DE RETRY
    */
-  const setRetryAction = useCallback((context: string, action: () => Promise<void>): void => {
+  const setRetryAction = useCallback((__context: string, action: () => Promise<void>): void => {
     retryActions.set(context, action)
   }, [])
 
@@ -269,7 +269,7 @@ export function useErrorHandler(): UseErrorHandlerReturn {
     const action = retryActions.get(targetContext)
     
     if (!action) {
-      console.warn('⚠️ No retry action found for context:', targetContext)
+      console.warn('⚠️ No retry action found for __context: ', targetContext)
       return
     }
 
@@ -281,7 +281,7 @@ export function useErrorHandler(): UseErrorHandlerReturn {
     } catch (retryError) {
       // Si el retry falla, manejar el nuevo error
       handleError(retryError, { 
-        context: targetContext,
+        __context: targetContext,
         logErrors: true 
       })
     }
@@ -312,7 +312,7 @@ function isRetryableStatus(status?: number): boolean {
 /**
  * 📊 DETERMINAR NIVEL DE LOG
  */
-function getLogLevel(error: ErrorState): 'error' | 'warn' | 'info' {
+function getLogLevel(__error: ErrorState): 'error' | 'warn' | 'info' {
   if (error.status) {
     if (error.status >= 500) return 'error'
     if (error.status >= 400) return 'warn'
@@ -338,13 +338,13 @@ function getLogLevel(error: ErrorState): 'error' | 'warn' | 'info' {
 /**
  * 🚀 HOOK SIMPLIFICADO PARA CASOS BÁSICOS
  */
-export function useSimpleErrorHandler(context: string = 'general') {
+export function useSimpleErrorHandler(_context: string = 'general') {
   const { handleError, clearError, getError, hasError } = useErrorHandler()
   
   return {
-    error: getError(context),
+    _error: getError(context),
     hasError: hasError(context),
-    setError: (error: unknown) => handleError(error, { context }),
+    setError: (_error: unknown) => handleError(error, { context }),
     clearError: () => clearError(context)
   }
 }
@@ -356,7 +356,7 @@ export const ErrorUtils = {
   /**
    * Crear error de validación
    */
-  createValidationError: (message: string, details?: any): ErrorState => ({
+  createValidationError: (message: string, details?: unknown): ErrorState => ({
     message,
     code: 'VALIDATION_ERROR',
     status: 400,
@@ -378,21 +378,21 @@ export const ErrorUtils = {
   /**
    * Verificar si un error es de autenticación
    */
-  isAuthError: (error: ErrorState): boolean => {
+  isAuthError: (_error: ErrorState): boolean => {
     return error.status === 401 || error.code === 'UNAUTHORIZED'
   },
 
   /**
    * Verificar si un error es de permisos
    */
-  isPermissionError: (error: ErrorState): boolean => {
+  isPermissionError: (_error: ErrorState): boolean => {
     return error.status === 403 || error.code === 'FORBIDDEN'
   },
 
   /**
    * Verificar si un error es de red
    */
-  isNetworkError: (error: ErrorState): boolean => {
+  isNetworkError: (_error: ErrorState): boolean => {
     return error.code === 'NETWORK_ERROR' || 
            (error.status !== undefined && error.status >= 500)
   }

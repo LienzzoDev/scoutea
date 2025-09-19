@@ -21,7 +21,7 @@ interface Scout {
 }
 
 export default function ScoutComparisonPage() {
-  const router = useRouter()
+  const _router = useRouter()
   const [activeTab, setActiveTab] = useState('info')
   const [selectedScout1, setSelectedScout1] = useState<Scout | null>(null)
   const [selectedScout2, setSelectedScout2] = useState<Scout | null>(null)
@@ -61,8 +61,7 @@ export default function ScoutComparisonPage() {
       specialization: "Defensive Analysis",
       rating: 4.7,
       rank: 567,
-      image: "/placeholder.svg?height=48&width=48&query=scout 3"
-    }
+      image: "/placeholder.svg?height=48&width=48&query=scout 3"}
   ]
 
   const bothScoutsSelected = selectedScout1 && selectedScout2
@@ -76,7 +75,7 @@ export default function ScoutComparisonPage() {
         {/* Breadcrumb */}
         <div className="mb-6">
           <nav className="text-sm text-[#6d6d6d]">
-            <span className="hover:text-[#8c1a10] cursor-pointer" onClick={() => router.push('/member/scouts')}>
+            <span className="hover:text-[#8c1a10] cursor-pointer" onClick={() => _router.push('/member/scouts')}>
               Wonderscouts
             </span>
             <span className="mx-2">›</span>
@@ -130,8 +129,7 @@ export default function ScoutComparisonPage() {
                   )}
                 </div>
                 
-                <h3 className="text-lg font-semibold text-[#000000] mb-2">
-                  {selectedScout1 ? selectedScout1.name : "Select scout 1"}
+                <h3 className="text-lg font-semibold text-[#000000] mb-2">{selectedScout1 ? selectedScout1.name : "Select scout 1"}
                 </h3>
                 
                 {selectedScout1 && (
@@ -148,17 +146,15 @@ export default function ScoutComparisonPage() {
                     placeholder="Search scout..."
                     value={search1}
                     onChange={(e) => setSearch1(e.target.value)}
-                    className="pr-10"
-                  />
+                    className="pr-10" />
                 </div>
 
                 <div className="space-y-2">
                   {selectedScout1 ? (
                     <Button
                       variant="outline"
-                      onClick={() => setSelectedScout1(null)}
-                      className="w-full border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white"
-                    >
+                      onClick={() =>setSelectedScout1(null)}
+                      className="w-full border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white">
                       Clear Selection
                     </Button>
                   ) : (
@@ -169,9 +165,8 @@ export default function ScoutComparisonPage() {
                           <Button
                             key={scout.id}
                             variant="outline"
-                            onClick={() => setSelectedScout1(scout)}
-                            className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
-                          >
+                            onClick={() =>setSelectedScout1(scout)}
+                            className="w-full border-gray-300 text-gray-700 hover:bg-gray-50">
                             {scout.name}
                           </Button>
                         ))}
@@ -199,8 +194,7 @@ export default function ScoutComparisonPage() {
                   )}
                 </div>
                 
-                <h3 className="text-lg font-semibold text-[#000000] mb-2">
-                  {selectedScout2 ? selectedScout2.name : "Select scout 2"}
+                <h3 className="text-lg font-semibold text-[#000000] mb-2">{selectedScout2 ? selectedScout2.name : "Select scout 2"}
                 </h3>
                 
                 {selectedScout2 && (
@@ -217,17 +211,15 @@ export default function ScoutComparisonPage() {
                     placeholder="Search scout..."
                     value={search2}
                     onChange={(e) => setSearch2(e.target.value)}
-                    className="pr-10"
-                  />
+                    className="pr-10" />
                 </div>
 
                 <div className="space-y-2">
                   {selectedScout2 ? (
                     <Button
                       variant="outline"
-                      onClick={() => setSelectedScout2(null)}
-                      className="w-full border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white"
-                    >
+                      onClick={() =>setSelectedScout2(null)}
+                      className="w-full border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white">
                       Clear Selection
                     </Button>
                   ) : (
@@ -238,9 +230,8 @@ export default function ScoutComparisonPage() {
                           <Button
                             key={scout.id}
                             variant="outline"
-                            onClick={() => setSelectedScout2(scout)}
-                            className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
-                          >
+                            onClick={() =>setSelectedScout2(scout)}
+                            className="w-full border-gray-300 text-gray-700 hover:bg-gray-50">
                             {scout.name}
                           </Button>
                         ))}
@@ -261,9 +252,8 @@ export default function ScoutComparisonPage() {
               {/* Scout 1 Summary */}
               <div className="bg-white rounded-lg p-6 border border-[#e7e7e7] relative">
                 <button
-                  onClick={() => setSelectedScout1(null)}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-                >
+                  onClick={() =>setSelectedScout1(null)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
                   <X className="w-5 h-5" />
                 </button>
                 
@@ -293,9 +283,8 @@ export default function ScoutComparisonPage() {
               {/* Scout 2 Summary */}
               <div className="bg-white rounded-lg p-6 border border-[#e7e7e7] relative">
                 <button
-                  onClick={() => setSelectedScout2(null)}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-                >
+                  onClick={() =>setSelectedScout2(null)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
                   <X className="w-5 h-5" />
                 </button>
                 
@@ -335,8 +324,7 @@ export default function ScoutComparisonPage() {
                   </div>
 
                   {/* Comparison Rows */}
-                  <div className="space-y-0">
-                    {[
+                  <div className="space-y-0">{[
                       { label: "Age", value1: "XX", value2: "XX" },
                       { label: "Total Reports", value1: "Loren Ipsum Dolor", value2: "Loren Ipsum Dolor" },
                       { label: "Original Reports", value1: "Loren Ipsum Dolor", value2: "Loren Ipsum Dolor" },
@@ -358,7 +346,7 @@ export default function ScoutComparisonPage() {
                       { label: "Avg Initial Competition Level", value1: "XX", value2: "XX" },
                       { label: "Scout ELO", value1: "XX", value2: "XX" },
                       { label: "Scout Level", value1: "XX", value2: "XX" },
-                      { label: "Scout Ranking", value1: "XX", value2: "XX" }
+                      { label: "Scout Ranking", value1: "XX", value2: "XX"}
                     ].map((row, index) => (
                       <div key={index} className="grid grid-cols-3 gap-8 py-3 border-b border-gray-100 last:border-b-0">
                         <div className="text-[#6d6d6d] font-medium">{row.label}</div>

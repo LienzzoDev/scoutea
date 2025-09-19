@@ -125,7 +125,7 @@ export class RadarCalculationService {
   /**
    * Calculates radar data for a specific player
    */
-  async calculatePlayerRadar(playerId: string, period: string = '2023-24'): Promise<RadarCategoryData[]> {
+  async calculatePlayerRadar(_playerId: string, _period: string = '2023-24'): Promise<RadarCategoryData[]> {
     const operationId = `radar_calc_${playerId}_${Date.now()}`;
     const startTime = Date.now();
     
@@ -191,7 +191,7 @@ export class RadarCalculationService {
     });
 
     return radarData;
-  } catch (error) {
+  } catch (_error) {
     const duration = Date.now() - startTime;
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     
@@ -202,7 +202,7 @@ export class RadarCalculationService {
       operation: 'calculate_player_radar',
       duration,
       success: false,
-      error: errorMessage
+      __error: errorMessage
     });
 
     throw error;
@@ -214,8 +214,8 @@ export class RadarCalculationService {
    */
   private calculateCategoryValue(
     categoryKey: string,
-    atributos: any,
-    playerStats: any,
+    atributos: unknown,
+    playerStats: unknown,
     mapping: AttributeWeight[]
   ): { value: number; completeness: number; sourceAttributes: string[] } {
     let weightedSum = 0;
@@ -318,19 +318,19 @@ export class RadarCalculationService {
    * Calculates radar data with comparison against a filtered group
    */
   async calculatePlayerRadarWithComparison(
-    playerId: string,
-    filters: RadarFilters = {},
-    period: string = '2023-24'
+    _playerId: string,
+    __filters: RadarFilters = {},
+    _period: string = '2023-24'
   ): Promise<RadarCategoryData[]> {
     try {
       // Get player's radar data
       const playerRadarData = await this.calculatePlayerRadar(playerId, period);
 
       // Get comparison group - if no filters provided, compare against ALL players
-      const comparisonGroup = await this.getComparisonGroup(filters);
+      const _comparisonGroup = await this.getComparisonGroup(filters);
 
       if (comparisonGroup.length === 0) {
-        console.warn(`No comparison group found for filters:`, filters);
+        console.warn(`No comparison group found for __filters: `, filters);
         return playerRadarData;
       }
 
@@ -345,7 +345,7 @@ export class RadarCalculationService {
 
       return enrichedRadarData;
 
-    } catch (error) {
+    } catch (_error) {
       console.error(`Error calculating radar with comparison for player ${playerId}:`, error);
       // Fallback to basic radar data without comparison
       return await this.calculatePlayerRadar(playerId, period);
@@ -355,9 +355,9 @@ export class RadarCalculationService {
   /**
    * Gets comparison group based on filters with enhanced filtering logic
    */
-  async getComparisonGroup(filters: RadarFilters = {}): Promise<string[]> {
-    const whereClause: any = {};
-    const orConditions: any[] = [];
+  async getComparisonGroup(__filters: RadarFilters = {}): Promise<string[]> {
+    const whereClause: unknown = {};
+    const orConditions: unknown[] = [];
 
     // Position filter with exact and similar position matching
     if (filters.position) {
@@ -419,7 +419,7 @@ export class RadarCalculationService {
       const playerIds = await this.queryOptimizer.getOptimizedComparisonGroup(filters);
       
       return playerIds;
-    } catch (error) {
+    } catch (_error) {
       console.error('Error fetching comparison group:', error);
       throw new Error(`Failed to fetch comparison group: ${error}`);
     }
@@ -464,7 +464,7 @@ export class RadarCalculationService {
   async calculatePercentiles(
     playerValues: RadarCategoryData[],
     comparisonGroup: string[],
-    period: string = '2023-24'
+    _period: string = '2023-24'
   ): Promise<RadarCategoryData[]> {
     const enrichedData: RadarCategoryData[] = [];
 
@@ -507,7 +507,7 @@ export class RadarCalculationService {
           minValue: Math.round(stats.min * 100) / 100
         });
 
-      } catch (error) {
+      } catch (_error) {
         console.error(`Error calculating percentiles for category ${playerCategory.category}:`, error);
         // Return original data without comparison stats
         enrichedData.push(playerCategory);
@@ -613,7 +613,7 @@ export class RadarCalculationService {
   private async getComparisonValues(
     categoryLabel: string,
     playerIds: string[],
-    period: string
+    _period: string
   ): Promise<number[]> {
     const values: number[] = [];
 
@@ -638,7 +638,7 @@ export class RadarCalculationService {
       try {
         const players = await this.prisma.jugador.findMany({
           where: {
-            id_player: { in: batch }
+            id___player: { in: batch }
           },
           include: {
             atributos: true,
@@ -660,13 +660,13 @@ export class RadarCalculationService {
               if (categoryData.completeness >= 50) {
                 values.push(categoryData.value);
               }
-            } catch (error) {
+            } catch (_error) {
               // Skip players with calculation errors
               console.warn(`Error calculating category ${categoryKey} for player ${player.id_player}:`, error);
             }
           }
         }
-      } catch (error) {
+      } catch (_error) {
         console.error(`Error processing batch ${i}-${i + batchSize}:`, error);
       }
     }
@@ -677,7 +677,7 @@ export class RadarCalculationService {
   /**
    * Caches radar data in the RadarMetrics table
    */
-  async cachePlayerRadarData(playerId: string, period: string = '2023-24'): Promise<void> {
+  async cachePlayerRadarData(_playerId: string, _period: string = '2023-24'): Promise<void> {
     const radarData = await this.calculatePlayerRadar(playerId, period);
 
     // Delete existing radar data for this player and period
@@ -711,7 +711,7 @@ export class RadarCalculationService {
    */
   async batchCalculateRadarData(
     playerIds: string[],
-    period: string = '2023-24',
+    _period: string = '2023-24',
     batchSize: number = 10
   ): Promise<{ processed: number; errors: string[] }> {
     const errors: string[] = [];
@@ -724,7 +724,7 @@ export class RadarCalculationService {
         try {
           await this.cachePlayerRadarData(playerId, period);
           processed++;
-        } catch (error) {
+        } catch (_error) {
           const errorMsg = `Error processing player ${playerId}: ${error}`;
           errors.push(errorMsg);
           console.error(errorMsg);

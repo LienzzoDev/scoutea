@@ -29,7 +29,7 @@ export async function GET(): Promise<NextResponse> {
       console.error('❌ API request failed:', errorText);
       
       return NextResponse.json({
-        error: 'API request failed',
+        __error: 'API request failed',
         status: response.status,
         statusText: response.statusText,
         responseText: errorText
@@ -49,16 +49,16 @@ export async function GET(): Promise<NextResponse> {
         status: response.status,
         playersCount: data.players?.length || 0,
         samplePlayer: data.players?.[0] || null,
-        pagination: data.pagination || null
+        _pagination: data.pagination || null
       },
       timestamp: new Date().toISOString()
     });
     
-  } catch (error) {
+  } catch (_error) {
     console.error('❌ Simple debug test failed:', error);
     
     return NextResponse.json({
-      error: 'Simple debug test failed',
+      __error: 'Simple debug test failed',
       details: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     }, { status: 500 });

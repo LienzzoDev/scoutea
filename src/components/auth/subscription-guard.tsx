@@ -17,21 +17,21 @@ export function SubscriptionGuard({
   fallbackUrl = '/member/subscription-plans'
 }: SubscriptionGuardProps) {
   const { subscription, loading, hasActiveSubscription, isPremium, isBasic } = useSubscription()
-  const router = useRouter()
+  const _router = useRouter()
 
   useEffect(() => {
     if (!loading) {
       if (!hasActiveSubscription) {
-        router.push(fallbackUrl)
+        _router.push(fallbackUrl)
         return
       }
 
       if (requiredPlan === 'premium' && !isPremium) {
-        router.push(fallbackUrl)
+        _router.push(fallbackUrl)
         return
       }
     }
-  }, [loading, hasActiveSubscription, isPremium, isBasic, requiredPlan, router, fallbackUrl])
+  }, [loading, hasActiveSubscription, isPremium, isBasic, requiredPlan, _router, fallbackUrl])
 
   if (loading) {
     return (

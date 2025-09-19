@@ -47,7 +47,7 @@ export class UserService {
         }
       })
       return user
-    } catch (error) {
+    } catch (_error) {
       console.error('Error creating user:', error)
       throw error
     }
@@ -60,7 +60,7 @@ export class UserService {
         where: { clerkId }
       })
       return user
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting user by clerk ID:', error)
       throw error
     }
@@ -73,7 +73,7 @@ export class UserService {
         where: { email }
       })
       return user
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting user by email:', error)
       throw error
     }
@@ -87,7 +87,7 @@ export class UserService {
         data
       })
       return user
-    } catch (error) {
+    } catch (_error) {
       console.error('Error updating user:', error)
       throw error
     }
@@ -101,21 +101,21 @@ export class UserService {
         data: { profileCompleted: true }
       })
       return user
-    } catch (error) {
+    } catch (_error) {
       console.error('Error marking profile as completed:', error)
       throw error
     }
   }
 
   // Actualizar información de suscripción
-  static async updateSubscription(clerkId: string, subscription: any) {
+  static async updateSubscription(clerkId: string, subscription: unknown) {
     try {
       const user = await prisma.usuario.update({
         where: { clerkId },
         data: { subscription }
       })
       return user
-    } catch (error) {
+    } catch (_error) {
       console.error('Error updating subscription:', error)
       throw error
     }
@@ -129,7 +129,7 @@ export class UserService {
         select: { profileCompleted: true }
       })
       return user?.profileCompleted || false
-    } catch (error) {
+    } catch (_error) {
       console.error('Error checking profile completion:', error)
       return false
     }
@@ -142,7 +142,7 @@ export class UserService {
         where: { clerkId }
       })
       return true
-    } catch (error) {
+    } catch (_error) {
       console.error('Error deleting user:', error)
       throw error
     }

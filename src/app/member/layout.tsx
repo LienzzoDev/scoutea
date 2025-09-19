@@ -14,7 +14,7 @@ interface MemberGuardProps {
 function MemberGuard({ children }: MemberGuardProps) {
   const { isLoaded, userId } = useAuth()
   const { user } = useUser()
-  const router = useRouter()
+  const _router = useRouter()
   const pathname = usePathname()
   const [isChecking, setIsChecking] = useState(true)
 
@@ -22,12 +22,12 @@ function MemberGuard({ children }: MemberGuardProps) {
     if (isLoaded) {
       if (!userId) {
         console.log('❌ No autenticado, redirigiendo a login')
-        router.push('/login')
+        _router.push('/login')
         return
       }
 
       // Verificar si el perfil está completo usando metadatos públicos de Clerk (seguro)
-      const profileCompleted = (user?.publicMetadata as any)?.profile === 'completed'
+      const _profileCompleted = (user?.publicMetadata as any)?.profile === 'completed'
       const hasSubscription = (user?.publicMetadata as any)?.subscription?.status === 'active'
       const userRole = getUserRole(user)
       
@@ -41,7 +41,7 @@ function MemberGuard({ children }: MemberGuardProps) {
       // Si el perfil no está completo, permitir acceso a planes de suscripción o welcome-plan
       if (!profileCompleted && pathname !== '/member/subscription-plans' && pathname !== '/member/welcome-plan' && pathname !== '/member/complete-profile-after-payment') {
         console.log('🔄 Perfil incompleto, redirigiendo a planes de suscripción')
-        router.replace('/member/subscription-plans')
+        _router.replace('/member/subscription-plans')
         return
       }
 
@@ -60,7 +60,7 @@ function MemberGuard({ children }: MemberGuardProps) {
           return
         } else {
           console.log('🔄 Sin suscripción, redirigiendo a planes de suscripción')
-          router.replace('/member/subscription-plans')
+          _router.replace('/member/subscription-plans')
           return
         }
       }
@@ -71,14 +71,14 @@ function MemberGuard({ children }: MemberGuardProps) {
           // Si tiene suscripción y no está en el dashboard, redirigir al dashboard
           if (pathname !== '/member/dashboard' && !pathname.startsWith('/member/player/') && !pathname.startsWith('/member/scout/') && pathname !== '/member/torneos') {
             console.log('✅ Perfil completo con suscripción, redirigiendo a dashboard')
-            router.replace('/member/dashboard')
+            _router.replace('/member/dashboard')
             return
           }
         } else {
           // Si no tiene suscripción y no está en planes de suscripción, redirigir a planes
           if (pathname !== '/member/subscription-plans' && pathname !== '/member/torneos') {
             console.log('✅ Perfil completo sin suscripción, redirigiendo a planes de suscripción')
-            router.replace('/member/subscription-plans')
+            _router.replace('/member/subscription-plans')
             return
           }
         }
@@ -102,7 +102,7 @@ function MemberGuard({ children }: MemberGuardProps) {
       console.log('✅ Acceso permitido - usuario member')
       setIsChecking(false)
     }
-  }, [isLoaded, userId, user, router, pathname])
+  }, [isLoaded, userId, user, _router, pathname])
 
   if (!isLoaded || isChecking) {
     return (

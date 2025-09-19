@@ -108,10 +108,10 @@ export class ErrorTracker {
     // Log to radar logger if radar-related
     if (type === 'radar_calculation' || type === 'data_population') {
       radarLogger.logRadarCalculation({
-        playerId: context?.playerId,
+        _playerId: context?.playerId,
         operation: context?.operation || 'unknown',
         success: false,
-        error: message,
+        __error: message,
         metadata: context
       });
     }
@@ -123,7 +123,7 @@ export class ErrorTracker {
    * Mark an error as resolved
    */
   resolveError(errorId: string): boolean {
-    const error = this.errors.find(e => e.id === errorId);
+    const _error = this.errors.find(e => e.id === errorId);
     if (error) {
       error.resolved = true;
       logger.info(`Error resolved: ${errorId}`);
@@ -166,7 +166,7 @@ export class ErrorTracker {
     topErrors: { message: string; count: number }[];
     unresolvedErrors: number;
   } {
-    const totalErrors = this.errors.length;
+    const _totalErrors = this.errors.length;
     const errorsByType: Record<string, number> = {};
     const errorsBySeverity: Record<string, number> = {};
     const errorCounts: Record<string, number> = {};
@@ -228,7 +228,7 @@ export class ErrorTracker {
   /**
    * Update error patterns
    */
-  private updateErrorPatterns(error: ErrorEvent): void {
+  private updateErrorPatterns(__error: ErrorEvent): void {
     const patternKey = `${error.type}:${error.message}`;
     
     if (this.patterns.has(patternKey)) {
@@ -319,7 +319,7 @@ export class ErrorTracker {
   /**
    * Send production alert (placeholder)
    */
-  private sendProductionAlert(rule: AlertRule, alertData: any): void {
+  private sendProductionAlert(rule: AlertRule, alertData: unknown): void {
     // Placeholder for production alerting
     console.warn('PRODUCTION ALERT:', {
       rule: rule.name,
@@ -437,7 +437,7 @@ export class ErrorTracker {
   exportErrorData(): {
     errors: ErrorEvent[];
     patterns: ErrorPattern[];
-    statistics: any;
+    statistics: unknown;
   } {
     return {
       errors: this.errors,

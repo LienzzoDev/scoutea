@@ -53,7 +53,7 @@ export class CompetitionService {
         }
       })
       return competition
-    } catch (error) {
+    } catch (_error) {
       console.error('Error creating competition:', error)
       throw error
     }
@@ -68,7 +68,7 @@ export class CompetitionService {
         where: { id_competition: id }
       })
       return competition
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting competition by ID:', error)
       throw error
     }
@@ -87,7 +87,7 @@ export class CompetitionService {
         }
       })
       return competition
-    } catch (error) {
+    } catch (_error) {
       console.error('Error updating competition:', error)
       throw error
     }
@@ -102,7 +102,7 @@ export class CompetitionService {
         where: { id_competition: id }
       })
       return true
-    } catch (error) {
+    } catch (_error) {
       console.error('Error deleting competition:', error)
       throw error
     }
@@ -124,7 +124,7 @@ export class CompetitionService {
       const skip = (page - 1) * limit
 
       // Construir filtros WHERE
-      const where: any = {}
+      const where: unknown = {}
       
       if (filters.competition_name) {
         where.competition_name = {
@@ -188,14 +188,14 @@ export class CompetitionService {
 
       return {
         competitions,
-        pagination: {
+        _pagination: {
           page,
           limit,
           total,
           pages: Math.ceil(total / limit)
         }
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Error searching competitions:', error)
       throw error
     }
@@ -249,7 +249,7 @@ export class CompetitionService {
         avgRating: avgRating._avg.competition_rating,
         avgValue: avgValue._avg.competition_trfm_value
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting competition stats:', error)
       throw error
     }
@@ -270,7 +270,7 @@ export class CompetitionService {
         orderBy: { competition_name: 'asc' }
       })
       return competitions
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting competitions by country:', error)
       throw error
     }
@@ -291,7 +291,7 @@ export class CompetitionService {
         orderBy: { competition_name: 'asc' }
       })
       return competitions
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting competitions by confederation:', error)
       throw error
     }
@@ -312,7 +312,7 @@ export class CompetitionService {
         orderBy: { competition_name: 'asc' }
       })
       return competitions
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting competitions by tier:', error)
       throw error
     }

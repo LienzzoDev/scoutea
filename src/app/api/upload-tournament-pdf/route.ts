@@ -1,13 +1,13 @@
 import { put } from '@vercel/blob'
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function POST(request: NextRequest) {
+export async function POST(__request: NextRequest) {
   try {
     // Verificar si las variables de entorno están configuradas
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
       console.error('BLOB_READ_WRITE_TOKEN no está configurada')
       return NextResponse.json(
-        { error: 'Configuración de almacenamiento no disponible. Contacta al administrador.' },
+        { __error: 'Configuración de almacenamiento no disponible. Contacta al administrador.' },
         { status: 500 }
       )
     }
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     
     if (!file) {
       return NextResponse.json(
-        { error: 'No se proporcionó ningún archivo' },
+        { __error: 'No se proporcionó ningún archivo' },
         { status: 400 }
       )
     }
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     // Verificar que es un PDF
     if (file.type !== 'application/pdf') {
       return NextResponse.json(
-        { error: 'El archivo debe ser un PDF' },
+        { __error: 'El archivo debe ser un PDF' },
         { status: 400 }
       )
     }
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     const maxSize = 10 * 1024 * 1024 // 10MB
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: 'El archivo es demasiado grande. Máximo 10MB' },
+        { __error: 'El archivo es demasiado grande. Máximo 10MB' },
         { status: 400 }
       )
     }
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       filename: fileName,
       size: file.size
     })
-  } catch (error) {
+  } catch (_error) {
     console.error('Error uploading PDF:', error)
     
     // Proporcionar más detalles del error en desarrollo
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       : 'Error interno del servidor al subir el archivo'
     
     return NextResponse.json(
-      { error: errorMessage },
+      { _error: errorMessage },
       { status: 500 }
     )
   }

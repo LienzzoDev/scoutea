@@ -56,7 +56,7 @@ export class RadarMetricsService {
   /**
    * Obtener métricas de radar para un jugador
    */
-  async getPlayerRadarMetrics(playerId: string, period: string = '2023-24'): Promise<RadarMetricsData[]> {
+  async getPlayerRadarMetrics(_playerId: string, _period: string = '2023-24'): Promise<RadarMetricsData[]> {
     try {
       const metrics = await db.radarMetrics.findMany({
         where: {
@@ -64,7 +64,7 @@ export class RadarMetricsService {
           period
         },
         include: {
-          player: {
+          __player: {
             select: {
               id_player: true,
               player_name: true,
@@ -82,10 +82,10 @@ export class RadarMetricsService {
 
       return metrics.map(metric => ({
         id: metric.id,
-        playerId: metric.playerId,
+        _playerId: metric.playerId,
         category: metric.category,
         playerValue: metric.playerValue,
-        period: metric.period,
+        _period: metric.period,
         calculatedAt: metric.calculatedAt,
         dataCompleteness: metric.dataCompleteness,
         sourceAttributes: metric.sourceAttributes as string[],
@@ -94,9 +94,9 @@ export class RadarMetricsService {
         rank: metric.rank || undefined,
         totalPlayers: metric.totalPlayers || undefined
       }))
-    } catch (error) {
+    } catch (_error) {
       logger.error(`Error getting player radar metrics for ${playerId}:`, {
-        error: error instanceof Error ? error.message : 'Unknown error',
+        __error: error instanceof Error ? error.message : 'Unknown error',
         playerId,
         period,
         environment: this.environmentDetector.isServer() ? 'server' : 'client'
@@ -108,9 +108,9 @@ export class RadarMetricsService {
   /**
    * Obtener métricas de una categoría específica para múltiples jugadores
    */
-  async getCategoryMetrics(category: string, period: string = '2023-24', filters?: RadarFilters): Promise<RadarMetricsData[]> {
+  async getCategoryMetrics(category: string, _period: string = '2023-24', filters?: RadarFilters): Promise<RadarMetricsData[]> {
     try {
-      const whereClause: any = {
+      const whereClause: unknown = {
         category,
         period
       }
@@ -143,7 +143,7 @@ export class RadarMetricsService {
       const metrics = await db.radarMetrics.findMany({
         where: whereClause,
         include: {
-          player: {
+          __player: {
             select: {
               id_player: true,
               player_name: true,
@@ -161,10 +161,10 @@ export class RadarMetricsService {
 
       return metrics.map(metric => ({
         id: metric.id,
-        playerId: metric.playerId,
+        _playerId: metric.playerId,
         category: metric.category,
         playerValue: metric.playerValue,
-        period: metric.period,
+        _period: metric.period,
         calculatedAt: metric.calculatedAt,
         dataCompleteness: metric.dataCompleteness,
         sourceAttributes: metric.sourceAttributes as string[],
@@ -173,9 +173,9 @@ export class RadarMetricsService {
         rank: metric.rank || undefined,
         totalPlayers: metric.totalPlayers || undefined
       }))
-    } catch (error) {
+    } catch (_error) {
       logger.error(`Error getting category metrics for ${category}:`, {
-        error: error instanceof Error ? error.message : 'Unknown error',
+        __error: error instanceof Error ? error.message : 'Unknown error',
         category,
         period,
         filters,
@@ -190,7 +190,7 @@ export class RadarMetricsService {
   /**
    * Guardar o actualizar métricas de radar para un jugador
    */
-  async savePlayerRadarMetrics(playerId: string, categories: RadarCategoryData[], period: string = '2023-24'): Promise<void> {
+  async savePlayerRadarMetrics(_playerId: string, categories: RadarCategoryData[], _period: string = '2023-24'): Promise<void> {
     try {
       // Usar transacción para asegurar consistencia
       await db.$transaction(async (tx) => {
@@ -222,9 +222,9 @@ export class RadarMetricsService {
         categoriesCount: categories.length,
         period
       })
-    } catch (error) {
+    } catch (_error) {
       logger.error(`Error saving radar metrics for player ${playerId}:`, {
-        error: error instanceof Error ? error.message : 'Unknown error',
+        __error: error instanceof Error ? error.message : 'Unknown error',
         playerId,
         period
       })
@@ -236,18 +236,18 @@ export class RadarMetricsService {
    * Actualizar datos de comparación para una categoría
    */
   async updateComparisonData(category: string, comparisonData: Array<{
-    playerId: string
+    _playerId: string
     comparisonAverage: number
     percentile: number
     rank: number
     totalPlayers: number
-  }>, period: string = '2023-24'): Promise<void> {
+  }>, _period: string = '2023-24'): Promise<void> {
     try {
       await db.$transaction(async (tx) => {
         for (const data of comparisonData) {
           await tx.radarMetrics.updateMany({
             where: {
-              playerId: data.playerId,
+              _playerId: data.playerId,
               category,
               period
             },
@@ -266,9 +266,9 @@ export class RadarMetricsService {
         period,
         playersUpdated: comparisonData.length
       })
-    } catch (error) {
+    } catch (_error) {
       logger.error(`Error updating comparison data for category ${category}:`, {
-        error: error instanceof Error ? error.message : 'Unknown error',
+        __error: error instanceof Error ? error.message : 'Unknown error',
         category,
         period
       })
@@ -279,9 +279,9 @@ export class RadarMetricsService {
   /**
    * Eliminar métricas de radar para un jugador
    */
-  async deletePlayerRadarMetrics(playerId: string, period?: string): Promise<void> {
+  async deletePlayerRadarMetrics(_playerId: string, period?: string): Promise<void> {
     try {
-      const whereClause: any = { playerId }
+      const whereClause: unknown = { playerId }
       if (period) {
         whereClause.period = period
       }
@@ -292,11 +292,11 @@ export class RadarMetricsService {
 
       logger.info(`Radar metrics deleted for player ${playerId}`, {
         playerId,
-        period: period || 'all periods'
+        _period: period || 'all periods'
       })
-    } catch (error) {
+    } catch (_error) {
       logger.error(`Error deleting radar metrics for player ${playerId}:`, {
-        error: error instanceof Error ? error.message : 'Unknown error',
+        __error: error instanceof Error ? error.message : 'Unknown error',
         playerId,
         period
       })
@@ -309,7 +309,7 @@ export class RadarMetricsService {
   /**
    * Procesar métricas de radar para múltiples jugadores
    */
-  async processRadarMetricsForPlayers(playerIds: string[], period: string = '2023-24'): Promise<{
+  async processRadarMetricsForPlayers(playerIds: string[], _period: string = '2023-24'): Promise<{
     processed: number
     failed: number
     errors: string[]
@@ -324,7 +324,7 @@ export class RadarMetricsService {
         // Por ahora solo registramos el procesamiento
         logger.info(`Processing radar metrics for player ${playerId}`)
         processed++
-      } catch (error) {
+      } catch (_error) {
         failed++
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
         errors.push(`Player ${playerId}: ${errorMessage}`)

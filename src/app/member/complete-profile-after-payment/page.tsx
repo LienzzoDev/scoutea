@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
 export default function CompleteProfileAfterPayment() {
-  const router = useRouter()
+  const _router = useRouter()
   const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -86,7 +86,7 @@ export default function CompleteProfileAfterPayment() {
         const errorData = await response.json()
         setError(errorData.error || 'Error al completar el perfil')
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Error completando perfil:', error)
       setError('Error al completar el perfil. Inténtalo de nuevo.')
     } finally {
@@ -125,7 +125,7 @@ export default function CompleteProfileAfterPayment() {
         const errorData = await response.json()
         setError(errorData.error || 'Error al actualizar el perfil')
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Error actualizando perfil:', error)
       setError('Error al actualizar el perfil. Inténtalo de nuevo.')
     } finally {
@@ -217,22 +217,18 @@ export default function CompleteProfileAfterPayment() {
                   <Input
                     id="firstName"
                     value={profileData.firstName}
-                    onChange={(e) => handleInputChange('firstName', e.target.value)}
-                    placeholder="Tu nombre"
-                    required
-                    className="mt-1"
-                  />
+                    onChange={(e) =>handleInputChange('firstName', e.target.value)}
+                    placeholder="Tu nombre" required
+                    className="mt-1" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">Apellido *</Label>
                   <Input
                     id="lastName"
                     value={profileData.lastName}
-                    onChange={(e) => handleInputChange('lastName', e.target.value)}
-                    placeholder="Tu apellido"
-                    required
-                    className="mt-1"
-                  />
+                    onChange={(e) =>handleInputChange('lastName', e.target.value)}
+                    placeholder="Tu apellido" required
+                    className="mt-1" />
                 </div>
               </div>
 
@@ -242,11 +238,9 @@ export default function CompleteProfileAfterPayment() {
                   <Input
                     id="nationality"
                     value={profileData.nationality}
-                    onChange={(e) => handleInputChange('nationality', e.target.value)}
-                    placeholder="Ej: Española"
-                    required
-                    className="mt-1"
-                  />
+                    onChange={(e) =>handleInputChange('nationality', e.target.value)}
+                    placeholder="Ej: Española" required
+                    className="mt-1" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="dateOfBirth" className="text-sm font-medium text-gray-700">Fecha de nacimiento</Label>
@@ -254,9 +248,8 @@ export default function CompleteProfileAfterPayment() {
                     id="dateOfBirth"
                     type="date"
                     value={profileData.dateOfBirth}
-                    onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-                    className="mt-1"
-                  />
+                    onChange={(e) =>handleInputChange('dateOfBirth', e.target.value)}
+                    className="mt-1" />
                 </div>
               </div>
 
@@ -265,10 +258,8 @@ export default function CompleteProfileAfterPayment() {
                 <Input
                   id="location"
                   value={profileData.location}
-                  onChange={(e) => handleInputChange('location', e.target.value)}
-                  placeholder="Ciudad, País"
-                  className="mt-1"
-                />
+                  onChange={(e) =>handleInputChange('location', e.target.value)}
+                  placeholder="Ciudad, País" className="mt-1" />
               </div>
             </div>
 
@@ -288,12 +279,10 @@ export default function CompleteProfileAfterPayment() {
                 <Textarea
                   id="bio"
                   value={profileData.bio}
-                  onChange={(e) => handleInputChange('bio', e.target.value)}
-                  placeholder="Cuéntanos sobre ti y tu experiencia en el fútbol"
-                  rows={3}
+                  onChange={(e) =>handleInputChange('bio', e.target.value)}
+                  placeholder="Cuéntanos sobre ti y tu experiencia en el fútbol" rows={3}
                   required
-                  className="mt-1"
-                />
+                  className="mt-1" />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -303,23 +292,18 @@ export default function CompleteProfileAfterPayment() {
                     id="experience"
                     type="number"
                     value={profileData.experience}
-                    onChange={(e) => handleInputChange('experience', e.target.value)}
-                    placeholder="5"
-                    min="0"
-                    required
-                    className="mt-1"
-                  />
+                    onChange={(e) =>handleInputChange('experience', e.target.value)}
+                    placeholder="5" min="0" required
+                    className="mt-1" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="specialization" className="text-sm font-medium text-gray-700">Especialización *</Label>
                   <Input
                     id="specialization"
                     value={profileData.specialization}
-                    onChange={(e) => handleInputChange('specialization', e.target.value)}
-                    placeholder="Ej: Scouting, Análisis de datos"
-                    required
-                    className="mt-1"
-                  />
+                    onChange={(e) =>handleInputChange('specialization', e.target.value)}
+                    placeholder="Ej: Scouting, Análisis de datos" required
+                    className="mt-1" />
                 </div>
               </div>
 
@@ -328,10 +312,8 @@ export default function CompleteProfileAfterPayment() {
                 <Input
                   id="languages"
                   value={profileData.languages}
-                  onChange={(e) => handleInputChange('languages', e.target.value)}
-                  placeholder="Español, Inglés, Francés"
-                  className="mt-1"
-                />
+                  onChange={(e) =>handleInputChange('languages', e.target.value)}
+                  placeholder="Español, Inglés, Francés" className="mt-1" />
               </div>
             </div>
 
@@ -352,20 +334,16 @@ export default function CompleteProfileAfterPayment() {
                   <Input
                     id="phone"
                     value={profileData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    placeholder="+34 123 456 789"
-                    className="mt-1"
-                  />
+                    onChange={(e) =>handleInputChange('phone', e.target.value)}
+                    placeholder="+34 123 456 789" className="mt-1" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="company" className="text-sm font-medium text-gray-700">Empresa/Club</Label>
                   <Input
                     id="company"
                     value={profileData.company}
-                    onChange={(e) => handleInputChange('company', e.target.value)}
-                    placeholder="Nombre de tu empresa o club"
-                    className="mt-1"
-                  />
+                    onChange={(e) =>handleInputChange('company', e.target.value)}
+                    placeholder="Nombre de tu empresa o club" className="mt-1" />
                 </div>
               </div>
 
@@ -374,10 +352,8 @@ export default function CompleteProfileAfterPayment() {
                 <Input
                   id="position"
                   value={profileData.position}
-                  onChange={(e) => handleInputChange('position', e.target.value)}
-                  placeholder="Ej: Scout, Analista, Director deportivo"
-                  className="mt-1"
-                />
+                  onChange={(e) =>handleInputChange('position', e.target.value)}
+                  placeholder="Ej: Scout, Analista, Director deportivo" className="mt-1" />
               </div>
             </div>
 

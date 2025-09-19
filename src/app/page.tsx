@@ -9,15 +9,26 @@ import {
   Crown
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-
+import { useState, useEffect } from 'react'
 
 export default function HomePage() {
-  const router = useRouter()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#f8f7f4] to-[#e8e6e0] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-[#8c1a10] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[#6d6d6d]">Cargando...</p>
+        </div>
+      </div>
+    )
+  }
+  const _router = useRouter()
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
 
   const plans = [
@@ -66,17 +77,17 @@ export default function HomePage() {
   const handleSubscribe = () => {
     if (selectedPlan) {
       // Redirigir al registro con plan seleccionado
-      router.push('/register?plan=' + selectedPlan)
+      _router.push('/register?plan=' + selectedPlan)
     } else {
       // Redirigir al registro sin plan
-      router.push('/register')
+      _router.push('/register')
     }
   }
 
   const handleSubscribeLater = () => {
     // Limpiar plan seleccionado y redirigir
     localStorage.removeItem('selectedPlan')
-    router.push('/register')
+    _router.push('/register')
   }
 
 
@@ -97,37 +108,34 @@ export default function HomePage() {
           
           {/* CTA Buttons */}
           <div className="flex items-center justify-center gap-4 mb-12">
-            <Button 
+            <button 
               onClick={handleSubscribe}
               disabled={!selectedPlan}
-              className="bg-[#8c1a10] hover:bg-[#6d1410] text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="bg-[#8c1a10] hover:bg-[#6d1410] text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl inline-flex items-center justify-center"
             >
               {selectedPlan ? `Suscribirse - Plan ${plans.find(p => p.id === selectedPlan)?.name}` : 'Selecciona un Plan'}
               <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-            <Button 
+            </button>
+            <button 
               onClick={handleSubscribeLater}
-              variant="outline"
-              className="border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200"
+              className="border border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 inline-flex items-center justify-center"
             >
               Suscribirse más tarde
-            </Button>
-            <Button 
-              onClick={() => router.push('/login')}
-              variant="ghost"
-              className="text-[#6d6d6d] hover:text-[#8c1a10] font-semibold px-6 py-3 rounded-lg transition-all duration-200"
-            >
+            </button>
+            <button 
+              onClick={() =>_router.push('/login')}
+              className="text-[#6d6d6d] hover:text-[#8c1a10] font-semibold px-6 py-3 rounded-lg transition-all duration-200 inline-flex items-center justify-center">
               Iniciar Sesión
-            </Button>
+            </button>
           </div>
         </div>
 
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto mb-16">
           {plans.map((plan) => (
-            <Card 
+            <div 
               key={plan.id}
-              className={`relative cursor-pointer transition-all duration-300 hover:shadow-2xl ${
+              className={`relative cursor-pointer transition-all duration-300 hover:shadow-2xl rounded-lg border bg-white shadow-sm ${
                 selectedPlan === plan.id 
                   ? 'ring-2 ring-[#8c1a10] shadow-xl scale-105' 
                   : 'hover:shadow-lg'
@@ -136,17 +144,17 @@ export default function HomePage() {
             >
               {plan.popular && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <Badge className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-1">
+                  <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-1 rounded-full border inline-flex items-center text-xs font-semibold">
                     <Crown className="w-4 h-4 mr-1" />
                     Más Popular
-                  </Badge>
+                  </div>
                 </div>
               )}
               
-              <CardHeader className="text-center pb-4">
-                <CardTitle className="text-2xl font-bold text-[#000000] mb-2">
+              <div className="text-center pb-4 flex flex-col space-y-1.5 p-6">
+                <h3 className="text-2xl font-bold text-[#000000] mb-2">
                   {plan.name}
-                </CardTitle>
+                </h3>
                 <p className="text-[#6d6d6d] mb-4">{plan.description}</p>
                 
                 <div className="mb-4">
@@ -160,9 +168,9 @@ export default function HomePage() {
                     ${plan.price.yearly}/mes si pagas anualmente (20% descuento)
                   </p>
                 </div>
-              </CardHeader>
+              </div>
               
-              <CardContent>
+              <div className="p-6 pt-0">
                 <ul className="space-y-3 mb-6">
                   {plan.features.map((feature, index) => (
                     <li key={index} className="flex items-start">
@@ -172,8 +180,8 @@ export default function HomePage() {
                   ))}
                 </ul>
                 
-                <Button 
-                  className={`w-full ${
+                <button 
+                  className={`w-full inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors h-10 px-4 py-2 ${
                     selectedPlan === plan.id 
                       ? 'bg-[#8c1a10] hover:bg-[#6d1410] text-white' 
                       : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -184,9 +192,9 @@ export default function HomePage() {
                   }}
                 >
                   {selectedPlan === plan.id ? 'Seleccionado' : 'Seleccionar Plan'}
-                </Button>
-              </CardContent>
-            </Card>
+                </button>
+              </div>
+            </div>
           ))}
         </div>
 
@@ -238,28 +246,25 @@ export default function HomePage() {
             Únete a cientos de scouts y analistas que ya confían en Scoutea
           </p>
           <div className="flex items-center justify-center gap-4">
-            <Button 
+            <button 
               onClick={handleSubscribe}
               disabled={!selectedPlan}
-              className="bg-[#8c1a10] hover:bg-[#6d1410] text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="bg-[#8c1a10] hover:bg-[#6d1410] text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl inline-flex items-center justify-center"
             >
               {selectedPlan ? `Comenzar con ${plans.find(p => p.id === selectedPlan)?.name}` : 'Selecciona un Plan'}
               <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-            <Button 
+            </button>
+            <button 
               onClick={handleSubscribeLater}
-              variant="outline"
-              className="border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200"
+              className="border border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 inline-flex items-center justify-center"
             >
               Explorar primero
-            </Button>
-            <Button 
-              onClick={() => router.push('/login')}
-              variant="ghost"
-              className="text-[#6d6d6d] hover:text-[#8c1a10] font-semibold px-6 py-3 rounded-lg transition-all duration-200"
-            >
+            </button>
+            <button 
+              onClick={() =>_router.push('/login')}
+              className="text-[#6d6d6d] hover:text-[#8c1a10] font-semibold px-6 py-3 rounded-lg transition-all duration-200 inline-flex items-center justify-center">
               Iniciar Sesión
-            </Button>
+            </button>
           </div>
         </div>
       </main>

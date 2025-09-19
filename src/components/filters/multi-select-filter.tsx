@@ -9,7 +9,7 @@ interface MultiSelectFilterProps {
   label: string
   options: string[]
   selectedValues: string[]
-  onSelectionChange: (values: string[]) => void
+  onSelectionChange: (values: string[]) =>void
   placeholder?: string
   searchPlaceholder?: string
   maxDisplayTags?: number
@@ -85,9 +85,8 @@ export default function MultiSelectFilter({
           >
             {value}
             <span
-              onClick={(e) => removeTag(value, e)}
-              className="hover:bg-gray-300 rounded-full p-0.5 transition-colors cursor-pointer"
-            >
+              onClick={(e) =>removeTag(value, e)}
+              className="hover:bg-gray-300 rounded-full p-0.5 transition-colors cursor-pointer">
               <X className="w-3 h-3" />
             </span>
           </span>
@@ -105,9 +104,8 @@ export default function MultiSelectFilter({
     <div className="relative" ref={dropdownRef}>
       {/* Campo principal */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors min-h-[44px]"
-      >
+        onClick={() =>setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors min-h-[44px]">
         <div className="flex-1 text-left">
           {selectedValues.length === 0 ? (
             <span className="text-gray-500">{placeholder}</span>
@@ -145,8 +143,7 @@ export default function MultiSelectFilter({
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="pl-10 border-gray-300"
-              />
+                className="pl-10 border-gray-300" />
             </div>
             
             {selectedValues.length > 0 && (

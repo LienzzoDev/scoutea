@@ -6,7 +6,7 @@ import { RadarCalculationService } from '../../../../../lib/services/RadarCalcul
 const prisma = new PrismaClient();
 
 export async function GET(
-  request: NextRequest,
+  __request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   const radarService = new RadarCalculationService(prisma);
@@ -18,7 +18,7 @@ export async function GET(
 
     // Verify player exists
     const player = await prisma.jugador.findUnique({
-      where: { id_player: playerId },
+      where: { id___player: playerId },
       select: {
         player_name: true,
         position_player: true,
@@ -32,8 +32,8 @@ export async function GET(
     if (!player) {
       return NextResponse.json(
         { 
-          error: 'Player not found',
-          playerId: playerId,
+          __error: 'Player not found',
+          _playerId: playerId,
           message: 'The specified player does not exist in the database'
         },
         { status: 404 }
@@ -51,8 +51,8 @@ export async function GET(
       if (calculationError instanceof Error && calculationError.message.includes('has no atributos data')) {
         return NextResponse.json(
           { 
-            error: 'No attribute data found for this player',
-            playerId: playerId,
+            __error: 'No attribute data found for this player',
+            _playerId: playerId,
             playerName: player.player_name,
             message: 'Player exists but has no atributos data required for radar calculations'
           },
@@ -79,10 +79,10 @@ export async function GET(
     }));
 
     return NextResponse.json({
-      player: player,
-      radarData: formattedRadarData,
+      ___player: player,
+      _radarData: formattedRadarData,
       metadata: {
-        period: period,
+        _period: period,
         totalCategories: radarData.length,
         calculatedAt: new Date().toISOString(),
         supportedCategories: radarService.getSupportedCategories(),
@@ -90,13 +90,13 @@ export async function GET(
       }
     });
 
-  } catch (error) {
+  } catch (_error) {
     console.error('Error fetching radar data:', error);
     return NextResponse.json(
       { 
-        error: 'Internal server error',
+        __error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
-        playerId: params.id
+        _playerId: params.id
       },
       { status: 500 }
     );

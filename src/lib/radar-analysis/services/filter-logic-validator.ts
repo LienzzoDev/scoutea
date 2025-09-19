@@ -100,8 +100,8 @@ export class FilterLogicValidator {
    * Requirements: 5.1, 5.2, 5.3
    */
   async validateFilterLogic(
-    filters: RadarFilters,
-    context: AnalysisContext
+    __filters: RadarFilters,
+    __context: AnalysisContext
   ): Promise<FilterLogicValidationResult> {
     radarAnalysisLogger.logAnalysisStart(context);
     
@@ -175,7 +175,7 @@ export class FilterLogicValidator {
         recommendations
       };
 
-    } catch (error) {
+    } catch (_error) {
       const issue = this.createFilterLogicIssue(
         'validation_error',
         'critical',
@@ -203,8 +203,8 @@ export class FilterLogicValidator {
    * Requirement 5.1: Position filters should include similar positions
    */
   private async validatePositionSimilarity(
-    filters: RadarFilters,
-    context: AnalysisContext
+    _filters: RadarFilters,
+    __context: AnalysisContext
   ): Promise<PositionSimilarityResult> {
     if (!filters.position) {
       return {
@@ -220,7 +220,7 @@ export class FilterLogicValidator {
     const expectedSimilarPositions = this.positionSimilarityMap[position] || [position];
     
     // Test the filter by getting comparison group
-    const comparisonGroup = await this.radarService.getComparisonGroup(filters);
+    const _comparisonGroup = await this.radarService.getComparisonGroup(filters);
     
     // In a real implementation, we would check the actual query to see which positions were included
     // For now, we simulate this by checking if the expected similar positions would be included
@@ -246,8 +246,8 @@ export class FilterLogicValidator {
    * Requirement 5.2: Multiple filters should be combined correctly using AND logic
    */
   private async validateMultiFilterCombination(
-    filters: RadarFilters,
-    context: AnalysisContext
+    _filters: RadarFilters,
+    __context: AnalysisContext
   ): Promise<MultiFilterCombinationResult> {
     const filterCount = Object.keys(filters).filter(key => 
       filters[key as keyof RadarFilters] !== undefined
@@ -321,8 +321,8 @@ export class FilterLogicValidator {
    * Requirement 5.3: Age ranges should be applied correctly
    */
   private async validateAgeRangeApplication(
-    filters: RadarFilters,
-    context: AnalysisContext
+    _filters: RadarFilters,
+    __context: AnalysisContext
   ): Promise<RangeValidationResult> {
     if (filters.ageMin === undefined && filters.ageMax === undefined) {
       return {
@@ -342,7 +342,7 @@ export class FilterLogicValidator {
       ageMax: filters.ageMax
     };
 
-    const comparisonGroup = await this.radarService.getComparisonGroup(ageFilters);
+    const _comparisonGroup = await this.radarService.getComparisonGroup(ageFilters);
     
     // In a real implementation, we would verify that all players in the result
     // are within the specified age range by querying the database
@@ -368,8 +368,8 @@ export class FilterLogicValidator {
    * Requirement 5.3: Rating ranges should be applied correctly
    */
   private async validateRatingRangeApplication(
-    filters: RadarFilters,
-    context: AnalysisContext
+    _filters: RadarFilters,
+    __context: AnalysisContext
   ): Promise<RangeValidationResult> {
     if (filters.ratingMin === undefined && filters.ratingMax === undefined) {
       return {
@@ -389,7 +389,7 @@ export class FilterLogicValidator {
       ratingMax: filters.ratingMax
     };
 
-    const comparisonGroup = await this.radarService.getComparisonGroup(ratingFilters);
+    const _comparisonGroup = await this.radarService.getComparisonGroup(ratingFilters);
     
     // In a real implementation, we would verify that all players in the result
     // are within the specified rating range by querying the database
@@ -427,7 +427,7 @@ export class FilterLogicValidator {
     id: string,
     severity: AnalysisSeverity,
     description: string,
-    context: AnalysisContext
+    __context: AnalysisContext
   ): AnalysisIssue {
     return {
       id: `${context.analysisId}_${id}`,

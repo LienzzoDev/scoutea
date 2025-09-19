@@ -143,9 +143,9 @@ export class RadarCalculationValidator {
    * Validates all radar calculations for a specific player
    */
   async validatePlayerCalculations(
-    playerId: string,
-    context: AnalysisContext,
-    period: string = '2023-24'
+    _playerId: string,
+    __context: AnalysisContext,
+    _period: string = '2023-24'
   ): Promise<CalculationValidationResult> {
     const startTime = Date.now();
     
@@ -261,7 +261,7 @@ export class RadarCalculationValidator {
 
       return result;
 
-    } catch (error) {
+    } catch (_error) {
       const duration = Date.now() - startTime;
       radarAnalysisLogger.logAnalysisError({
         ...context,
@@ -276,11 +276,11 @@ export class RadarCalculationValidator {
    */
   private async validateCategoryCalculation(
     categoryKey: string,
-    atributos: any,
-    playerStats: any,
+    atributos: unknown,
+    playerStats: unknown,
     mapping: AttributeWeight[],
     actualRadarData: RadarCategoryData[],
-    context: AnalysisContext
+    __context: AnalysisContext
   ): Promise<CategoryCalculationReport> {
     const calculationSteps: CalculationStep[] = [];
     const issues: string[] = [];
@@ -402,10 +402,10 @@ export class RadarCalculationValidator {
    */
   private async validateAttributeNormalization(
     attribute: string,
-    atributos: any,
-    playerStats: any,
+    atributos: unknown,
+    playerStats: unknown,
     isStatistic: boolean,
-    context: AnalysisContext
+    __context: AnalysisContext
   ): Promise<NormalizationValidationReport | null> {
     let rawValue: number | null = null;
 
@@ -528,9 +528,9 @@ export class RadarCalculationValidator {
   /**
    * Get player data with attributes and statistics
    */
-  private async getPlayerData(playerId: string) {
+  private async getPlayerData(_playerId: string) {
     return await this.prisma.jugador.findUnique({
-      where: { id_player: playerId },
+      where: { id___player: playerId },
       include: {
         atributos: true,
         playerStats3m: true
@@ -541,7 +541,7 @@ export class RadarCalculationValidator {
   /**
    * Create an analysis issue for calculation errors
    */
-  private createCalculationIssue(report: CategoryCalculationReport, context: AnalysisContext): AnalysisIssue {
+  private createCalculationIssue(report: CategoryCalculationReport, __context: AnalysisContext): AnalysisIssue {
     return {
       id: uuidv4(),
       severity: 'critical' as AnalysisSeverity,
@@ -571,7 +571,7 @@ export class RadarCalculationValidator {
   /**
    * Create an analysis issue for normalization errors
    */
-  private createNormalizationIssue(report: NormalizationValidationReport, context: AnalysisContext): AnalysisIssue {
+  private createNormalizationIssue(report: NormalizationValidationReport, __context: AnalysisContext): AnalysisIssue {
     return {
       id: uuidv4(),
       severity: 'high' as AnalysisSeverity,

@@ -9,7 +9,7 @@ interface RangeFilterProps {
   label: string
   minValue?: number
   maxValue?: number
-  onRangeChange: (min?: number, max?: number) => void
+  onRangeChange: (min?: number, max?: number) =>void
   placeholder?: string
   step?: string
   suffix?: string
@@ -86,9 +86,8 @@ export default function RangeFilter({
     <div className="relative" ref={dropdownRef}>
       {/* Campo principal */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors min-h-[44px]"
-      >
+        onClick={() =>setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors min-h-[44px]">
         <div className="flex-1 text-left">
           {hasValue ? (
             <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-200 text-gray-800 text-xs rounded-md">
@@ -129,16 +128,14 @@ export default function RangeFilter({
                   placeholder="Mín"
                   value={localMin}
                   onChange={(e) => setLocalMin(e.target.value)}
-                  className="flex-1"
-                />
+                  className="flex-1" />
                 <Input
                   type="number"
                   step={step}
                   placeholder="Máx"
                   value={localMax}
                   onChange={(e) => setLocalMax(e.target.value)}
-                  className="flex-1"
-                />
+                  className="flex-1" />
               </div>
             </div>
             
@@ -150,14 +147,13 @@ export default function RangeFilter({
                 Aplicar
               </button>
               <button
-                onClick={() => {
+                onClick={() =>{
                   setLocalMin('')
                   setLocalMax('')
                   onRangeChange(undefined, undefined)
                   setIsOpen(false)
                 }}
-                className="px-3 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm"
-              >
+                className="px-3 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm">
                 Limpiar
               </button>
             </div>

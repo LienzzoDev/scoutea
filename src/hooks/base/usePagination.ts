@@ -346,7 +346,7 @@ export const PaginationUtils = {
     
     return {
       items,
-      pagination: {
+      _pagination: {
         page: currentPage,
         limit,
         total,

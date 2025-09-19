@@ -9,7 +9,7 @@ interface AdminMultiSelectFilterProps {
   label: string
   options: string[]
   selectedValues: string[]
-  onSelectionChange: (values: string[]) => void
+  onSelectionChange: (values: string[]) =>void
   placeholder?: string
   searchPlaceholder?: string
   maxDisplayTags?: number
@@ -85,9 +85,8 @@ export default function AdminMultiSelectFilter({
           >
             {value}
             <span
-              onClick={(e) => removeTag(value, e)}
-              className="hover:bg-slate-600 rounded-full p-0.5 transition-colors cursor-pointer"
-            >
+              onClick={(e) =>removeTag(value, e)}
+              className="hover:bg-slate-600 rounded-full p-0.5 transition-colors cursor-pointer">
               <X className="w-3 h-3" />
             </span>
           </span>
@@ -105,9 +104,8 @@ export default function AdminMultiSelectFilter({
     <div className="relative" ref={dropdownRef}>
       {/* Campo principal */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-3 border border-slate-700 rounded-lg bg-[#131921] hover:bg-slate-800 transition-colors min-h-[44px]"
-      >
+        onClick={() =>setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-3 border border-slate-700 rounded-lg bg-[#131921] hover:bg-slate-800 transition-colors min-h-[44px]">
         <div className="flex-1 text-left">
           {selectedValues.length === 0 ? (
             <span className="text-slate-400">{placeholder}</span>
@@ -145,8 +143,7 @@ export default function AdminMultiSelectFilter({
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="pl-10 border-slate-700 bg-[#131921] text-white placeholder:text-slate-400"
-              />
+                className="pl-10 border-slate-700 bg-[#131921] text-white placeholder:text-slate-400" />
             </div>
             
             {selectedValues.length > 0 && (

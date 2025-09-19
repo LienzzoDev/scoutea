@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 
 interface Category {
-  key: string
+  _key: string
   label: string
 }
 
@@ -57,9 +57,8 @@ export default function CategorySelector({
       <div className="mb-6">
         <Button
           variant="outline"
-          onClick={() => setShowSelector(true)}
-          className="flex items-center gap-2 border-[#e7e7e7] text-[#6d6d6d] hover:border-[#8c1a10] hover:text-[#8c1a10]"
-        >
+          onClick={() =>setShowSelector(true)}
+          className="flex items-center gap-2 border-[#e7e7e7] text-[#6d6d6d] hover:border-[#8c1a10] hover:text-[#8c1a10]">
           <Settings className="w-4 h-4" />
           <span>Customize Display</span>
           <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full">
@@ -85,9 +84,8 @@ export default function CategorySelector({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setShowSelector(false)}
-          className="border-[#e7e7e7] text-[#6d6d6d]"
-        >
+          onClick={() =>setShowSelector(false)}
+          className="border-[#e7e7e7] text-[#6d6d6d]">
           Hide Options
           <ChevronDown className="w-4 h-4 ml-2 transition-transform rotate-180" />
         </Button>
@@ -102,9 +100,8 @@ export default function CategorySelector({
           >
             <span>{category.label}</span>
             <button
-              onClick={() => handleCategoryToggle(category.key)}
-              className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
-              disabled={selectedCategories.length <= minCategories}
+              onClick={() =>handleCategoryToggle(category.key)}
+              className="hover:bg-white/20 rounded-full p-0.5 transition-colors" disabled={selectedCategories.length <= minCategories}
             >
               <X className="w-3 h-3" />
             </button>

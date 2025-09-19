@@ -19,7 +19,7 @@ import { usePlayers } from "@/hooks/player/usePlayers"
 
 export default function DashboardPage() {
   const { isSignedIn, isLoaded } = useAuth()
-  const router = useRouter()
+  const _router = useRouter()
   const [hasRedirected, setHasRedirected] = useState(false)
   const [scrapingStatus, setScrapingStatus] = useState<'idle' | 'running' | 'completed' | 'error'>('idle')
 
@@ -74,7 +74,7 @@ export default function DashboardPage() {
           porcentajeConRating
         })
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error loading admin stats:', error)
     }
   }, [players])
@@ -119,7 +119,7 @@ export default function DashboardPage() {
       
       // Resetear estado después de 2 segundos
       setTimeout(() => setScrapingStatus('idle'), 2000)
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error in scraping process:', error)
       setScrapingStatus('error')
       setTimeout(() => setScrapingStatus('idle'), 3000)
@@ -129,9 +129,9 @@ export default function DashboardPage() {
   useEffect(() => {
     if (isLoaded && !isSignedIn && !hasRedirected) {
       setHasRedirected(true)
-      router.replace('/login')
+      _router.replace('/login')
     }
-  }, [isLoaded, isSignedIn, router, hasRedirected])
+  }, [isLoaded, isSignedIn, _router, hasRedirected])
 
   // 🚀 CARGAR DATOS OPTIMIZADOS AL MONTAR EL COMPONENTE
   useEffect(() => {
@@ -381,15 +381,13 @@ export default function DashboardPage() {
         <div className="mt-8 p-4 bg-red-900/20 border border-red-700 rounded-lg">
           <p className="text-red-400">Error: {error}</p>
           <Button 
-            onClick={() => searchPlayers({
+            onClick={() =>searchPlayers({
               page: 1,
               limit: 100,
               sortBy: 'createdAt',
               sortOrder: 'desc'
             })}
-            variant="outline" 
-            className="mt-2 border-red-700 text-red-400 hover:bg-red-900/20"
-          >
+            variant="outline" className="mt-2 border-red-700 text-red-400 hover:bg-red-900/20">
             Reintentar
           </Button>
         </div>

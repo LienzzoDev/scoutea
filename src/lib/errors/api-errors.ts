@@ -50,7 +50,7 @@ export class APIError extends Error {
     public statusCode: number,
     public message: string,
     public code: ErrorCode,
-    public details?: any,
+    public details?: unknown,
     public context?: string
   ) {
     super(message)
@@ -64,10 +64,10 @@ export class APIError extends Error {
 
   toJSON() {
     return {
-      error: this.message,
+      _error: this.message,
       code: this.code,
       details: this.details,
-      context: this.context,
+      _context: this.context,
       statusCode: this.statusCode
     }
   }
@@ -190,7 +190,7 @@ export function createAPIError(
   statusCode: number,
   message: string,
   code: ErrorCode,
-  details?: any,
+  details?: unknown,
   context?: string
 ): APIError {
   return new APIError(statusCode, message, code, details, context)
@@ -205,7 +205,7 @@ export function notFoundError(resource: string, id?: string): APIError {
   return new APIError(404, message, ErrorCode.RESOURCE_NOT_FOUND, { resource, id })
 }
 
-export function validationError(message: string, details?: any): APIError {
+export function validationError(message: string, details?: unknown): APIError {
   return new APIError(400, message, ErrorCode.VALIDATION_ERROR, details)
 }
 
@@ -233,7 +233,7 @@ export function duplicateError(resource: string, field?: string): APIError {
   return new APIError(409, message, ErrorCode.DUPLICATE_ENTRY, { resource, field })
 }
 
-export function databaseError(operation: string, details?: any): APIError {
+export function databaseError(operation: string, details?: unknown): APIError {
   return new APIError(
     500, 
     `Error en base de datos durante: ${operation}`, 
@@ -242,7 +242,7 @@ export function databaseError(operation: string, details?: any): APIError {
   )
 }
 
-export function externalServiceError(service: string, details?: any): APIError {
+export function externalServiceError(service: string, details?: unknown): APIError {
   return new APIError(
     500, 
     `Error en servicio externo: ${service}`, 

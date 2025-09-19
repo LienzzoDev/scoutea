@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
 export async function GET(
-  request: NextRequest,
+  __request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -15,26 +15,26 @@ export async function GET(
     })
 
     if (!torneo) {
-      return NextResponse.json({ error: 'Torneo no encontrado' }, { status: 404 })
+      return NextResponse.json({ __error: 'Torneo no encontrado' }, { status: 404 })
     }
 
     return NextResponse.json(torneo)
-  } catch (error) {
+  } catch (_error) {
     console.error('Error fetching torneo:', error)
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { __error: 'Error interno del servidor' },
       { status: 500 }
     )
   }
 }
 
 export async function PUT(
-  request: NextRequest,
+  __request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params
-    const body = await request.json()
+    const _body = await request.json()
     
     console.log('🔍 Debug API - Actualizando torneo:', id)
     console.log('🔍 Debug API - Datos recibidos:', body)
@@ -76,17 +76,17 @@ export async function PUT(
     })
 
     return NextResponse.json(torneo)
-  } catch (error) {
+  } catch (_error) {
     console.error('Error updating torneo:', error)
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { __error: 'Error interno del servidor' },
       { status: 500 }
     )
   }
 }
 
 export async function DELETE(
-  request: NextRequest,
+  __request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -100,7 +100,7 @@ export async function DELETE(
     })
 
     if (!existingTorneo) {
-      return NextResponse.json({ error: 'Torneo no encontrado' }, { status: 404 })
+      return NextResponse.json({ __error: 'Torneo no encontrado' }, { status: 404 })
     }
 
     await prisma.torneo.delete({
@@ -110,10 +110,10 @@ export async function DELETE(
     })
 
     return NextResponse.json({ success: true })
-  } catch (error) {
+  } catch (_error) {
     console.error('Error deleting torneo:', error)
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { __error: 'Error interno del servidor' },
       { status: 500 }
     )
   }

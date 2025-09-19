@@ -82,7 +82,7 @@ export class ServiceCircuitBreaker {
   private healthCheckInterval?: NodeJS.Timeout
   private startTime = Date.now()
 
-  constructor(serviceName: string, config: Partial<CircuitBreakerConfig> = {}) {
+  constructor(serviceName: string, _config: Partial<CircuitBreakerConfig> = {}) {
     this.serviceName = serviceName
     this.config = {
       failureThreshold: 5,
@@ -131,10 +131,10 @@ export class ServiceCircuitBreaker {
             fromFallback: true,
             circuitState: this.state
           }
-        } catch (fallbackError) {
+        } catch (_fallbackError) {
           return {
             success: false,
-            error: fallbackError instanceof Error ? fallbackError : new Error(String(fallbackError)),
+            _error: fallbackError instanceof Error ? fallbackError : new Error(String(fallbackError)),
             executionTime: Date.now() - startTime,
             retryCount: 0,
             fromFallback: true,
@@ -146,7 +146,7 @@ export class ServiceCircuitBreaker {
       // No fallback available
       return {
         success: false,
-        error: new Error(`Service ${this.serviceName} is currently unavailable (circuit breaker ${this.state})`),
+        _error: new Error(`Service ${this.serviceName} is currently unavailable (circuit breaker ${this.state})`),
         executionTime: Date.now() - startTime,
         retryCount: 0,
         fromFallback: false,
@@ -178,7 +178,7 @@ export class ServiceCircuitBreaker {
           circuitState: this.state
         }
 
-      } catch (error) {
+      } catch (_error) {
         lastError = error instanceof Error ? error : new Error(String(error))
         retryCount = attempt
 
@@ -216,14 +216,14 @@ export class ServiceCircuitBreaker {
           fromFallback: true,
           circuitState: this.state
         }
-      } catch (fallbackError) {
+      } catch (_fallbackError) {
         console.error(`❌ Both operation and fallback failed for ${operation.name} in service ${this.serviceName}`)
       }
     }
 
     return {
       success: false,
-      error: lastError!,
+      _error: lastError!,
       executionTime,
       retryCount,
       fromFallback: false,
@@ -310,7 +310,7 @@ export class ServiceCircuitBreaker {
   /**
    * Record a failed operation
    */
-  private recordFailure(operationName: string, error: Error, responseTime: number): void {
+  private recordFailure(operationName: string, __error: Error, responseTime: number): void {
     this.failedRequests++
     this.consecutiveFailures++
     this.lastFailureTime = Date.now()

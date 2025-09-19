@@ -107,9 +107,7 @@ export default function PlayerProfilePage() {
             <PlayerTabs
               activeTab={activeTab}
               onTabChange={setActiveTab}
-            />
-
-            {/* Tab Content */}
+            />{/* Tab Content */}
             {activeTab === "info" && <PlayerInfo player={player} />}
             {activeTab === "reports" && <PlayerReports player={player} />}
             {/* {activeTab === "highlights" && <PlayerHighlights player={player} />} */}
@@ -119,8 +117,7 @@ export default function PlayerProfilePage() {
                 activeStatsTab={activeStatsTab}
                 onStatsTabChange={setActiveStatsTab}
                 getStatValue={getStatValue}
-              />
-            )}
+              />)}
             {activeTab === "features" && (
               <PlayerFeatures
                 player={player}

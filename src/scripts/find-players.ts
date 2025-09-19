@@ -66,7 +66,7 @@ async function findRealPlayers() {
     
     // Buscar algunos jugadores famosos por nombre
     const famousNames = ['Messi', 'Ronaldo', 'Haaland', 'Mbappé', 'Modric'];
-    console.log("\n🌟 BUSCANDO JUGADORES FAMOSOS:");
+    console.log("\n🌟 BUSCANDO JUGADORES FAMOSOS:");`
     
     for (const name of famousNames) {
       const players = await prisma.jugador.findMany({
@@ -90,7 +90,7 @@ async function findRealPlayers() {
       }
     }
     
-  } catch (error) {
+  } catch (_error) {
     console.error("❌ Error:", error);
   } finally {
     await prisma.$disconnect();

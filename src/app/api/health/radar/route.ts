@@ -10,8 +10,8 @@ import { connectionPool } from '../../../../lib/db/connection-pool';
 import { radarLogger } from '../../../../lib/logging/radar-logger';
 import { radarPerformanceMonitor } from '../../../../lib/monitoring/radar-performance-monitor';
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
+export async function GET(_request: NextRequest) {
+  const { searchParams } = new URL(_request.url);
   const detailed = searchParams.get('detailed') === 'true';
   const component = searchParams.get('component');
 
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const startTime = Date.now();
 
     // Basic health check
-    const healthData: any = {
+    const healthData: unknown = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
@@ -86,13 +86,13 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json(healthData, { status: statusCode });
 
-  } catch (error) {
-    console.error('Health check failed:', error);
+  } catch (_error) {
+    console.error('Health check failed:', _error);
     
     return NextResponse.json({
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Unknown error',
+      _error: _error instanceof Error ? _error.message : 'Unknown error',
       responseTime: Date.now() - Date.now()
     }, { status: 503 });
   }
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
 /**
  * Determine overall health status based on component health
  */
-function determineOverallHealth(healthData: any): 'healthy' | 'degraded' | 'unhealthy' {
+function determineOverallHealth(healthData: unknown): 'healthy' | 'degraded' | 'unhealthy' {
   let healthyComponents = 0;
   let totalComponents = 0;
 
@@ -163,10 +163,10 @@ function determineOverallHealth(healthData: any): 'healthy' | 'degraded' | 'unhe
 /**
  * POST endpoint for triggering health checks or maintenance operations
  */
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
-    const body = await request.json();
-    const { action } = body;
+    const _body = await _request.json();
+    const { action } = _body;
 
     switch (action) {
       case 'reset_metrics':
@@ -186,16 +186,16 @@ export async function POST(request: NextRequest) {
       default:
         return NextResponse.json({ 
           success: false, 
-          error: 'Unknown action' 
+          __error: 'Unknown action' 
         }, { status: 400 });
     }
 
-  } catch (error) {
-    console.error('Health check POST action failed:', error);
+  } catch (_error) {
+    console.error('Health check POST action failed:', _error);
     
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      __error: _error instanceof Error ? _error.message : 'Unknown error'
     }, { status: 500 });
   }
 }

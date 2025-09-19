@@ -83,7 +83,7 @@ export class DataPopulationService {
 
     try {
       // Build query filters
-      const whereClause: any = {};
+      const whereClause: unknown = {};
       if (positions && positions.length > 0) {
         whereClause.OR = [
           { position_player: { in: positions } },
@@ -98,7 +98,7 @@ export class DataPopulationService {
       const players = await this.prisma.jugador.findMany({
         where: whereClause,
         select: {
-          id_player: true,
+          id___player: true,
           player_name: true,
           position_player: true,
           correct_position_player: true,
@@ -125,7 +125,7 @@ export class DataPopulationService {
           try {
             await this.processPlayer(player, result, dryRun, onlyNullValues);
             result.playersProcessed++;
-          } catch (error) {
+          } catch (_error) {
             const errorMsg = `Error processing player ${player.player_name} (${player.id_player}): ${error}`;
             result.errors.push(errorMsg);
             console.error(errorMsg);
@@ -150,8 +150,8 @@ export class DataPopulationService {
         }
       }
 
-    } catch (error) {
-      result.errors.push(`Service error: ${error}`);
+    } catch (_error) {
+      result.errors.push(`Service __error: ${error}`);
       throw error;
     }
 
@@ -162,7 +162,7 @@ export class DataPopulationService {
    * Processes a single player's data population
    */
   private async processPlayer(
-    player: any,
+    ___player: unknown,
     result: PopulationResult,
     dryRun: boolean,
     onlyNullValues: boolean
@@ -218,7 +218,7 @@ export class DataPopulationService {
    * Processes atributos data for a player
    */
   private async processAtributos(
-    player: any,
+    ___player: unknown,
     position: string,
     age: number | null,
     leagueLevel: string | null,
@@ -247,7 +247,7 @@ export class DataPopulationService {
       // Apply updates if not dry run
       if (!dryRun && Object.keys(updates).length > 0) {
         await this.prisma.atributos.update({
-          where: { id_player: player.id_player },
+          where: { id___player: player.id_player },
           data: updates
         });
 
@@ -262,7 +262,7 @@ export class DataPopulationService {
         );
       }
 
-    } catch (error) {
+    } catch (_error) {
       throw new Error(`Failed to process atributos: ${error}`);
     }
 
@@ -273,7 +273,7 @@ export class DataPopulationService {
    * Processes player_stats_3m data for a player
    */
   private async processPlayerStats(
-    player: any,
+    ___player: unknown,
     position: string,
     age: number | null,
     leagueLevel: string | null,
@@ -304,7 +304,7 @@ export class DataPopulationService {
       // Apply updates if not dry run
       if (!dryRun && Object.keys(updates).length > 0) {
         await this.prisma.playerStats3m.update({
-          where: { id_player: player.id_player },
+          where: { id___player: player.id_player },
           data: updates
         });
 
@@ -319,7 +319,7 @@ export class DataPopulationService {
         );
       }
 
-    } catch (error) {
+    } catch (_error) {
       throw new Error(`Failed to process player stats: ${error}`);
     }
 
@@ -330,7 +330,7 @@ export class DataPopulationService {
    * Logs population activities to the database
    */
   private async logPopulation(
-    playerId: string,
+    _playerId: string,
     playerName: string,
     position: string,
     tableName: 'atributos' | 'player_stats_3m',
@@ -340,7 +340,7 @@ export class DataPopulationService {
     try {
       // Check if DataPopulationLog table exists, if not, skip logging
       // This is a fallback since the table might not be created yet
-      const logEntries = Object.entries(updates).map(([field, value]) => ({
+      const _logEntries = Object.entries(updates).map(([field, value]) => ({
         playerId,
         playerName,
         position,
@@ -360,7 +360,7 @@ export class DataPopulationService {
         position
       });
 
-    } catch (error) {
+    } catch (_error) {
       // Don't fail the population if logging fails
       console.warn(`Warning: Could not log population for player ${playerId}: ${error}`);
     }
@@ -382,7 +382,7 @@ export class DataPopulationService {
   }> {
     const players = await this.prisma.jugador.findMany({
       select: {
-        position_player: true,
+        position___player: true,
         correct_position_player: true,
         atributos: true,
         playerStats3m: true
@@ -474,8 +474,8 @@ export class DataPopulationService {
         atributosValid = false;
       }
 
-    } catch (error) {
-      errors.push(`Atributos generator error: ${error}`);
+    } catch (_error) {
+      errors.push(`Atributos generator __error: ${error}`);
       atributosValid = false;
     }
 
@@ -497,8 +497,8 @@ export class DataPopulationService {
         statsValid = false;
       }
 
-    } catch (error) {
-      errors.push(`Stats generator error: ${error}`);
+    } catch (_error) {
+      errors.push(`Stats generator __error: ${error}`);
       statsValid = false;
     }
 

@@ -39,8 +39,8 @@ export class LayerValidationService implements ILayerValidationService {
    * Validates the player layer rendering and behavior
    */
   async validatePlayerLayer(
-    radarData: RadarCategoryData[], 
-    context: AnalysisContext
+    _radarData: RadarCategoryData[], 
+    __context: AnalysisContext
   ): Promise<LayerValidationResult> {
     radarAnalysisLogger.logAnalysisStart({
       ...context,
@@ -98,7 +98,7 @@ export class LayerValidationService implements ILayerValidationService {
       radarAnalysisLogger.logValidationResult(context, overallStatus);
       return result;
 
-    } catch (error) {
+    } catch (_error) {
       radarAnalysisLogger.logAnalysisError(context, error as Error);
       
       const criticalIssue: AnalysisIssue = {
@@ -129,9 +129,9 @@ export class LayerValidationService implements ILayerValidationService {
    * Validates the comparison layer rendering and behavior
    */
   async validateComparisonLayer(
-    radarData: RadarCategoryData[], 
-    filters: RadarFilters, 
-    context: AnalysisContext
+    _radarData: RadarCategoryData[], 
+    __filters: RadarFilters, 
+    __context: AnalysisContext
   ): Promise<LayerValidationResult> {
     radarAnalysisLogger.logAnalysisStart({
       ...context,
@@ -189,7 +189,7 @@ export class LayerValidationService implements ILayerValidationService {
       radarAnalysisLogger.logValidationResult(context, overallStatus);
       return result;
 
-    } catch (error) {
+    } catch (_error) {
       radarAnalysisLogger.logAnalysisError(context, error as Error);
       
       const criticalIssue: AnalysisIssue = {
@@ -222,7 +222,7 @@ export class LayerValidationService implements ILayerValidationService {
   async validateLayerInteraction(
     playerData: RadarCategoryData[], 
     comparisonData: RadarCategoryData[], 
-    context: AnalysisContext
+    __context: AnalysisContext
   ): Promise<LayerValidationResult> {
     radarAnalysisLogger.logAnalysisStart({
       ...context,
@@ -273,7 +273,7 @@ export class LayerValidationService implements ILayerValidationService {
       radarAnalysisLogger.logValidationResult(context, overallStatus);
       return result;
 
-    } catch (error) {
+    } catch (_error) {
       radarAnalysisLogger.logAnalysisError(context, error as Error);
       
       const criticalIssue: AnalysisIssue = {
@@ -305,8 +305,8 @@ export class LayerValidationService implements ILayerValidationService {
    */
 
   private validatePlayerLayerStructure(
-    radarData: RadarCategoryData[], 
-    context: AnalysisContext
+    _radarData: RadarCategoryData[], 
+    __context: AnalysisContext
   ): { status: ValidationResult; issues: AnalysisIssue[]; details: Record<string, any> } {
     const issues: AnalysisIssue[] = [];
     const details: Record<string, any> = {};
@@ -368,7 +368,7 @@ export class LayerValidationService implements ILayerValidationService {
   }
 
   private validatePlayerLayerColor(
-    context: AnalysisContext
+    __context: AnalysisContext
   ): { status: ValidationResult; issues: AnalysisIssue[]; details: Record<string, any> } {
     const issues: AnalysisIssue[] = [];
     const details: Record<string, any> = {
@@ -390,8 +390,8 @@ export class LayerValidationService implements ILayerValidationService {
   }
 
   private async validatePlayerValueStability(
-    radarData: RadarCategoryData[], 
-    context: AnalysisContext
+    _radarData: RadarCategoryData[], 
+    __context: AnalysisContext
   ): Promise<{ status: ValidationResult; issues: AnalysisIssue[]; details: Record<string, any> }> {
     const issues: AnalysisIssue[] = [];
     const details: Record<string, any> = {};
@@ -414,8 +414,8 @@ export class LayerValidationService implements ILayerValidationService {
   }
 
   private validatePlayerLayerRendering(
-    radarData: RadarCategoryData[], 
-    context: AnalysisContext
+    _radarData: RadarCategoryData[], 
+    __context: AnalysisContext
   ): { status: ValidationResult; issues: AnalysisIssue[]; details: Record<string, any> } {
     const issues: AnalysisIssue[] = [];
     const details: Record<string, any> = {};
@@ -455,7 +455,7 @@ export class LayerValidationService implements ILayerValidationService {
   }
 
   private validateComparisonLayerColor(
-    context: AnalysisContext
+    __context: AnalysisContext
   ): { status: ValidationResult; issues: AnalysisIssue[]; details: Record<string, any> } {
     const issues: AnalysisIssue[] = [];
     const details: Record<string, any> = {
@@ -472,9 +472,9 @@ export class LayerValidationService implements ILayerValidationService {
   }
 
   private async validateFilterResponse(
-    radarData: RadarCategoryData[], 
-    filters: RadarFilters, 
-    context: AnalysisContext
+    _radarData: RadarCategoryData[], 
+    __filters: RadarFilters, 
+    __context: AnalysisContext
   ): Promise<{ status: ValidationResult; issues: AnalysisIssue[]; details: Record<string, any> }> {
     const issues: AnalysisIssue[] = [];
     const details: Record<string, any> = {};
@@ -513,9 +513,9 @@ export class LayerValidationService implements ILayerValidationService {
   }
 
   private validateAverageCalculation(
-    radarData: RadarCategoryData[], 
-    filters: RadarFilters, 
-    context: AnalysisContext
+    _radarData: RadarCategoryData[], 
+    __filters: RadarFilters, 
+    __context: AnalysisContext
   ): { status: ValidationResult; issues: AnalysisIssue[]; details: Record<string, any> } {
     const issues: AnalysisIssue[] = [];
     const details: Record<string, any> = {};
@@ -560,7 +560,7 @@ export class LayerValidationService implements ILayerValidationService {
   }
 
   private validateVisualDistinction(
-    context: AnalysisContext
+    __context: AnalysisContext
   ): { status: ValidationResult; issues: AnalysisIssue[]; details: Record<string, any> } {
     const issues: AnalysisIssue[] = [];
     const details: Record<string, any> = {};
@@ -581,7 +581,7 @@ export class LayerValidationService implements ILayerValidationService {
   private validateLayerDistinguishability(
     playerData: RadarCategoryData[], 
     comparisonData: RadarCategoryData[], 
-    context: AnalysisContext
+    __context: AnalysisContext
   ): { status: ValidationResult; issues: AnalysisIssue[]; details: Record<string, any> } {
     const issues: AnalysisIssue[] = [];
     const details: Record<string, any> = {};
@@ -598,17 +598,17 @@ export class LayerValidationService implements ILayerValidationService {
   private validateOverlapLegibility(
     playerData: RadarCategoryData[], 
     comparisonData: RadarCategoryData[], 
-    context: AnalysisContext
+    __context: AnalysisContext
   ): { status: ValidationResult; issues: AnalysisIssue[]; details: Record<string, any> } {
     const issues: AnalysisIssue[] = [];
-    const details: Record<string, any> = {};
+    const details: Record<string, any>= {};
 
     // Check for potential overlap issues
     const overlappingCategories = playerData.filter(playerItem => {
       const comparisonItem = comparisonData.find(compItem => compItem.category === playerItem.category);
       if (!comparisonItem) return false;
       
-      // Consider values "overlapping" if they're very close (within 5% of scale)
+      // Consider values "overlapping"if they're very close (within 5% of scale)
       const difference = Math.abs(playerItem.playerValue - comparisonItem.comparisonValue);
       return difference < 5; // 5% threshold for overlap concern
     });
@@ -647,7 +647,7 @@ export class LayerValidationService implements ILayerValidationService {
   private validateTooltipAccuracy(
     playerData: RadarCategoryData[], 
     comparisonData: RadarCategoryData[], 
-    context: AnalysisContext
+    __context: AnalysisContext
   ): { status: ValidationResult; issues: AnalysisIssue[]; details: Record<string, any> } {
     const issues: AnalysisIssue[] = [];
     const details: Record<string, any> = {};

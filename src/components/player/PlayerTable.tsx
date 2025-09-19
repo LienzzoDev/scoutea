@@ -9,18 +9,18 @@ import PlayerAvatar from "@/components/ui/player-avatar";
 import type { Player } from "@/types/player";
 
 interface Category {
-  key: string;
+  _key: string;
   label: string;
-  getValue: (player: Player) => any;
-  format?: (value: any) => string;
+  getValue: (__player: Player) => any;
+  format?: (value: unknown) => string;
 }
 
 interface PlayerTableProps {
   players: Player[];
   selectedCategories: Category[];
-  isInList: (playerId: string) => boolean;
-  addToList: (playerId: string) => Promise<boolean>;
-  removeFromList: (playerId: string) => Promise<boolean>;
+  isInList: (_playerId: string) => boolean;
+  addToList: (_playerId: string) => Promise<boolean>;
+  removeFromList: (_playerId: string) => Promise<boolean>;
 }
 
 export default function PlayerTable({
@@ -30,7 +30,7 @@ export default function PlayerTable({
   addToList,
   removeFromList,
 }: PlayerTableProps) {
-  const router = useRouter();
+  const _router = useRouter();
   const headerScrollRef = useRef<HTMLDivElement>(null);
   const rowScrollRefs = useRef<HTMLDivElement[]>([]);
 
@@ -118,7 +118,7 @@ export default function PlayerTable({
             key={player.id_player}
             className="flex cursor-pointer hover:bg-gray-50 transition-colors"
             onClick={() =>
-              router.push(`/member/player/${player.id_player}`)
+              _router.push(`/member/player/${player.id_player}`)
             }
           >
             {/* Columna fija - Player Info */}
@@ -129,8 +129,7 @@ export default function PlayerTable({
                   <h3 className="font-semibold text-[#000000]">
                     {player.player_name}
                   </h3>
-                  <p className="text-[#6d6d6d] text-sm">
-                    {player.age ? `${player.age} años` : "Edad N/A"} •{" "}
+                  <p className="text-[#6d6d6d] text-sm">{player.age ? `${player.age} años` : "Edad N/A"} • {" "}
                     {player.nationality_1 || "Nacionalidad N/A"}
                   </p>
                   {player.position_player && (
@@ -144,11 +143,10 @@ export default function PlayerTable({
 
             {/* Valores scrolleables */}
             <div
-              ref={(el) => {
+              ref={(el) =>{
                 if (el) rowScrollRefs.current[index] = el;
               }}
-              className="flex-1 overflow-x-auto scrollbar-hide"
-              onScroll={(e) =>
+              className="flex-1 overflow-x-auto scrollbar-hide" onScroll={(e) =>
                 handleScroll(e.currentTarget.scrollLeft)
               }
               style={{
@@ -164,8 +162,7 @@ export default function PlayerTable({
                     100
                   )}px`,
                 }}
-              >
-                {selectedCategories.map((category, catIndex, array) => {
+              >{selectedCategories.map((category, catIndex, array) => {
                   const value = category.getValue(player);
                   const formattedValue = category.format
                     ? category.format(value)
@@ -186,8 +183,7 @@ export default function PlayerTable({
                       <p className="font-medium text-[#000000]">
                         {formattedValue}
                       </p>
-                      {category.key === "competition" &&
-                        player.team_name && (
+                      {category.key === "competition" && player.team_name && (
                           <p className="text-[#6d6d6d] text-xs mt-1 truncate">
                             {player.team_name}
                           </p>
@@ -218,7 +214,7 @@ export default function PlayerTable({
                   className="w-4 h-4 text-[#8c1a10] cursor-pointer hover:text-[#8c1a10]/80"
                   onClick={(e) => {
                     e.stopPropagation();
-                    router.push(`/member/player/${player.id_player}`);
+                    _router.push(`/member/player/${player.id_player}`);
                   }}
                 />
               </div>

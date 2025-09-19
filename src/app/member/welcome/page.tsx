@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 
 export default function WelcomePage() {
-  const router = useRouter()
+  const _router = useRouter()
   const searchParams = useSearchParams()
   const { user } = useUser()
   const [subscriptionPlan, setSubscriptionPlan] = useState<string>('')
@@ -21,7 +21,7 @@ export default function WelcomePage() {
     // Obtener el plan de suscripción desde los metadatos del usuario o URL params
     if (user) {
       const metadata = user.publicMetadata as any
-      const subscription = metadata?.subscription
+      const _subscription = metadata?.subscription
       const planFromUrl = searchParams.get('plan')
       
       console.log('🔍 Metadata del usuario:', metadata)
@@ -58,9 +58,9 @@ export default function WelcomePage() {
         { icon: Target, text: "Análisis ilimitado de jugadores" },
         { icon: TrendingUp, text: "Estadísticas avanzadas y predicciones" },
         { icon: Trophy, text: "Comparaciones entre jugadores" },
-        { icon: Zap, text: "Alertas en tiempo real" },
-        { icon: Shield, text: "Datos exclusivos de ligas premium" },
-        { icon: Headphones, text: "Soporte prioritario 24/7" }
+        { icon: Zap, text: "Alertas en tiempo real"},
+        { icon: Shield, text: "Datos exclusivos de ligas premium"},
+        { icon: Headphones, text: "Soporte prioritario 24/7"}
       ]
     }
     return features[plan as keyof typeof features] || features.basic
@@ -174,16 +174,13 @@ export default function WelcomePage() {
         {/* Action Buttons */}
         <div className="text-center">
           <Button
-            onClick={() => router.push('/member/dashboard')}
-            className="bg-[#8c1a10] hover:bg-[#6d1410] text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl mr-4"
-          >
+            onClick={() =>_router.push('/member/dashboard')}
+            className="bg-[#8c1a10] hover:bg-[#6d1410] text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl mr-4">
             Ir al Dashboard
           </Button>
           <Button
-            onClick={() => router.push('/member/subscription-plans')}
-            variant="outline"
-            className="border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200"
-          >
+            onClick={() =>_router.push('/member/subscription-plans')}
+            variant="outline" className="border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200">
             Completar Perfil
           </Button>
         </div>

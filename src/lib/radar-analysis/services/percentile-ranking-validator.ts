@@ -72,10 +72,10 @@ export class PercentileRankingValidator {
    * Validates percentile and ranking calculations for a specific player
    */
   async validatePlayerPercentiles(
-    playerId: string,
-    context: AnalysisContext,
+    _playerId: string,
+    __context: AnalysisContext,
     filters?: RadarFilters,
-    period: string = '2023-24'
+    _period: string = '2023-24'
   ): Promise<PercentileRankingValidationResult> {
     const startTime = Date.now();
     
@@ -93,7 +93,7 @@ export class PercentileRankingValidator {
       );
 
       // Get comparison group
-      const comparisonGroup = await this.radarService.getComparisonGroup(filters || {});
+      const _comparisonGroup = await this.radarService.getComparisonGroup(filters || {});
 
       const percentileReports: PercentileValidationReport[] = [];
       const rankingReports: RankingValidationReport[] = [];
@@ -173,7 +173,7 @@ export class PercentileRankingValidator {
 
       return result;
 
-    } catch (error) {
+    } catch (_error) {
       const duration = Date.now() - startTime;
       radarAnalysisLogger.logAnalysisError({
         ...context,
@@ -187,9 +187,9 @@ export class PercentileRankingValidator {
    * Validates percentile calculation for a specific category
    */
   private async validatePercentileCalculation(
-    categoryData: any,
+    categoryData: unknown,
     comparisonValues: number[],
-    context: AnalysisContext
+    __context: AnalysisContext
   ): Promise<PercentileValidationReport> {
     const issues: string[] = [];
     
@@ -253,9 +253,9 @@ export class PercentileRankingValidator {
    * Validates ranking calculation for a specific category
    */
   private async validateRankingCalculation(
-    categoryData: any,
+    categoryData: unknown,
     comparisonValues: number[],
-    context: AnalysisContext
+    __context: AnalysisContext
   ): Promise<RankingValidationReport> {
     const issues: string[] = [];
     
@@ -271,7 +271,7 @@ export class PercentileRankingValidator {
     const isCorrect = categoryData.rank === expectedRank;
 
     if (!isCorrect) {
-      issues.push(`Rank calculation error: expected ${expectedRank}, got ${categoryData.rank}`);
+      issues.push(`Rank calculation __error: expected ${expectedRank}, got ${categoryData.rank}`);
     }
 
     // Validate rank consistency
@@ -370,7 +370,7 @@ export class PercentileRankingValidator {
   private async getComparisonValuesForCategory(
     categoryLabel: string,
     playerIds: string[],
-    period: string
+    _period: string
   ): Promise<number[]> {
     const values: number[] = [];
 
@@ -398,12 +398,12 @@ export class PercentileRankingValidator {
             if (categoryData && categoryData.dataCompleteness >= 50) {
               values.push(categoryData.playerValue);
             }
-          } catch (error) {
+          } catch (_error) {
             // Skip players with calculation errors
             console.warn(`Error calculating radar for player ${playerId}:`, error);
           }
         }
-      } catch (error) {
+      } catch (_error) {
         console.error(`Error processing batch ${i}-${i + batchSize}:`, error);
       }
     }
@@ -505,7 +505,7 @@ export class PercentileRankingValidator {
   /**
    * Create an analysis issue for percentile errors
    */
-  private createPercentileIssue(report: PercentileValidationReport, context: AnalysisContext): AnalysisIssue {
+  private createPercentileIssue(report: PercentileValidationReport, __context: AnalysisContext): AnalysisIssue {
     return {
       id: uuidv4(),
       severity: 'high' as AnalysisSeverity,
@@ -531,7 +531,7 @@ export class PercentileRankingValidator {
   /**
    * Create an analysis issue for ranking errors
    */
-  private createRankingIssue(report: RankingValidationReport, context: AnalysisContext): AnalysisIssue {
+  private createRankingIssue(report: RankingValidationReport, __context: AnalysisContext): AnalysisIssue {
     return {
       id: uuidv4(),
       severity: 'high' as AnalysisSeverity,

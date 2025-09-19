@@ -21,7 +21,7 @@ interface Player {
 }
 
 export default function PlayerComparisonPage() {
-  const router = useRouter()
+  const _router = useRouter()
   const [activeTab, setActiveTab] = useState('info')
   const [selectedPlayer1, setSelectedPlayer1] = useState<Player | null>(null)
   const [selectedPlayer2, setSelectedPlayer2] = useState<Player | null>(null)
@@ -104,7 +104,7 @@ export default function PlayerComparisonPage() {
         {/* Breadcrumb */}
         <div className="mb-6">
           <nav className="text-sm text-[#6d6d6d]">
-            <span className="hover:text-[#8c1a10] cursor-pointer" onClick={() => router.push('/member/dashboard')}>
+            <span className="hover:text-[#8c1a10] cursor-pointer" onClick={() => _router.push('/member/dashboard')}>
               Wonderkids
             </span>
             <span className="mx-2">›</span>
@@ -164,8 +164,7 @@ export default function PlayerComparisonPage() {
                   )}
                 </div>
                 
-                <h3 className="text-lg font-semibold text-[#000000] mb-2">
-                  {selectedPlayer1 ? selectedPlayer1.name : "Select player 1"}
+                <h3 className="text-lg font-semibold text-[#000000] mb-2">{selectedPlayer1 ? selectedPlayer1.name : "Select player 1"}
                 </h3>
                 
                 {selectedPlayer1 && (
@@ -183,17 +182,15 @@ export default function PlayerComparisonPage() {
                     placeholder="Search player..."
                     value={search1}
                     onChange={(e) => setSearch1(e.target.value)}
-                    className="pr-10"
-                  />
+                    className="pr-10" />
                 </div>
 
                 <div className="space-y-2">
                   {selectedPlayer1 ? (
                     <Button
                       variant="outline"
-                      onClick={() => setSelectedPlayer1(null)}
-                      className="w-full border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white"
-                    >
+                      onClick={() =>setSelectedPlayer1(null)}
+                      className="w-full border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white">
                       Clear Selection
                     </Button>
                   ) : (
@@ -204,9 +201,8 @@ export default function PlayerComparisonPage() {
                           <Button
                             key={player.id}
                             variant="outline"
-                            onClick={() => setSelectedPlayer1(player)}
-                            className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
-                          >
+                            onClick={() =>setSelectedPlayer1(player)}
+                            className="w-full border-gray-300 text-gray-700 hover:bg-gray-50">
                             {player.name}
                           </Button>
                         ))}
@@ -240,8 +236,7 @@ export default function PlayerComparisonPage() {
                   )}
                 </div>
                 
-                <h3 className="text-lg font-semibold text-[#000000] mb-2">
-                  {selectedPlayer2 ? selectedPlayer2.name : "Select player 2"}
+                <h3 className="text-lg font-semibold text-[#000000] mb-2">{selectedPlayer2 ? selectedPlayer2.name : "Select player 2"}
                 </h3>
                 
                 {selectedPlayer2 && (
@@ -259,17 +254,15 @@ export default function PlayerComparisonPage() {
                     placeholder="Search player..."
                     value={search2}
                     onChange={(e) => setSearch2(e.target.value)}
-                    className="pr-10"
-                  />
+                    className="pr-10" />
                 </div>
 
                 <div className="space-y-2">
                   {selectedPlayer2 ? (
                     <Button
                       variant="outline"
-                      onClick={() => setSelectedPlayer2(null)}
-                      className="w-full border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white"
-                    >
+                      onClick={() =>setSelectedPlayer2(null)}
+                      className="w-full border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white">
                       Clear Selection
                     </Button>
                   ) : (
@@ -280,9 +273,8 @@ export default function PlayerComparisonPage() {
                           <Button
                             key={player.id}
                             variant="outline"
-                            onClick={() => setSelectedPlayer2(player)}
-                            className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
-                          >
+                            onClick={() =>setSelectedPlayer2(player)}
+                            className="w-full border-gray-300 text-gray-700 hover:bg-gray-50">
                             {player.name}
                           </Button>
                         ))}
@@ -303,9 +295,8 @@ export default function PlayerComparisonPage() {
               {/* Player 1 Summary */}
               <div className="bg-white rounded-lg p-6 border border-[#e7e7e7] relative">
                 <button
-                  onClick={() => setSelectedPlayer1(null)}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-                >
+                  onClick={() =>setSelectedPlayer1(null)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
                   <X className="w-5 h-5" />
                 </button>
                 
@@ -341,9 +332,8 @@ export default function PlayerComparisonPage() {
               {/* Player 2 Summary */}
               <div className="bg-white rounded-lg p-6 border border-[#e7e7e7] relative">
                 <button
-                  onClick={() => setSelectedPlayer2(null)}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-                >
+                  onClick={() =>setSelectedPlayer2(null)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
                   <X className="w-5 h-5" />
                 </button>
                 
@@ -389,8 +379,7 @@ export default function PlayerComparisonPage() {
                   </div>
 
                   {/* Comparison Rows */}
-                  <div className="space-y-0">
-                    {[
+                  <div className="space-y-0">{[
                       { label: "Age", value1: selectedPlayer1?.age || "N/A", value2: selectedPlayer2?.age || "N/A" },
                       { label: "Position", value1: selectedPlayer1?.position || "N/A", value2: selectedPlayer2?.position || "N/A" },
                       { label: "Team", value1: selectedPlayer1?.team || "N/A", value2: selectedPlayer2?.team || "N/A" },
@@ -412,7 +401,7 @@ export default function PlayerComparisonPage() {
                       { label: "Tackles per Game", value1: "1.1", value2: "0.7" },
                       { label: "Aerial Duels Won", value1: "45%", value2: "78%" },
                       { label: "International Caps", value1: "180", value2: "212" },
-                      { label: "International Goals", value1: "106", value2: "130" }
+                      { label: "International Goals", value1: "106", value2: "130"}
                     ].map((row, index) => (
                       <div key={index} className="grid grid-cols-3 gap-8 py-3 border-b border-gray-100 last:border-b-0">
                         <div className="text-[#6d6d6d] font-medium">{row.label}</div>

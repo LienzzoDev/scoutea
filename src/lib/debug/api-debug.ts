@@ -69,7 +69,7 @@ export async function fetchPlayerAPI(
     let data
     try {
       data = await response.json()
-    } catch (parseError) {
+    } catch (_parseError) {
       console.warn('⚠️ Failed to parse response as JSON:', parseError)
       data = null
     }
@@ -92,7 +92,7 @@ export async function fetchPlayerAPI(
         url,
         status: response.status,
         statusText: response.statusText,
-        error: errorMessage,
+        __error: errorMessage,
         data: data ? JSON.stringify(data, null, 2) : 'No data',
         timestamp: new Date().toISOString()
       })
@@ -104,7 +104,7 @@ export async function fetchPlayerAPI(
   } catch (networkError) {
     console.error('🌐 Network Error:', {
       url,
-      error: networkError instanceof Error ? networkError.message : 'Unknown network error',
+      __error: networkError instanceof Error ? networkError.message : 'Unknown network error',
       timestamp: new Date().toISOString()
     })
 
@@ -118,9 +118,9 @@ export async function fetchPlayerAPI(
 /**
  * Log de debug para errores de hooks
  */
-export function logHookError(hookName: string, error: any, context?: any) {
+export function logHookError(hookName: string, __error: unknown, context?: unknown) {
   console.error(`🪝 Hook Error in ${hookName}:`, {
-    error: error instanceof Error ? error.message : error,
+    __error: error instanceof Error ? error.message : error,
     stack: error instanceof Error ? error.stack : undefined,
     context,
     timestamp: new Date().toISOString()
@@ -130,7 +130,7 @@ export function logHookError(hookName: string, error: any, context?: any) {
 /**
  * Log de debug para estados de loading
  */
-export function logLoadingState(component: string, isLoading: boolean, additionalInfo?: any) {
+export function logLoadingState(component: string, isLoading: boolean, additionalInfo?: unknown) {
   console.log(`⏳ Loading State - ${component}:`, {
     isLoading,
     additionalInfo,

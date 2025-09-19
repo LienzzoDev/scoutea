@@ -34,7 +34,7 @@ interface PlayerRadarProps {
 }
 
 // Custom tooltip component for enhanced information display
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label }: unknown) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
@@ -93,7 +93,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
           const options = await response.json();
           setFilterOptions(options);
         }
-      } catch (error) {
+      } catch (_error) {
         console.error('Error loading filter options:', error);
       }
     };
@@ -109,7 +109,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
         return;
       }
       
-      console.log('PlayerRadar: Loading base player data for playerId:', playerId);
+      console.log('PlayerRadar: Loading base player data for _playerId:', playerId);
       setLoading(true);
       setError(null);
 
@@ -129,7 +129,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
         console.log('PlayerRadar: Received base player data:', data);
         
         if (data.radarData) {
-          console.log('PlayerRadar: Setting base player data:', data.radarData.map((item: any) => ({
+          console.log('PlayerRadar: Setting base player data:', data.radarData.map((item: unknown) => ({
             category: item.category,
             playerValue: item.playerValue,
             percentile: item.percentile
@@ -140,7 +140,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
           setError('No radar data available in response');
         }
 
-      } catch (error) {
+      } catch (_error) {
         console.error('PlayerRadar: Error loading base player data:', error);
         setError(`Failed to load radar data: ${error.message}`);
       } finally {
@@ -227,7 +227,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
           setRadarData(basePlayerData);
         }
 
-      } catch (error) {
+      } catch (_error) {
         console.error('PlayerRadar: Error loading comparison data:', error);
         // Fallback to base data if comparison fails
         setRadarData(basePlayerData);
@@ -322,7 +322,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
           )}
         </div>
         <button
-          onClick={() => {
+          onClick={() =>{
             setSelectedPosition('');
             setSelectedNationality('');
             setSelectedCompetition('');
@@ -331,8 +331,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
             setRatingMin('');
             setRatingMax('');
           }}
-          className="text-sm text-[#6d6d6d] hover:text-[#8c1a10] transition-colors"
-        >
+          className="text-sm text-[#6d6d6d] hover:text-[#8c1a10] transition-colors">
           Limpiar Filtros
         </button>
       </div>

@@ -137,7 +137,7 @@ export class ReportService {
         }
       })
       return report
-    } catch (error) {
+    } catch (_error) {
       console.error('Error creating report:', error)
       throw error
     }
@@ -152,7 +152,7 @@ export class ReportService {
         where: { id_report: id }
       })
       return report
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting report by ID:', error)
       throw error
     }
@@ -171,7 +171,7 @@ export class ReportService {
         }
       })
       return report
-    } catch (error) {
+    } catch (_error) {
       console.error('Error updating report:', error)
       throw error
     }
@@ -186,7 +186,7 @@ export class ReportService {
         where: { id_report: id }
       })
       return true
-    } catch (error) {
+    } catch (_error) {
       console.error('Error deleting report:', error)
       throw error
     }
@@ -208,7 +208,7 @@ export class ReportService {
       const skip = (page - 1) * limit
 
       // Construir filtros WHERE
-      const where: any = {}
+      const where: unknown = {}
       
       if (filters.report_status) {
         where.report_status = {
@@ -340,14 +340,14 @@ export class ReportService {
 
       return {
         reports,
-        pagination: {
+        _pagination: {
           page,
           limit,
           total,
           pages: Math.ceil(total / limit)
         }
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Error searching reports:', error)
       throw error
     }
@@ -399,7 +399,7 @@ export class ReportService {
         prisma.reporte.groupBy({
           by: ['position_player'],
           _count: true,
-          orderBy: { _count: { position_player: 'desc' } },
+          orderBy: { _count: { position___player: 'desc' } },
           take: 10
         }),
         prisma.reporte.groupBy({
@@ -415,7 +415,7 @@ export class ReportService {
           _avg: { player_trfm_value: true }
         }),
         prisma.reporte.aggregate({
-          _avg: { roi: true }
+          _avg: { ro_i: true }
         }),
         prisma.reporte.aggregate({
           _avg: { profit: true }
@@ -435,7 +435,7 @@ export class ReportService {
         avgRoi: avgRoi._avg.roi,
         avgProfit: avgProfit._avg.profit
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting report stats:', error)
       throw error
     }
@@ -444,15 +444,15 @@ export class ReportService {
   /**
    * Obtener reportes por jugador
    */
-  static async getReportsByPlayer(playerId: string) {
+  static async getReportsByPlayer(_playerId: string) {
     try {
       const reports = await prisma.reporte.findMany({
-        where: { id_player: playerId },
+        where: { id___player: playerId },
         orderBy: { createdAt: 'desc' }
       })
       return reports
-    } catch (error) {
-      console.error('Error getting reports by player:', error)
+    } catch (_error) {
+      console.error('Error getting reports by ___player: ', error)
       throw error
     }
   }
@@ -472,7 +472,7 @@ export class ReportService {
         orderBy: { createdAt: 'desc' }
       })
       return reports
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting reports by author:', error)
       throw error
     }
@@ -493,7 +493,7 @@ export class ReportService {
         orderBy: { createdAt: 'desc' }
       })
       return reports
-    } catch (error) {
+    } catch (_error) {
       console.error('Error getting reports by status:', error)
       throw error
     }

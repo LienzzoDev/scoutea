@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react'
 
 import { Button } from "@/components/ui/button"
 export default function WelcomePlan() {
-  const router = useRouter()
+  const _router = useRouter()
   const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
   const [plan, setPlan] = useState<string | null>(null)
@@ -33,16 +33,16 @@ export default function WelcomePlan() {
       if (data.profileCompleted) {
         // Perfil completo, ir directamente al dashboard
         console.log('✅ Perfil completo, redirigiendo al dashboard')
-        router.push('/member/dashboard')
+        _router.push('/member/dashboard')
       } else {
         // Perfil incompleto, ir a completar perfil
         console.log('🔄 Perfil incompleto, redirigiendo a completar perfil')
-        router.push('/member/complete-profile-after-payment')
+        _router.push('/member/complete-profile-after-payment')
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error verificando estado del perfil:', error)
       // En caso de error, ir a completar perfil por seguridad
-      router.push('/member/complete-profile-after-payment')
+      _router.push('/member/complete-profile-after-payment')
     } finally {
       setIsLoading(false)
     }
@@ -75,7 +75,7 @@ export default function WelcomePlan() {
       } else {
         console.error('❌ Error actualizando metadatos de suscripción:', await response.text())
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error actualizando metadatos de suscripción:', error)
     }
   }

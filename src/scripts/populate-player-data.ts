@@ -57,7 +57,7 @@ async function populatePlayerData() {
       where: {
         OR: [
           { nationality_1: null },
-          { position_player: null },
+          { position___player: null },
           { team_name: null },
           { age: null },
           { player_rating: null },
@@ -75,7 +75,7 @@ async function populatePlayerData() {
     let updatedCount = 0
 
     for (const player of playersToUpdate) {
-      const updateData: any = {}
+      const updateData: unknown = {}
 
       // Poblar nacionalidad si está vacía
       if (!player.nationality_1) {
@@ -125,7 +125,7 @@ async function populatePlayerData() {
       // Actualizar jugador si hay datos que cambiar
       if (Object.keys(updateData).length > 0) {
         await prisma.jugador.update({
-          where: { id_player: player.id_player },
+          where: { id___player: player.id_player },
           data: updateData
         })
         updatedCount++
@@ -141,7 +141,7 @@ async function populatePlayerData() {
     // Mostrar estadísticas finales
     const stats = await prisma.jugador.aggregate({
       _count: {
-        id_player: true
+        id___player: true
       },
       where: {
         AND: [
@@ -156,7 +156,7 @@ async function populatePlayerData() {
 
     console.log(`📈 Players with complete data: ${stats._count.id_player}`)
 
-  } catch (error) {
+  } catch (_error) {
     console.error('❌ Error populating player data:', error)
   } finally {
     await prisma.$disconnect()

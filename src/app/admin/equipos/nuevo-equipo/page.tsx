@@ -12,7 +12,7 @@ import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 
 export default function NuevoEquipoPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
-  const router = useRouter()
+  const _router = useRouter()
   const [loading, setLoading] = useState(false)
   
   const [formData, setFormData] = useState({
@@ -82,12 +82,12 @@ export default function NuevoEquipoPage() {
 
       if (response.ok) {
         alert('Equipo creado correctamente')
-        router.push('/admin/equipos')
+        _router.push('/admin/equipos')
       } else {
-        const error = await response.json()
+        const _error = await response.json()
         alert(`Error al crear el equipo: ${error.error || 'Error desconocido'}`)
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Error al crear equipo:', error)
       alert('Error al crear el equipo')
     } finally {
@@ -115,9 +115,8 @@ export default function NuevoEquipoPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => router.push('/admin/equipos')}
-                className="text-slate-400 hover:text-white"
-              >
+                onClick={() =>_router.push('/admin/equipos')}
+                className="text-slate-400 hover:text-white">
                 <ChevronLeft className="h-5 w-5" />
               </Button>
               <div>
@@ -152,9 +151,7 @@ export default function NuevoEquipoPage() {
                   id="team_name"
                   value={formData.team_name}
                   onChange={(e) => setFormData(prev => ({ ...prev, team_name: e.target.value }))}
-                  className="bg-[#080F17] border-slate-700 text-white"
-                  placeholder="Real Madrid CF"
-                />
+                  className="bg-[#080F17] border-slate-700 text-white" placeholder="Real Madrid CF"/>
               </div>
               <div>
                 <Label htmlFor="correct_team_name" className="text-slate-300">Nombre Correcto</Label>
@@ -162,9 +159,7 @@ export default function NuevoEquipoPage() {
                   id="correct_team_name"
                   value={formData.correct_team_name}
                   onChange={(e) => setFormData(prev => ({ ...prev, correct_team_name: e.target.value }))}
-                  className="bg-[#080F17] border-slate-700 text-white"
-                  placeholder="Real Madrid Club de Fútbol"
-                />
+                  className="bg-[#080F17] border-slate-700 text-white" placeholder="Real Madrid Club de Fútbol"/>
               </div>
               <div>
                 <Label htmlFor="team_country" className="text-slate-300">País</Label>
@@ -172,9 +167,7 @@ export default function NuevoEquipoPage() {
                   id="team_country"
                   value={formData.team_country}
                   onChange={(e) => setFormData(prev => ({ ...prev, team_country: e.target.value }))}
-                  className="bg-[#080F17] border-slate-700 text-white"
-                  placeholder="España"
-                />
+                  className="bg-[#080F17] border-slate-700 text-white" placeholder="España"/>
               </div>
             </div>
           </div>
@@ -189,9 +182,7 @@ export default function NuevoEquipoPage() {
                   id="url_trfm_advisor"
                   value={formData.url_trfm_advisor}
                   onChange={(e) => setFormData(prev => ({ ...prev, url_trfm_advisor: e.target.value }))}
-                  className="bg-[#080F17] border-slate-700 text-white"
-                  placeholder="https://www.transfermarkt.es/real-madrid/startseite/verein/418"
-                />
+                  className="bg-[#080F17] border-slate-700 text-white" placeholder="https://www.transfermarkt.es/real-madrid/startseite/verein/418"/>
               </div>
               <div>
                 <Label htmlFor="url_trfm" className="text-slate-300">URL Transfermarkt</Label>
@@ -199,9 +190,7 @@ export default function NuevoEquipoPage() {
                   id="url_trfm"
                   value={formData.url_trfm}
                   onChange={(e) => setFormData(prev => ({ ...prev, url_trfm: e.target.value }))}
-                  className="bg-[#080F17] border-slate-700 text-white"
-                  placeholder="https://www.transfermarkt.es/real-madrid/startseite/verein/418"
-                />
+                  className="bg-[#080F17] border-slate-700 text-white" placeholder="https://www.transfermarkt.es/real-madrid/startseite/verein/418"/>
               </div>
             </div>
           </div>
@@ -216,9 +205,7 @@ export default function NuevoEquipoPage() {
                   id="owner_club"
                   value={formData.owner_club}
                   onChange={(e) => setFormData(prev => ({ ...prev, owner_club: e.target.value }))}
-                  className="bg-[#080F17] border-slate-700 text-white"
-                  placeholder="Real Madrid CF"
-                />
+                  className="bg-[#080F17] border-slate-700 text-white" placeholder="Real Madrid CF"/>
               </div>
               <div>
                 <Label htmlFor="owner_club_country" className="text-slate-300">País del Propietario</Label>
@@ -226,9 +213,7 @@ export default function NuevoEquipoPage() {
                   id="owner_club_country"
                   value={formData.owner_club_country}
                   onChange={(e) => setFormData(prev => ({ ...prev, owner_club_country: e.target.value }))}
-                  className="bg-[#080F17] border-slate-700 text-white"
-                  placeholder="España"
-                />
+                  className="bg-[#080F17] border-slate-700 text-white" placeholder="España"/>
               </div>
             </div>
           </div>
@@ -243,9 +228,7 @@ export default function NuevoEquipoPage() {
                   id="competition"
                   value={formData.competition}
                   onChange={(e) => setFormData(prev => ({ ...prev, competition: e.target.value }))}
-                  className="bg-[#080F17] border-slate-700 text-white"
-                  placeholder="LaLiga"
-                />
+                  className="bg-[#080F17] border-slate-700 text-white" placeholder="LaLiga"/>
               </div>
               <div>
                 <Label htmlFor="correct_competition" className="text-slate-300">Competición Correcta</Label>
@@ -253,9 +236,7 @@ export default function NuevoEquipoPage() {
                   id="correct_competition"
                   value={formData.correct_competition}
                   onChange={(e) => setFormData(prev => ({ ...prev, correct_competition: e.target.value }))}
-                  className="bg-[#080F17] border-slate-700 text-white"
-                  placeholder="Primera División de España"
-                />
+                  className="bg-[#080F17] border-slate-700 text-white" placeholder="Primera División de España"/>
               </div>
               <div>
                 <Label htmlFor="competition_country" className="text-slate-300">País de Competición</Label>
@@ -263,9 +244,7 @@ export default function NuevoEquipoPage() {
                   id="competition_country"
                   value={formData.competition_country}
                   onChange={(e) => setFormData(prev => ({ ...prev, competition_country: e.target.value }))}
-                  className="bg-[#080F17] border-slate-700 text-white"
-                  placeholder="España"
-                />
+                  className="bg-[#080F17] border-slate-700 text-white" placeholder="España"/>
               </div>
               <div>
                 <Label htmlFor="competition_tier" className="text-slate-300">Tier de Competición</Label>
@@ -273,9 +252,7 @@ export default function NuevoEquipoPage() {
                   id="competition_tier"
                   value={formData.competition_tier}
                   onChange={(e) => setFormData(prev => ({ ...prev, competition_tier: e.target.value }))}
-                  className="bg-[#080F17] border-slate-700 text-white"
-                  placeholder="1"
-                />
+                  className="bg-[#080F17] border-slate-700 text-white" placeholder="1"/>
               </div>
               <div>
                 <Label htmlFor="competition_confederation" className="text-slate-300">Confederación</Label>
@@ -283,9 +260,7 @@ export default function NuevoEquipoPage() {
                   id="competition_confederation"
                   value={formData.competition_confederation}
                   onChange={(e) => setFormData(prev => ({ ...prev, competition_confederation: e.target.value }))}
-                  className="bg-[#080F17] border-slate-700 text-white"
-                  placeholder="UEFA"
-                />
+                  className="bg-[#080F17] border-slate-700 text-white" placeholder="UEFA"/>
               </div>
             </div>
           </div>
@@ -301,9 +276,7 @@ export default function NuevoEquipoPage() {
                   type="number"
                   value={formData.team_trfm_value}
                   onChange={(e) => setFormData(prev => ({ ...prev, team_trfm_value: e.target.value }))}
-                  className="bg-[#080F17] border-slate-700 text-white"
-                  placeholder="1000000000"
-                />
+                  className="bg-[#080F17] border-slate-700 text-white" placeholder="1000000000"/>
               </div>
               <div>
                 <Label htmlFor="team_rating" className="text-slate-300">Rating del Equipo</Label>
@@ -313,9 +286,7 @@ export default function NuevoEquipoPage() {
                   step="0.1"
                   value={formData.team_rating}
                   onChange={(e) => setFormData(prev => ({ ...prev, team_rating: e.target.value }))}
-                  className="bg-[#080F17] border-slate-700 text-white"
-                  placeholder="8.5"
-                />
+                  className="bg-[#080F17] border-slate-700 text-white" placeholder="8.5"/>
               </div>
               <div>
                 <Label htmlFor="team_elo" className="text-slate-300">ELO del Equipo</Label>
@@ -324,9 +295,7 @@ export default function NuevoEquipoPage() {
                   type="number"
                   value={formData.team_elo}
                   onChange={(e) => setFormData(prev => ({ ...prev, team_elo: e.target.value }))}
-                  className="bg-[#080F17] border-slate-700 text-white"
-                  placeholder="1850"
-                />
+                  className="bg-[#080F17] border-slate-700 text-white" placeholder="1850"/>
               </div>
               <div>
                 <Label htmlFor="team_level" className="text-slate-300">Nivel del Equipo</Label>
@@ -334,9 +303,7 @@ export default function NuevoEquipoPage() {
                   id="team_level"
                   value={formData.team_level}
                   onChange={(e) => setFormData(prev => ({ ...prev, team_level: e.target.value }))}
-                  className="bg-[#080F17] border-slate-700 text-white"
-                  placeholder="Elite"
-                />
+                  className="bg-[#080F17] border-slate-700 text-white" placeholder="Elite"/>
               </div>
             </div>
           </div>

@@ -21,7 +21,7 @@ export async function GET(): Promise<NextResponse> {
     // Test finding a specific player (get first one)
     const firstPlayer = await prisma.jugador.findFirst({
       select: {
-        id_player: true,
+        id___player: true,
         player_name: true
       }
     });
@@ -30,7 +30,7 @@ export async function GET(): Promise<NextResponse> {
     // Test the specific problematic ID
     const problematicId = 'cmfnrkrmq0000zwoo8yafzumb';
     const specificPlayer = await prisma.jugador.findUnique({
-      where: { id_player: problematicId },
+      where: { id___player: problematicId },
       select: {
         id_player: true,
         player_name: true,
@@ -51,12 +51,12 @@ export async function GET(): Promise<NextResponse> {
       }
     });
     
-  } catch (error) {
+  } catch (_error) {
     console.error('❌ Database test failed:', error);
     
     return NextResponse.json({
       success: false,
-      error: {
+      __error: {
         message: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined,
         timestamp: new Date().toISOString()

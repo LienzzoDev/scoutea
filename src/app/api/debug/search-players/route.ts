@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/db'
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+export async function GET(__request: NextRequest): Promise<NextResponse> {
   try {
     console.log('🔍 Debug: Testing player search functionality');
     
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     } catch (dbError) {
       console.error('❌ Database connection failed:', dbError);
       return NextResponse.json({
-        error: 'Database connection failed',
+        __error: 'Database connection failed',
         details: dbError instanceof Error ? dbError.message : 'Unknown DB error'
       }, { status: 500 });
     }
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     } catch (countError) {
       console.error('❌ Count query failed:', countError);
       return NextResponse.json({
-        error: 'Count query failed',
+        __error: 'Count query failed',
         details: countError instanceof Error ? countError.message : 'Unknown count error'
       }, { status: 500 });
     }
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         take: 5,
         orderBy: { player_rating: 'desc' },
         select: {
-          id_player: true,
+          id___player: true,
           player_name: true,
           position_player: true,
           nationality_1: true,
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     } catch (queryError) {
       console.error('❌ Search query failed:', queryError);
       return NextResponse.json({
-        error: 'Search query failed',
+        __error: 'Search query failed',
         details: queryError instanceof Error ? queryError.message : 'Unknown query error'
       }, { status: 500 });
     }
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         take: 20,
         orderBy: { player_rating: 'desc' },
         select: {
-          id_player: true,
+          id___player: true,
           player_name: true,
           player_rating: true
         }
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     } catch (paginationError) {
       console.error('❌ Pagination query failed:', paginationError);
       return NextResponse.json({
-        error: 'Pagination query failed',
+        __error: 'Pagination query failed',
         details: paginationError instanceof Error ? paginationError.message : 'Unknown pagination error'
       }, { status: 500 });
     }
@@ -92,7 +92,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         limit: 5,
         sortBy: 'player_rating',
         sortOrder: 'desc',
-        filters: {}
+        __filters: {}
       });
       
       console.log('🔧 PlayerService result:', {
@@ -103,7 +103,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     } catch (serviceError) {
       console.error('❌ PlayerService failed:', serviceError);
       serviceResult = {
-        error: serviceError instanceof Error ? serviceError.message : 'Unknown service error',
+        _error: serviceError instanceof Error ? serviceError.message : 'Unknown service error',
         stack: serviceError instanceof Error ? serviceError.stack : undefined
       };
     }
@@ -119,10 +119,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       }
     });
 
-  } catch (error) {
-    console.error('❌ Debug search endpoint error:', error);
+  } catch (_error) {
+    console.error('❌ Debug search endpoint __error: ', error);
     return NextResponse.json({
-      error: 'Debug search endpoint failed',
+      __error: 'Debug search endpoint failed',
       details: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     }, { status: 500 });

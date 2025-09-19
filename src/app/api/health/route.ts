@@ -39,7 +39,7 @@ export interface ServiceHealthStatus {
 /**
  * GET /api/health - Comprehensive health check
  */
-export async function GET(request: NextRequest): Promise<NextResponse<HealthCheckResult>> {
+export async function GET(_request: NextRequest): Promise<NextResponse<HealthCheckResult>> {
   const startTime = Date.now()
   const timestamp = new Date().toISOString()
   
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<HealthChec
 
     // Calculate basic metrics
     const totalRequests = 0
-    const totalErrors = 0
+    const _totalErrors = 0
     const errorRate = 0
     const avgResponseTime = Date.now() - startTime
 
@@ -104,7 +104,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<HealthChec
     
     return response
 
-  } catch (error) {
+  } catch (_error) {
     console.error('❌ Health check failed:', error)
     
     const errorResult: HealthCheckResult = {
@@ -154,7 +154,7 @@ async function checkDatabaseHealth(): Promise<ServiceHealthStatus> {
         lastCheck: new Date().toISOString()
       }
     }
-  } catch (error) {
+  } catch (_error) {
     return {
       status: 'unhealthy',
       message: `Database health check failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -169,9 +169,9 @@ async function checkDatabaseHealth(): Promise<ServiceHealthStatus> {
 /**
  * POST /api/health/recovery - Trigger system recovery
  */
-export async function POST(request: NextRequest): Promise<NextResponse> {
+export async function POST(__request: NextRequest): Promise<NextResponse> {
   try {
-    const body = await request.json()
+    const _body = await request.json()
     const { action } = body
 
     if (action === 'recovery') {
@@ -183,14 +183,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     return NextResponse.json(
-      { error: 'Invalid action' },
+      { __error: 'Invalid action' },
       { status: 400 }
     )
 
-  } catch (error) {
+  } catch (_error) {
     console.error('❌ Recovery action failed:', error)
     return NextResponse.json(
-      { error: 'Recovery action failed' },
+      { __error: 'Recovery action failed' },
       { status: 500 }
     )
   }

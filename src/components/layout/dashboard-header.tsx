@@ -16,7 +16,7 @@ import { getUserRole } from '@/lib/auth/user-role'
 export default function DashboardHeader() {
   const { isSignedIn } = useAuth()
   const { user } = useUser()
-  const router = useRouter()
+  const _router = useRouter()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   // Obtener el rol del usuario
@@ -29,7 +29,7 @@ export default function DashboardHeader() {
 
   const handleSignOut = () => {
     // Cerrar sesión y redirigir
-    router.push('/login')
+    _router.push('/login')
   }
 
   if (!isSignedIn) {
@@ -43,11 +43,7 @@ export default function DashboardHeader() {
           {/* Logo y navegación principal */}
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <img
-                className="h-8 w-auto"
-                src="/logo-nav.png"
-                alt="Scoutea Logo"
-              />
+              <img src="/logo-nav.png" alt="Scoutea Logo" className="h-8 w-auto" />
             </div>
             
             {/* Navegación desktop */}
@@ -90,11 +86,8 @@ export default function DashboardHeader() {
             {/* Botón para ir a la sección de miembros - Solo visible para usuarios admin */}
             {isAdmin && (
               <Button
-                onClick={() => router.push('/member/dashboard')}
-                className="bg-[#8c1a10] hover:bg-[#6d1410] text-white text-sm px-3 py-1.5 flex items-center gap-2"
-                size="sm"
-              >
-                <Users className="w-4 h-4" />
+                onClick={() =>_router.push('/member/dashboard')}
+                className="bg-[#8c1a10] hover:bg-[#6d1410] text-white text-sm px-3 py-1.5 flex items-center gap-2" size="sm">                <Users className="w-4 h-4" />
                 Miembros
               </Button>
             )}
@@ -127,12 +120,11 @@ export default function DashboardHeader() {
             {/* Botón para ir a la sección de miembros - Solo visible para usuarios admin */}
             {isAdmin && (
               <button
-                onClick={() => {
+                onClick={() =>{
                   setIsMenuOpen(false)
-                  router.push('/member/dashboard')
+                  _router.push('/member/dashboard')
                 }}
-                className="w-full text-left text-[#8c1a10] hover:text-[#6d1410] block px-3 py-2 rounded-md text-base font-medium flex items-center gap-2"
-              >
+                className="w-full text-left text-[#8c1a10] hover:text-[#6d1410] block px-3 py-2 rounded-md text-base font-medium flex items-center gap-2">
                 <Users className="w-4 h-4" />
                 Ir a Miembros
               </button>

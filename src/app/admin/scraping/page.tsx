@@ -222,7 +222,7 @@ export default function ScrapingPage() {
         <CardContent>
           <div className="bg-black rounded-lg p-4 h-96 overflow-y-auto font-mono text-sm">
             {logs.length === 0 ? (
-              <div className="text-slate-400">No hay logs disponibles. Haz clic en "Iniciar Scraping" para comenzar.</div>
+              <div className="text-slate-400">No hay logs disponibles. Haz clic en "Iniciar Scraping"para comenzar.</div>
             ) : (
               logs.map((log, index) => (
                 <div key={index} className="text-slate-300 mb-1">

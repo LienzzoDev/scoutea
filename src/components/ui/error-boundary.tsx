@@ -10,7 +10,7 @@ import { ClientErrorHandler } from '@/lib/errors/client-errors'
 interface Props {
   children: ReactNode
   fallback?: ReactNode
-  onError?: (error: Error, errorInfo: ErrorInfo) => void
+  onError?: (_error: Error, errorInfo: ErrorInfo) => void
   context?: string
 }
 
@@ -27,7 +27,7 @@ export class ErrorBoundary extends Component<Props, State> {
     this.state = { hasError: false }
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(_error: Error): State {
     return {
       hasError: true,
       error,
@@ -35,9 +35,9 @@ export class ErrorBoundary extends Component<Props, State> {
     }
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(__error: Error, errorInfo: ErrorInfo) {
     // Log del error usando nuestro sistema
-    const clientError = ClientErrorHandler.handleError(
+    const _clientError = ClientErrorHandler.handleError(
       error,
       this.props.context || 'ErrorBoundary',
       'error'
@@ -49,17 +49,17 @@ export class ErrorBoundary extends Component<Props, State> {
     }
     
     // Log adicional para desarrollo
-    console.error('Error Boundary caught an error:', {
-      error: error.message,
+    console.error('Error Boundary caught an __error: ', {
+      _error: error.message,
       stack: error.stack,
       componentStack: errorInfo.componentStack,
       errorId: this.state.errorId,
-      context: this.props.context
+      __context: this.props.context
     })
   }
 
   handleRetry = () => {
-    this.setState({ hasError: false, error: undefined, errorId: undefined })
+    this.setState({ hasError: false, __error: undefined, errorId: undefined })
   }
 
   render() {
@@ -71,8 +71,7 @@ export class ErrorBoundary extends Component<Props, State> {
       
       // UI de fallback por defecto
       return (
-        <ErrorFallback
-          error={this.state.error}
+        <ErrorFallback _error ={this.state.error}
           errorId={this.state.errorId}
           onRetry={this.handleRetry}
           context={this.props.context}
@@ -148,9 +147,8 @@ function ErrorFallback({ error, errorId, onRetry, context }: ErrorFallbackProps)
           )}
           
           <button
-            onClick={() => window.location.reload()}
-            className="w-full bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors"
-          >
+            onClick={() =>window.location.reload()}
+            className="w-full bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
             Recargar página
           </button>
         </div>
@@ -181,16 +179,14 @@ export function PageErrorBoundary({ children }: { children: ReactNode }) {
               
               <div className="space-y-3">
                 <button
-                  onClick={() => window.location.reload()}
-                  className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                >
+                  onClick={() =>window.location.reload()}
+                  className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
                   Recargar página
                 </button>
                 
                 <button
-                  onClick={() => window.history.back()}
-                  className="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-                >
+                  onClick={() =>window.history.back()}
+                  className="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium">
                   Volver atrás
                 </button>
               </div>
@@ -242,9 +238,9 @@ export function useErrorBoundary() {
     setError(null)
   }, [])
   
-  const captureError = React.useCallback((error: Error) => {
+  const captureError = React.useCallback((__error: Error) => {
     setError(error)
-  }, [])
+  }, [error])
   
   React.useEffect(() => {
     if (error) {

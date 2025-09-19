@@ -12,10 +12,10 @@ export async function GET(): Promise<NextResponse> {
       environment: process.env.NODE_ENV,
       port: process.env.PORT || 'default'
     });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({
       status: 'error',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      __error: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }

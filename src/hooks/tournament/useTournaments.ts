@@ -65,7 +65,7 @@ export function useTournaments() {
   const [totalPages, setTotalPages] = useState(0)
   const [currentFilters, setCurrentFilters] = useState<TorneoFilters>({})
 
-  const searchTorneos = useCallback(async (filters: TorneoFilters = {}, pageNum = 1) => {
+  const searchTorneos = useCallback(async (__filters: TorneoFilters = {}, pageNum = 1) => {
     setLoading(true)
     setError(null)
 
@@ -206,7 +206,7 @@ export function useTournaments() {
     }
   }, [])
 
-  const clearError = useCallback(() => {
+  const _clearError = useCallback(() => {
     setError(null)
   }, [])
 

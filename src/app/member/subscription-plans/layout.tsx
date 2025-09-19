@@ -12,14 +12,14 @@ interface SubscriptionPlansGuardProps {
 
 function SubscriptionPlansGuard({ children }: SubscriptionPlansGuardProps) {
   const { isLoaded, userId } = useAuth()
-  const router = useRouter()
+  const _router = useRouter()
   const [isChecking, setIsChecking] = useState(true)
 
   useEffect(() => {
     if (isLoaded) {
       if (!userId) {
         console.log('❌ No autenticado, redirigiendo a login')
-        router.push('/login')
+        _router.push('/login')
         return
       }
 
@@ -27,7 +27,7 @@ function SubscriptionPlansGuard({ children }: SubscriptionPlansGuardProps) {
       console.log('✅ Acceso permitido - seleccionando plan de suscripción')
       setIsChecking(false)
     }
-  }, [isLoaded, userId, router])
+  }, [isLoaded, userId, _router])
 
   if (!isLoaded || isChecking) {
     return (
