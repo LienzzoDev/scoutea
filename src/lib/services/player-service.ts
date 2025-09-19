@@ -5,8 +5,8 @@
  */
 
 // Simplified without circuit breaker for now
-import { prisma } from '@/lib/db'
 import { executeDbOperation } from '@/lib/database/database-error-handler'
+import { prisma } from '@/lib/db'
 import type {
   Player,
   PlayerSearchOptions,

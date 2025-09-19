@@ -5,9 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
 import MemberNavbar from "@/components/layout/member-navbar"
+import { Input } from "@/components/ui/input"
 import PlayerAvatar from "@/components/ui/player-avatar"
 import ScoutAvatar from "@/components/ui/scout-avatar"
-import { Input } from "@/components/ui/input"
 
 export default function SearchPage() {
   const router = useRouter()

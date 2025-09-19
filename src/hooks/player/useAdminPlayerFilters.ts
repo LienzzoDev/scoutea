@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from 'react';
+
 import type { Player } from '@/types/player';
 
 interface FilterOptions {

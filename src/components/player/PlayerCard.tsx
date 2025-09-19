@@ -3,9 +3,9 @@
 import { ArrowRight } from "lucide-react";
 import React, { memo, useMemo, useCallback } from "react";
 
+import { Badge } from "@/components/ui/badge";
 import BookmarkButton from "@/components/ui/bookmark-button";
 import PlayerAvatar from "@/components/ui/player-avatar";
-import { Badge } from "@/components/ui/badge";
 import type { Player } from "@/types/player";
 
 interface PlayerCardProps {

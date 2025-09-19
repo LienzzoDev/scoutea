@@ -4,16 +4,16 @@ import { Search, Filter, ArrowRight, X } from "lucide-react"
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback, useRef } from 'react'
 
-import BookmarkButton from "@/components/ui/bookmark-button"
 import CategorySelector from "@/components/filters/category-selector"
-import EntityTabs from "@/components/ui/entity-tabs"
-import MemberNavbar from "@/components/layout/member-navbar"
 import MultiSelectFilter from "@/components/filters/multi-select-filter"
 import RangeFilter from "@/components/filters/range-filter"
-import ScoutAvatar from "@/components/ui/scout-avatar"
 import ToggleFilter from "@/components/filters/toggle-filter"
+import MemberNavbar from "@/components/layout/member-navbar"
+import BookmarkButton from "@/components/ui/bookmark-button"
 import { Button } from "@/components/ui/button"
+import EntityTabs from "@/components/ui/entity-tabs"
 import { Input } from "@/components/ui/input"
+import ScoutAvatar from "@/components/ui/scout-avatar"
 import { useScoutList } from "@/hooks/scout/useScoutList"
 import { useScouts, Scout } from "@/hooks/scout/useScouts"
 

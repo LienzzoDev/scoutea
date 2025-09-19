@@ -6,9 +6,12 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import { v4 as uuidv4 } from 'uuid';
+
+import { connectionPool } from '../../db/connection-pool';
 import { PlayerService } from '../../services/player-service';
 import { RadarCalculationService, RadarCategoryData, RadarFilters } from '../../services/RadarCalculationService';
-import { connectionPool } from '../../db/connection-pool';
+import { IDataCoherenceValidator } from '../interfaces';
 import { radarAnalysisLogger } from '../logging/radar-analysis-logger';
 import { 
   AnalysisIssue, 
@@ -16,8 +19,7 @@ import {
   ValidationResult,
   AnalysisSeverity
 } from '../types';
-import { IDataCoherenceValidator } from '../interfaces';
-import { v4 as uuidv4 } from 'uuid';
+
 
 export interface RadarViewComparisonResult {
   category: string;

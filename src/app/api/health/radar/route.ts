@@ -5,9 +5,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { radarPerformanceMonitor } from '../../../../lib/monitoring/radar-performance-monitor';
-import { radarLogger } from '../../../../lib/logging/radar-logger';
+
 import { connectionPool } from '../../../../lib/db/connection-pool';
+import { radarLogger } from '../../../../lib/logging/radar-logger';
+import { radarPerformanceMonitor } from '../../../../lib/monitoring/radar-performance-monitor';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

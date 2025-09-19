@@ -6,21 +6,19 @@
  */
 
 import {
+  IRadarAlertSystem,
+  AlertNotification,
+  AlertEscalation,
+  AlertThreshold
+} from '../interfaces';
+import { radarAnalysisLogger } from '../logging/radar-analysis-logger';
+import {
   AnalysisIssue,
   AnalysisContext,
   ConsolidatedReport,
   AnalysisSeverity,
   AnalysisCategory
 } from '../types';
-import {
-  IRadarAlertSystem,
-  AlertRule,
-  AlertNotification,
-  AlertEscalation,
-  AlertChannel,
-  AlertThreshold
-} from '../interfaces';
-import { radarAnalysisLogger } from '../logging/radar-analysis-logger';
 
 /**
  * Alert severity levels for escalation

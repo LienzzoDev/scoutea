@@ -1,8 +1,11 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
 import { useAuth } from '@clerk/nextjs'
+import { useState, useCallback, useMemo } from 'react'
 
+import { fetchPlayerAPI } from '@/lib/debug/api-debug'
+
+import { useErrorHandler } from '../base'
 import type { 
   Player, 
   PlayerSearchOptions, 
@@ -11,8 +14,6 @@ import type {
   CreatePlayerData 
 } from '../types/player'
 
-import { useErrorHandler } from '../base'
-import { fetchPlayerAPI } from '@/lib/debug/api-debug'
 
 export function usePlayers() {
   const [players, setPlayers] = useState<Player[]>([])

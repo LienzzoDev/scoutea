@@ -6,6 +6,8 @@
  * Requirements: 5.1, 5.2, 5.3
  */
 
+import { RadarCalculationService } from '../../services/RadarCalculationService';
+import { radarAnalysisLogger } from '../logging/radar-analysis-logger';
 import { 
   RadarFilters,
   AnalysisContext,
@@ -13,8 +15,6 @@ import {
   AnalysisIssue,
   AnalysisSeverity
 } from '../types';
-import { RadarCalculationService } from '../../services/RadarCalculationService';
-import { radarAnalysisLogger } from '../logging/radar-analysis-logger';
 
 export interface FilterLogicValidationResult {
   overallStatus: ValidationResult;
@@ -269,7 +269,7 @@ export class FilterLogicValidator {
     const combinedResults = await this.radarService.getComparisonGroup(filters);
     
     // Test each filter individually to verify AND logic
-    let individualResults: string[][] = [];
+    const individualResults: string[][] = [];
     
     if (filters.position) {
       const positionOnly = await this.radarService.getComparisonGroup({ position: filters.position });

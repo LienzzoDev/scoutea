@@ -9,7 +9,6 @@ import {
   RadarFilters, 
   PerformanceMetrics,
   PerformanceThresholds,
-  RadarTestCase,
   FixRecommendation,
   ValidationResult,
   AnalysisDepth

@@ -111,8 +111,8 @@ export class DatabaseErrorHandler {
     context: Omit<DatabaseErrorContext, 'timestamp'>
   ): Promise<DatabaseOperationResult<T>> {
     const startTime = Date.now()
-    let lastError: any = null
-    let retryCount = 0
+    const lastError: any = null
+    const retryCount = 0
 
     const fullContext: DatabaseErrorContext = {
       ...context,

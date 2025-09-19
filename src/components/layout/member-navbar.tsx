@@ -5,10 +5,10 @@ import { Search, ChevronDown, User, Shield, X } from "lucide-react"
 import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 
-import PlayerAvatar from "@/components/ui/player-avatar"
-import ScoutAvatar from "@/components/ui/scout-avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import PlayerAvatar from "@/components/ui/player-avatar"
+import ScoutAvatar from "@/components/ui/scout-avatar"
 import { getUserRole } from '@/lib/auth/user-role'
 
 

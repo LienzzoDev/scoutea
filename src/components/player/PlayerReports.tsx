@@ -1,6 +1,7 @@
 "use client";
 
 import { Play } from "lucide-react";
+
 import type { Player } from "@/types/player";
 
 interface PlayerReportsProps {

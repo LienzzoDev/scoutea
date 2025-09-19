@@ -6,19 +6,6 @@
  */
 
 import {
-  AnalysisIssue,
-  AnalysisContext,
-  RadarAnalysisResult,
-  AnalysisReport,
-  AnalysisSummary,
-  AnalysisTrend,
-  FixRecommendation,
-  AnalysisSeverity,
-  AnalysisCategory,
-  ValidationResult,
-  PerformanceMetrics
-} from '../types';
-import {
   IRadarAnalysisReportGenerator,
   ConsolidatedReport,
   AreaScore,
@@ -26,6 +13,16 @@ import {
   ScoreBreakdown
 } from '../interfaces';
 import { radarAnalysisLogger } from '../logging/radar-analysis-logger';
+import {
+  AnalysisIssue,
+  AnalysisContext,
+  RadarAnalysisResult,
+  AnalysisSummary,
+  AnalysisTrend,
+  FixRecommendation,
+  AnalysisCategory,
+  PerformanceMetrics
+} from '../types';
 
 /**
  * Scoring weights for different analysis areas

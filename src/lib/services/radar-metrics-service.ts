@@ -110,7 +110,7 @@ export class RadarMetricsService {
    */
   async getCategoryMetrics(category: string, period: string = '2023-24', filters?: RadarFilters): Promise<RadarMetricsData[]> {
     try {
-      let whereClause: any = {
+      const whereClause: any = {
         category,
         period
       }

@@ -3,6 +3,7 @@
  */
 
 import { logger } from '../../logging/logger';
+import { ANALYSIS_LOGGING_CONFIG } from '../config/analysis-config';
 import { 
   IRadarAnalysisLogger, 
   AnalysisContext, 
@@ -14,7 +15,6 @@ import {
   PerformanceMetrics, 
   ValidationResult 
 } from '../types';
-import { ANALYSIS_LOGGING_CONFIG } from '../config/analysis-config';
 
 export class RadarAnalysisLogger implements IRadarAnalysisLogger {
   private static instance: RadarAnalysisLogger;

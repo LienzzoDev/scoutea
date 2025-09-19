@@ -10,8 +10,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+
 import { databaseErrorHandler } from '@/lib/database/database-error-handler'
-import { prisma } from '@/lib/db'
 
 export interface HealthCheckResult {
   status: 'healthy' | 'degraded' | 'unhealthy'

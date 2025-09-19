@@ -7,16 +7,17 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { RadarCalculationService, RadarCategoryData, RadarFilters } from '../../services/RadarCalculationService';
+import { v4 as uuidv4 } from 'uuid';
+
 import { connectionPool } from '../../db/connection-pool';
+import { RadarCalculationService, RadarFilters } from '../../services/RadarCalculationService';
 import { radarAnalysisLogger } from '../logging/radar-analysis-logger';
 import { 
   AnalysisIssue, 
-  AnalysisContext, 
-  ValidationResult,
+  AnalysisContext,
   AnalysisSeverity
 } from '../types';
-import { v4 as uuidv4 } from 'uuid';
+
 
 export interface ComparisonGroupValidationResult {
   filters: RadarFilters;

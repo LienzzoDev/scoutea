@@ -5,10 +5,12 @@
  * using the DataPopulationService with various options and filters.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { DataPopulationService } from '@/lib/services/DataPopulationService';
 import { PrismaClient } from '@prisma/client';
+import { NextRequest, NextResponse } from 'next/server';
+
+import { DataPopulationService } from '@/lib/services/DataPopulationService';
+
 
 const prisma = new PrismaClient();
 

@@ -16,7 +16,7 @@ interface AdminMultiSelectFilterProps {
 }
 
 export default function AdminMultiSelectFilter({
-  label,
+  label: _label,
   options,
   selectedValues,
   onSelectionChange,

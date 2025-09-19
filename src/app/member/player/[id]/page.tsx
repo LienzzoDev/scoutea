@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
 import { useParams } from "next/navigation";
+import { useEffect } from "react";
 
 import AuthGuard from "@/components/auth/AuthGuard";
 import MemberNavbar from "@/components/layout/member-navbar";
 import PlayerFeatures from "@/components/player/PlayerFeatures";
 import PlayerHeader from "@/components/player/PlayerHeader";
-
 import PlayerInfo from "@/components/player/PlayerInfo";
 import PlayerReports from "@/components/player/PlayerReports";
 import PlayerSidebar from "@/components/player/PlayerSidebar";

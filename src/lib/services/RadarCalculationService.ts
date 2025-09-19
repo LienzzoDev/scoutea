@@ -6,10 +6,12 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { RadarQueryOptimizer } from './radar-query-optimizer';
+
 import { connectionPool } from '../db/connection-pool';
-import { radarPerformanceMonitor } from '../monitoring/radar-performance-monitor';
 import { radarLogger } from '../logging/radar-logger';
+import { radarPerformanceMonitor } from '../monitoring/radar-performance-monitor';
+
+import { RadarQueryOptimizer } from './radar-query-optimizer';
 
 export interface RadarCategoryData {
   category: string;

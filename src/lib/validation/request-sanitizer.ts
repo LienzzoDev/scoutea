@@ -15,8 +15,8 @@
  * - 2.4: Injection attack prevention
  */
 
-import { z } from 'zod'
 import { NextRequest } from 'next/server'
+import { z } from 'zod'
 
 export interface SanitizationConfig {
   maxStringLength: number

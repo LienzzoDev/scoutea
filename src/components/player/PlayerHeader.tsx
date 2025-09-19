@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
 import { Bookmark, BookmarkCheck } from "lucide-react";
+import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import type { Player } from "@/types/player";

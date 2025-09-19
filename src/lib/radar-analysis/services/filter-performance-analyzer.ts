@@ -5,6 +5,8 @@
  * for the radar visualization system.
  */
 
+import { radarCacheService } from '../../cache/radar-cache-service';
+import { RadarCalculationService } from '../../services/RadarCalculationService';
 import { 
   IFilterPerformanceAnalyzer,
   FilterPerformanceResult,
@@ -12,12 +14,9 @@ import {
   AnalysisContext,
   ValidationResult,
   AnalysisIssue,
-  PerformanceMetrics,
   RadarFilters,
   AnalysisSeverity
 } from '../interfaces';
-import { RadarCalculationService } from '../../services/RadarCalculationService';
-import { radarCacheService } from '../../cache/radar-cache-service';
 import { radarAnalysisLogger } from '../logging/radar-analysis-logger';
 
 export interface FilterResponseMetrics {

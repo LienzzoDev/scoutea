@@ -3,9 +3,9 @@
 import { useUser } from '@clerk/nextjs'
 import { useState, useCallback, useEffect, useMemo } from 'react'
 
+import { useErrorHandler } from '../base'
 import type { Player } from '../types/player'
 
-import { useErrorHandler } from '../base'
 
 
 interface PlayerList {

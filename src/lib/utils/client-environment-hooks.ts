@@ -8,6 +8,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+
 import { getEnvironmentDetector } from './environment-detector';
 
 /**

@@ -3,6 +3,12 @@
  * Orchestrates comprehensive analysis of radar visualization system
  */
 
+import { v4 as uuidv4 } from 'uuid';
+
+import { 
+  DEFAULT_PERFORMANCE_THRESHOLDS, 
+  ANALYSIS_DEPTH_CONFIG 
+} from '../config/analysis-config';
 import { 
   IRadarVisualizationAnalyzer,
   RadarAnalysisResult,
@@ -10,6 +16,7 @@ import {
   PerformanceAnalysisResult,
   AnalysisContext
 } from '../interfaces';
+import { radarAnalysisLogger } from '../logging/radar-analysis-logger';
 import { 
   RadarCategoryData, 
   RadarFilters, 
@@ -19,13 +26,6 @@ import {
   PerformanceMetrics,
   FixRecommendation
 } from '../types';
-import { radarAnalysisLogger } from '../logging/radar-analysis-logger';
-import { 
-  DEFAULT_PERFORMANCE_THRESHOLDS, 
-  ANALYSIS_DEPTH_CONFIG,
-  ANALYSIS_TIMEOUTS 
-} from '../config/analysis-config';
-import { v4 as uuidv4 } from 'uuid';
 
 export class RadarVisualizationAnalyzer implements IRadarVisualizationAnalyzer {
   private static instance: RadarVisualizationAnalyzer;

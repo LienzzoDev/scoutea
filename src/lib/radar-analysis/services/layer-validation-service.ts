@@ -11,6 +11,7 @@ import {
   ILayerValidationService, 
   LayerValidationResult 
 } from '../interfaces';
+import { radarAnalysisLogger } from '../logging/radar-analysis-logger';
 import { 
   RadarCategoryData, 
   RadarFilters, 
@@ -18,7 +19,6 @@ import {
   AnalysisIssue, 
   ValidationResult 
 } from '../types';
-import { radarAnalysisLogger } from '../logging/radar-analysis-logger';
 
 export class LayerValidationService implements ILayerValidationService {
   private readonly PLAYER_LAYER_COLOR = '#8c1a10';

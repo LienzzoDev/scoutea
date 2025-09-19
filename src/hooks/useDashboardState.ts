@@ -1,8 +1,8 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useAuth } from "@clerk/nextjs";
 
 import { usePlayerList } from "@/hooks/player/usePlayerList";
 import { usePlayers } from "@/hooks/player/usePlayers";
@@ -107,13 +107,19 @@ export function useDashboardState() {
     useState<string[]>(defaultCategories);
 
   // Estados para filtros
-  const [activeFilters, setActiveFilters] = useState<any>({});
+  const [activeFilters, setActiveFilters] = useState<Record<string, unknown>>({});
   const [selectedNationalities, setSelectedNationalities] = useState<string[]>([]);
   const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [selectedCompetitions, setSelectedCompetitions] = useState<string[]>([]);
   const [selectedAges, setSelectedAges] = useState<string[]>([]);
-  const [filterOptions, setFilterOptions] = useState<any>({
+  const [filterOptions, setFilterOptions] = useState<{
+    nationalities: string[];
+    positions: string[];
+    teams: string[];
+    competitions: string[];
+    ages: string[];
+  }>({
     nationalities: [],
     positions: [],
     teams: [],
@@ -410,7 +416,7 @@ export function useDashboardState() {
 
   // Aplicar filtros
   const applyFilters = useCallback(
-    (newFilters: any) => {
+    (newFilters: Record<string, unknown>) => {
       setActiveFilters(newFilters);
 
       const searchOptions = {
@@ -436,7 +442,7 @@ export function useDashboardState() {
 
       searchPlayersRef.current(searchOptions);
     },
-    [searchTerm, selectedNationalities, selectedPositions, selectedTeams, selectedCompetitions, selectedAges] // Removed searchPlayers dependency
+    [searchTerm, selectedNationalities, selectedPositions, selectedTeams, selectedCompetitions, selectedAges]
   );
 
   // Limpiar filtros

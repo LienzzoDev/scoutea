@@ -6,17 +6,17 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import { v4 as uuidv4 } from 'uuid';
+
+import { connectionPool } from '../../db/connection-pool';
 import { PlayerService } from '../../services/player-service';
 import { RadarCalculationService, RadarCategoryData } from '../../services/RadarCalculationService';
-import { connectionPool } from '../../db/connection-pool';
 import { radarAnalysisLogger } from '../logging/radar-analysis-logger';
 import { 
-  AnalysisIssue, 
-  AnalysisContext, 
-  ValidationResult,
+  AnalysisContext,
   AnalysisSeverity
 } from '../types';
-import { v4 as uuidv4 } from 'uuid';
+
 
 export interface ViewInconsistencyResult {
   playerId: string;

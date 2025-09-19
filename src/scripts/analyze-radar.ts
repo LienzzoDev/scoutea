@@ -3,6 +3,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+
 import { RadarCalculationService } from '../lib/services/RadarCalculationService';
 
 const prisma = new PrismaClient();

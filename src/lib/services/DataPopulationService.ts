@@ -6,10 +6,10 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+
 import { AtributosDataGenerator } from './data-generators/AtributosDataGenerator';
 import { PlayerStatsDataGenerator } from './data-generators/PlayerStatsDataGenerator';
-import { radarLogger } from '../logging/radar-logger';
-import { radarPerformanceMonitor } from '../monitoring/radar-performance-monitor';
+
 
 export interface PopulationOptions {
   dryRun?: boolean;

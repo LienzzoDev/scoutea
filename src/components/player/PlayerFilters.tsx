@@ -1,11 +1,8 @@
 "use client";
 
-import { Filter, X } from "lucide-react";
+import { Filter } from "lucide-react";
 import React, { memo, useMemo } from "react";
 
-import MultiSelectFilter from "@/components/filters/multi-select-filter";
-import RangeFilter from "@/components/filters/range-filter";
-import ToggleFilter from "@/components/filters/toggle-filter";
 import { Button } from "@/components/ui/button";
 
 interface FilterOptions {
@@ -25,13 +22,13 @@ interface PlayerFiltersProps {
   selectedTeams: string[];
   selectedCompetitions: string[];
   selectedAges: string[];
-  activeFilters: any;
+  activeFilters: Record<string, unknown>;
   onNationalitiesChange: (values: string[]) => void;
   onPositionsChange: (values: string[]) => void;
   onTeamsChange: (values: string[]) => void;
   onCompetitionsChange: (values: string[]) => void;
   onAgesChange: (values: string[]) => void;
-  onApplyFilters: (filters: any) => void;
+  onApplyFilters: (filters: Record<string, unknown>) => void;
   onClearFilters: () => void;
 }
 
@@ -42,20 +39,20 @@ interface PlayerFiltersProps {
 const PlayerFilters = memo<PlayerFiltersProps>(function PlayerFilters({
   showFilters,
   onToggleFilters,
-  filterOptions,
+  filterOptions: _filterOptions,
   selectedNationalities,
   selectedPositions,
   selectedTeams,
   selectedCompetitions,
   selectedAges,
-  activeFilters,
-  onNationalitiesChange,
-  onPositionsChange,
-  onTeamsChange,
-  onCompetitionsChange,
-  onAgesChange,
-  onApplyFilters,
-  onClearFilters,
+  activeFilters: _activeFilters,
+  onNationalitiesChange: _onNationalitiesChange,
+  onPositionsChange: _onPositionsChange,
+  onTeamsChange: _onTeamsChange,
+  onCompetitionsChange: _onCompetitionsChange,
+  onAgesChange: _onAgesChange,
+  onApplyFilters: _onApplyFilters,
+  onClearFilters: _onClearFilters,
 }) {
   // 📊 MEMOIZAR CÁLCULOS DE ESTADO DE FILTROS
   const filterState = useMemo(() => {
@@ -82,14 +79,7 @@ const PlayerFilters = memo<PlayerFiltersProps>(function PlayerFilters({
     };
   }, [selectedNationalities, selectedPositions, selectedTeams, selectedCompetitions, selectedAges, activeFilters]);
 
-  // 🔄 MEMOIZAR OPCIONES DE FILTROS PARA EVITAR RE-PROCESAMIENTO
-  const memoizedFilterOptions = useMemo(() => ({
-    nationalities: filterOptions.nationalities || [],
-    positions: filterOptions.positions || [],
-    teams: filterOptions.teams || [],
-    competitions: filterOptions.competitions || [],
-    ages: filterOptions.ages || []
-  }), [filterOptions]);
+
 
   // 🎨 MEMOIZAR CLASES CSS DEL BOTÓN
   const buttonClasses = useMemo(() => 

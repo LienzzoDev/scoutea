@@ -5,6 +5,9 @@
  * Requirements: 8.1, 8.5
  */
 
+import { radarCacheService } from '../../cache/radar-cache-service';
+import { RadarCalculationService } from '../../services/RadarCalculationService';
+import { radarAnalysisLogger } from '../logging/radar-analysis-logger';
 import { 
   RadarFilters,
   AnalysisContext,
@@ -12,9 +15,6 @@ import {
   AnalysisIssue,
   AnalysisSeverity
 } from '../types';
-import { RadarCalculationService } from '../../services/RadarCalculationService';
-import { radarCacheService } from '../../cache/radar-cache-service';
-import { radarAnalysisLogger } from '../logging/radar-analysis-logger';
 
 export interface CacheEfficiencyAnalysisResult {
   overallStatus: ValidationResult;
@@ -388,7 +388,7 @@ export class CacheEfficiencyAnalyzer {
 
     // Test radar data with cache
     const radarStartTime = performance.now();
-    let cachedRadarData = await radarCacheService.getCachedRadarData(playerId, '2023-24');
+    const cachedRadarData = await radarCacheService.getCachedRadarData(playerId, '2023-24');
     if (!cachedRadarData) {
       await this.radarService.calculatePlayerRadarWithComparison(playerId, {}, '2023-24');
     }
