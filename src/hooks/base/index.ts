@@ -15,16 +15,7 @@ export {
   type UseAPIReturn
 } from './useAPI'
 
-// Cache Hook
-export { 
-  useCache, 
-  clearAllCaches, 
-  getGlobalCacheStats,
-  type CacheOptions,
-  type CacheEntry,
-  type UseCacheReturn,
-  type CacheStats
-} from './useCache'
+// Cache hooks removed - no longer using cache system
 
 // Error Handler Hook
 export { 

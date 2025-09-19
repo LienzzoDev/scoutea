@@ -1,9 +1,10 @@
 'use client'
 
-import { Search, Filter, Download, Upload, Globe, Plus, Edit, Trash2 } from "lucide-react"
+import { Search, Download, Upload, Globe, Plus, Edit, Trash2 } from "lucide-react"
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
+import AdminPlayerFilters from "@/components/player/AdminPlayerFilters"
 import PlayerProfileModal from "@/components/player/player-profile-modal"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -11,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { LoadingPage, LoadingCard } from "@/components/ui/loading-spinner"
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
+import { useAdminPlayerFilters } from "@/hooks/player/useAdminPlayerFilters"
 import { usePlayers } from "@/hooks/player/usePlayers"
 import type { Player } from "@/types/player"
 
@@ -29,6 +31,24 @@ export default function JugadoresPage() {
     error, 
     searchPlayers
   } = usePlayers()
+
+  // Hook para manejar filtros
+  const {
+    showFilters,
+    selectedNationalities,
+    selectedPositions,
+    selectedTeams,
+    selectedAgencies,
+    filterOptions,
+    toggleFilters,
+    setSelectedNationalities,
+    setSelectedPositions,
+    setSelectedTeams,
+    setSelectedAgencies,
+    applyFilters,
+    clearFilters,
+    filteredPlayers: playersFilteredByFilters
+  } = useAdminPlayerFilters(players)
 
   // Manejador global de errores no capturados
   useEffect(() => {
@@ -88,8 +108,8 @@ export default function JugadoresPage() {
     }
   }
 
-  // Filtrar jugadores por búsqueda
-  const filteredPlayers = players.filter(player =>
+  // Filtrar jugadores por búsqueda (aplicar sobre los ya filtrados por filtros)
+  const filteredPlayers = playersFilteredByFilters.filter(player =>
     player.player_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (player.complete_player_name && player.complete_player_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (player.team_name && player.team_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -150,10 +170,21 @@ export default function JugadoresPage() {
               className="pl-10 bg-[#131921] border-slate-700 text-white placeholder:text-slate-400"
             />
           </div>
-          <Button variant="outline" className="border-slate-700 bg-[#131921] text-white hover:bg-slate-700">
-            <Filter className="h-4 w-4 mr-2" />
-            Filtros
-          </Button>
+          <AdminPlayerFilters
+            showFilters={showFilters}
+            onToggleFilters={toggleFilters}
+            filterOptions={filterOptions}
+            selectedNationalities={selectedNationalities}
+            selectedPositions={selectedPositions}
+            selectedTeams={selectedTeams}
+            selectedAgencies={selectedAgencies}
+            onNationalitiesChange={setSelectedNationalities}
+            onPositionsChange={setSelectedPositions}
+            onTeamsChange={setSelectedTeams}
+            onAgenciesChange={setSelectedAgencies}
+            onApplyFilters={applyFilters}
+            onClearFilters={clearFilters}
+          />
         </div>
 
         {/* Error State */}

@@ -1,18 +1,77 @@
-// 🛡️ ESQUEMAS DE VALIDACIÓN CON ZOD
+// 🛡️ ESQUEMAS DE VALIDACIÓN CON ZOD - ENHANCED SECURITY
 // ✅ PROPÓSITO: Validar que los datos enviados sean correctos y seguros
 // ✅ BENEFICIO: Previene errores, ataques maliciosos y datos corruptos
 // ✅ RESULTADO: Mensajes de error más claros, app más segura
+// 🚀 NUEVO: Validación mejorada con sanitización y prevención de inyecciones
 
 import { z } from 'zod'
 
+// 🛡️ ENHANCED SECURITY PATTERNS
+const SECURITY_PATTERNS = {
+  // SQL Injection patterns
+  SQL_INJECTION: /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|SCRIPT)\b)|(\b(OR|AND)\s+\d+\s*=\s*\d+)|('|(\\')|(;)|(--)|(\|)|(\*)|(%)|(\+)|(=))/i,
+  
+  // XSS patterns
+  XSS_SCRIPT: /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+  XSS_IFRAME: /<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi,
+  XSS_JAVASCRIPT: /javascript:/i,
+  XSS_EVENTS: /on\w+\s*=/i,
+  
+  // Path traversal
+  PATH_TRAVERSAL: /\.\.\//,
+  
+  // Command injection
+  COMMAND_INJECTION: /[;&|`$(){}[\]]/,
+  
+  // NoSQL injection
+  NOSQL_INJECTION: /\$where|\$ne|\$gt|\$lt|\$gte|\$lte|\$in|\$nin|\$regex/i
+}
+
+// 🛡️ SECURITY VALIDATION HELPER
+const createSecureString = (minLength: number, maxLength: number, pattern?: RegExp, errorMessage?: string) => {
+  return z
+    .string()
+    .min(minLength, `Debe tener al menos ${minLength} caracteres`)
+    .max(maxLength, `No puede exceder ${maxLength} caracteres`)
+    .refine(
+      (val) => !SECURITY_PATTERNS.SQL_INJECTION.test(val),
+      'Contiene patrones de inyección SQL no permitidos'
+    )
+    .refine(
+      (val) => !SECURITY_PATTERNS.XSS_SCRIPT.test(val) && 
+               !SECURITY_PATTERNS.XSS_IFRAME.test(val) && 
+               !SECURITY_PATTERNS.XSS_JAVASCRIPT.test(val) && 
+               !SECURITY_PATTERNS.XSS_EVENTS.test(val),
+      'Contiene patrones XSS no permitidos'
+    )
+    .refine(
+      (val) => !SECURITY_PATTERNS.PATH_TRAVERSAL.test(val),
+      'Contiene patrones de path traversal no permitidos'
+    )
+    .refine(
+      (val) => !SECURITY_PATTERNS.COMMAND_INJECTION.test(val),
+      'Contiene caracteres de inyección de comandos no permitidos'
+    )
+    .refine(
+      (val) => !SECURITY_PATTERNS.NOSQL_INJECTION.test(val),
+      'Contiene patrones de inyección NoSQL no permitidos'
+    )
+    .refine(
+      (val) => pattern ? pattern.test(val) : true,
+      errorMessage || 'Formato no válido'
+    )
+    .transform((val) => val.trim()) // Always trim whitespace
+}
+
 // 🎯 ========== VALIDACIONES BÁSICAS REUTILIZABLES ==========
 
-// 📝 VALIDACIÓN DE NOMBRE DE JUGADOR
-const playerNameSchema = z
-  .string()
-  .min(2, 'El nombre debe tener al menos 2 caracteres')
-  .max(100, 'El nombre no puede exceder 100 caracteres')
-  .regex(/^[a-zA-ZÀ-ÿ\u0100-\u017F\s\-'\.]+$/, 'El nombre solo puede contener letras, espacios, guiones y apostrofes')
+// 📝 VALIDACIÓN DE NOMBRE DE JUGADOR - ENHANCED SECURITY
+const playerNameSchema = createSecureString(
+  2, 
+  100, 
+  /^[a-zA-ZÀ-ÿ\u0100-\u017F\s\-'\.]+$/, 
+  'El nombre solo puede contener letras, espacios, guiones y apostrofes'
+)
 
 // 🎂 VALIDACIÓN DE EDAD
 const ageSchema = z
@@ -39,24 +98,29 @@ const footSchema = z.enum(['Left', 'Right', 'Both'], {
   errorMap: () => ({ message: 'El pie debe ser Left, Right o Both' })
 })
 
-// 🎯 VALIDACIÓN DE POSICIÓN
-const positionSchema = z
-  .string()
-  .min(1, 'La posición no puede estar vacía')
-  .max(10, 'La posición no puede exceder 10 caracteres')
-  .regex(/^[A-Z]{1,3}[A-Z\-]*$/, 'La posición debe usar códigos válidos (ej: CF, CM, CB)')
+// 🎯 VALIDACIÓN DE POSICIÓN - ENHANCED SECURITY
+const positionSchema = createSecureString(
+  1, 
+  10, 
+  /^[A-Z]{1,3}[A-Z\-]*$/, 
+  'La posición debe usar códigos válidos (ej: CF, CM, CB)'
+)
 
-// 🌍 VALIDACIÓN DE NACIONALIDAD
-const nationalitySchema = z
-  .string()
-  .min(2, 'La nacionalidad debe tener al menos 2 caracteres')
-  .max(50, 'La nacionalidad no puede exceder 50 caracteres')
+// 🌍 VALIDACIÓN DE NACIONALIDAD - ENHANCED SECURITY
+const nationalitySchema = createSecureString(
+  2, 
+  50, 
+  /^[a-zA-ZÀ-ÿ\u0100-\u017F\s\-]+$/, 
+  'La nacionalidad solo puede contener letras, espacios y guiones'
+)
 
-// ⚽ VALIDACIÓN DE NOMBRE DE EQUIPO
-const teamNameSchema = z
-  .string()
-  .min(2, 'El nombre del equipo debe tener al menos 2 caracteres')
-  .max(100, 'El nombre del equipo no puede exceder 100 caracteres')
+// ⚽ VALIDACIÓN DE NOMBRE DE EQUIPO - ENHANCED SECURITY
+const teamNameSchema = createSecureString(
+  2, 
+  100, 
+  /^[a-zA-ZÀ-ÿ\u0100-\u017F0-9\s\-'\.&]+$/, 
+  'El nombre del equipo solo puede contener letras, números, espacios, guiones, apostrofes, puntos y &'
+)
 
 // 📅 VALIDACIÓN DE FECHA
 const dateStringSchema = z

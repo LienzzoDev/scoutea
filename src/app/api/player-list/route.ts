@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/db'
+import { getOrCreateUser } from '@/lib/utils/user-sync'
 
 // GET - Obtener la lista de jugadores del usuario
 export async function GET() {
@@ -12,15 +13,13 @@ export async function GET() {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
 
-    // Buscar el usuario en la base de datos
-    const user = await prisma.usuario.findUnique({
-      where: { clerkId: userId },
-      select: { id: true }
-    })
-
-    if (!user) {
-      console.log('Usuario no encontrado en la base de datos:', userId)
-      // Si el usuario no existe, devolver lista vacía en lugar de error
+    // Obtener o crear el usuario en la base de datos
+    let user
+    try {
+      user = await getOrCreateUser(userId)
+    } catch (error) {
+      console.error('❌ Error obteniendo/creando usuario en GET:', error)
+      // Si falla la creación, devolver lista vacía
       return NextResponse.json({ playerList: [] })
     }
 
@@ -56,40 +55,51 @@ export async function GET() {
 // POST - Añadir jugador a la lista
 export async function POST(request: NextRequest) {
   try {
+    console.log('🚀 Iniciando POST /api/player-list')
+    
     const { userId } = await auth()
+    console.log('👤 Usuario autenticado:', userId)
 
     if (!userId) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
 
     const { playerId } = await request.json()
+    console.log('🎯 Player ID recibido:', playerId)
 
     if (!playerId) {
       return NextResponse.json({ error: 'ID del jugador requerido' }, { status: 400 })
     }
 
-    // Buscar el usuario en la base de datos
-    const user = await prisma.usuario.findUnique({
-      where: { clerkId: userId },
-      select: { id: true }
-    })
-
-    if (!user) {
-      console.log('Usuario no encontrado en la base de datos para POST:', userId)
-      return NextResponse.json({ error: 'Usuario no encontrado en la base de datos' }, { status: 404 })
+    // Obtener o crear el usuario en la base de datos
+    console.log('🔍 Obteniendo/creando usuario...')
+    let user
+    try {
+      user = await getOrCreateUser(userId)
+      console.log('✅ Usuario obtenido/creado:', user.id)
+    } catch (error) {
+      console.error('❌ Error obteniendo/creando usuario en POST:', error)
+      return NextResponse.json({ 
+        error: 'Error al obtener/crear usuario en la base de datos',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      }, { status: 500 })
     }
 
     // Verificar que el jugador existe
+    console.log('🔍 Verificando si el jugador existe...')
     const player = await prisma.jugador.findUnique({
       where: { id_player: playerId },
       select: { id_player: true }
     })
 
     if (!player) {
+      console.log('❌ Jugador no encontrado:', playerId)
       return NextResponse.json({ error: 'Jugador no encontrado' }, { status: 404 })
     }
+    console.log('✅ Jugador encontrado:', player.id_player)
 
     // Verificar si ya está en la lista
+    console.log('🔍 Verificando si ya está en la lista...')
     const existingEntry = await prisma.playerList.findUnique({
       where: {
         userId_playerId: {
@@ -100,10 +110,12 @@ export async function POST(request: NextRequest) {
     })
 
     if (existingEntry) {
+      console.log('⚠️ Jugador ya está en la lista')
       return NextResponse.json({ error: 'El jugador ya está en tu lista' }, { status: 400 })
     }
 
     // Añadir a la lista
+    console.log('➕ Añadiendo jugador a la lista...')
     const playerList = await prisma.playerList.create({
       data: {
         userId: user.id,
@@ -124,11 +136,16 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    console.log('✅ Jugador añadido exitosamente a la lista')
     return NextResponse.json({ playerList })
   } catch (error) {
-    console.error('Error adding player to list:', error)
+    console.error('❌ Error adding player to list:', error)
+    console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace')
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { 
+        error: 'Error interno del servidor',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      },
       { status: 500 }
     )
   }

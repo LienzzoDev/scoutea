@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Bookmark, BookmarkCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -20,9 +21,13 @@ export default function PlayerHeader({
   listLoading,
   onToggleList,
 }: PlayerHeaderProps) {
-  // Debug: Log player data in header
-  console.log('PlayerHeader: received player data:', player);
-  console.log('PlayerHeader: player_name:', player?.player_name);
+  // Debug: Log player data in header only when it changes
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('PlayerHeader: received player data:', player);
+      console.log('PlayerHeader: player_name:', player?.player_name);
+    }
+  }, [player]);
 
   return (
     <>

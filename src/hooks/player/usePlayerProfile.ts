@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 import { usePlayerList } from "@/hooks/player/usePlayerList";
 import { usePlayers } from "@/hooks/player/usePlayers";
@@ -13,6 +13,7 @@ export function usePlayerProfile(playerId: string) {
   const [isSaving, setIsSaving] = useState(false);
   const [player, setPlayer] = useState<Player | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const {
     isInList,
@@ -76,30 +77,63 @@ export function usePlayerProfile(playerId: string) {
     );
   };
 
-  // Cargar datos del jugador
-  useEffect(() => {
-    const loadPlayer = async () => {
-      if (!playerId) {
-        console.log('usePlayerProfile: No playerId provided');
+  // Load player data
+  const loadPlayer = useCallback(
+    async (playerIdToLoad: string) => {
+      if (!playerIdToLoad || playerIdToLoad.trim() === "") {
+        console.log("usePlayerProfile: No valid playerId provided");
+        setLoading(false);
+        setPlayer(null);
         return;
       }
 
-      console.log('usePlayerProfile: Loading player with ID:', playerId);
+      console.log("usePlayerProfile: Loading player with ID:", playerIdToLoad);
+
       setLoading(true);
+      setError(null);
+
       try {
-        const playerData = await getPlayer(playerId);
-        console.log('usePlayerProfile: Player data received:', playerData ? 'Success' : 'No data');
+        const playerData = await getPlayer(playerIdToLoad);
+
+        console.log("usePlayerProfile: Player data received:", {
+          hasData: !!playerData,
+          playerName: playerData?.player_name,
+        });
+
         setPlayer(playerData);
       } catch (error) {
         console.error("usePlayerProfile: Error loading player:", error);
+
+        setError(
+          error instanceof Error ? error.message : "Unknown error occurred"
+        );
+        setPlayer(null);
       } finally {
-        console.log('usePlayerProfile: Setting loading to false');
         setLoading(false);
       }
-    };
+    },
+    [getPlayer]
+  );
 
-    loadPlayer();
-  }, [playerId, getPlayer]); // getPlayer should be stable now
+  // Effect to load player data
+  useEffect(() => {
+    if (!playerId || playerId.trim() === "") {
+      setLoading(false);
+      setPlayer(null);
+      setError(null);
+      return;
+    }
+
+    loadPlayer(playerId);
+  }, [playerId, loadPlayer]);
+
+  // Retry mechanism for errors
+  const retry = useCallback(() => {
+    if (playerId && playerId.trim() !== "") {
+      setError(null);
+      loadPlayer(playerId);
+    }
+  }, [playerId, loadPlayer]);
 
   const handleToggleList = async () => {
     if (isSaving) return;
@@ -129,13 +163,15 @@ export function usePlayerProfile(playerId: string) {
     isSaving,
     player,
     loading,
-    
+    error,
+
     // Derived state
     isPlayerInList,
     listLoading,
-    
+
     // Functions
     handleToggleList,
     getStatValue,
+    retry,
   };
 }

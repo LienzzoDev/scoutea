@@ -8,3 +8,5 @@ export {
   type ErrorEvent,
   type AlertRule
 } from './error-monitor'
+
+// Cache monitoring removed - cache system eliminated

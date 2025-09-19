@@ -1,6 +1,6 @@
 'use client'
 
-import { useEntityList } from './useEntityList'
+import { useEntityList } from '../useEntityList'
 
 interface ScoutList {
   id: string

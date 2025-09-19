@@ -124,6 +124,7 @@ model Jugador {
   playerLists                     PlayerList[]
 
   radarMetrics                    RadarMetrics[]
+  dataPopulationLogs              DataPopulationLog[]
   atributos                       Atributos?
   playerStats3m                   PlayerStats3m?
 
@@ -457,21 +458,44 @@ model Scout {
 model RadarMetrics {
   id              String   @id @default(cuid())
   playerId        String
-  position        String
-  category        String
-  playerValue     Float
-  positionAverage Float
-  percentile      Float
-  period          String
-  createdAt       DateTime @default(now())
+  category        String   // One of the 9 categories
+  playerValue     Float    // Calculated category value (0-100)
+  period          String   // e.g., "2023-24"
+  calculatedAt    DateTime @default(now())
+  dataCompleteness Float   // Percentage of non-null source attributes
+  sourceAttributes Json    // Array of attributes used in calculation
+  
+  // Comparison data (calculated on-demand)
+  comparisonAverage Float?
+  percentile        Float?
+  rank             Int?
+  totalPlayers     Int?
+  
   player          Jugador  @relation(fields: [playerId], references: [id_player], onDelete: Cascade)
-
-  @@index([playerId])
-  @@index([position])
-  @@index([category])
-  @@index([playerId, position])
+  
+  @@unique([playerId, category, period])
   @@index([category, period])
+  @@index([playerId])
+  @@index([calculatedAt])
   @@map("radar_metrics")
+}
+
+model DataPopulationLog {
+  id          String   @id @default(cuid())
+  playerId    String
+  tableName   String   // "atributos" or "player_stats_3m"
+  fieldName   String
+  originalValue String? // "null" if was null
+  populatedValue Float
+  populationMethod String // "position_average", "league_average", etc.
+  createdAt   DateTime @default(now())
+  
+  player      Jugador  @relation(fields: [playerId], references: [id_player], onDelete: Cascade)
+  
+  @@index([playerId, tableName])
+  @@index([tableName, fieldName])
+  @@index([createdAt])
+  @@map("data_population_log")
 }
 
 model BeeswarmData {

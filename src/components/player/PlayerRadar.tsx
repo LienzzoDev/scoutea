@@ -1,17 +1,21 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend } from 'recharts';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import RadarDebugPanel from '../debug/RadarDebugPanel';
 
 interface RadarData {
   category: string;
   playerValue: number;
-  positionAverage: number;
+  comparisonAverage?: number;
+  positionAverage?: number; // Keep for backward compatibility
   percentile: number;
   rank: number;
   totalPlayers: number;
   maxValue?: number;
   minValue?: number;
+  dataCompleteness?: number;
+  sourceAttributes?: string[];
 }
 
 interface FilterOptions {
@@ -28,7 +32,38 @@ interface PlayerRadarProps {
   playerId: string;
 }
 
+// Custom tooltip component for enhanced information display
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white p-3 border border-gray-300 rounded-lg shadow-lg">
+        <p className="font-semibold text-[#2e3138] mb-2">{label}</p>
+        <div className="space-y-1">
+          <p className="text-sm">
+            <span className="text-[#8c1a10] font-medium">Jugador:</span> {Math.round(data.playerValue)}
+          </p>
+          <p className="text-sm">
+            <span className="text-[#6d6d6d] font-medium">Percentil:</span> {Math.round(data.percentile)}%
+          </p>
+          <p className="text-sm">
+            <span className="text-[#6d6d6d] font-medium">Ranking:</span> #{data.rank} de {data.totalPlayers}
+          </p>
+          {data.dataCompleteness && data.dataCompleteness < 100 && (
+            <p className="text-xs text-orange-600">
+              Completitud de datos: {Math.round(data.dataCompleteness)}%
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function PlayerRadar({ playerId }: PlayerRadarProps) {
+  // FIXED: Separate base player data from comparison data
+  const [basePlayerData, setBasePlayerData] = useState<RadarData[]>([]);
   const [radarData, setRadarData] = useState<RadarData[]>([]);
   const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,10 +73,14 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
   const [selectedPosition, setSelectedPosition] = useState<string>('');
   const [selectedNationality, setSelectedNationality] = useState<string>('');
   const [selectedCompetition, setSelectedCompetition] = useState<string>('');
+  const [ageMin, setAgeMin] = useState<string>('');
+  const [ageMax, setAgeMax] = useState<string>('');
+  const [ratingMin, setRatingMin] = useState<string>('');
+  const [ratingMax, setRatingMax] = useState<string>('');
   const [showMax, setShowMax] = useState(false);
   const [showMin, setShowMin] = useState(false);
   const [showAvg, setShowAvg] = useState(true);
-  const [showNorm, setShowNorm] = useState(true);
+  const [showPercentiles, setShowPercentiles] = useState(true);
   const [showRaw, setShowRaw] = useState(false);
 
   // Load filter options
@@ -61,33 +100,23 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
     loadFilterOptions();
   }, []);
 
-  // Load radar data
+  // FIXED: Load base player data only once (never changes)
   useEffect(() => {
-    const loadRadarData = async () => {
+    const loadBasePlayerData = async () => {
       if (!playerId) {
         console.log('PlayerRadar: No playerId provided');
         return;
       }
       
-      console.log('PlayerRadar: Loading data for playerId:', playerId);
+      console.log('PlayerRadar: Loading base player data for playerId:', playerId);
       setLoading(true);
       setError(null);
 
       try {
-        // Build query parameters for comparison
-        const params = new URLSearchParams();
-        if (selectedPosition) params.append('position', selectedPosition);
-        if (selectedNationality) params.append('nationality', selectedNationality);
-        if (selectedCompetition) params.append('competition', selectedCompetition);
-
-        const endpoint = params.toString() 
-          ? `/api/players/${playerId}/radar/compare?${params}`
-          : `/api/players/${playerId}/radar`;
-
-        console.log('PlayerRadar: Fetching from endpoint:', endpoint);
-        const response = await fetch(endpoint);
+        // ALWAYS fetch base player data without filters - this should be constant
+        const response = await fetch(`/api/players/${playerId}/radar`);
         
-        console.log('PlayerRadar: Response status:', response.status);
+        console.log('PlayerRadar: Base data response status:', response.status);
         
         if (!response.ok) {
           const errorText = await response.text();
@@ -96,50 +125,166 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
         }
 
         const data = await response.json();
-        console.log('PlayerRadar: Received data:', data);
+        console.log('PlayerRadar: Received base player data:', data);
         
-        if (data.comparisonData) {
-          console.log('PlayerRadar: Using comparison data');
-          setRadarData(data.comparisonData);
-        } else if (data.radarData) {
-          console.log('PlayerRadar: Using radar data');
-          setRadarData(data.radarData);
+        if (data.radarData) {
+          console.log('PlayerRadar: Setting base player data:', data.radarData.map((item: any) => ({
+            category: item.category,
+            playerValue: item.playerValue,
+            percentile: item.percentile
+          })));
+          setBasePlayerData(data.radarData);
         } else {
           console.warn('PlayerRadar: No radar data in response');
           setError('No radar data available in response');
         }
 
       } catch (error) {
-        console.error('PlayerRadar: Error loading radar data:', error);
+        console.error('PlayerRadar: Error loading base player data:', error);
         setError(`Failed to load radar data: ${error.message}`);
       } finally {
         setLoading(false);
       }
     };
 
-    loadRadarData();
-  }, [playerId, selectedPosition, selectedNationality, selectedCompetition]);
+    loadBasePlayerData();
+  }, [playerId]); // Only depend on playerId
 
-  // Prepare chart data
-  const chartData = radarData.map(item => ({
-    category: item.category,
-    Player: showRaw ? item.playerValue : item.percentile,
-    Average: showAvg ? (showRaw ? item.positionAverage || item.groupAverage : 50) : undefined,
-    Max: showMax ? (showRaw ? item.maxValue : 100) : undefined,
-    Min: showMin ? (showRaw ? item.minValue : 0) : undefined,
-    // Display data for tooltips
-    playerValue: item.playerValue,
-    percentile: item.percentile,
-    rank: item.rank,
-    totalPlayers: item.totalPlayers
-  }));
+  // FIXED: Load comparison data when filters change
+  useEffect(() => {
+    const loadComparisonData = async () => {
+      if (!basePlayerData.length) {
+        console.log('PlayerRadar: No base data available yet');
+        return;
+      }
+
+      try {
+        // Check if any filters are applied
+        const hasFilters = selectedPosition || selectedNationality || selectedCompetition || 
+                          ageMin || ageMax || ratingMin || ratingMax;
+
+        if (hasFilters) {
+          console.log('PlayerRadar: Loading comparison data with filters');
+          
+          // Build query parameters for comparison
+          const params = new URLSearchParams();
+          if (selectedPosition) params.append('position', selectedPosition);
+          if (selectedNationality) params.append('nationality', selectedNationality);
+          if (selectedCompetition) params.append('competition', selectedCompetition);
+          if (ageMin) params.append('ageMin', ageMin);
+          if (ageMax) params.append('ageMax', ageMax);
+          if (ratingMin) params.append('ratingMin', ratingMin);
+          if (ratingMax) params.append('ratingMax', ratingMax);
+
+          const endpoint = `/api/players/${playerId}/radar/compare?${params}`;
+          console.log('PlayerRadar: Fetching comparison from endpoint:', endpoint);
+          
+          const response = await fetch(endpoint);
+          
+          if (response.ok) {
+            const comparisonData = await response.json();
+            console.log('PlayerRadar: Received comparison data:', comparisonData);
+            
+            if (comparisonData.comparisonData) {
+              // FIXED: Merge base player data with comparison data
+              const mergedData = basePlayerData.map(baseCategory => {
+                const comparisonCategory = comparisonData.comparisonData.find(
+                  (comp: RadarData) => comp.category === baseCategory.category
+                );
+                
+                const merged = {
+                  ...baseCategory, // Keep original player values (CRITICAL: playerValue stays constant)
+                  comparisonAverage: comparisonCategory?.comparisonAverage,
+                  percentile: comparisonCategory?.percentile, // This can change with filters
+                  rank: comparisonCategory?.rank,
+                  totalPlayers: comparisonCategory?.totalPlayers,
+                  maxValue: comparisonCategory?.maxValue,
+                  minValue: comparisonCategory?.minValue
+                };
+                
+                // Debug logging to verify data integrity
+                console.log(`PlayerRadar: Merging category ${baseCategory.category}:`, {
+                  basePlayerValue: baseCategory.playerValue,
+                  mergedPlayerValue: merged.playerValue,
+                  basePercentile: baseCategory.percentile,
+                  comparisonPercentile: comparisonCategory?.percentile,
+                  finalPercentile: merged.percentile
+                });
+                
+                return merged;
+              });
+              
+              console.log('PlayerRadar: Setting merged radar data with filters applied');
+              setRadarData(mergedData);
+            }
+          } else {
+            // If comparison fails, use base data without comparison
+            setRadarData(basePlayerData);
+          }
+        } else {
+          // No filters applied, use base data
+          setRadarData(basePlayerData);
+        }
+
+      } catch (error) {
+        console.error('PlayerRadar: Error loading comparison data:', error);
+        // Fallback to base data if comparison fails
+        setRadarData(basePlayerData);
+      }
+    };
+
+    loadComparisonData();
+  }, [playerId, basePlayerData, selectedPosition, selectedNationality, selectedCompetition, ageMin, ageMax, ratingMin, ratingMax]);
+
+  // Define the 9 tactical categories in proper order
+  const categoryOrder = [
+    'Balón Parado Def.',
+    'Evitación',
+    'Recuperación',
+    'Transición Def.',
+    'Balón Parado Of.',
+    'Mantenimiento',
+    'Progresión',
+    'Finalización',
+    'Transición Of.'
+  ];
+
+  // Sort radar data according to the defined category order
+  const sortedRadarData = [...radarData].sort((a, b) => {
+    const indexA = categoryOrder.indexOf(a.category);
+    const indexB = categoryOrder.indexOf(b.category);
+    return indexA - indexB;
+  });
+
+  // FIXED: Prepare chart data with proper separation of player and comparison data
+  const chartData = sortedRadarData.map(item => {
+    // CRITICAL FIX: Calculate base percentile from base player data only
+    const baseCategory = basePlayerData.find(base => base.category === item.category);
+    const basePercentile = baseCategory?.percentile || 50; // Use base percentile, not filtered percentile
+    
+    return {
+      category: item.category,
+      // FIXED: Player layer ALWAYS uses base data, never changes with filters
+      Player: showRaw ? item.playerValue : basePercentile,
+      // FIXED: Comparison layer changes based on filters
+      Average: showAvg ? (showRaw ? (item.comparisonAverage || 50) : 50) : undefined,
+      Max: showMax ? (showRaw ? (item.maxValue || 100) : 100) : undefined,
+      Min: showMin ? (showRaw ? (item.minValue || 0) : 0) : undefined,
+      // Display data for tooltips - show comparison data when available
+      playerValue: item.playerValue,
+      percentile: item.percentile || basePercentile,
+      rank: item.rank || 1,
+      totalPlayers: item.totalPlayers || 1,
+      dataCompleteness: item.dataCompleteness
+    };
+  });
 
   if (loading) {
     return (
       <div className="bg-white p-6">
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8c1a10] mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8c1a10] mx-auto mb-4" role="status" aria-label="Loading"></div>
             <p className="text-[#6d6d6d]">Loading radar data...</p>
           </div>
         </div>
@@ -171,12 +316,29 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
         <div className="flex items-center gap-2">
           <h3 className="text-xl font-bold text-[#8c1a10]">RADAR</h3>
           <div className="w-5 h-5 text-[#8c1a10] text-xl">▼</div>
+          {loading && (
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#8c1a10]"></div>
+          )}
         </div>
+        <button
+          onClick={() => {
+            setSelectedPosition('');
+            setSelectedNationality('');
+            setSelectedCompetition('');
+            setAgeMin('');
+            setAgeMax('');
+            setRatingMin('');
+            setRatingMax('');
+          }}
+          className="text-sm text-[#6d6d6d] hover:text-[#8c1a10] transition-colors"
+        >
+          Limpiar Filtros
+        </button>
       </div>
 
       {/* Filters and Options */}
-      <div className="grid grid-cols-2 gap-8 mb-8">
-        {/* Left Column */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 mb-8">
+        {/* Left Column - Display Options */}
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
@@ -186,82 +348,88 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
               <option value="2023-24">2023-24</option>
             </select>
           </div>
+          
           <div>
-            <label className="block text-sm font-medium text-[#2e3138] mb-2">
-              Estadísticas
+            <label className="block text-sm font-medium text-[#2e3138] mb-3">
+              Tipo de Valores
             </label>
-            <select className="w-full p-2 border border-gray-300 rounded-md bg-white">
-              <option>FMI Attributes</option>
-            </select>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <input 
+                  type="radio" 
+                  id="percentiles" 
+                  name="valueType"
+                  className="rounded" 
+                  checked={!showRaw}
+                  onChange={() => setShowRaw(false)}
+                />
+                <label htmlFor="percentiles" className="text-sm text-[#2e3138]">
+                  Percentiles (0-100)
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="radio" 
+                  id="raw" 
+                  name="valueType"
+                  className="rounded" 
+                  checked={showRaw}
+                  onChange={() => setShowRaw(true)}
+                />
+                <label htmlFor="raw" className="text-sm text-[#2e3138]">
+                  Valores Brutos
+                </label>
+              </div>
+            </div>
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <input 
-                type="checkbox" 
-                id="max" 
-                className="rounded" 
-                checked={showMax}
-                onChange={(e) => setShowMax(e.target.checked)}
-              />
-              <label htmlFor="max" className="text-sm text-[#2e3138]">
-                Max
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input 
-                type="checkbox" 
-                id="min" 
-                className="rounded" 
-                checked={showMin}
-                onChange={(e) => setShowMin(e.target.checked)}
-              />
-              <label htmlFor="min" className="text-sm text-[#2e3138]">
-                Min
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input 
-                type="checkbox" 
-                id="avg" 
-                className="rounded" 
-                checked={showAvg}
-                onChange={(e) => setShowAvg(e.target.checked)}
-              />
-              <label htmlFor="avg" className="text-sm text-[#2e3138]">
-                AVG
-              </label>
+
+          <div>
+            <label className="block text-sm font-medium text-[#2e3138] mb-3">
+              Mostrar Líneas
+            </label>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <input 
+                  type="checkbox" 
+                  id="avg" 
+                  className="rounded" 
+                  checked={showAvg}
+                  onChange={(e) => setShowAvg(e.target.checked)}
+                />
+                <label htmlFor="avg" className="text-sm text-[#2e3138]">
+                  Promedio
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="checkbox" 
+                  id="max" 
+                  className="rounded" 
+                  checked={showMax}
+                  onChange={(e) => setShowMax(e.target.checked)}
+                />
+                <label htmlFor="max" className="text-sm text-[#2e3138]">
+                  Máximo
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="checkbox" 
+                  id="min" 
+                  className="rounded" 
+                  checked={showMin}
+                  onChange={(e) => setShowMin(e.target.checked)}
+                />
+                <label htmlFor="min" className="text-sm text-[#2e3138]">
+                  Mínimo
+                </label>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Right Column */}
+        {/* Right Column - Comparison Filters */}
         <div className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <input 
-                type="checkbox" 
-                id="norm" 
-                className="rounded" 
-                checked={showNorm}
-                onChange={(e) => setShowNorm(e.target.checked)}
-              />
-              <label htmlFor="norm" className="text-sm text-[#2e3138]">
-                Percentile
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input 
-                type="checkbox" 
-                id="raw" 
-                className="rounded" 
-                checked={showRaw}
-                onChange={(e) => setShowRaw(e.target.checked)}
-              />
-              <label htmlFor="raw" className="text-sm text-[#2e3138]">
-                Raw Values
-              </label>
-            </div>
-          </div>
           <div>
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
               Posición
@@ -271,7 +439,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
               value={selectedPosition}
               onChange={(e) => setSelectedPosition(e.target.value)}
             >
-              <option value="">All Positions</option>
+              <option value="">Todas las Posiciones</option>
               {filterOptions?.positions.map(pos => (
                 <option key={pos.value} value={pos.value}>
                   {pos.label} ({pos.count})
@@ -288,7 +456,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
               value={selectedNationality}
               onChange={(e) => setSelectedNationality(e.target.value)}
             >
-              <option value="">All Nationalities</option>
+              <option value="">Todas las Nacionalidades</option>
               {filterOptions?.nationalities.map(nat => (
                 <option key={nat.value} value={nat.value}>
                   {nat.label} ({nat.count})
@@ -305,7 +473,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
               value={selectedCompetition}
               onChange={(e) => setSelectedCompetition(e.target.value)}
             >
-              <option value="">All Competitions</option>
+              <option value="">Todas las Competiciones</option>
               {filterOptions?.competitions.map(comp => (
                 <option key={comp.value} value={comp.value}>
                   {comp.label} ({comp.count})
@@ -313,63 +481,145 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
               ))}
             </select>
           </div>
+          
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-sm font-medium text-[#2e3138] mb-2">
+                Edad Mín
+              </label>
+              <input 
+                type="number" 
+                className="w-full p-2 border border-gray-300 rounded-md bg-white"
+                placeholder="16"
+                min="16"
+                max="45"
+                value={ageMin}
+                onChange={(e) => setAgeMin(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#2e3138] mb-2">
+                Edad Máx
+              </label>
+              <input 
+                type="number" 
+                className="w-full p-2 border border-gray-300 rounded-md bg-white"
+                placeholder="45"
+                min="16"
+                max="45"
+                value={ageMax}
+                onChange={(e) => setAgeMax(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-sm font-medium text-[#2e3138] mb-2">
+                Rating Mín
+              </label>
+              <input 
+                type="number" 
+                className="w-full p-2 border border-gray-300 rounded-md bg-white"
+                placeholder="50"
+                min="50"
+                max="100"
+                step="0.1"
+                value={ratingMin}
+                onChange={(e) => setRatingMin(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#2e3138] mb-2">
+                Rating Máx
+              </label>
+              <input 
+                type="number" 
+                className="w-full p-2 border border-gray-300 rounded-md bg-white"
+                placeholder="100"
+                min="50"
+                max="100"
+                step="0.1"
+                value={ratingMax}
+                onChange={(e) => setRatingMax(e.target.value)}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Radar Chart */}
       <div className="border-2 border-[#8c1a10] rounded-lg p-6">
         <h4 className="text-lg font-semibold text-[#2e3138] mb-4 text-center">
-          Player Comparison Radar
+          Radar de Comparación del Jugador
         </h4>
         
         {radarData.length > 0 ? (
-          <div className="h-96">
+          <div className="h-80 md:h-96">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={chartData}>
-                <PolarGrid />
-                <PolarAngleAxis dataKey="category" />
+                <PolarGrid 
+                  stroke="#e5e7eb" 
+                  strokeWidth={1}
+                />
+                <PolarAngleAxis 
+                  dataKey="category" 
+                  tick={{ fontSize: 12, fill: '#2e3138', fontWeight: 500 }}
+                  className="text-sm"
+                />
                 <PolarRadiusAxis 
                   angle={90} 
                   domain={showRaw ? [0, 100] : [0, 100]}
-                  tick={{ fontSize: 10 }}
+                  tick={{ fontSize: 10, fill: '#6d6d6d' }}
+                  tickCount={6}
                 />
+                <Tooltip content={<CustomTooltip />} />
                 <Radar
-                  name="Player"
+                  name="Jugador"
                   dataKey="Player"
                   stroke="#8c1a10"
                   fill="#8c1a10"
                   fillOpacity={0.3}
-                  strokeWidth={2}
+                  strokeWidth={3}
+                  dot={{ fill: '#8c1a10', strokeWidth: 2, r: 4 }}
                 />
                 {showAvg && (
                   <Radar
-                    name="Average"
+                    name="Promedio"
                     dataKey="Average"
                     stroke="#6d6d6d"
                     fill="transparent"
-                    strokeWidth={1}
-                    strokeDasharray="5 5"
+                    strokeWidth={2}
+                    strokeDasharray="4 4"
+                    dot={{ fill: '#6d6d6d', strokeWidth: 1, r: 3 }}
                   />
                 )}
                 {showMax && (
                   <Radar
-                    name="Max"
+                    name="Máximo"
                     dataKey="Max"
                     stroke="#22c55e"
                     fill="transparent"
                     strokeWidth={1}
+                    strokeDasharray="2 2"
                   />
                 )}
                 {showMin && (
                   <Radar
-                    name="Min"
+                    name="Mínimo"
                     dataKey="Min"
                     stroke="#ef4444"
                     fill="transparent"
                     strokeWidth={1}
+                    strokeDasharray="2 2"
                   />
                 )}
-                <Legend />
+                <Legend 
+                  wrapperStyle={{ 
+                    paddingTop: '20px',
+                    fontSize: '14px'
+                  }}
+                />
               </RadarChart>
             </ResponsiveContainer>
           </div>
@@ -382,10 +632,10 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
           </div>
         )}
 
-        {/* Stats Summary */}
-        {radarData.length > 0 && (
-          <div className="mt-6 grid grid-cols-5 gap-4 text-center">
-            {radarData.map(item => (
+        {/* Stats Summary - Display in responsive grid for the 9 categories */}
+        {sortedRadarData.length > 0 && (
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 text-center">
+            {sortedRadarData.map(item => (
               <div key={item.category} className="bg-gray-50 p-3 rounded-lg">
                 <h5 className="font-semibold text-sm text-[#2e3138] mb-1">
                   {item.category}
@@ -394,13 +644,28 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
                   {Math.round(item.playerValue)}
                 </p>
                 <p className="text-xs text-[#6d6d6d]">
-                  {Math.round(item.percentile)}% | #{item.rank}/{item.totalPlayers}
+                  {Math.round(item.percentile || 50)}% | #{item.rank || 1}/{item.totalPlayers || 1}
                 </p>
+                {item.dataCompleteness && item.dataCompleteness < 100 && (
+                  <p className="text-xs text-orange-600 mt-1">
+                    {Math.round(item.dataCompleteness)}% datos
+                  </p>
+                )}
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Debug Panel */}
+      {process.env.NODE_ENV === 'development' && (
+        <RadarDebugPanel
+          playerId={playerId}
+          basePlayerData={basePlayerData}
+          radarData={radarData}
+          selectedPosition={selectedPosition}
+        />
+      )}
     </div>
   );
 }

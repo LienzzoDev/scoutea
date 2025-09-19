@@ -5,7 +5,7 @@ import { useState, useCallback, useEffect, useMemo } from 'react'
 
 import type { Player } from '../types/player'
 
-import { useCache, useErrorHandler } from '../base'
+import { useErrorHandler } from '../base'
 
 
 interface PlayerList {
@@ -24,19 +24,12 @@ interface UsePlayerListReturn {
   loading: boolean
   error: string | null
   refreshList: () => Promise<void>
-  clearCache: () => void
-  cacheStats: any
-  syncAcrossTabs: boolean
-  setSyncAcrossTabs: (sync: boolean) => void
 }
 
 /**
- * 🚀 HOOK OPTIMIZADO PARA LISTA DE JUGADORES
+ * 🚀 HOOK PARA LISTA DE JUGADORES
  * 
- * ✅ MEJORAS IMPLEMENTADAS:
- *   - Cache inteligente con invalidación automática
- *   - Sincronización entre pestañas
- *   - Persistencia en localStorage
+ * ✅ FUNCIONALIDADES:
  *   - Manejo de errores consistente
  *   - Optimistic updates
  *   - Retry automático
@@ -45,14 +38,6 @@ export function usePlayerList(): UsePlayerListReturn {
   const { user, isLoaded } = useUser()
   const [playerList, setPlayerList] = useState<PlayerList[]>([])
   const [loading, setLoading] = useState(false)
-  const [syncAcrossTabs, setSyncAcrossTabs] = useState(true)
-  
-  // 🚀 USAR HOOKS BASE PARA FUNCIONALIDAD COMÚN
-  const cache = useCache({ 
-    key: `player-list-${user?.id || 'anonymous'}`, 
-    ttl: 10 * 60 * 1000, // 10 minutos
-    storage: 'localStorage' // Persistir en localStorage para sincronización entre pestañas
-  })
   
   const { handleError, clearError, getError, setRetryAction } = useErrorHandler()
   
@@ -60,9 +45,9 @@ export function usePlayerList(): UsePlayerListReturn {
   const error = getError('playerList')?.message || null
 
   /**
-   * 📋 CARGAR LISTA DE JUGADORES CON CACHE INTELIGENTE
+   * 📋 CARGAR LISTA DE JUGADORES
    */
-  const loadPlayerList = useCallback(async (forceRefresh: boolean = false) => {
+  const loadPlayerList = useCallback(async () => {
     if (!isLoaded) return
     
     if (!user?.id) {
@@ -71,15 +56,6 @@ export function usePlayerList(): UsePlayerListReturn {
         clearError('playerList')
       }
       return
-    }
-
-    // 🚀 VERIFICAR CACHE PRIMERO (si no es refresh forzado)
-    if (!forceRefresh) {
-      const cachedList = cache.get()
-      if (cachedList && Array.isArray(cachedList)) {
-        setPlayerList(cachedList)
-        return
-      }
     }
 
     setLoading(true)
@@ -92,7 +68,6 @@ export function usePlayerList(): UsePlayerListReturn {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Cache-Control': forceRefresh ? 'no-cache' : 'max-age=120'
         }
       })
 
@@ -100,7 +75,6 @@ export function usePlayerList(): UsePlayerListReturn {
         if (response.status === 404) {
           // No hay lista aún, es válido
           setPlayerList([])
-          cache.set([])
           return
         }
         
@@ -112,12 +86,10 @@ export function usePlayerList(): UsePlayerListReturn {
       
       if (!data.playerList || !Array.isArray(data.playerList)) {
         setPlayerList([])
-        cache.set([])
         return
       }
       
       setPlayerList(data.playerList)
-      cache.set(data.playerList)
       
     } catch (err) {
       // Ensure we have a proper error object
@@ -132,13 +104,13 @@ export function usePlayerList(): UsePlayerListReturn {
       })
       
       // Configurar acción de retry
-      setRetryAction('playerList', () => loadPlayerList(forceRefresh))
+      setRetryAction('playerList', () => loadPlayerList())
       
       setPlayerList([])
     } finally {
       setLoading(false)
     }
-  }, [user?.id, isLoaded, cache, clearError, handleError, setRetryAction])
+  }, [user?.id, isLoaded, clearError, handleError, setRetryAction])
 
   /**
    * ❓ VERIFICAR SI JUGADOR ESTÁ EN LA LISTA
@@ -218,10 +190,6 @@ export function usePlayerList(): UsePlayerListReturn {
         return [...filtered, data.playerList]
       })
       
-      // 💾 ACTUALIZAR CACHE
-      const updatedList = [...previousList, data.playerList]
-      cache.set(updatedList)
-      
       return true
       
     } catch (err) {
@@ -249,7 +217,7 @@ export function usePlayerList(): UsePlayerListReturn {
     } finally {
       setLoading(false)
     }
-  }, [user?.id, isInList, playerList, cache, clearError, handleError, setRetryAction])
+  }, [user?.id, isInList, playerList, clearError, handleError, setRetryAction])
 
   /**
    * 🗑️ REMOVER JUGADOR DE LA LISTA CON OPTIMISTIC UPDATE
@@ -291,18 +259,12 @@ export function usePlayerList(): UsePlayerListReturn {
       if (!response.ok) {
         if (response.status === 404) {
           // Ya no existe, el optimistic update es correcto
-          const updatedList = previousList.filter(item => item.playerId !== playerId)
-          cache.set(updatedList)
           return true
         }
         
         const errorData = await response.json().catch(() => ({}))
         throw new Error(errorData.error || `Error al remover jugador de la lista (${response.status})`)
       }
-
-      // 💾 ACTUALIZAR CACHE
-      const updatedList = previousList.filter(item => item.playerId !== playerId)
-      cache.set(updatedList)
       
       return true
       
@@ -328,25 +290,14 @@ export function usePlayerList(): UsePlayerListReturn {
     } finally {
       setLoading(false)
     }
-  }, [user?.id, isInList, playerList, cache, clearError, handleError, setRetryAction])
+  }, [user?.id, isInList, playerList, clearError, handleError, setRetryAction])
 
   /**
    * 🔄 REFRESCAR LISTA
    */
   const refreshList = useCallback(async (): Promise<void> => {
-    await loadPlayerList(true)
+    await loadPlayerList()
   }, [loadPlayerList])
-
-  /**
-   * 🧹 LIMPIAR CACHE
-   */
-  const clearCache = useCallback(() => {
-    cache.clear()
-    setPlayerList([])
-    if (error) {
-      clearError('playerList')
-    }
-  }, [cache, clearError])
 
   // 🔄 CARGAR LISTA AL MONTAR EL COMPONENTE
   useEffect(() => {
@@ -355,43 +306,20 @@ export function usePlayerList(): UsePlayerListReturn {
     }
   }, [isLoaded, user?.id]) // Removed loadPlayerList from dependencies
 
-  // 🔄 SINCRONIZACIÓN ENTRE PESTAÑAS
-  useEffect(() => {
-    if (!syncAcrossTabs || typeof window === 'undefined') return
 
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key?.includes('player-list') && e.newValue) {
-        try {
-          const newList = JSON.parse(e.newValue)
-          if (Array.isArray(newList.value)) {
-            setPlayerList(newList.value)
-          }
-        } catch (error) {
-          console.error('Error syncing player list across tabs:', error)
-        }
-      }
-    }
-
-    window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
-  }, [syncAcrossTabs]) // Removed cache dependency - not used in effect
 
   // 🚀 MEMOIZAR MÉTODOS PARA EVITAR RE-RENDERS
   const methods = useMemo(() => ({
     isInList,
     addToList,
     removeFromList,
-    refreshList,
-    clearCache
-  }), [isInList, addToList, removeFromList, refreshList, clearCache])
+    refreshList
+  }), [isInList, addToList, removeFromList, refreshList])
 
   return {
     playerList,
     loading,
     error,
-    cacheStats: cache.stats,
-    syncAcrossTabs,
-    setSyncAcrossTabs,
     ...methods
   }
 }

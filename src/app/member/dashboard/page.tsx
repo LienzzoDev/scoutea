@@ -1,8 +1,11 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 
+import AuthGuard from "@/components/auth/AuthGuard";
 import CategorySelector from "@/components/filters/category-selector";
+import MultiSelectFilter from "@/components/filters/multi-select-filter";
+import RangeFilter from "@/components/filters/range-filter";
 import MemberNavbar from "@/components/layout/member-navbar";
 import DashboardTabs from "@/components/player/DashboardTabs";
 import PlayerFilters from "@/components/player/PlayerFilters";
@@ -19,10 +22,12 @@ export default function MemberDashboard() {
     activeTab,
     paymentSuccess,
     selectedCategories,
+    activeFilters,
     selectedNationalities,
     selectedPositions,
     selectedTeams,
     selectedCompetitions,
+    selectedAges,
     filterOptions,
     
     // Datos derivados
@@ -42,6 +47,7 @@ export default function MemberDashboard() {
     setSelectedPositions,
     setSelectedTeams,
     setSelectedCompetitions,
+    setSelectedAges,
     
     // Player list functions
     addToList,
@@ -53,9 +59,10 @@ export default function MemberDashboard() {
   } = useDashboardState();
 
   return (
-    <div className="min-h-screen bg-[#f8f7f4]">
-      {/* Header */}
-      <MemberNavbar />
+    <AuthGuard>
+      <div className="min-h-screen bg-[#f8f7f4]">
+        {/* Header */}
+        <MemberNavbar />
 
       {/* Mensaje de pago exitoso */}
       {paymentSuccess && (
@@ -134,23 +141,195 @@ export default function MemberDashboard() {
               selectedPositions={selectedPositions}
               selectedTeams={selectedTeams}
               selectedCompetitions={selectedCompetitions}
+              selectedAges={selectedAges}
+              activeFilters={activeFilters}
               onNationalitiesChange={setSelectedNationalities}
               onPositionsChange={setSelectedPositions}
               onTeamsChange={setSelectedTeams}
               onCompetitionsChange={setSelectedCompetitions}
-              onApplyFilters={() => {
-                applyFilters({
-                  nationalities: selectedNationalities,
-                  positions: selectedPositions,
-                  teams: selectedTeams,
-                  competitions: selectedCompetitions,
-                });
-                setShowFilters(false);
-              }}
+              onAgesChange={setSelectedAges}
+              onApplyFilters={applyFilters}
               onClearFilters={clearFilters}
             />
           </div>
         </div>
+
+        {/* Filters Panel */}
+        {showFilters && (
+          <div className="bg-white rounded-lg p-6 border border-[#e7e7e7] mb-8">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <h3 className="font-semibold text-[#000000]">Filtros</h3>
+                {(Object.keys(activeFilters).length > 0 || selectedNationalities.length > 0 || selectedPositions.length > 0 || selectedTeams.length > 0 || selectedCompetitions.length > 0 || selectedAges.length > 0) && (
+                  <button
+                    onClick={clearFilters}
+                    className="flex items-center gap-1 px-2 py-1 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors cursor-pointer"
+                  >
+                    <span className="text-red-600 text-sm">Limpiar Filtros</span>
+                    <X className="w-3 h-3 text-red-600" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Filter Options */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Nacionalidades */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nacionalidad
+                </label>
+                <MultiSelectFilter
+                  label="Nacionalidad"
+                  options={filterOptions.nationalities}
+                  selectedValues={selectedNationalities}
+                  onSelectionChange={setSelectedNationalities}
+                  placeholder="Seleccionar nacionalidades..."
+                  searchPlaceholder="Buscar nacionalidades..."
+                  maxDisplayTags={2}
+                />
+              </div>
+
+              {/* Posiciones */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Posición
+                </label>
+                <MultiSelectFilter
+                  label="Posición"
+                  options={filterOptions.positions}
+                  selectedValues={selectedPositions}
+                  onSelectionChange={setSelectedPositions}
+                  placeholder="Seleccionar posiciones..."
+                  searchPlaceholder="Buscar posiciones..."
+                  maxDisplayTags={2}
+                />
+              </div>
+
+              {/* Equipos */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Equipo
+                </label>
+                <MultiSelectFilter
+                  label="Equipo"
+                  options={filterOptions.teams}
+                  selectedValues={selectedTeams}
+                  onSelectionChange={setSelectedTeams}
+                  placeholder="Seleccionar equipos..."
+                  searchPlaceholder="Buscar equipos..."
+                  maxDisplayTags={1}
+                />
+              </div>
+
+              {/* Competiciones */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Competición
+                </label>
+                <MultiSelectFilter
+                  label="Competición"
+                  options={filterOptions.competitions}
+                  selectedValues={selectedCompetitions}
+                  onSelectionChange={setSelectedCompetitions}
+                  placeholder="Seleccionar competiciones..."
+                  searchPlaceholder="Buscar competiciones..."
+                  maxDisplayTags={1}
+                />
+              </div>
+            </div>
+
+            {/* Filtros adicionales */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200">
+              {/* Rango de Edad */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Rango de Edad
+                </label>
+                <RangeFilter
+                  label="Edad"
+                  minValue={activeFilters.min_age}
+                  maxValue={activeFilters.max_age}
+                  onRangeChange={(min, max) => {
+                    const newFilters = { ...activeFilters }
+                    if (min === undefined) {
+                      delete newFilters.min_age
+                    } else {
+                      newFilters.min_age = min
+                    }
+                    if (max === undefined) {
+                      delete newFilters.max_age
+                    } else {
+                      newFilters.max_age = max
+                    }
+                    applyFilters(newFilters)
+                  }}
+                  placeholder="Seleccionar rango de edad..."
+                  step="1"
+                  suffix=" años"
+                />
+              </div>
+
+              {/* Rango de Rating */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Rango de Rating
+                </label>
+                <RangeFilter
+                  label="Rating"
+                  minValue={activeFilters.min_rating}
+                  maxValue={activeFilters.max_rating}
+                  onRangeChange={(min, max) => {
+                    const newFilters = { ...activeFilters }
+                    if (min === undefined) {
+                      delete newFilters.min_rating
+                    } else {
+                      newFilters.min_rating = min
+                    }
+                    if (max === undefined) {
+                      delete newFilters.max_rating
+                    } else {
+                      newFilters.max_rating = max
+                    }
+                    applyFilters(newFilters)
+                  }}
+                  placeholder="Seleccionar rango de rating..."
+                  step="0.1"
+                />
+              </div>
+
+              {/* Rango de Valor de Mercado */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Valor de Mercado (€M)
+                </label>
+                <RangeFilter
+                  label="Valor"
+                  minValue={activeFilters.min_value}
+                  maxValue={activeFilters.max_value}
+                  onRangeChange={(min, max) => {
+                    const newFilters = { ...activeFilters }
+                    if (min === undefined) {
+                      delete newFilters.min_value
+                    } else {
+                      newFilters.min_value = min
+                    }
+                    if (max === undefined) {
+                      delete newFilters.max_value
+                    } else {
+                      newFilters.max_value = max
+                    }
+                    applyFilters(newFilters)
+                  }}
+                  placeholder="Seleccionar rango de valor..."
+                  step="0.1"
+                  suffix="M €"
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Loading State */}
         {loading && (
@@ -214,5 +393,6 @@ export default function MemberDashboard() {
         )}
       </main>
     </div>
+    </AuthGuard>
   );
 }

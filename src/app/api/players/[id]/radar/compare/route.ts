@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { RadarCalculationService, RadarFilters } from '../../../../../../lib/services/RadarCalculationService';
 
 const prisma = new PrismaClient();
 
@@ -7,162 +8,186 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const radarService = new RadarCalculationService(prisma);
+  
   try {
     const playerId = params.id;
     const { searchParams } = new URL(request.url);
+    const period = searchParams.get('period') || '2023-24';
 
-    // Obtener filtros de la query
-    const filters = {
-      position: searchParams.get('position'),
-      nationality: searchParams.get('nationality'),
-      competition: searchParams.get('competition'),
-      ageMin: searchParams.get('ageMin') ? parseInt(searchParams.get('ageMin')!) : undefined,
-      ageMax: searchParams.get('ageMax') ? parseInt(searchParams.get('ageMax')!) : undefined,
-      trfmMin: searchParams.get('trfmMin') ? parseFloat(searchParams.get('trfmMin')!) : undefined,
-      trfmMax: searchParams.get('trfmMax') ? parseFloat(searchParams.get('trfmMax')!) : undefined,
-    };
-
-    // Construir where clause dinámicamente
-    const whereClause: any = {
-      atributos: {
-        isNot: null
-      }
-    };
-
-    if (filters.position) {
-      whereClause.position_player = filters.position;
+    // Parse filters from query parameters
+    const filters: RadarFilters = {};
+    
+    if (searchParams.get('position')) {
+      filters.position = searchParams.get('position')!;
+    }
+    
+    if (searchParams.get('nationality')) {
+      filters.nationality = searchParams.get('nationality')!;
+    }
+    
+    if (searchParams.get('competition')) {
+      filters.competition = searchParams.get('competition')!;
+    }
+    
+    if (searchParams.get('ageMin')) {
+      filters.ageMin = parseInt(searchParams.get('ageMin')!);
+    }
+    
+    if (searchParams.get('ageMax')) {
+      filters.ageMax = parseInt(searchParams.get('ageMax')!);
+    }
+    
+    if (searchParams.get('ratingMin')) {
+      filters.ratingMin = parseFloat(searchParams.get('ratingMin')!);
+    }
+    
+    if (searchParams.get('ratingMax')) {
+      filters.ratingMax = parseFloat(searchParams.get('ratingMax')!);
     }
 
-    if (filters.nationality) {
-      whereClause.nationality_1 = filters.nationality;
-    }
-
-    if (filters.ageMin || filters.ageMax) {
-      whereClause.age = {};
-      if (filters.ageMin) whereClause.age.gte = filters.ageMin;
-      if (filters.ageMax) whereClause.age.lte = filters.ageMax;
-    }
-
-    if (filters.trfmMin || filters.trfmMax) {
-      whereClause.player_rating = {};
-      if (filters.trfmMin) whereClause.player_rating.gte = filters.trfmMin;
-      if (filters.trfmMax) whereClause.player_rating.lte = filters.trfmMax;
-    }
-
-    // Obtener jugadores que coinciden con los filtros
-    const comparisonPlayers = await prisma.jugador.findMany({
-      where: whereClause,
-      include: {
-        atributos: true,
-        radarMetrics: {
-          where: {
-            period: '2023-24'
-          }
-        }
-      }
-    });
-
-    // Obtener datos del jugador actual
-    const currentPlayer = await prisma.jugador.findUnique({
+    // Verify player exists
+    const player = await prisma.jugador.findUnique({
       where: { id_player: playerId },
-      include: {
-        atributos: true,
-        radarMetrics: {
-          where: {
-            period: '2023-24'
-          }
-        }
+      select: {
+        player_name: true,
+        position_player: true,
+        age: true,
+        nationality_1: true,
+        team_name: true,
+        player_rating: true
       }
     });
 
-    if (!currentPlayer || !currentPlayer.radarMetrics.length) {
+    if (!player) {
       return NextResponse.json(
-        { error: 'Player not found or no radar data available' },
+        { 
+          error: 'Player not found',
+          playerId: playerId,
+          message: 'The specified player does not exist in the database'
+        },
         { status: 404 }
       );
     }
 
-    // Calcular estadísticas comparativas
-    const categories = ['Attacking', 'Defending', 'Passing', 'Physical', 'Mental'];
-    const comparisonData = categories.map(category => {
-      const playerRadar = currentPlayer.radarMetrics.find(r => r.category === category);
+    // Calculate radar data with comparison using the new service
+    let comparisonData;
+    try {
+      comparisonData = await radarService.calculatePlayerRadarWithComparison(
+        playerId,
+        filters,
+        period
+      );
+    } catch (calculationError) {
+      console.error('Error calculating radar comparison:', calculationError);
       
-      if (!playerRadar) {
-        return {
-          category,
-          playerValue: 0,
-          groupAverage: 0,
-          percentile: 0,
-          rank: 0,
-          totalPlayers: 0
+      // Check if it's a missing data error
+      if (calculationError instanceof Error && calculationError.message.includes('has no atributos data')) {
+        return NextResponse.json(
+          { 
+            error: 'No attribute data found for this player',
+            playerId: playerId,
+            playerName: player.player_name,
+            message: 'Player exists but has no atributos data required for radar calculations'
+          },
+          { status: 404 }
+        );
+      }
+      
+      throw calculationError;
+    }
+
+    // Get comparison group statistics
+    let groupStats = {
+      totalPlayers: 0,
+      averageAge: 0,
+      averageRating: 0,
+      positions: [] as string[],
+      nationalities: [] as string[]
+    };
+
+    try {
+      const comparisonGroup = await radarService.getComparisonGroup(filters);
+      
+      if (comparisonGroup.length > 0) {
+        // Get detailed stats for the comparison group
+        const comparisonPlayers = await prisma.jugador.findMany({
+          where: {
+            id_player: { in: comparisonGroup }
+          },
+          select: {
+            age: true,
+            player_rating: true,
+            position_player: true,
+            nationality_1: true
+          }
+        });
+
+        groupStats = {
+          totalPlayers: comparisonPlayers.length,
+          averageAge: comparisonPlayers.length > 0 
+            ? Math.round(comparisonPlayers.reduce((sum, p) => sum + (p.age || 0), 0) / comparisonPlayers.length)
+            : 0,
+          averageRating: comparisonPlayers.length > 0
+            ? Math.round((comparisonPlayers.reduce((sum, p) => sum + (p.player_rating || 0), 0) / comparisonPlayers.length) * 10) / 10
+            : 0,
+          positions: Array.from(new Set(comparisonPlayers.map(p => p.position_player).filter(Boolean))),
+          nationalities: Array.from(new Set(comparisonPlayers.map(p => p.nationality_1).filter(Boolean)))
         };
       }
+    } catch (groupError) {
+      console.warn('Error calculating group statistics:', groupError);
+      // Continue with default group stats
+    }
 
-      // Obtener valores de todos los jugadores en esta categoría
-      const categoryValues = comparisonPlayers
-        .map(p => p.radarMetrics.find(r => r.category === category))
-        .filter(r => r !== undefined)
-        .map(r => r!.playerValue);
-
-      // Calcular estadísticas
-      const groupAverage = categoryValues.length > 0 
-        ? categoryValues.reduce((sum, val) => sum + val, 0) / categoryValues.length
-        : 0;
-
-      const sortedValues = categoryValues.sort((a, b) => a - b);
-      const rank = sortedValues.filter(val => val < playerRadar.playerValue).length + 1;
-      const percentile = categoryValues.length > 0 
-        ? ((categoryValues.length - rank + 1) / categoryValues.length) * 100
-        : 0;
-
-      return {
-        category,
-        playerValue: playerRadar.playerValue,
-        groupAverage: Math.round(groupAverage * 10) / 10,
-        percentile: Math.round(percentile * 10) / 10,
-        rank,
-        totalPlayers: categoryValues.length,
-        maxValue: Math.max(...categoryValues, playerRadar.playerValue),
-        minValue: Math.min(...categoryValues, playerRadar.playerValue)
-      };
-    });
-
-    // Calcular estadísticas del grupo
-    const groupStats = {
-      totalPlayers: comparisonPlayers.length,
-      averageAge: comparisonPlayers.length > 0 
-        ? Math.round(comparisonPlayers.reduce((sum, p) => sum + (p.age || 0), 0) / comparisonPlayers.length)
-        : 0,
-      averageRating: comparisonPlayers.length > 0
-        ? Math.round((comparisonPlayers.reduce((sum, p) => sum + (p.player_rating || 0), 0) / comparisonPlayers.length) * 10) / 10
-        : 0,
-      positions: [...new Set(comparisonPlayers.map(p => p.position_player).filter(Boolean))],
-      nationalities: [...new Set(comparisonPlayers.map(p => p.nationality_1).filter(Boolean))]
-    };
+    // Format the response data
+    const formattedComparisonData = comparisonData.map(data => ({
+      category: data.category,
+      playerValue: data.playerValue,
+      comparisonAverage: data.comparisonAverage || 0,
+      percentile: data.percentile || 0,
+      rank: data.rank || 0,
+      totalPlayers: data.totalPlayers || 0,
+      maxValue: data.maxValue || data.playerValue,
+      minValue: data.minValue || data.playerValue,
+      dataCompleteness: data.dataCompleteness,
+      sourceAttributes: data.sourceAttributes
+    }));
 
     return NextResponse.json({
       player: {
-        id: currentPlayer.id_player,
-        name: currentPlayer.player_name,
-        position: currentPlayer.position_player,
-        age: currentPlayer.age,
-        nationality: currentPlayer.nationality_1,
-        rating: currentPlayer.player_rating
+        id: playerId,
+        name: player.player_name,
+        position: player.position_player,
+        age: player.age,
+        nationality: player.nationality_1,
+        team: player.team_name,
+        rating: player.player_rating
       },
-      comparisonData,
+      comparisonData: formattedComparisonData,
       groupStats,
-      filters: filters,
+      filters,
       metadata: {
-        period: '2023-24',
-        generatedAt: new Date().toISOString()
+        period,
+        generatedAt: new Date().toISOString(),
+        supportedCategories: radarService.getSupportedCategories(),
+        categoryLabels: radarService.getCategoryLabels(),
+        filtersApplied: Object.keys(filters).length > 0,
+        comparisonType: Object.keys(filters).length === 0 ? 'all_players' : 'filtered_group'
       }
     });
 
   } catch (error) {
     console.error('Error in radar comparison:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        playerId: params.id
+      },
       { status: 500 }
     );
+  } finally {
+    await radarService.disconnect();
   }
 }

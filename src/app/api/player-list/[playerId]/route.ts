@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/db'
+import { getOrCreateUser } from '@/lib/utils/user-sync'
 
 // DELETE - Remover jugador de la lista
 export async function DELETE(
@@ -20,14 +21,13 @@ export async function DELETE(
       return NextResponse.json({ error: 'ID del jugador requerido' }, { status: 400 })
     }
 
-    // Buscar el usuario en la base de datos
-    const user = await prisma.usuario.findUnique({
-      where: { clerkId: userId },
-      select: { id: true }
-    })
-
-    if (!user) {
-      return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
+    // Obtener o crear el usuario en la base de datos
+    let user
+    try {
+      user = await getOrCreateUser(userId)
+    } catch (error) {
+      console.error('❌ Error obteniendo/creando usuario en DELETE:', error)
+      return NextResponse.json({ error: 'Error al obtener/crear usuario en la base de datos' }, { status: 500 })
     }
 
     // Buscar la entrada en la lista

@@ -60,6 +60,10 @@ export interface Player {
   // 🕒 METADATOS DEL SISTEMA
   createdAt: string            // Cuándo se añadió a la base de datos (ISO string)
   updatedAt: string            // Última vez que se actualizó (ISO string)
+  
+  // 📊 ESTADÍSTICAS DEL JUGADOR (OPCIONAL)
+  playerStats?: PlayerStatistic[]      // Estadísticas en formato legacy
+  playerStatsV2?: PlayerStatisticV2[]  // Estadísticas en formato nuevo (JSON)
 }
 
 // 🔍 FILTROS PARA BÚSQUEDA DE JUGADORES
@@ -213,6 +217,47 @@ export interface CrearJugadorData {
     nombre: string                      // Nombre del atributo
     valor: string                       // Valor del atributo
   }>
+}
+
+// 📊 TIPOS PARA ESTADÍSTICAS DE JUGADORES
+
+// Estadísticas en formato legacy (estructura plana)
+export interface PlayerStatistic {
+  metricName: string           // Nombre de la métrica (ej: "goals", "assists")
+  totalValue?: number         // Valor total en el período
+  p90Value?: number          // Valor por 90 minutos
+  averageValue?: number      // Valor promedio
+  maximumValue?: number      // Valor máximo registrado
+}
+
+// Estadísticas en formato nuevo (estructura JSON por categorías)
+export interface PlayerStatisticV2 {
+  // Datos básicos del período
+  matches?: number           // Partidos jugados
+  minutes?: number          // Minutos jugados
+  goals?: number            // Goles marcados
+  assists?: number          // Asistencias
+  shots?: number            // Disparos totales
+  shots_on_target?: number  // Disparos a puerta
+  
+  // Categorías de estadísticas (estructura JSON)
+  general?: Record<string, StatValue>      // Estadísticas generales
+  attacking?: Record<string, StatValue>    // Estadísticas ofensivas
+  defending?: Record<string, StatValue>    // Estadísticas defensivas
+  passing?: Record<string, StatValue>      // Estadísticas de pase
+  goalkeeping?: Record<string, StatValue>  // Estadísticas de portero
+  physical?: Record<string, StatValue>     // Estadísticas físicas
+  dribbling?: Record<string, StatValue>    // Estadísticas de regate
+  finishing?: Record<string, StatValue>    // Estadísticas de definición
+  duels?: Record<string, StatValue>        // Estadísticas de duelos
+}
+
+// Estructura de valor de estadística
+export interface StatValue {
+  totalValue?: number         // Valor total
+  p90Value?: number          // Valor por 90 minutos
+  averageValue?: number      // Valor promedio
+  maximumValue?: number      // Valor máximo
 }
 
 // 📤 EXPORTACIONES ADICIONALES

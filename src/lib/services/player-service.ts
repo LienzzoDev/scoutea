@@ -1,13 +1,12 @@
 /**
- * Consolidated Player Service with intelligent caching
+ * Player Service - Simplified without cache system
  * 
  * Centralizes all player-related business logic in a single service.
- * Replaces duplicate logic across different services and provides
- * intelligent caching for improved performance.
  */
 
-import { cacheManager } from '@/lib/cache/cache-manager'
+// Simplified without circuit breaker for now
 import { prisma } from '@/lib/db'
+import { executeDbOperation } from '@/lib/database/database-error-handler'
 import type {
   Player,
   PlayerSearchOptions,
@@ -23,786 +22,550 @@ import type {
  * All methods are static for direct usage without instantiation
  */
 export class PlayerService {
-  
-  // ========== CRUD OPERATIONS ==========
-  
+
   /**
-   * Search players with filters and optimized pagination
-   * 
-   * Uses database indices for efficient queries and implements
-   * intelligent caching to reduce database load.
-   * 🚀 NUEVO: Sistema de caché inteligente para consultas frecuentes
-   * ✅ EJEMPLO: PlayerService.searchPlayers({ page: 1, limit: 20, filters: { position_player: "CF" } })
-   * 
-   * @param options - Opciones de búsqueda (página, límite, filtros, ordenamiento)
-   * @returns Resultado con jugadores encontrados y información de paginación
+   * 🔍 BUSCAR JUGADORES CON FILTROS AVANZADOS
    */
   static async searchPlayers(options: PlayerSearchOptions = {}): Promise<PlayerSearchResult> {
     try {
-      // 🔑 GENERAR CLAVE DE CACHÉ ÚNICA BASADA EN PARÁMETROS
-      const cacheKey = `search:${JSON.stringify(options)}`
+      console.log('🔍 PlayerService.searchPlayers called with options:', options);
       
-      // 🚀 INTENTAR OBTENER DESDE CACHÉ PRIMERO
-      const cachedResult = cacheManager.getSearchResults(cacheKey)
-      if (cachedResult) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🎯 Cache HIT para búsqueda de jugadores:', cacheKey)
-        }
-        return cachedResult
-      }
-      // 🎛️ CONFIGURACIÓN POR DEFECTO
-      const page = options.page || 1
-      const limit = options.limit || 20
-      const sortBy = options.sortBy || 'player_name'
-      const sortOrder = options.sortOrder || 'asc'
-      const filters = options.filters || {}
-
-      // 🛡️ VALIDAR LÍMITES PARA PREVENIR SOBRECARGA
-      const safeLimit = Math.min(Math.max(limit, 1), 100)
-      const safePage = Math.max(page, 1)
-      const skip = (safePage - 1) * safeLimit
-
-      // 🔍 CONSTRUIR WHERE CLAUSE
-      const where: any = {}
+      const result = await this.executeSearchQuery(options)
       
-      if (filters.player_name) {
-        where.player_name = { contains: filters.player_name, mode: 'insensitive' }
-      }
-      if (filters.position_player) {
-        where.position_player = filters.position_player
-      }
-      if (filters.team_name) {
-        where.team_name = { contains: filters.team_name, mode: 'insensitive' }
-      }
-      if (filters.nationality_1) {
-        where.nationality_1 = filters.nationality_1
-      }
-      if (filters.min_age || filters.max_age) {
-        where.age = {}
-        if (filters.min_age) where.age.gte = filters.min_age
-        if (filters.max_age) where.age.lte = filters.max_age
-      }
-      if (filters.min_rating || filters.max_rating) {
-        where.player_rating = {}
-        if (filters.min_rating) where.player_rating.gte = filters.min_rating
-        if (filters.max_rating) where.player_rating.lte = filters.max_rating
-      }
-      if (filters.on_loan !== undefined) {
-        where.on_loan = filters.on_loan
-      }
-
-      // 📈 CONSTRUIR ORDENAMIENTO OPTIMIZADO (array para múltiples campos)
-      let orderBy: any
-      if (sortBy === 'createdAt') {
-        orderBy = [
-          { createdAt: sortOrder },
-          { id_player: 'asc' } // Para paginación consistente
-        ]
-      } else if (sortBy === 'player_rating') {
-        orderBy = [
-          { player_rating: sortOrder },
-          { createdAt: 'desc' } // Segundo criterio para desempate
-        ]
-      } else {
-        orderBy = { [sortBy]: sortOrder }
-      }
-
-      // 🚀 EJECUTAR CONSULTAS EN PARALELO
-      
-      const [players, total] = await Promise.all([
-        prisma.jugador.findMany({
-          where,
-          orderBy,
-          skip,
-          take: safeLimit,
-          select: {
-            id_player: true,
-            player_name: true,
-            age: true,
-            position_player: true,
-            nationality_1: true,
-            team_name: true,
-            player_rating: true,
-            createdAt: true,
-            updatedAt: true
-          }
-        }),
-        prisma.jugador.count({ where })
-      ])
-
-      // 📊 CALCULAR INFORMACIÓN DE PAGINACIÓN
-      const totalPages = Math.ceil(total / safeLimit)
-      const hasNext = safePage < totalPages
-      const hasPrev = safePage > 1
-
-      // 📤 ESTRUCTURAR RESULTADO
-      const result: PlayerSearchResult = {
-        players: players as Player[],
-        pagination: {
-          page: safePage,
-          limit: safeLimit,
-          total,
-          totalPages,
-          hasNext,
-          hasPrev
+      // Extraer datos del OperationResult si es necesario
+      if (result && typeof result === 'object' && 'success' in result && 'data' in result) {
+        if (result.success && result.data) {
+          return result.data
+        } else {
+          throw new Error(result.error?.message || 'Error en la operación del servicio')
         }
       }
-
-      // 💾 GUARDAR EN CACHÉ PARA FUTURAS CONSULTAS
-      cacheManager.setSearchResults(cacheKey, result)
       
-      if (process.env.NODE_ENV === 'development') {
-        console.log('💾 Resultado guardado en caché:', cacheKey)
-      }
-
+      // Si no es un OperationResult, devolver directamente
       return result
-
     } catch (error) {
-      console.error('❌ Error in searchPlayers:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        options,
-        timestamp: new Date().toISOString()
-      })
-      throw new Error('Error al buscar jugadores')
+      console.error('❌ Error in PlayerService.searchPlayers:', error);
+      throw error;
     }
   }
 
   /**
-   * 👤 OBTENER UN JUGADOR ESPECÍFICO POR ID + CACHÉ
-   * 
-   * ✅ QUÉ HACE: Busca un jugador por su ID único
-   * ✅ POR QUÉ: Para mostrar perfiles detallados o editar jugadores
-   * 🚀 NUEVO: Caché inteligente para detalles de jugador (10 min TTL)
-   * ✅ EJEMPLO: PlayerService.getPlayerById("player_123")
-   * 
-   * @param id - ID único del jugador
-   * @returns El jugador encontrado o null si no existe
+   * Execute the actual search query
+   */
+  private static async executeSearchQuery(options: PlayerSearchOptions = {}): Promise<PlayerSearchResult> {
+    const {
+      search = '',
+      position = '',
+      nationality = '',
+      team = '',
+      competition = '',
+      ageMin,
+      ageMax,
+      ratingMin,
+      ratingMax,
+      page = 1,
+      limit = 20,
+      sortBy = 'player_rating',
+      sortOrder = 'desc'
+    } = options
+
+    // 🔍 CONSTRUIR CONDICIONES DE BÚSQUEDA
+    const whereConditions: any = {}
+
+    if (search) {
+      whereConditions.OR = [
+        { player_name: { contains: search, mode: 'insensitive' } },
+        { team_name: { contains: search, mode: 'insensitive' } }
+      ]
+    }
+
+    if (position) {
+      whereConditions.position_player = { contains: position, mode: 'insensitive' }
+    }
+
+    if (nationality) {
+      whereConditions.nationality_1 = { contains: nationality, mode: 'insensitive' }
+    }
+
+    if (team) {
+      whereConditions.team_name = { contains: team, mode: 'insensitive' }
+    }
+
+    if (competition) {
+      whereConditions.team_competition = { contains: competition, mode: 'insensitive' }
+    }
+
+    if (ageMin !== undefined || ageMax !== undefined) {
+      whereConditions.age = {}
+      if (ageMin !== undefined) whereConditions.age.gte = ageMin
+      if (ageMax !== undefined) whereConditions.age.lte = ageMax
+    }
+
+    if (ratingMin !== undefined || ratingMax !== undefined) {
+      whereConditions.player_rating = {}
+      if (ratingMin !== undefined) whereConditions.player_rating.gte = ratingMin
+      if (ratingMax !== undefined) whereConditions.player_rating.lte = ratingMax
+    }
+
+    // 📊 EJECUTAR CONSULTA CON PAGINACIÓN
+    const skip = (page - 1) * limit
+
+    const [players, totalCount] = await Promise.all([
+      prisma.jugador.findMany({
+        where: whereConditions,
+        select: {
+          id_player: true,
+          player_name: true,
+          complete_player_name: true,
+          date_of_birth: true,
+          age: true,
+          position_player: true,
+          foot: true,
+          height: true,
+          nationality_1: true,
+          nationality_2: true,
+          team_name: true,
+          team_country: true,
+          team_competition: true,
+          competition_country: true,
+          player_rating: true,
+          player_trfm_value: true,
+          photo_coverage: true,
+          url_trfm: true,
+          createdAt: true,
+          updatedAt: true
+        },
+        orderBy: { [sortBy]: sortOrder },
+        skip,
+        take: limit
+      }),
+      prisma.jugador.count({ where: whereConditions })
+    ])
+
+    const totalPages = Math.ceil(totalCount / limit)
+
+    return {
+      players,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1
+      }
+    }
+  }
+
+  /**
+   * 👤 OBTENER JUGADOR POR ID
    */
   static async getPlayerById(id: string): Promise<Player | null> {
     try {
-      // 🚀 INTENTAR OBTENER DESDE CACHÉ PRIMERO
-      const cachedPlayer = cacheManager.getPlayerDetails(id)
-      if (cachedPlayer) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🎯 Cache HIT para jugador:', id)
-        }
-        return cachedPlayer
-      }
+      console.log('🔍 PlayerService.getPlayerById called with ID:', id);
+      
+      return await executeDbOperation(
+        async () => {
+          console.log('💾 Querying database for player:', id);
+          
+          const player = await prisma.jugador.findUnique({
+            where: { id_player: id },
+            include: {
+              atributos: true,
+              playerStats3m: true,
+              radarMetrics: {
+                where: { period: '2023-24' },
+                orderBy: { category: 'asc' }
+              }
+            }
+          })
 
-      // 🔍 BUSCAR JUGADOR POR ID EN BASE DE DATOS
-      const player = await prisma.jugador.findUnique({
-        where: { id_player: id }
-      })
+          if (!player) {
+            console.log('❌ Player not found:', id);
+            return null
+          }
 
-      // 💾 GUARDAR EN CACHÉ SI SE ENCONTRÓ
-      if (player) {
-        cacheManager.setPlayerDetails(id, player as Player)
-        if (process.env.NODE_ENV === 'development') {
-          console.log('💾 Jugador guardado en caché:', id)
-        }
-      }
-
-      // 📤 DEVOLVER RESULTADO (null si no se encuentra)
-      return player as Player | null
+          console.log('✅ Player found:', player.player_name);
+          return player as Player
+        },
+        'get-player-by-id',
+        { query: `getPlayerById(${id})` }
+      )
     } catch (error) {
-      console.error('❌ Error getting player by ID:', error)
-      throw new Error('Error al obtener el jugador')
+      console.error('❌ Error in PlayerService.getPlayerById:', error);
+      throw error;
     }
   }
 
   /**
-   * ➕ CREAR UN NUEVO JUGADOR + INVALIDACIÓN DE CACHÉ
-   * 
-   * ✅ QUÉ HACE: Añade un nuevo jugador a la base de datos
-   * ✅ POR QUÉ: Para que los admins puedan añadir nuevos jugadores
-   * 🚀 NUEVO: Invalidación inteligente de caché para mantener consistencia
-   * ✅ EJEMPLO: PlayerService.createPlayer({ player_name: "Nuevo Jugador", age: 20 })
-   * 
-   * @param data - Datos del nuevo jugador
-   * @returns El jugador creado con su ID asignado
+   * ➕ CREAR NUEVO JUGADOR
    */
-  static async createPlayer(data: CreatePlayerData): Promise<Player> {
-    try {
-      // ➕ CREAR JUGADOR EN BASE DE DATOS
-      const player = await prisma.jugador.create({
-        data: {
-          ...data,                    // Spread de todos los datos proporcionados
-          createdAt: new Date(),      // Timestamp de creación
-          updatedAt: new Date()       // Timestamp de actualización
+  static async createPlayer(playerData: CreatePlayerData): Promise<Player> {
+    return await executeDbOperation(
+      async () => {
+        const newPlayer = await prisma.jugador.create({
+          data: {
+            ...playerData,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          include: {
+            atributos: true,
+            playerStats3m: true,
+            radarMetrics: true
+          }
+        })
+
+        if (process.env.NODE_ENV === 'development') {
+          console.log('✅ Player created successfully:', newPlayer.id_player);
         }
-      })
 
-      // 🧹 INVALIDAR CACHÉ RELACIONADO
-      cacheManager.invalidateSearchResults()  // Limpiar búsquedas
-      cacheManager.invalidateFilterOptions()  // Limpiar opciones de filtros
-      cacheManager.invalidate('players:stats') // Limpiar estadísticas
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🧹 Caché invalidado después de crear jugador:', player.id_player)
-      }
-
-      // 📤 DEVOLVER JUGADOR CREADO
-      return player as Player
-    } catch (error) {
-      console.error('❌ Error creating player:', error)
-      throw new Error('Error al crear el jugador')
-    }
+        return newPlayer as Player
+      },
+      'create-player',
+      { params: { playerName: playerData.player_name } }
+    )
   }
 
   /**
-   * ✏️ ACTUALIZAR UN JUGADOR EXISTENTE + INVALIDACIÓN DE CACHÉ
-   * 
-   * ✅ QUÉ HACE: Modifica los datos de un jugador existente
-   * ✅ POR QUÉ: Para mantener la información actualizada
-   * 🚀 NUEVO: Invalidación selectiva de caché para el jugador específico
-   * ✅ EJEMPLO: PlayerService.updatePlayer("player_123", { player_rating: 85 })
-   * 
-   * @param id - ID del jugador a actualizar
-   * @param data - Datos a actualizar (solo los campos que cambian)
-   * @returns El jugador actualizado
+   * ✏️ ACTUALIZAR JUGADOR EXISTENTE
    */
-  static async updatePlayer(id: string, data: UpdatePlayerData): Promise<Player> {
-    try {
-      // ✏️ ACTUALIZAR JUGADOR EN BASE DE DATOS
-      const player = await prisma.jugador.update({
-        where: { id_player: id },
-        data: {
-          ...data,                    // Solo actualizar campos proporcionados
-          updatedAt: new Date()       // Actualizar timestamp de modificación
+  static async updatePlayer(id: string, updateData: UpdatePlayerData): Promise<Player> {
+    return await executeDbOperation(
+      async () => {
+        const updatedPlayer = await prisma.jugador.update({
+          where: { id_player: id },
+          data: {
+            ...updateData,
+            updatedAt: new Date()
+          },
+          include: {
+            atributos: true,
+            playerStats3m: true,
+            radarMetrics: true
+          }
+        })
+
+        if (process.env.NODE_ENV === 'development') {
+          console.log('✅ Player updated successfully:', id);
         }
-      })
 
-      // 🧹 INVALIDAR CACHÉ ESPECÍFICO DEL JUGADOR
-      cacheManager.invalidatePlayerData(id)
-      
-      // 🧹 INVALIDAR CACHÉ RELACIONADO SI CAMBIOS IMPORTANTES
-      const importantFields = ['player_name', 'position_player', 'team_name', 'nationality_1', 'player_rating']
-      const hasImportantChanges = Object.keys(data).some(key => importantFields.includes(key))
-      
-      if (hasImportantChanges) {
-        cacheManager.invalidateSearchResults()  // Limpiar búsquedas
-        cacheManager.invalidateFilterOptions()  // Limpiar opciones de filtros
-        cacheManager.invalidate('players:stats') // Limpiar estadísticas
-      }
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🧹 Caché invalidado después de actualizar jugador:', id, { hasImportantChanges })
-      }
-
-      // 📤 DEVOLVER JUGADOR ACTUALIZADO
-      return player as Player
-    } catch (error) {
-      console.error('❌ Error updating player:', error)
-      throw new Error('Error al actualizar el jugador')
-    }
+        return updatedPlayer as Player
+      },
+      'update-player',
+      { params: { playerId: id } }
+    )
   }
 
   /**
-   * 🗑️ ELIMINAR UN JUGADOR + LIMPIEZA COMPLETA DE CACHÉ
-   * 
-   * ✅ QUÉ HACE: Elimina permanentemente un jugador de la base de datos
-   * ✅ POR QUÉ: Para limpiar datos obsoletos o incorrectos
-   * 🚀 NUEVO: Limpieza completa de caché para mantener consistencia
-   * ⚠️ CUIDADO: Esta operación es irreversible
-   * ✅ EJEMPLO: PlayerService.deletePlayer("player_123")
-   * 
-   * @param id - ID del jugador a eliminar
+   * 🗑️ ELIMINAR JUGADOR
    */
   static async deletePlayer(id: string): Promise<void> {
-    try {
-      // 🗑️ ELIMINAR JUGADOR DE BASE DE DATOS
-      await prisma.jugador.delete({
-        where: { id_player: id }
-      })
+    return await executeDbOperation(
+      async () => {
+        await prisma.jugador.delete({
+          where: { id_player: id }
+        })
 
-      // 🧹 LIMPIEZA COMPLETA DE CACHÉ (eliminación afecta todo)
-      cacheManager.invalidatePlayerData(id)    // Datos específicos del jugador
-      cacheManager.invalidateSearchResults()   // Todas las búsquedas
-      cacheManager.invalidateFilterOptions()   // Opciones de filtros
-      cacheManager.invalidate('players:stats') // Estadísticas generales
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🧹 Caché completamente limpiado después de eliminar jugador:', id)
-      }
-    } catch (error) {
-      console.error('❌ Error deleting player:', error)
-      throw new Error('Error al eliminar el jugador')
-    }
+        if (process.env.NODE_ENV === 'development') {
+          console.log('✅ Player deleted successfully:', id);
+        }
+      },
+      'delete-player',
+      { params: { playerId: id } }
+    )
   }
 
-  // 📊 ========== OPERACIONES AVANZADAS ==========
-
   /**
-   * 📈 OBTENER ESTADÍSTICAS GENERALES OPTIMIZADAS + CACHÉ
-   * 
-   * ✅ QUÉ HACE: Calcula métricas para dashboards aprovechando índices optimizados
-   * ✅ POR QUÉ: Los admins necesitan ver el estado general del sistema rápidamente
-   * ✅ OPTIMIZACIÓN: Usa índices específicos para consultas de agregación
-   * 🚀 NUEVO: Caché de larga duración para estadísticas (30 min TTL)
-   * ✅ EJEMPLO: PlayerService.getPlayerStats()
-   * 
-   * @returns Estadísticas completas del sistema
+   * 📊 OBTENER ESTADÍSTICAS GENERALES DE JUGADORES
    */
   static async getPlayerStats(): Promise<PlayerStats> {
     try {
-      // 🚀 INTENTAR OBTENER DESDE CACHÉ PRIMERO
-      const cachedStats = cacheManager.getPlayerStats('general')
-      if (cachedStats) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🎯 Cache HIT para estadísticas generales')
-        }
-        return cachedStats
-      }
-      // 🚀 EJECUTAR MÚLTIPLES CONSULTAS OPTIMIZADAS EN PARALELO
-      const [
-        totalPlayers,           // Total de jugadores
-        playersByPosition,      // Distribución por posiciones (usa idx_player_analytics)
-        playersByNationality,   // Top nacionalidades (usa idx_player_nationality)
-        averageRating,         // Rating promedio (usa idx_player_rating_created)
-        topRatedPlayers        // Mejores jugadores (usa idx_player_rating_created)
-      ] = await Promise.all([
-        
-        // 🔢 CONTAR TOTAL DE JUGADORES (consulta simple, muy rápida)
-        prisma.jugador.count(),
-        
-        // 🎯 AGRUPAR POR POSICIÓN (optimizado con idx_player_analytics)
-        prisma.jugador.groupBy({
-          by: ['position_player'],
-          _count: { position_player: true },
-          where: { 
-            position_player: { not: null },
-            // 🚀 OPTIMIZACIÓN: Filtrar solo jugadores con datos completos
-            age: { not: null },
-            player_rating: { not: null }
-          },
-          orderBy: { _count: { position_player: 'desc' } }
-        }),
-        
-        // 🌍 TOP 10 NACIONALIDADES (optimizado con idx_player_nationality)
-        prisma.jugador.groupBy({
-          by: ['nationality_1'],
-          _count: { nationality_1: true },
-          where: { nationality_1: { not: null } },
-          orderBy: { _count: { nationality_1: 'desc' } },
-          take: 10
-        }),
-        
-        // ⭐ CALCULAR RATING PROMEDIO (optimizado con idx_player_rating_created)
-        prisma.jugador.aggregate({
-          _avg: { player_rating: true },
-          _count: { player_rating: true },
-          _min: { player_rating: true },
-          _max: { player_rating: true },
-          where: { 
-            player_rating: { 
-              not: null,
-              gte: 0,  // Solo ratings válidos
-              lte: 100
-            } 
-          }
-        }),
-        
-        // 🏆 TOP 10 MEJORES JUGADORES (optimizado con idx_player_rating_created)
-        prisma.jugador.findMany({
-          where: { 
-            player_rating: { 
-              not: null,
-              gte: 70  // Solo jugadores con rating alto para mejor performance
-            } 
-          },
-          orderBy: [
-            { player_rating: 'desc' },
-            { createdAt: 'desc' }  // Desempate por fecha (usa el índice compuesto)
-          ],
-          take: 10,
-          select: {
-            id_player: true,
-            player_name: true,
-            player_rating: true,
-            team_name: true,
-            position_player: true,
-            nationality_1: true,
-            age: true
-          }
-        })
-      ])
-
-      // 📊 CALCULAR ESTADÍSTICAS ADICIONALES
-      const ratingStats = {
-        average: averageRating._avg.player_rating,
-        count: averageRating._count.player_rating,
-        min: averageRating._min.player_rating,
-        max: averageRating._max.player_rating
-      }
-
-      // 📊 ESTRUCTURAR ESTADÍSTICAS
-      const stats: PlayerStats = {
-        totalPlayers,
-        playersByPosition: playersByPosition.slice(0, 8), // Limitar a top 8 posiciones
-        playersByNationality: playersByNationality.slice(0, 10), // Top 10 países
-        averageRating: ratingStats.average,
-        topRatedPlayers,
-        // 📊 ESTADÍSTICAS ADICIONALES PARA DASHBOARDS AVANZADOS
-        ratingDistribution: {
-          average: ratingStats.average,
-          min: ratingStats.min,
-          max: ratingStats.max,
-          totalWithRating: ratingStats.count
-        }
-      }
-
-      // 💾 GUARDAR EN CACHÉ (TTL largo para estadísticas)
-      cacheManager.setPlayerStats('general', stats)
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log('💾 Estadísticas guardadas en caché')
-      }
-
-      // 📤 DEVOLVER ESTADÍSTICAS
-      return stats
+      return await this.calculatePlayerStats()
     } catch (error) {
-      console.error('❌ Error getting optimized player stats:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      })
-      throw new Error('Error al obtener estadísticas')
+      console.error('❌ Error getting player stats:', error);
+      throw error;
     }
   }
 
   /**
-   * ⚽ OBTENER JUGADORES POR EQUIPO
-   * 
-   * ✅ QUÉ HACE: Busca todos los jugadores de un equipo específico
-   * ✅ POR QUÉ: Para análisis de equipos y comparaciones
-   * ✅ EJEMPLO: PlayerService.getPlayersByTeam("Barcelona")
-   * 
-   * @param teamName - Nombre del equipo
-   * @returns Array de jugadores del equipo
+   * Calculate player statistics
    */
-  static async getPlayersByTeam(teamName: string): Promise<Player[]> {
-    try {
-      // 🔍 BUSCAR JUGADORES POR EQUIPO
-      const players = await prisma.jugador.findMany({
-        where: {
-          team_name: {
-            contains: teamName,      // Búsqueda parcial
-            mode: 'insensitive'     // Insensible a mayúsculas
-          }
-        },
-        orderBy: { player_rating: 'desc' }  // Ordenar por rating (mejores primero)
-      })
+  private static async calculatePlayerStats(): Promise<PlayerStats> {
+    return await executeDbOperation(
+      async () => {
+        const [
+          totalPlayers,
+          averageAge,
+          averageRating,
+          topRatedPlayer,
+          positionDistribution,
+          nationalityDistribution,
+          recentlyAdded
+        ] = await Promise.all([
+          // Total de jugadores
+          prisma.jugador.count(),
+          
+          // Edad promedio
+          prisma.jugador.aggregate({
+            _avg: { age: true },
+            where: { age: { not: null } }
+          }),
+          
+          // Rating promedio
+          prisma.jugador.aggregate({
+            _avg: { player_rating: true },
+            where: { player_rating: { not: null } }
+          }),
+          
+          // Jugador mejor valorado
+          prisma.jugador.findFirst({
+            where: { player_rating: { not: null } },
+            orderBy: { player_rating: 'desc' },
+            select: {
+              id_player: true,
+              player_name: true,
+              player_rating: true,
+              team_name: true
+            }
+          }),
+          
+          // Distribución por posición
+          prisma.jugador.groupBy({
+            by: ['position_player'],
+            _count: { position_player: true },
+            where: { position_player: { not: null } },
+            orderBy: { _count: { position_player: 'desc' } },
+            take: 10
+          }),
+          
+          // Distribución por nacionalidad
+          prisma.jugador.groupBy({
+            by: ['nationality_1'],
+            _count: { nationality_1: true },
+            where: { nationality_1: { not: null } },
+            orderBy: { _count: { nationality_1: 'desc' } },
+            take: 10
+          }),
+          
+          // Jugadores añadidos recientemente
+          prisma.jugador.count({
+            where: {
+              createdAt: {
+                gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Últimos 30 días
+              }
+            }
+          })
+        ])
 
-      return players as Player[]
-    } catch (error) {
-      console.error('❌ Error getting players by team:', error)
-      throw new Error('Error al obtener jugadores del equipo')
-    }
+        return {
+          totalPlayers,
+          averageAge: averageAge._avg.age || 0,
+          averageRating: averageRating._avg.player_rating || 0,
+          topRatedPlayer: topRatedPlayer ? {
+            id: topRatedPlayer.id_player,
+            name: topRatedPlayer.player_name,
+            rating: topRatedPlayer.player_rating || 0,
+            team: topRatedPlayer.team_name || 'N/A'
+          } : null,
+          positionDistribution: positionDistribution.map(item => ({
+            position: item.position_player || 'Unknown',
+            count: item._count.position_player
+          })),
+          nationalityDistribution: nationalityDistribution.map(item => ({
+            nationality: item.nationality_1 || 'Unknown',
+            count: item._count.nationality_1
+          })),
+          recentlyAdded
+        }
+      },
+      'calculate-player-stats'
+    )
   }
 
   /**
-   * 🎯 OBTENER JUGADORES POR POSICIÓN
-   * 
-   * ✅ QUÉ HACE: Busca todos los jugadores de una posición específica
-   * ✅ POR QUÉ: Para comparar jugadores de la misma posición
-   * ✅ EJEMPLO: PlayerService.getPlayersByPosition("CF")
-   * 
-   * @param position - Código de la posición
-   * @returns Array de jugadores de esa posición
-   */
-  static async getPlayersByPosition(position: string): Promise<Player[]> {
-    try {
-      // 🔍 BUSCAR JUGADORES POR POSICIÓN
-      const players = await prisma.jugador.findMany({
-        where: { position_player: position },
-        orderBy: { player_rating: 'desc' }  // Ordenar por rating
-      })
-
-      return players as Player[]
-    } catch (error) {
-      console.error('❌ Error getting players by position:', error)
-      throw new Error('Error al obtener jugadores por posición')
-    }
-  }
-
-  /**
-   * 🔧 OBTENER OPCIONES DISPONIBLES PARA FILTROS OPTIMIZADAS + CACHÉ
-   * 
-   * ✅ QUÉ HACE: Devuelve opciones para dropdowns aprovechando índices optimizados
-   * ✅ POR QUÉ: Los filtros se llenan automáticamente con datos reales y rápidos
-   * ✅ OPTIMIZACIÓN: Usa índices específicos y limita resultados para mejor UX
-   * 🚀 NUEVO: Caché de larga duración para opciones de filtros (1 hora TTL)
-   * ✅ EJEMPLO: PlayerService.getAvailableFilters()
-   * 
-   * @returns Opciones para todos los filtros
+   * 🔧 OBTENER OPCIONES DE FILTROS DISPONIBLES
    */
   static async getAvailableFilters(): Promise<FilterOptions> {
     try {
-      // 🚀 INTENTAR OBTENER DESDE CACHÉ PRIMERO
-      const cachedOptions = cacheManager.getFilterOptions()
-      if (cachedOptions) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🎯 Cache HIT para opciones de filtros')
-        }
-        return cachedOptions
-      }
-      // 🚀 OBTENER OPCIONES OPTIMIZADAS EN PARALELO
-      const [positions, nationalities, teams, competitions] = await Promise.all([
-        
-        // 🎯 POSICIONES ÚNICAS (optimizado con idx_player_analytics)
-        prisma.jugador.groupBy({
-          by: ['position_player'],
-          _count: { position_player: true },
-          where: { 
-            position_player: { not: null },
-            // 🚀 FILTRAR SOLO JUGADORES ACTIVOS PARA MEJOR RELEVANCIA
-            age: { not: null, gte: 16, lte: 45 },
-            player_rating: { not: null, gte: 30 }
-          },
-          orderBy: { _count: { position_player: 'desc' } },
-          having: {
-            position_player: {
-              _count: { gte: 2 } // Solo posiciones con al menos 2 jugadores
-            }
-          }
-        }),
-        
-        // 🌍 NACIONALIDADES ÚNICAS (optimizado con idx_player_nationality)
-        prisma.jugador.groupBy({
-          by: ['nationality_1'],
-          _count: { nationality_1: true },
-          where: { 
-            nationality_1: { not: null },
-            // 🚀 FILTRAR JUGADORES ACTIVOS
-            age: { not: null, gte: 16, lte: 45 }
-          },
-          orderBy: { _count: { nationality_1: 'desc' } },
-          take: 50, // Limitar a top 50 países para mejor UX
-          having: {
-            nationality_1: {
-              _count: { gte: 1 } // Al menos 1 jugador por país
-            }
-          }
-        }),
-        
-        // ⚽ EQUIPOS ÚNICOS (optimizado con idx_player_team_position)
-        prisma.jugador.groupBy({
-          by: ['team_name'],
-          _count: { team_name: true },
-          where: { 
-            team_name: { not: null },
-            // 🚀 SOLO EQUIPOS CON JUGADORES ACTIVOS
-            age: { not: null, gte: 16, lte: 45 }
-          },
-          orderBy: { _count: { team_name: 'desc' } },
-          take: 100, // Limitar a top 100 equipos
-          having: {
-            team_name: {
-              _count: { gte: 2 } // Solo equipos con al menos 2 jugadores
-            }
-          }
-        }),
-        
-        // 🏆 COMPETICIONES ÚNICAS (optimizado con idx_player_competition)
-        prisma.jugador.groupBy({
-          by: ['team_competition'],
-          _count: { team_competition: true },
-          where: { 
-            team_competition: { not: null },
-            // 🚀 SOLO COMPETICIONES ACTIVAS
-            age: { not: null, gte: 16, lte: 45 }
-          },
-          orderBy: { _count: { team_competition: 'desc' } },
-          take: 30, // Limitar a top 30 competiciones
-          having: {
-            team_competition: {
-              _count: { gte: 5 } // Solo competiciones con al menos 5 jugadores
-            }
-          }
-        })
-      ])
-
-      // 📊 FORMATEAR OPCIONES CON INFORMACIÓN ENRIQUECIDA
-      const formatOptions = (items: any[], field: string) => 
-        items
-          .filter(item => item[field] && item[field].trim().length > 0)
-          .map(item => ({
-            value: item[field]!,
-            label: item[field]!,
-            count: item._count[field]
-          }))
-          .sort((a, b) => b.count - a.count) // Ordenar por popularidad
-
-      // 📊 ESTRUCTURAR OPCIONES
-      const options: FilterOptions = {
-        positions: formatOptions(positions, 'position_player'),
-        nationalities: formatOptions(nationalities, 'nationality_1'),
-        teams: formatOptions(teams, 'team_name'),
-        competitions: formatOptions(competitions, 'team_competition')
-      }
-
-      // 💾 GUARDAR EN CACHÉ (TTL largo para opciones de filtros)
-      cacheManager.setFilterOptions(options)
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log('💾 Opciones de filtros guardadas en caché')
-      }
-
-      // 📤 DEVOLVER OPCIONES
-      return options
+      return await this.calculateFilterOptions()
     } catch (error) {
-      console.error('❌ Error getting optimized available filters:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      })
-      throw new Error('Error al obtener opciones de filtros')
+      console.error('❌ Error getting filter options:', error);
+      throw error;
     }
   }
 
-  // 🔧 ========== MÉTODOS DE UTILIDAD Y OPTIMIZACIÓN ==========
+  /**
+   * Calculate filter options
+   */
+  private static async calculateFilterOptions(): Promise<FilterOptions> {
+    return await executeDbOperation(
+      async () => {
+        const [
+          positions,
+          nationalities,
+          teams,
+          competitions,
+          ageRange,
+          ratingRange
+        ] = await Promise.all([
+          // Posiciones únicas
+          prisma.jugador.findMany({
+            select: { position_player: true },
+            where: { position_player: { not: null } },
+            distinct: ['position_player'],
+            orderBy: { position_player: 'asc' }
+          }),
+          
+          // Nacionalidades únicas
+          prisma.jugador.findMany({
+            select: { nationality_1: true },
+            where: { nationality_1: { not: null } },
+            distinct: ['nationality_1'],
+            orderBy: { nationality_1: 'asc' }
+          }),
+          
+          // Equipos únicos
+          prisma.jugador.findMany({
+            select: { team_name: true },
+            where: { team_name: { not: null } },
+            distinct: ['team_name'],
+            orderBy: { team_name: 'asc' },
+            take: 100 // Limitar para performance
+          }),
+          
+          // Competiciones únicas
+          prisma.jugador.findMany({
+            select: { team_competition: true },
+            where: { team_competition: { not: null } },
+            distinct: ['team_competition'],
+            orderBy: { team_competition: 'asc' }
+          }),
+          
+          // Rango de edades
+          prisma.jugador.aggregate({
+            _min: { age: true },
+            _max: { age: true },
+            where: { age: { not: null } }
+          }),
+          
+          // Rango de ratings
+          prisma.jugador.aggregate({
+            _min: { player_rating: true },
+            _max: { player_rating: true },
+            where: { player_rating: { not: null } }
+          })
+        ])
+
+        return {
+          positions: positions
+            .map(p => p.position_player)
+            .filter((p): p is string => p !== null)
+            .sort(),
+          nationalities: nationalities
+            .map(n => n.nationality_1)
+            .filter((n): n is string => n !== null)
+            .sort(),
+          teams: teams
+            .map(t => t.team_name)
+            .filter((t): t is string => t !== null)
+            .sort(),
+          competitions: competitions
+            .map(c => c.team_competition)
+            .filter((c): c is string => c !== null)
+            .sort(),
+          ageRange: {
+            min: ageRange._min.age || 16,
+            max: ageRange._max.age || 45
+          },
+          ratingRange: {
+            min: Math.floor(ratingRange._min.player_rating || 0),
+            max: Math.ceil(ratingRange._max.player_rating || 100)
+          }
+        }
+      },
+      'calculate-filter-options'
+    )
+  }
 
   /**
-   * 📊 VERIFICAR PERFORMANCE DE ÍNDICES
-   * 
-   * ✅ QUÉ HACE: Ejecuta consultas de prueba para medir la efectividad de los índices
-   * ✅ POR QUÉ: Permite monitorear si las optimizaciones están funcionando
-   * ✅ EJEMPLO: PlayerService.checkIndexPerformance()
-   * 
-   * @returns Métricas de performance de las consultas más comunes
+   * 🔍 BUSCAR JUGADORES POR NOMBRE (AUTOCOMPLETADO)
    */
-  static async checkIndexPerformance(): Promise<{
-    searchByName: number
-    searchByPosition: number
-    searchByRating: number
-    searchComposite: number
-    totalPlayers: number
+  static async searchPlayersByName(query: string, limit: number = 10): Promise<Array<{
+    id: string
+    name: string
+    team: string | null
+    position: string | null
+    rating: number | null
+  }>> {
+    if (!query || query.trim().length < 2) {
+      return []
+    }
+
+    return await executeDbOperation(
+      async () => {
+        const players = await prisma.jugador.findMany({
+          where: {
+            player_name: {
+              contains: query.trim(),
+              mode: 'insensitive'
+            }
+          },
+          select: {
+            id_player: true,
+            player_name: true,
+            team_name: true,
+            position_player: true,
+            player_rating: true
+          },
+          orderBy: [
+            { player_rating: 'desc' },
+            { player_name: 'asc' }
+          ],
+          take: limit
+        })
+
+        return players.map(player => ({
+          id: player.id_player,
+          name: player.player_name,
+          team: player.team_name,
+          position: player.position_player,
+          rating: player.player_rating
+        }))
+      },
+      'search-players-by-name',
+      { params: { query, limit } }
+    )
+  }
+
+  /**
+   * 🔧 VERIFICAR SALUD DEL SERVICIO
+   */
+  static async healthCheck(): Promise<{
+    status: 'healthy' | 'degraded' | 'unhealthy'
+    database: boolean
+    timestamp: string
   }> {
     try {
-      // 🔍 TEST 1: Búsqueda por nombre (usa idx_player_search_composite)
-      const startName = Date.now()
-      await prisma.jugador.findMany({
-        where: { player_name: { contains: 'a', mode: 'insensitive' } },
-        take: 10
-      })
-      const searchByName = Date.now() - startName
-
-      // 🎯 TEST 2: Búsqueda por posición (usa idx_player_analytics)
-      const startPosition = Date.now()
-      await prisma.jugador.findMany({
-        where: { position_player: 'CF' },
-        take: 10
-      })
-      const searchByPosition = Date.now() - startPosition
-
-      // ⭐ TEST 3: Ordenamiento por rating (usa idx_player_rating_created)
-      const startRating = Date.now()
-      await prisma.jugador.findMany({
-        where: { player_rating: { gte: 80 } },
-        orderBy: { player_rating: 'desc' },
-        take: 10
-      })
-      const searchByRating = Date.now() - startRating
-
-      // 🚀 TEST 4: Búsqueda compuesta (usa múltiples índices)
-      const startComposite = Date.now()
-      await prisma.jugador.findMany({
-        where: {
-          position_player: 'CF',
-          age: { gte: 20, lte: 25 },
-          player_rating: { gte: 75 }
-        },
-        orderBy: { player_rating: 'desc' },
-        take: 10
-      })
-      const searchComposite = Date.now() - startComposite
-
-      // 📊 CONTAR TOTAL PARA CONTEXTO
-      const totalPlayers = await prisma.jugador.count()
-
+      // Test database connection
+      await prisma.$queryRaw`SELECT 1`
+      
       return {
-        searchByName: `${searchByName}ms`,
-        searchByPosition: `${searchByPosition}ms`,
-        searchByRating: `${searchByRating}ms`,
-        searchComposite: `${searchComposite}ms`,
-        totalPlayers
+        status: 'healthy',
+        database: true,
+        timestamp: new Date().toISOString()
       }
     } catch (error) {
-      console.error('❌ Error checking index performance:', error)
-      throw new Error('Error al verificar performance de índices')
-    }
-  }
-
-  /**
-   * 🧹 LIMPIAR CACHÉ DE CONSULTAS Y APLICACIÓN
-   * 
-   * ✅ QUÉ HACE: Fuerza la regeneración de estadísticas y limpia cachés
-   * ✅ POR QUÉ: Útil durante desarrollo y testing
-   * 🚀 NUEVO: Limpia tanto caché de BD como caché de aplicación
-   * ✅ EJEMPLO: PlayerService.clearQueryCache()
-   */
-  static async clearQueryCache(): Promise<void> {
-    try {
-      // 🔄 EJECUTAR CONSULTA DUMMY PARA LIMPIAR CACHÉ DE BD
-      await prisma.$executeRaw`SELECT 1`
+      console.error('❌ PlayerService health check failed:', error)
       
-      // 🧹 LIMPIAR CACHÉ DE APLICACIÓN
-      cacheManager.invalidate()
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🧹 Caché de consultas y aplicación limpiado completamente')
+      return {
+        status: 'unhealthy',
+        database: false,
+        timestamp: new Date().toISOString()
       }
-    } catch (error) {
-      console.error('❌ Error clearing query cache:', error)
-      throw new Error('Error al limpiar caché de consultas')
-    }
-  }
-
-  /**
-   * 📊 OBTENER ESTADÍSTICAS DEL CACHÉ
-   * 
-   * ✅ QUÉ HACE: Devuelve métricas de uso del caché
-   * ✅ POR QUÉ: Para monitorear efectividad del sistema de caché
-   * ✅ EJEMPLO: PlayerService.getCacheStats()
-   * 
-   * @returns Estadísticas del caché (hits, misses, hit rate, etc.)
-   */
-  static getCacheStats() {
-    return cacheManager.getStats()
-  }
-
-  /**
-   * 🧹 INVALIDAR CACHÉ ESPECÍFICO
-   * 
-   * ✅ QUÉ HACE: Permite invalidar tipos específicos de caché
-   * ✅ POR QUÉ: Para control granular del caché
-   * ✅ EJEMPLO: PlayerService.invalidateCache('search')
-   * 
-   * @param type - Tipo de caché a invalidar
-   */
-  static invalidateCache(type: 'all' | 'search' | 'players' | 'stats' | 'filters'): void {
-    switch (type) {
-      case 'all':
-        cacheManager.invalidate()
-        break
-      case 'search':
-        cacheManager.invalidateSearchResults()
-        break
-      case 'players':
-        cacheManager.invalidatePlayerData()
-        break
-      case 'stats':
-        cacheManager.invalidate('players:stats')
-        break
-      case 'filters':
-        cacheManager.invalidateFilterOptions()
-        break
-    }
-    
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`🧹 Caché invalidado: ${type}`)
     }
   }
 }
 
-// 📤 EXPORTACIÓN POR DEFECTO
-export default PlayerService
+// Export singleton-like access
+export const playerService = PlayerService

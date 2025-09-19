@@ -30,7 +30,8 @@ export default clerkMiddleware(async (auth, req) => {
   if (req.nextUrl.pathname.startsWith('/api/webhooks/') || 
       req.nextUrl.pathname.startsWith('/api/torneos/') ||
       req.nextUrl.pathname.startsWith('/api/upload-tournament-pdf') ||
-      req.nextUrl.pathname.startsWith('/api/player-list')) {
+      req.nextUrl.pathname.startsWith('/api/player-list') ||
+      req.nextUrl.pathname.startsWith('/api/debug/')) {
     return NextResponse.next()
   }
   

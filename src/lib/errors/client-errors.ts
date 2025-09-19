@@ -1,3 +1,5 @@
+'use client'
+
 // src/lib/errors/client-errors.ts - MANEJO DE ERRORES EN CLIENTE
 // 🎯 PROPÓSITO: Manejo consistente de errores en el frontend
 

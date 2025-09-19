@@ -1,7 +1,8 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useAuth } from "@clerk/nextjs";
 
 import { usePlayerList } from "@/hooks/player/usePlayerList";
 import { usePlayers } from "@/hooks/player/usePlayers";
@@ -91,12 +92,14 @@ const AVAILABLE_CATEGORIES = [
 
 export function useDashboardState() {
   const searchParams = useSearchParams();
+  const { isLoaded, isSignedIn } = useAuth();
 
   // Estados básicos
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [initialLoadCompleted, setInitialLoadCompleted] = useState(false);
 
   // Estados para categorías seleccionadas
   const defaultCategories = ["rating", "age", "position", "team"];
@@ -109,16 +112,22 @@ export function useDashboardState() {
   const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [selectedCompetitions, setSelectedCompetitions] = useState<string[]>([]);
+  const [selectedAges, setSelectedAges] = useState<string[]>([]);
   const [filterOptions, setFilterOptions] = useState<any>({
     nationalities: [],
     positions: [],
     teams: [],
     competitions: [],
+    ages: [],
   });
 
   // Hooks
   const { players, loading, error, searchPlayers, pagination } = usePlayers();
   const { playerList, addToList, removeFromList, isInList } = usePlayerList();
+  
+  // Use ref to store searchPlayers function to avoid dependency issues
+  const searchPlayersRef = useRef(searchPlayers);
+  searchPlayersRef.current = searchPlayers;
 
   // Cargar categorías guardadas
   useEffect(() => {
@@ -161,17 +170,50 @@ export function useDashboardState() {
 
   // Cargar jugadores iniciales
   useEffect(() => {
-    const initialSearchOptions = {
-      page: 1,
-      limit: 20,
-      sortBy: "player_rating" as const,
-      sortOrder: "desc" as const,
-      filters: {},
+    const loadInitialData = async () => {
+      // 🔐 ESPERAR A QUE CLERK ESTÉ LISTO
+      if (!isLoaded) {
+        console.log('useDashboardState: Clerk not loaded yet, waiting...');
+        return;
+      }
+      
+      if (!isSignedIn) {
+        console.log('useDashboardState: User not signed in');
+        return;
+      }
+
+      // Prevent multiple loads
+      if (initialLoadCompleted) {
+        console.log('useDashboardState: Initial load already completed, skipping...');
+        return;
+      }
+      
+      console.log('useDashboardState: Loading initial data...');
+      
+      const initialSearchOptions = {
+        page: 1,
+        limit: 20,
+        sortBy: "player_rating" as const,
+        sortOrder: "desc" as const,
+        filters: {},
+      };
+
+      try {
+        await searchPlayersRef.current(initialSearchOptions);
+        console.log('useDashboardState: Initial players loaded');
+        setInitialLoadCompleted(true);
+      } catch (error) {
+        console.error('useDashboardState: Error loading initial players:', error);
+      }
+      
+      await loadFilterOptions();
     };
 
-    searchPlayers(initialSearchOptions);
-    loadFilterOptions();
-  }, []);
+    // Only load once when authentication is ready
+    if (isLoaded && isSignedIn && !initialLoadCompleted) {
+      loadInitialData();
+    }
+  }, [isLoaded, isSignedIn, initialLoadCompleted]); // Added initialLoadCompleted to prevent loops
 
   // Cargar opciones de filtros
   const loadFilterOptions = useCallback(async () => {
@@ -182,19 +224,21 @@ export function useDashboardState() {
         setFilterOptions(options);
       } else {
         const fallbackOptions = {
-          nationalities: ["Spain", "Brazil", "Argentina", "France", "Germany"],
-          positions: ["GK", "CB", "LB", "RB", "CDM", "CM", "CAM", "LW", "RW", "ST"],
-          teams: ["Real Madrid", "Barcelona", "Atletico Madrid", "Valencia"],
-          competitions: ["La Liga", "Premier League", "Serie A", "Bundesliga"],
+          nationalities: ["Spain", "Brazil", "Argentina", "France", "Germany", "Italy", "England", "Portugal", "Netherlands", "Belgium"],
+          positions: ["GK", "CB", "LB", "RB", "CDM", "CM", "CAM", "LW", "RW", "ST", "CF", "LM", "RM"],
+          teams: ["Real Madrid", "Barcelona", "Atletico Madrid", "Valencia", "Sevilla", "Real Sociedad"],
+          competitions: ["La Liga", "Premier League", "Serie A", "Bundesliga", "Ligue 1", "Champions League"],
+          ages: ["16-18", "19-21", "22-24", "25-27", "28-30", "31+"],
         };
         setFilterOptions(fallbackOptions);
       }
     } catch (error) {
       const fallbackOptions = {
-        nationalities: ["Spain", "Brazil", "Argentina", "France", "Germany"],
-        positions: ["GK", "CB", "LB", "RB", "CDM", "CM", "CAM", "LW", "RW", "ST"],
-        teams: ["Real Madrid", "Barcelona", "Atletico Madrid", "Valencia"],
-        competitions: ["La Liga", "Premier League", "Serie A", "Bundesliga"],
+        nationalities: ["Spain", "Brazil", "Argentina", "France", "Germany", "Italy", "England", "Portugal", "Netherlands", "Belgium"],
+        positions: ["GK", "CB", "LB", "RB", "CDM", "CM", "CAM", "LW", "RW", "ST", "CF", "LM", "RM"],
+        teams: ["Real Madrid", "Barcelona", "Atletico Madrid", "Valencia", "Sevilla", "Real Sociedad"],
+        competitions: ["La Liga", "Premier League", "Serie A", "Bundesliga", "Ligue 1", "Champions League"],
+        ages: ["16-18", "19-21", "22-24", "25-27", "28-30", "31+"],
       };
       setFilterOptions(fallbackOptions);
     }
@@ -242,8 +286,78 @@ export function useDashboardState() {
       });
     }
 
+    // Aplicar filtros avanzados
+    const hasActiveFilters = Object.keys(activeFilters).length > 0 || 
+                            selectedNationalities.length > 0 || 
+                            selectedPositions.length > 0 || 
+                            selectedTeams.length > 0 || 
+                            selectedCompetitions.length > 0 || 
+                            selectedAges.length > 0;
+
+    if (hasActiveFilters) {
+      console.log('🔍 Applying player filters:', {
+        activeFilters,
+        selectedNationalities,
+        selectedPositions,
+        selectedTeams,
+        selectedCompetitions,
+        selectedAges,
+        totalPlayers: filtered.length
+      });
+
+      filtered = filtered.filter(player => {
+        // Filtro por nacionalidades (multi-select)
+        if (selectedNationalities.length > 0 && !selectedNationalities.includes(player.nationality_1 || '')) {
+          return false;
+        }
+        
+        // Filtro por posiciones (multi-select)
+        if (selectedPositions.length > 0 && !selectedPositions.includes(player.position_player || '')) {
+          return false;
+        }
+        
+        // Filtro por equipos (multi-select)
+        if (selectedTeams.length > 0 && !selectedTeams.includes(player.team_name || '')) {
+          return false;
+        }
+        
+        // Filtro por competiciones (multi-select)
+        if (selectedCompetitions.length > 0 && !selectedCompetitions.includes(player.team_competition || '')) {
+          return false;
+        }
+        
+        // Filtro por edad
+        if (activeFilters.min_age && (!player.age || player.age < activeFilters.min_age)) {
+          return false;
+        }
+        if (activeFilters.max_age && (!player.age || player.age > activeFilters.max_age)) {
+          return false;
+        }
+        
+        // Filtro por rating
+        if (activeFilters.min_rating && (!player.player_rating || player.player_rating < activeFilters.min_rating)) {
+          return false;
+        }
+        if (activeFilters.max_rating && (!player.player_rating || player.player_rating > activeFilters.max_rating)) {
+          return false;
+        }
+        
+        // Filtro por valor de mercado (en millones)
+        if (activeFilters.min_value && (!player.player_trfm_value || (player.player_trfm_value / 1000000) < activeFilters.min_value)) {
+          return false;
+        }
+        if (activeFilters.max_value && (!player.player_trfm_value || (player.player_trfm_value / 1000000) > activeFilters.max_value)) {
+          return false;
+        }
+        
+        return true;
+      });
+
+      console.log('🔍 Filtered players result:', filtered.length);
+    }
+
     return filtered;
-  }, [players, activeTab, searchTerm, isInList]);
+  }, [players, activeTab, searchTerm, isInList, activeFilters, selectedNationalities, selectedPositions, selectedTeams, selectedCompetitions, selectedAges]);
 
   // Calcular conteos para las pestañas
   const getTabCounts = useCallback(() => {
@@ -275,10 +389,10 @@ export function useDashboardState() {
           filters: { player_name: term.trim() },
         };
 
-        searchPlayers(searchOptions);
+        searchPlayersRef.current(searchOptions);
       }
     },
-    [searchPlayers]
+    [] // Removed searchPlayers dependency
   );
 
   // Función para cambiar de pestaña optimizada
@@ -320,9 +434,9 @@ export function useDashboardState() {
         },
       };
 
-      searchPlayers(searchOptions);
+      searchPlayersRef.current(searchOptions);
     },
-    [searchPlayers, searchTerm, selectedNationalities, selectedPositions, selectedTeams, selectedCompetitions]
+    [searchTerm, selectedNationalities, selectedPositions, selectedTeams, selectedCompetitions, selectedAges] // Removed searchPlayers dependency
   );
 
   // Limpiar filtros
@@ -332,6 +446,7 @@ export function useDashboardState() {
     setSelectedPositions([]);
     setSelectedTeams([]);
     setSelectedCompetitions([]);
+    setSelectedAges([]);
   }, []);
 
   // Manejar toggle de categorías
@@ -374,6 +489,7 @@ export function useDashboardState() {
     selectedPositions,
     selectedTeams,
     selectedCompetitions,
+    selectedAges,
     filterOptions,
     
     // Datos derivados
@@ -394,6 +510,7 @@ export function useDashboardState() {
     setSelectedPositions,
     setSelectedTeams,
     setSelectedCompetitions,
+    setSelectedAges,
     
     // Player list functions
     addToList,

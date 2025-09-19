@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect } from "react";
 import { useParams } from "next/navigation";
 
+import AuthGuard from "@/components/auth/AuthGuard";
 import MemberNavbar from "@/components/layout/member-navbar";
 import PlayerFeatures from "@/components/player/PlayerFeatures";
 import PlayerHeader from "@/components/player/PlayerHeader";
-import PlayerHighlights from "@/components/player/PlayerHighlights";
+
 import PlayerInfo from "@/components/player/PlayerInfo";
 import PlayerReports from "@/components/player/PlayerReports";
 import PlayerSidebar from "@/components/player/PlayerSidebar";
@@ -38,6 +40,15 @@ export default function PlayerProfilePage() {
     getStatValue,
   } = usePlayerProfile(playerId);
 
+  // Debug: Log player data only when it changes
+  // IMPORTANTE: Este useEffect debe estar ANTES de cualquier return condicional
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('PlayerProfilePage: player data:', player);
+      console.log('PlayerProfilePage: loading state:', loading);
+    }
+  }, [player, loading]);
+
   // Mostrar loading si está cargando
   if (loading) {
     return (
@@ -54,10 +65,6 @@ export default function PlayerProfilePage() {
       </div>
     );
   }
-
-  // Debug: Log player data
-  console.log('PlayerProfilePage: player data:', player);
-  console.log('PlayerProfilePage: loading state:', loading);
 
   // Mostrar error si no se encuentra el jugador
   if (!player) {
@@ -77,9 +84,10 @@ export default function PlayerProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f7f4]">
-      {/* Header */}
-      <MemberNavbar />
+    <AuthGuard>
+      <div className="min-h-screen bg-[#f8f7f4]">
+        {/* Header */}
+        <MemberNavbar />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6" style={{ marginTop: "55px" }}>
@@ -125,5 +133,6 @@ export default function PlayerProfilePage() {
         </div>
       </main>
     </div>
+    </AuthGuard>
   );
 }

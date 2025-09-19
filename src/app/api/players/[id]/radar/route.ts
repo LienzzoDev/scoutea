@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { RadarCalculationService } from '../../../../../lib/services/RadarCalculationService';
 
 const prisma = new PrismaClient();
 
@@ -7,50 +8,14 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const radarService = new RadarCalculationService(prisma);
+  
   try {
     const playerId = params.id;
+    const { searchParams } = new URL(request.url);
+    const period = searchParams.get('period') || '2023-24';
 
-    // Obtener datos de radar del jugador
-    const radarData = await prisma.radarMetrics.findMany({
-      where: {
-        playerId: playerId,
-        period: '2023-24'
-      },
-      orderBy: {
-        category: 'asc'
-      }
-    });
-
-    if (radarData.length === 0) {
-      // Verificar si el jugador existe
-      const playerExists = await prisma.jugador.findUnique({
-        where: { id_player: playerId },
-        select: { player_name: true, position_player: true }
-      });
-
-      if (!playerExists) {
-        return NextResponse.json(
-          { 
-            error: 'Player not found',
-            playerId: playerId,
-            message: 'The specified player does not exist in the database'
-          },
-          { status: 404 }
-        );
-      }
-
-      return NextResponse.json(
-        { 
-          error: 'No radar data found for this player',
-          playerId: playerId,
-          playerName: playerExists.player_name,
-          message: 'Player exists but has no radar metrics data'
-        },
-        { status: 404 }
-      );
-    }
-
-    // Obtener información del jugador para contexto
+    // Verify player exists
     const player = await prisma.jugador.findUnique({
       where: { id_player: playerId },
       select: {
@@ -63,70 +28,64 @@ export async function GET(
       }
     });
 
-    // Calcular ranking dentro de su posición
-    console.log('Radar API: player position:', player?.position_player);
-    console.log('Radar API: About to query players in position...');
-    
-    // Simplified approach: get all players with radar metrics first, then filter
-    console.log('Radar API: Using simplified approach...');
-    let playersInPosition = [];
-    
-    try {
-      // First get all players with the same position
-      const allPlayersInPosition = await prisma.jugador.findMany({
-        where: {
-          position_player: player?.position_player
+    if (!player) {
+      return NextResponse.json(
+        { 
+          error: 'Player not found',
+          playerId: playerId,
+          message: 'The specified player does not exist in the database'
         },
-        include: {
-          atributos: true,
-          radarMetrics: {
-            where: {
-              period: '2023-24'
-            }
-          }
-        }
-      });
-      
-      // Then filter those that have atributos
-      playersInPosition = allPlayersInPosition.filter(p => p.atributos !== null);
-      console.log('Radar API: Found players in position with atributos:', playersInPosition.length);
-      
-    } catch (queryError) {
-      console.error('Radar API: Error in simplified query:', queryError);
-      playersInPosition = [];
+        { status: 404 }
+      );
     }
 
-    // Enriquecer datos con rankings
-    const enrichedRadarData = radarData.map(radar => {
-      // Calcular ranking para esta categoría
-      const categoryValues = playersInPosition
-        .map(p => p.radarMetrics.find(r => r.category === radar.category))
-        .filter(r => r !== undefined)
-        .map(r => r!.playerValue)
-        .sort((a, b) => b - a);
+    // Calculate radar data using the new service
+    let radarData;
+    try {
+      radarData = await radarService.calculatePlayerRadar(playerId, period);
+    } catch (calculationError) {
+      console.error('Error calculating radar data:', calculationError);
+      
+      // Check if it's a missing data error
+      if (calculationError instanceof Error && calculationError.message.includes('has no atributos data')) {
+        return NextResponse.json(
+          { 
+            error: 'No attribute data found for this player',
+            playerId: playerId,
+            playerName: player.player_name,
+            message: 'Player exists but has no atributos data required for radar calculations'
+          },
+          { status: 404 }
+        );
+      }
+      
+      throw calculationError;
+    }
 
-      const rank = categoryValues.findIndex(value => value <= radar.playerValue) + 1;
-
-      return {
-        category: radar.category,
-        playerValue: radar.playerValue,
-        positionAverage: radar.positionAverage,
-        percentile: radar.percentile,
-        rank: rank,
-        totalPlayers: categoryValues.length,
-        // Datos adicionales para el gráfico
-        maxValue: Math.max(...categoryValues),
-        minValue: Math.min(...categoryValues)
-      };
-    });
+    // Format response with the 9 categories
+    const formattedRadarData = radarData.map(data => ({
+      category: data.category,
+      playerValue: data.playerValue,
+      dataCompleteness: data.dataCompleteness,
+      sourceAttributes: data.sourceAttributes,
+      // Initialize comparison fields (will be populated by comparison endpoint)
+      comparisonAverage: null,
+      percentile: null,
+      rank: null,
+      totalPlayers: null,
+      maxValue: null,
+      minValue: null
+    }));
 
     return NextResponse.json({
       player: player,
-      radarData: enrichedRadarData,
+      radarData: formattedRadarData,
       metadata: {
-        period: '2023-24',
+        period: period,
         totalCategories: radarData.length,
-        positionComparison: playersInPosition.length
+        calculatedAt: new Date().toISOString(),
+        supportedCategories: radarService.getSupportedCategories(),
+        categoryLabels: radarService.getCategoryLabels()
       }
     });
 
@@ -140,5 +99,7 @@ export async function GET(
       },
       { status: 500 }
     );
+  } finally {
+    await radarService.disconnect();
   }
 }

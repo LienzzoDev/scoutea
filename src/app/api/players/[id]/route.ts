@@ -51,10 +51,34 @@ export async function GET(
     }
 
     // 🔍 BUSCAR JUGADOR EN BASE DE DATOS
-    const player = await PlayerService.getPlayerById(validatedId)
+    console.log('🔍 Searching for player with ID:', validatedId);
+    
+    let player;
+    try {
+      player = await PlayerService.getPlayerById(validatedId)
+      console.log('📊 PlayerService result:', !!player);
+      
+      if (player) {
+        console.log('📋 Player data received:', {
+          id: player.id_player,
+          name: player.player_name,
+          position: player.position_player
+        });
+      }
+    } catch (serviceError) {
+      console.error('❌ PlayerService.getPlayerById failed:', {
+        error: serviceError instanceof Error ? serviceError.message : 'Unknown service error',
+        stack: serviceError instanceof Error ? serviceError.stack : undefined,
+        playerId: validatedId
+      });
+      
+      // Re-throw the error to be handled by the outer catch block
+      throw serviceError;
+    }
     
     // ❌ VERIFICAR SI EL JUGADOR EXISTE
     if (!player) {
+      console.log('❌ Player not found:', validatedId);
       return NextResponse.json(
         { error: `No se encontró ningún jugador con ID: ${validatedId}` }, 
         { status: 404 }
@@ -70,6 +94,7 @@ export async function GET(
     })
 
     // 📤 DEVOLVER JUGADOR ENCONTRADO
+    console.log('📤 Returning player data to client');
     return NextResponse.json(player)
 
   } catch (error) {
