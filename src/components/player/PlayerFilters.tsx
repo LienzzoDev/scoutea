@@ -45,7 +45,7 @@ const PlayerFilters = memo<PlayerFiltersProps>(function PlayerFilters({
   selectedTeams,
   selectedCompetitions,
   selectedAges,
-  activeFilters: _activeFilters,
+  activeFilters,
   onNationalitiesChange: _onNationalitiesChange,
   onPositionsChange: _onPositionsChange,
   onTeamsChange: _onTeamsChange,
