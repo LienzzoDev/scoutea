@@ -1,6 +1,7 @@
 "use client";
 
 import { Search, FileText } from "lucide-react";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 
 import MemberNavbar from "@/components/layout/member-navbar";

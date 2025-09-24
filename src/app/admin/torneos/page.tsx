@@ -15,25 +15,25 @@ export default function TorneosPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
   const _router = useRouter()
   const searchParams = useSearchParams()
-  const [selectedTorneo, setSelectedTorneo] = useState<any>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [_selectedTorneo, _setSelectedTorneo] = useState<Tournament | null>(null)
+  const [_isModalOpen, _setIsModalOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [filters, setFilters] = useState<TorneoFilters>({})
   const [showFilters, setShowFilters] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const [filterOptions, setFilterOptions] = useState<any>(null)
+  const [filterOptions, setFilterOptions] = useState<Record<string, unknown> | null>(null)
 
   const {
     torneos,
     loading,
     error,
     total,
-    page,
+    page: _page,
     totalPages,
     searchTorneos,
     deleteTorneo,
-    clearError
+    clearError: _clearError
   } = useTournaments()
 
   // Cargar torneos al montar el componente
@@ -305,7 +305,7 @@ export default function TorneosPage() {
               </div>
             ) : error ? (
               <div className="p-6 text-center">
-                <p className="text-red-400 mb-4">{error}</p>
+                <p className="text-red-400 mb-4">{typeof error === 'string' ? error : error?.message || 'Error desconocido'}</p>
                 <Button onClick={() => searchTorneos(filters, currentPage, 10)}>
                   Reintentar
                 </Button>

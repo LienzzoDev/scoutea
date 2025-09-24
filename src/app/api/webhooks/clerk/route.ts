@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   // Create a new Svix instance with your secret.
   const wh = new Webhook(process.env.CLERK_WEBHOOK_SECRET || '')
 
-  let evt: any
+  let evt: unknown
 
   // Verify the payload with the headers
   try {

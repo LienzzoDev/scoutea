@@ -128,7 +128,7 @@ export async function GET(__request: NextRequest): Promise<NextResponse<FilterOp
 
     return response
 
-  } catch (_error) {
+  } catch (error) {
     // 🚨 MANEJO DE ERRORES
     console.error('❌ Error generating filter options:', {
       __error: error instanceof Error ? error.message : 'Unknown error',

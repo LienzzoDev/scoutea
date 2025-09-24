@@ -27,7 +27,7 @@ export default function CategorySelector({
   onCategoryToggle,
   minCategories = 1,
   maxCategories,
-  storageKey
+  storageKey: _storageKey
 }: CategorySelectorProps) {
   const [showSelector, setShowSelector] = useState(false)
 

@@ -4,7 +4,7 @@ import { ChevronDown, X } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 
 interface ToggleOption {
-  value: any
+  value: string | number | boolean
   label: string
   color?: string
 }
@@ -12,7 +12,7 @@ interface ToggleOption {
 interface ToggleFilterProps {
   label: string
   options: ToggleOption[]
-  selectedValue?: any
+  selectedValue?: string | number | boolean
   onSelectionChange: (value?: unknown) =>void
   placeholder?: string
 }

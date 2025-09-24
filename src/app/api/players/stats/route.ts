@@ -82,7 +82,7 @@ export async function GET(__request: NextRequest): Promise<NextResponse<PlayerSt
 
     return response
 
-  } catch (_error) {
+  } catch (error) {
     // 🚨 MANEJO DE ERRORES
     console.error('❌ Error generating player statistics:', {
       __error: error instanceof Error ? error.message : 'Unknown error',

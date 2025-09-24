@@ -13,7 +13,7 @@ export default function ScoutProfilePage() {
   const _router = useRouter()
   const [activeTab, setActiveTab] = useState('info')
   const [showFilters, setShowFilters] = useState(false)
-  const [activeReportsTab, setActiveReportsTab] = useState('qualitative')
+  const [_activeReportsTab, _setActiveReportsTab] = useState('qualitative')
   const [activeStatsTab, setActiveStatsTab] = useState('qualitative')
   const [message, setMessage] = useState('')
   

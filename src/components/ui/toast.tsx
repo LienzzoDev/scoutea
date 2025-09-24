@@ -248,15 +248,17 @@ export function useErrorToast() {
   
   useEffect(() => {
     // Suscribirse a errores globales del ClientErrorHandler
-    const { ClientErrorHandler } = require('@/lib/errors/client-errors')
+    let unsubscribe: (() => void) | undefined;
     
-    const unsubscribe = ClientErrorHandler.subscribe((__error: ClientErrorState) => {
-      if (shouldShowErrorToUser(error)) {
-        showError(error)
-      }
+    import('@/lib/errors/client-errors').then(({ ClientErrorHandler }) => {
+      unsubscribe = ClientErrorHandler.subscribe((__error: ClientErrorState) => {
+        if (shouldShowErrorToUser(error)) {
+          showError(error)
+        }
+      })
     })
     
-    return unsubscribe
+    return () => unsubscribe?.()
   }, [showError])
   
   return {

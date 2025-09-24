@@ -20,7 +20,7 @@ export default function WelcomePage() {
   useEffect(() => {
     // Obtener el plan de suscripción desde los metadatos del usuario o URL params
     if (user) {
-      const metadata = user.publicMetadata as any
+      const metadata = user.publicMetadata as Record<string, unknown>
       const _subscription = metadata?.subscription
       const planFromUrl = searchParams.get('plan')
       

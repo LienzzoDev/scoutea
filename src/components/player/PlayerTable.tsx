@@ -9,9 +9,9 @@ import PlayerAvatar from "@/components/ui/player-avatar";
 import type { Player } from "@/types/player";
 
 interface Category {
-  _key: string;
+  key: string;
   label: string;
-  getValue: (__player: Player) => any;
+  getValue: (player: Player) => string | number | null | undefined;
   format?: (value: unknown) => string;
 }
 
@@ -164,9 +164,18 @@ export default function PlayerTable({
                 }}
               >{selectedCategories.map((category, catIndex, array) => {
                   const value = category.getValue(player);
-                  const formattedValue = category.format
+                  let formattedValue = category.format
                     ? category.format(value)
                     : value || "N/A";
+                  
+                  // Ensure formattedValue is always a string
+                  if (typeof formattedValue === 'object') {
+                    formattedValue = JSON.stringify(formattedValue);
+                  } else if (formattedValue === null || formattedValue === undefined) {
+                    formattedValue = "N/A";
+                  } else {
+                    formattedValue = String(formattedValue);
+                  }
 
                   return (
                     <div

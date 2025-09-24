@@ -1,11 +1,9 @@
-"use client";
-
 import { Play } from "lucide-react";
 
 import type { Player } from "@/types/player";
 
 interface PlayerHighlightsProps {
-  _player: Player;
+  player: Player;
 }
 
 export default function PlayerHighlights({ player }: PlayerHighlightsProps) {

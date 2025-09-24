@@ -5,6 +5,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import { logger } from '../logging/production-logger';
 
 export interface ConnectionPoolConfig {
   maxConnections: number;
@@ -154,7 +155,7 @@ export class DatabaseConnectionPool {
     // Log connection pool stats every 5 minutes in production
     if (process.env.NODE_ENV === 'production') {
       setInterval(() => {
-        console.log('Connection Pool Stats:', this.stats);
+        logger.info('Connection Pool Stats', this.stats);
       }, 300000);
     }
   }
@@ -285,9 +286,9 @@ export class DatabaseConnectionPool {
   async shutdown(): Promise<void> {
     try {
       await this.prismaClient.$disconnect();
-      console.log('Database connection pool shut down gracefully');
-    } catch (_error) {
-      console.error('Error during database shutdown:', error);
+      logger.info('Database connection pool shut down gracefully');
+    } catch (error) {
+      logger.error('Error during database shutdown', error as Error);
     }
   }
 }

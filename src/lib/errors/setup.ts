@@ -4,26 +4,28 @@
 import { setupGlobalErrorHandling } from '../logging/logger'
 import { setupErrorMonitoring } from '../monitoring/error-monitor'
 
+import { logger } from '../logging/production-logger'
+
 // Función principal para configurar todo el sistema de errores
 export function setupErrorHandling(): void {
-  console.log('🔧 Configurando sistema de manejo de errores...')
+  logger.info('Configurando sistema de manejo de errores')
   
   try {
     // 1. Configurar logging global
     setupGlobalErrorHandling()
-    console.log('✅ Logging global configurado')
+    logger.info('Logging global configurado')
     
     // 2. Configurar monitoreo de errores
     setupErrorMonitoring()
-    console.log('✅ Monitoreo de errores configurado')
+    logger.info('Monitoreo de errores configurado')
     
     // 3. Configurar interceptores para fetch (solo en cliente)
     if (typeof window !== 'undefined') {
       setupFetchInterceptor()
-      console.log('✅ Interceptor de fetch configurado')
+      logger.info('Interceptor de fetch configurado')
     }
     
-    console.log('🎉 Sistema de manejo de errores configurado exitosamente')
+    logger.info('Sistema de manejo de errores configurado exitosamente')
     
   } catch (_error) {
     console.error('❌ Error configurando sistema de manejo de errores:', error)
@@ -43,9 +45,7 @@ function setupFetchInterceptor(): void {
       const duration = Date.now() - startTime
       
       // Log de request exitoso
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`🌐 Fetch: ${init?.method || 'GET'} ${url} - ${response.status} (${duration}ms)`)
-      }
+      logger.apiCall(init?.method || 'GET', url.toString(), response.status, duration)
       
       return response
     } catch (_error) {
@@ -65,7 +65,7 @@ export function setupDevelopmentErrorHandling(): void {
     return
   }
   
-  console.log('🔧 Configurando herramientas de desarrollo para errores...')
+  logger.debug('Configurando herramientas de desarrollo para errores')
   
   // Mostrar más detalles en consola
   if (typeof window !== 'undefined') {
@@ -85,7 +85,7 @@ export function setupDevelopmentErrorHandling(): void {
       }
     }
     
-    console.log('🛠️ Herramientas de debug disponibles en window.__errorDebug')
+    logger.debug('Herramientas de debug disponibles en window.__errorDebug')
   }
 }
 
@@ -95,7 +95,7 @@ export function setupProductionErrorHandling(): void {
     return
   }
   
-  console.log('🔧 Configurando manejo de errores para producción...')
+  logger.info('Configurando manejo de errores para producción')
   
   // En producción, configurar reportes automáticos
   // Aquí se podría integrar con servicios como Sentry, LogRocket, etc.
@@ -109,5 +109,5 @@ export function setupProductionErrorHandling(): void {
     level: 2 // WARN y superior
   }
   
-  console.log('✅ Configuración de producción aplicada')
+  logger.info('Configuración de producción aplicada')
 }

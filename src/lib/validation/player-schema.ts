@@ -95,7 +95,7 @@ const heightSchema = z
 
 // 🦶 VALIDACIÓN DE PIE DOMINANTE
 const footSchema = z.enum(['Left', 'Right', 'Both'], {
-  errorMap: () => ({ message: 'El pie debe ser Left, Right o Both' })
+  message: 'El pie debe ser Left, Right o Both'
 })
 
 // 🎯 VALIDACIÓN DE POSICIÓN - ENHANCED SECURITY
@@ -206,14 +206,14 @@ export const PlayerSearchSchema = z.object({
     .regex(/^\d+$/, 'La página debe ser un número')
     .transform(Number)
     .refine(n => n >= 1, 'La página debe ser mayor a 0')
-    .default('1'),
+    .default(1),
     
   limit: z
     .string()
     .regex(/^\d+$/, 'El límite debe ser un número')
     .transform(Number)
     .refine(n => n >= 1 && n <= 100, 'El límite debe estar entre 1 y 100')
-    .default('20'),
+    .default(20),
   
   // 📈 ORDENAMIENTO
   sortBy: z
@@ -280,8 +280,8 @@ export const PlayerStatsSchema = z.object({
  * ✅ USO: En GET /api/players/filters
  */
 export const AvailableFiltersSchema = z.object({
-  include_counts: z.enum(['true', 'false']).transform(val => val === 'true').default('true'),
-  min_count: z.string().regex(/^\d+$/).transform(Number).default('1')
+  include_counts: z.enum(['true', 'false']).default('true').transform(val => val === 'true'),
+  min_count: z.string().regex(/^\d+$/).default('1').transform(Number)
 }).strict()
 
 // 📤 ========== FUNCIONES DE VALIDACIÓN ==========
@@ -295,13 +295,13 @@ export const AvailableFiltersSchema = z.object({
 export function validatePlayerCreate(data: unknown) {
   try {
     return PlayerCreateSchema.parse(data)
-  } catch (_error) {
+  } catch (error) {
     if (error instanceof z.ZodError) {
       // 📋 FORMATEAR ERRORES DE VALIDACIÓN
-      const formattedErrors = error.errors.map(err => ({
+      const formattedErrors = error.issues.map(err => ({
         field: err.path.join('.'),
         message: err.message,
-        received: err.input
+        received: (err as any).input
       }))
       
       throw new Error(`Datos de creación inválidos: ${JSON.stringify(formattedErrors)}`)
@@ -316,12 +316,12 @@ export function validatePlayerCreate(data: unknown) {
 export function validatePlayerUpdate(data: unknown) {
   try {
     return PlayerUpdateSchema.parse(data)
-  } catch (_error) {
+  } catch (error) {
     if (error instanceof z.ZodError) {
-      const formattedErrors = error.errors.map(err => ({
+      const formattedErrors = error.issues.map(err => ({
         field: err.path.join('.'),
         message: err.message,
-        received: err.input
+        received: (err as any).input
       }))
       
       throw new Error(`Datos de actualización inválidos: ${JSON.stringify(formattedErrors)}`)
@@ -336,12 +336,12 @@ export function validatePlayerUpdate(data: unknown) {
 export function validatePlayerSearch(params: unknown) {
   try {
     return PlayerSearchSchema.parse(params)
-  } catch (_error) {
+  } catch (error) {
     if (error instanceof z.ZodError) {
-      const formattedErrors = error.errors.map(err => ({
+      const formattedErrors = error.issues.map(err => ({
         field: err.path.join('.'),
         message: err.message,
-        received: err.input
+        received: (err as any).input
       }))
       
       throw new Error(`Parámetros de búsqueda inválidos: ${JSON.stringify(formattedErrors)}`)
@@ -356,9 +356,9 @@ export function validatePlayerSearch(params: unknown) {
 export function validatePlayerId(id: unknown) {
   try {
     return PlayerIdSchema.parse({ id }).id
-  } catch (_error) {
+  } catch (error) {
     if (error instanceof z.ZodError) {
-      throw new Error(`ID de jugador inválido: ${error.errors[0]?.message}`)
+      throw new Error(`ID de jugador inválido: ${error.issues[0]?.message}`)
     }
     throw error
   }

@@ -27,7 +27,7 @@ import type { PlayerSearchResult, Player } from '@/types/player'
  * @example
  * GET /api/players?page=1&limit=20&filters[position_player]=CF
  */
-export async function GET(__request: NextRequest): Promise<NextResponse<PlayerSearchResult | { _error: string; code?: string; details?: any }>> {
+export async function GET(__request: NextRequest): Promise<NextResponse<PlayerSearchResult | { _error: string; code?: string; details?: unknown }>> {
   const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const startTime = Date.now();
   
@@ -147,7 +147,7 @@ export async function GET(__request: NextRequest): Promise<NextResponse<PlayerSe
         limit: validatedParams.limit,
         sortBy: validatedParams.sortBy,
         sortOrder: validatedParams.sortOrder,
-        _filters: {
+        filters: {
           player_name: validatedParams['filters[player_name]'],
           position_player: validatedParams['filters[position_player]'],
           team_name: validatedParams['filters[team_name]'],
@@ -182,7 +182,7 @@ export async function GET(__request: NextRequest): Promise<NextResponse<PlayerSe
         userId,
         searchOptions: {
           ...searchOptions,
-          __filters: Object.keys(searchOptions.filters).length > 0 ? '...' : 'none'
+          filters: Object.keys(searchOptions.filters).length > 0 ? '...' : 'none'
         }
       });
       
@@ -354,7 +354,7 @@ export async function GET(__request: NextRequest): Promise<NextResponse<PlayerSe
  * @param request - Request con datos del nuevo jugador
  * @returns El jugador creado con su ID asignado
  */
-export async function POST(__request: NextRequest): Promise<NextResponse<Player | { _error: string; code?: string; details?: any }>> {
+export async function POST(__request: NextRequest): Promise<NextResponse<Player | { _error: string; code?: string; details?: unknown }>> {
   const requestId = `post_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const startTime = Date.now();
   

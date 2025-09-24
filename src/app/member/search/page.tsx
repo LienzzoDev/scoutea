@@ -98,9 +98,9 @@ export default function SearchPage() {
           {searchTerm && (
             <div className="text-[#6d6d6d] mb-6">
               {loading ? (
-                <p>Searching for "{searchTerm}"...</p>
+                <p>Searching for &quot;{searchTerm}&quot;...</p>
               ) : (
-                <p>Found {totalResults} result{totalResults !== 1 ? 's' : ''} for "{searchTerm}"{results.players.length > 0 && ` (${results.players.length} player${results.players.length !== 1 ? 's' : ''})`}
+                <p>Found {totalResults} result{totalResults !== 1 ? 's' : ''} for &quot;{searchTerm}&quot;{results.players.length > 0 && ` (${results.players.length} player${results.players.length !== 1 ? 's' : ''})`}
                   {results.players.length > 0 && results.scouts.length > 0 && ', '}
                   {results.scouts.length > 0 && `${results.scouts.length} scout${results.scouts.length !== 1 ? 's' : ''}`}
                 </p>
@@ -176,7 +176,7 @@ export default function SearchPage() {
                         </div>
                         {player.player_rating && (
                           <div className="text-lg font-bold text-[#8c1a10]">
-                            {player.player_rating.toFixed(1)}
+                            {Number(player.player_rating).toFixed(1)}
                           </div>
                         )}
                       </div>
@@ -211,7 +211,7 @@ export default function SearchPage() {
                         </div>
                         {scout.scout_elo && (
                           <div className="text-lg font-bold text-[#8c1a10]">
-                            {scout.scout_elo.toFixed(0)}
+                            {Number(scout.scout_elo).toFixed(0)}
                           </div>
                         )}
                       </div>
@@ -228,7 +228,7 @@ export default function SearchPage() {
             {/* No Results */}
             {!loading && totalResults === 0 && searchTerm && (
               <div className="text-center py-12">
-                <p className="text-[#6d6d6d] text-lg mb-2">No results found for "{searchTerm}"</p>
+                <p className="text-[#6d6d6d] text-lg mb-2">No results found for &quot;{searchTerm}&quot;</p>
                 <p className="text-[#6d6d6d] text-sm">Try searching with different keywords</p>
               </div>
             )}

@@ -104,7 +104,7 @@ export async function GET(_request: NextRequest): Promise<NextResponse<HealthChe
     
     return response
 
-  } catch (_error) {
+  } catch (error) {
     console.error('❌ Health check failed:', error)
     
     const errorResult: HealthCheckResult = {
@@ -154,7 +154,7 @@ async function checkDatabaseHealth(): Promise<ServiceHealthStatus> {
         lastCheck: new Date().toISOString()
       }
     }
-  } catch (_error) {
+  } catch (error) {
     return {
       status: 'unhealthy',
       message: `Database health check failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -169,9 +169,9 @@ async function checkDatabaseHealth(): Promise<ServiceHealthStatus> {
 /**
  * POST /api/health/recovery - Trigger system recovery
  */
-export async function POST(__request: NextRequest): Promise<NextResponse> {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const _body = await request.json()
+    const body = await request.json()
     const { action } = body
 
     if (action === 'recovery') {
@@ -187,7 +187,7 @@ export async function POST(__request: NextRequest): Promise<NextResponse> {
       { status: 400 }
     )
 
-  } catch (_error) {
+  } catch (error) {
     console.error('❌ Recovery action failed:', error)
     return NextResponse.json(
       { __error: 'Recovery action failed' },

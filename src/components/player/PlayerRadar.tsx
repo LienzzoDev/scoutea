@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 import RadarDebugPanel from '../debug/RadarDebugPanel';
+import { usePlayerRadar } from '@/hooks/player/usePlayerRadar';
 
 interface RadarData {
   category: string;
@@ -11,6 +12,7 @@ interface RadarData {
   comparisonAverage?: number;
   positionAverage?: number; // Keep for backward compatibility
   percentile: number;
+  basePercentile?: number; // Original percentile without filters
   rank: number;
   totalPlayers: number;
   maxValue?: number;
@@ -63,12 +65,8 @@ const CustomTooltip = ({ active, payload, label }: unknown) => {
 };
 
 export default function PlayerRadar({ playerId }: PlayerRadarProps) {
-  // FIXED: Separate base player data from comparison data
-  const [basePlayerData, setBasePlayerData] = useState<RadarData[]>([]);
-  const [radarData, setRadarData] = useState<RadarData[]>([]);
-  const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Use the custom hook instead of direct API calls
+  const { radarData, filterOptions, loading, error, applyFilters } = usePlayerRadar(playerId);
   
   // Filter states
   const [selectedPosition, setSelectedPosition] = useState<string>('');
@@ -81,161 +79,23 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
   const [showMax, setShowMax] = useState(false);
   const [showMin, setShowMin] = useState(false);
   const [showAvg, setShowAvg] = useState(true);
-  const [showPercentiles, setShowPercentiles] = useState(true);
+  const [_showPercentiles, _setShowPercentiles] = useState(true);
   const [showRaw, setShowRaw] = useState(false);
 
-  // Load filter options
+  // Apply filters when they change
   useEffect(() => {
-    const loadFilterOptions = async () => {
-      try {
-        const response = await fetch('/api/players/radar/filters');
-        if (response.ok) {
-          const options = await response.json();
-          setFilterOptions(options);
-        }
-      } catch (_error) {
-        console.error('Error loading filter options:', error);
-      }
+    const filters = {
+      position: selectedPosition,
+      nationality: selectedNationality,
+      competition: selectedCompetition,
+      ageMin,
+      ageMax,
+      ratingMin,
+      ratingMax
     };
-
-    loadFilterOptions();
-  }, []);
-
-  // FIXED: Load base player data only once (never changes)
-  useEffect(() => {
-    const loadBasePlayerData = async () => {
-      if (!playerId) {
-        console.log('PlayerRadar: No playerId provided');
-        return;
-      }
-      
-      console.log('PlayerRadar: Loading base player data for _playerId:', playerId);
-      setLoading(true);
-      setError(null);
-
-      try {
-        // ALWAYS fetch base player data without filters - this should be constant
-        const response = await fetch(`/api/players/${playerId}/radar`);
-        
-        console.log('PlayerRadar: Base data response status:', response.status);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('PlayerRadar: API Error:', errorText);
-          throw new Error(`API Error: ${response.status} - ${errorText}`);
-        }
-
-        const data = await response.json();
-        console.log('PlayerRadar: Received base player data:', data);
-        
-        if (data.radarData) {
-          console.log('PlayerRadar: Setting base player data:', data.radarData.map((item: unknown) => ({
-            category: item.category,
-            playerValue: item.playerValue,
-            percentile: item.percentile
-          })));
-          setBasePlayerData(data.radarData);
-        } else {
-          console.warn('PlayerRadar: No radar data in response');
-          setError('No radar data available in response');
-        }
-
-      } catch (_error) {
-        console.error('PlayerRadar: Error loading base player data:', error);
-        setError(`Failed to load radar data: ${error.message}`);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadBasePlayerData();
-  }, [playerId]); // Only depend on playerId
-
-  // FIXED: Load comparison data when filters change
-  useEffect(() => {
-    const loadComparisonData = async () => {
-      if (!basePlayerData.length) {
-        console.log('PlayerRadar: No base data available yet');
-        return;
-      }
-
-      try {
-        // Check if any filters are applied
-        const hasFilters = selectedPosition || selectedNationality || selectedCompetition || 
-                          ageMin || ageMax || ratingMin || ratingMax;
-
-        if (hasFilters) {
-          console.log('PlayerRadar: Loading comparison data with filters');
-          
-          // Build query parameters for comparison
-          const params = new URLSearchParams();
-          if (selectedPosition) params.append('position', selectedPosition);
-          if (selectedNationality) params.append('nationality', selectedNationality);
-          if (selectedCompetition) params.append('competition', selectedCompetition);
-          if (ageMin) params.append('ageMin', ageMin);
-          if (ageMax) params.append('ageMax', ageMax);
-          if (ratingMin) params.append('ratingMin', ratingMin);
-          if (ratingMax) params.append('ratingMax', ratingMax);
-
-          const endpoint = `/api/players/${playerId}/radar/compare?${params}`;
-          console.log('PlayerRadar: Fetching comparison from endpoint:', endpoint);
-          
-          const response = await fetch(endpoint);
-          
-          if (response.ok) {
-            const comparisonData = await response.json();
-            console.log('PlayerRadar: Received comparison data:', comparisonData);
-            
-            if (comparisonData.comparisonData) {
-              // FIXED: Merge base player data with comparison data
-              const mergedData = basePlayerData.map(baseCategory => {
-                const comparisonCategory = comparisonData.comparisonData.find(
-                  (comp: RadarData) => comp.category === baseCategory.category
-                );
-                
-                const merged = {
-                  ...baseCategory, // Keep original player values (CRITICAL: playerValue stays constant)
-                  comparisonAverage: comparisonCategory?.comparisonAverage,
-                  percentile: comparisonCategory?.percentile, // This can change with filters
-                  rank: comparisonCategory?.rank,
-                  totalPlayers: comparisonCategory?.totalPlayers,
-                  maxValue: comparisonCategory?.maxValue,
-                  minValue: comparisonCategory?.minValue
-                };
-                
-                // Debug logging to verify data integrity
-                console.log(`PlayerRadar: Merging category ${baseCategory.category}:`, {
-                  basePlayerValue: baseCategory.playerValue,
-                  mergedPlayerValue: merged.playerValue,
-                  basePercentile: baseCategory.percentile,
-                  comparisonPercentile: comparisonCategory?.percentile,
-                  finalPercentile: merged.percentile
-                });
-                
-                return merged;
-              });
-              
-              console.log('PlayerRadar: Setting merged radar data with filters applied');
-              setRadarData(mergedData);
-            }
-          } else {
-            // If comparison fails, use base data without comparison
-            setRadarData(basePlayerData);
-          }
-        } else {
-          // No filters applied, use base data
-          setRadarData(basePlayerData);
-        }
-
-      } catch (_error) {
-        console.error('PlayerRadar: Error loading comparison data:', error);
-        // Fallback to base data if comparison fails
-        setRadarData(basePlayerData);
-      }
-    };
-
-    loadComparisonData();
-  }, [playerId, basePlayerData, selectedPosition, selectedNationality, selectedCompetition, ageMin, ageMax, ratingMin, ratingMax]);
+    
+    applyFilters(filters);
+  }, [selectedPosition, selectedNationality, selectedCompetition, ageMin, ageMax, ratingMin, ratingMax, applyFilters]);
 
   // Define the 9 tactical categories in proper order
   const categoryOrder = [
@@ -257,27 +117,47 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
     return indexA - indexB;
   });
 
-  // FIXED: Prepare chart data with proper separation of player and comparison data
+  // Prepare chart data
   const chartData = sortedRadarData.map(item => {
-    // CRITICAL FIX: Calculate base percentile from base player data only
-    const baseCategory = basePlayerData.find(base => base.category === item.category);
-    const basePercentile = baseCategory?.percentile || 50; // Use base percentile, not filtered percentile
+    // Convert comparison average to percentile (assuming 50 is the baseline)
+    const comparisonPercentile = item.comparisonAverage ? 
+      Math.min(100, Math.max(0, (item.comparisonAverage / 100) * 100)) : 50;
     
-    return {
+    const chartItem = {
       category: item.category,
-      // FIXED: Player layer ALWAYS uses base data, never changes with filters
-      Player: showRaw ? item.playerValue : basePercentile,
-      // FIXED: Comparison layer changes based on filters
-      Average: showAvg ? (showRaw ? (item.comparisonAverage || 50) : 50) : undefined,
+      // Player layer - ALWAYS uses base data (NEVER changes with filters)
+      Player: showRaw ? item.playerValue : (item.basePercentile || item.percentile || 50),
+      // Average layer - shows comparison group average (changes with filters)
+      Average: showAvg ? (showRaw ? (item.comparisonAverage || 50) : comparisonPercentile) : undefined,
+      // Max/Min layers
       Max: showMax ? (showRaw ? (item.maxValue || 100) : 100) : undefined,
       Min: showMin ? (showRaw ? (item.minValue || 0) : 0) : undefined,
-      // Display data for tooltips - show comparison data when available
+      // Display data for tooltips
       playerValue: item.playerValue,
-      percentile: item.percentile || basePercentile,
+      percentile: item.percentile || 50,
+      basePercentile: item.basePercentile || item.percentile || 50,
       rank: item.rank || 1,
       totalPlayers: item.totalPlayers || 1,
-      dataCompleteness: item.dataCompleteness
+      dataCompleteness: item.dataCompleteness,
+      comparisonAverage: item.comparisonAverage
     };
+    
+    // Debug logging for radar data
+    if (item.category === 'Finalización' || item.category === 'Finishing') {
+      console.log(`🔍 PlayerRadar: ${item.category}`, {
+        playerValue: item.playerValue,
+        basePercentile: item.basePercentile,
+        percentile: item.percentile,
+        comparisonAverage: item.comparisonAverage,
+        showRaw,
+        showAvg,
+        Player: chartItem.Player,
+        Average: chartItem.Average,
+        comparisonPercentile
+      });
+    }
+    
+    return chartItem;
   });
 
   if (loading) {
@@ -299,7 +179,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <div className="text-4xl mb-4">⚠️</div>
-            <p className="text-red-600 mb-4">{error}</p>
+            <p className="text-red-600 mb-4">{typeof error === 'string' ? error : error?.message || 'An error occurred'}</p>
             <div className="text-sm text-gray-600">
               <p>Player ID: {playerId}</p>
               <p>This player may not exist or have no radar data.</p>
@@ -587,11 +467,11 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
                   <Radar
                     name="Promedio"
                     dataKey="Average"
-                    stroke="#6d6d6d"
+                    stroke="#2563eb"
                     fill="transparent"
                     strokeWidth={2}
                     strokeDasharray="4 4"
-                    dot={{ fill: '#6d6d6d', strokeWidth: 1, r: 3 }}
+                    dot={{ fill: '#2563eb', strokeWidth: 2, r: 3 }}
                   />
                 )}
                 {showMax && (
@@ -635,14 +515,25 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
         {/* Stats Summary - Display in responsive grid for the 9 categories */}
         {sortedRadarData.length > 0 && (
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 text-center">
-            {sortedRadarData.map(item => (
-              <div key={item.category} className="bg-gray-50 p-3 rounded-lg">
+            {sortedRadarData.map((item, index) => (
+              <div key={`${item.category}-${index}`} className="bg-gray-50 p-3 rounded-lg">
                 <h5 className="font-semibold text-sm text-[#2e3138] mb-1">
                   {item.category}
                 </h5>
-                <p className="text-lg font-bold text-[#8c1a10]">
-                  {Math.round(item.playerValue)}
-                </p>
+                <div className="flex justify-center items-center gap-3 mb-1">
+                  <div className="text-center">
+                    <p className="text-lg font-bold text-[#8c1a10]">
+                      {Math.round(item.playerValue)}
+                    </p>
+                    <p className="text-xs text-[#8c1a10]">Jugador</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-lg font-bold text-[#2563eb]">
+                      {Math.round(item.comparisonAverage || 50)}
+                    </p>
+                    <p className="text-xs text-[#2563eb]">Promedio</p>
+                  </div>
+                </div>
                 <p className="text-xs text-[#6d6d6d]">
                   {Math.round(item.percentile || 50)}% | #{item.rank || 1}/{item.totalPlayers || 1}
                 </p>
@@ -661,7 +552,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
       {process.env.NODE_ENV === 'development' && (
         <RadarDebugPanel
           playerId={playerId}
-          basePlayerData={basePlayerData}
+          basePlayerData={radarData}
           radarData={radarData}
           selectedPosition={selectedPosition}
         />

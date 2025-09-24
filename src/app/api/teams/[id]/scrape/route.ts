@@ -34,7 +34,7 @@ export async function POST(
 
     // Filtrar datos nulos
     const filteredData = Object.fromEntries(
-      Object.entries(scrapedData).filter(([key, value]) => value !== null)
+      Object.entries(scrapedData).filter(([_key, value]) => value !== null)
     )
 
     return NextResponse.json({

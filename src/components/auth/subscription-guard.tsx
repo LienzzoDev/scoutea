@@ -16,7 +16,7 @@ export function SubscriptionGuard({
   requiredPlan = 'basic',
   fallbackUrl = '/member/subscription-plans'
 }: SubscriptionGuardProps) {
-  const { subscription, loading, hasActiveSubscription, isPremium, isBasic } = useSubscription()
+  const { subscription: _subscription, loading, hasActiveSubscription, isPremium, isBasic } = useSubscription()
   const _router = useRouter()
 
   useEffect(() => {

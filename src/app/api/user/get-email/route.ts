@@ -13,7 +13,7 @@ export async function GET(__request: NextRequest) {
 
     // Obtener el email del usuario desde los metadatos de la sesión
     const { sessionClaims } = await auth()
-    const email = (sessionClaims as any)?.email || ''
+    const email = (sessionClaims as Record<string, unknown>)?.email as string || ''
 
     return NextResponse.json({ 
       email: email,

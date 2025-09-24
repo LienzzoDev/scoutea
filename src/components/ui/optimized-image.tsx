@@ -4,7 +4,9 @@
 
 "use client";
 
+import Image from "next/image";
 import React, { memo, useState, useCallback, useMemo } from 'react';
+
 
 interface OptimizedImageProps {
   src: string;
@@ -44,7 +46,7 @@ const OptimizedImage = memo<OptimizedImageProps>(function OptimizedImage({
   onLoad,
   onError,
   fallbackSrc = '/default-avatar.svg',
-  lazy = true
+  lazy: _lazy = true
 }) {
   // 🔄 ESTADO PARA MANEJO DE ERRORES Y CARGA
   const [imageError, setImageError] = useState(false);

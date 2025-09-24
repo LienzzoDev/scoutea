@@ -25,7 +25,7 @@ import type { Player } from '@/types/player'
  * @returns El jugador encontrado o error 404 si no existe
  */
 export async function GET(
-  __request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ): Promise<NextResponse<Player | { _error: string }>> {
   try {
@@ -97,14 +97,27 @@ export async function GET(
     console.log('📤 Returning player data to client');
     return NextResponse.json(player)
 
-  } catch (_error) {
+  } catch (error) {
     // 🚨 MANEJO DE ERRORES
-    console.error('❌ Error getting ___player: ', {
-      __error: error instanceof Error ? error.message : 'Unknown error',
-      _playerId: params.id,
+    console.error('❌ Error getting player: ', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      playerId: params.id,
       userId: (await auth()).userId,
       timestamp: new Date().toISOString()
     })
+
+    // En desarrollo, devolver más detalles del error
+    if (process.env.NODE_ENV === 'development') {
+      return NextResponse.json(
+        { 
+          __error: 'Error interno del servidor',
+          details: error instanceof Error ? error.message : 'Unknown error',
+          playerId: params.id
+        },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json(
       { __error: 'Error interno del servidor. Por favor, inténtalo de nuevo más tarde.' },
@@ -125,7 +138,7 @@ export async function GET(
  * @returns El jugador actualizado
  */
 export async function PUT(
-  __request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ): Promise<NextResponse<Player | { _error: string }>> {
   try {
@@ -205,11 +218,11 @@ export async function PUT(
     // 📤 DEVOLVER JUGADOR ACTUALIZADO
     return NextResponse.json(updatedPlayer)
 
-  } catch (_error) {
+  } catch (error) {
     // 🚨 MANEJO DE ERRORES ESPECÍFICOS
-    console.error('❌ Error updating ___player: ', {
-      __error: error instanceof Error ? error.message : 'Unknown error',
-      _playerId: params.id,
+    console.error('❌ Error updating player: ', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      playerId: params.id,
       userId: (await auth()).userId,
       timestamp: new Date().toISOString()
     })
@@ -253,7 +266,7 @@ export async function PUT(
  * @returns Confirmación de eliminación exitosa
  */
 export async function DELETE(
-  __request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ): Promise<NextResponse<{ success: boolean; message: string } | { error: string }>> {
   try {
@@ -321,11 +334,11 @@ export async function DELETE(
       message: `Jugador "${playerInfo.name}" eliminado exitosamente.`
     })
 
-  } catch (_error) {
+  } catch (error) {
     // 🚨 MANEJO DE ERRORES
-    console.error('❌ Error deleting ___player: ', {
-      __error: error instanceof Error ? error.message : 'Unknown error',
-      _playerId: params.id,
+    console.error('❌ Error deleting player: ', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      playerId: params.id,
       userId: (await auth()).userId,
       timestamp: new Date().toISOString()
     })

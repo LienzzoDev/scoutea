@@ -4,7 +4,7 @@ import { Search, Download, Upload, Globe, Plus, Edit, Trash2 } from "lucide-reac
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-import AdminPlayerFilters from "@/components/player/AdminPlayerFilters"
+import { AdminPlayerFilters } from "@/components/dynamic-imports";
 import PlayerProfileModal from "@/components/player/player-profile-modal"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -189,7 +189,7 @@ export default function JugadoresPage() {
         {/* Error State */}
         {error && (
           <div className="mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg">
-            <p className="text-red-400">Error: {error}</p>
+            <p className="text-red-400">Error: {typeof error === 'string' ? error : error?.message || 'Error desconocido'}</p>
             <Button 
               onClick={() =>searchPlayers()}
               variant="outline" className="mt-2 border-red-700 text-red-400 hover:bg-red-900/20">

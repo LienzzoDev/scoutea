@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { ChartService } from '@/lib/services/chart-service'
+
 import { ChartFilters } from '@/types/charts'
 
-export async function GET(__request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     
@@ -12,13 +13,13 @@ export async function GET(__request: NextRequest) {
 
     if (!metric) {
       return NextResponse.json(
-        { __error: 'Métrica requerida' },
+        { error: 'Métrica requerida' },
         { status: 400 }
       )
     }
 
     // Construir filtros desde query parameters
-    const _filters: ChartFilters = {
+    const filters: ChartFilters = {
       period: searchParams.get('period') || undefined,
       position: searchParams.get('position') || undefined,
       age: searchParams.get('age') || undefined,
@@ -39,9 +40,9 @@ export async function GET(__request: NextRequest) {
     })
 
   } catch (_error) {
-    console.error('Error al obtener datos de enjambre:', error)
+    console.error('Error al obtener datos de enjambre:', _error)
     return NextResponse.json(
-      { __error: 'Error interno del servidor' },
+      { error: 'Error interno del servidor' },
       { status: 500 }
     )
   }

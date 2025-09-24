@@ -183,7 +183,7 @@ export default function MemberNavbar() {
                               </div>
                               {player.player_rating && (
                                 <div className="text-sm font-medium text-[#8c1a10]">
-                                  {player.player_rating.toFixed(1)}
+                                  {Number(player.player_rating).toFixed(1)}
                                 </div>
                               )}
                             </div>
@@ -219,7 +219,7 @@ export default function MemberNavbar() {
                               </div>
                               {scout.scout_elo && (
                                 <div className="text-sm font-medium text-[#8c1a10]">
-                                  {scout.scout_elo.toFixed(0)}
+                                  {Number(scout.scout_elo).toFixed(0)}
                                 </div>
                               )}
                             </div>
@@ -231,7 +231,7 @@ export default function MemberNavbar() {
                     {/* NO RESULTS */}
                     {searchResults.players.length === 0 && searchResults.scouts.length === 0 && searchTerm.trim() && (
                       <div className="p-4 text-center">
-                        <p className="text-[#6d6d6d] text-sm">No se encontraron resultados para "{searchTerm}"</p>
+                        <p className="text-[#6d6d6d] text-sm">No se encontraron resultados para &quot;{searchTerm}&quot;</p>
                         <p className="text-[#6d6d6d] text-xs mt-1">Intenta buscar con otras palabras clave</p>
                       </div>
                     )}
@@ -247,7 +247,7 @@ export default function MemberNavbar() {
                             setShowSearchResults(false)
                           }}
                         >
-                          Ver todos los resultados para "{searchTerm}"</button>
+                          Ver todos los resultados para &quot;{searchTerm}&quot;</button>
                       </div>
                     )}
                   </div>

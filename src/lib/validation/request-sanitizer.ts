@@ -17,6 +17,7 @@
 
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
+import { logger } from '../logging/production-logger'
 
 export interface SanitizationConfig {
   maxStringLength: number
@@ -559,15 +560,8 @@ export class RequestSanitizer {
       data?: any
     }
   ): void {
-    const logLevel = event === 'blocked' ? 'error' : event === 'warning' ? 'warn' : 'info'
-    const logMethod = logLevel === 'error' ? console.error : 
-                     logLevel === 'warn' ? console.warn : console.log
-    
-    logMethod(`🛡️ Security Event [${event.toUpperCase()}]:`, {
-      timestamp: new Date().toISOString(),
-      event,
-      ...details
-    })
+    const severity = event === 'blocked' ? 'high' : event === 'warning' ? 'medium' : 'low'
+    logger.securityEvent(event, severity, details)
   }
 }
 

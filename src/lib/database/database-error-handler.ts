@@ -15,6 +15,7 @@
  */
 
 import { PrismaClient, Prisma } from '@prisma/client'
+import { logger } from '../logging/production-logger'
 
 export interface DatabaseErrorContext {
   operation: string
@@ -110,7 +111,7 @@ export class DatabaseErrorHandler {
     _context: Omit<DatabaseErrorContext, 'timestamp'>
   ): Promise<DatabaseOperationResult<T>> {
     const startTime = Date.now()
-    const lastError: unknown = null
+    const _lastError: unknown = null
     const _retryCount = 0
 
     const fullContext: DatabaseErrorContext = {
@@ -150,7 +151,7 @@ export class DatabaseErrorHandler {
     _context: DatabaseErrorContext,
     initialRetryCount: number
   ): Promise<{ data: T; retryCount: number }> {
-    let retryCount = initialRetryCount
+    let _retryCount = initialRetryCount
     let lastError: unknown = null
 
     for (let attempt = 0; attempt <= this.config.maxRetries; attempt++) {
@@ -158,7 +159,10 @@ export class DatabaseErrorHandler {
         const data = await this.executeWithTimeout(operation, 30000) // 30 second timeout
         
         if (attempt > 0) {
-          console.log(`✅ Database operation ${context.operation} succeeded after ${attempt} retries`)
+          logger.info(`Database operation succeeded after retries`, { 
+            operation: context.operation, 
+            attempts: attempt 
+          })
         }
         
         return { data, retryCount: attempt }

@@ -12,7 +12,7 @@ export function useAuthRedirect() {
       setHasRedirected(true)
       try {
         _router.replace('/login')
-      } catch (_error) {
+      } catch (error) {
         console.error('Error durante la redirección:', error)
         // Fallback a window.location si router falla
         window.location.href = '/login'

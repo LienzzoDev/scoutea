@@ -1,16 +1,16 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server';
 
-import { TournamentService } from '@/lib/services/tournament-service'
+import { CompetitionService } from '@/lib/services/competition-service';
 
-export async function GET() {
+export async function GET(_request: NextRequest) {
   try {
-    const competiciones = await TournamentService.getCompeticiones()
-    return NextResponse.json(competiciones)
-  } catch (_error) {
-    console.error('Error fetching competiciones:', error)
+    const competitions = await CompetitionService.getAllCompetitions();
+    return NextResponse.json(competitions);
+  } catch (error) {
+    console.error('Error fetching competitions:', error);
     return NextResponse.json(
-      { __error: 'Error interno del servidor' },
+      { error: 'Failed to fetch competitions' },
       { status: 500 }
-    )
+    );
   }
 }

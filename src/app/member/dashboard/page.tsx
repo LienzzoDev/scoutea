@@ -3,13 +3,13 @@
 import { Search, X } from "lucide-react";
 
 import AuthGuard from "@/components/auth/AuthGuard";
+import { PlayerTable } from "@/components/dynamic-imports";
 import CategorySelector from "@/components/filters/category-selector";
 import MultiSelectFilter from "@/components/filters/multi-select-filter";
 import RangeFilter from "@/components/filters/range-filter";
 import MemberNavbar from "@/components/layout/member-navbar";
 import DashboardTabs from "@/components/player/DashboardTabs";
 import PlayerFilters from "@/components/player/PlayerFilters";
-import PlayerTable from "@/components/player/PlayerTable";
 import { Input } from "@/components/ui/input";
 import { useDashboardState } from "@/hooks/useDashboardState";
 
@@ -338,7 +338,7 @@ export default function MemberDashboard() {
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
             <p className="text-red-600">
-              Error al cargar los jugadores: {error}
+              Error al cargar los jugadores: {typeof error === 'string' ? error : error?.message || 'Error desconocido'}
             </p>
           </div>
         )}

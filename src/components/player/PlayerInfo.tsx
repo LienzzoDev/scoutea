@@ -1,10 +1,8 @@
-"use client";
-
 import { Badge } from "@/components/ui/badge";
 import type { Player } from "@/types/player";
 
 interface PlayerInfoProps {
-  _player: Player;
+  player: Player;
 }
 
 export default function PlayerInfo({ player }: PlayerInfoProps) {

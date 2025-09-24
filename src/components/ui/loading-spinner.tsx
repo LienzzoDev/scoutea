@@ -1,5 +1,3 @@
-"use client";
-
 interface LoadingSpinnerProps {
   size?: "sm" | "md" | "lg" | "xl";
   variant?: "default" | "primary" | "secondary";

@@ -1,12 +1,14 @@
 "use client";
 
-import { Play } from "lucide-react";import type { Player } from "@/types/player";
+import { Play } from "lucide-react";
+
+import type { Player } from "@/types/player";
 
 interface PlayerReportsProps {
   _player: Player;
 }
 
-export default function PlayerReports({ player }: PlayerReportsProps) {
+export default function PlayerReports({ player: _player }: PlayerReportsProps) {
   return (
     <div className="bg-white p-6">
       {/* Overall Rating */}

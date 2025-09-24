@@ -363,7 +363,7 @@ export default function CompleteProfileAfterPayment() {
                 <div className="bg-red-100 rounded-full p-1">
                   <CheckCircle className="h-4 w-4 text-red-600" />
                 </div>
-                <p className="text-sm text-red-600 font-medium">{error}</p>
+                <p className="text-sm text-red-600 font-medium">{typeof error === 'string' ? error : error?.message || 'Error desconocido'}</p>
               </div>
             )}
 

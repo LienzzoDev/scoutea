@@ -9,7 +9,7 @@ interface PlayerFeaturesProps {
 }
 
 export default function PlayerFeatures({
-  player,
+  player: _player,
   activeFeaturesTab,
   onFeaturesTabChange,
 }: PlayerFeaturesProps) {

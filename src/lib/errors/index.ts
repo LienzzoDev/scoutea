@@ -29,34 +29,28 @@ export {
 
 // Cliente - manejo de errores en frontend
 export {
-  ClientErrorHandler,
-  useErrorHandler,
-  fetchWithErrorHandling,
-  formatErrorMessage,
-  shouldShowErrorToUser,
-  type ClientErrorState,
-  type APIErrorResponse
+  ClientErrorHandler
 } from './client-errors'
 
 // Sistema de logging
-export {
-  logger,
-  createLogger,
-  createRequestLogger,
-  setupGlobalErrorHandling,
-  LogLevel,
-  type LogEntry,
-  type LoggerConfig
-} from '../logging/logger'
+// export {
+//   logger,
+//   createLogger,
+//   createRequestLogger,
+//   setupGlobalErrorHandling,
+//   LogLevel,
+//   type LogEntry,
+//   type LoggerConfig
+// } from '../logging/logger'
 
 // Sistema de monitoreo
-export {
-  errorMonitor,
-  setupErrorMonitoring,
-  type ErrorMetrics,
-  type ErrorEvent,
-  type AlertRule
-} from '../monitoring/error-monitor'
+// export {
+//   errorMonitor,
+//   setupErrorMonitoring,
+//   type ErrorMetrics,
+//   type ErrorEvent,
+//   type AlertRule
+// } from '../monitoring/error-monitor'
 
 // Re-exportar para compatibilidad
-export type { ErrorContext as APIErrorContext } from './error-handler'
+// export type { ErrorContext as APIErrorContext } from './error-handler'

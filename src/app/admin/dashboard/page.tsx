@@ -16,6 +16,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { usePlayers } from "@/hooks/player/usePlayers"
+import PlayersDiagnostic from "@/components/debug/PlayersDiagnostic"
 
 export default function DashboardPage() {
   const { isSignedIn, isLoaded } = useAuth()
@@ -44,34 +45,42 @@ export default function DashboardPage() {
       if (response.ok) {
         const stats = await response.json()
         
-        // 📊 CALCULAR MÉTRICAS ADICIONALES
+        // 📊 USAR ESTADÍSTICAS REALES DE LA API
         const totalJugadores = stats.totalPlayers || 0
+        
+        // Calcular jugadores recientes solo de los jugadores cargados (muestra)
         const jugadoresRecientes = players.filter(player => {
           const fechaCreacion = new Date(player.createdAt)
           const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000)
           return fechaCreacion > hace24h
         }).length
 
-        const jugadoresConRating = players.filter(player => 
+        // Estimar jugadores con rating basado en la muestra cargada
+        const jugadoresConRatingMuestra = players.filter(player => 
           player.player_rating && player.player_rating > 0
         ).length
-
-        const porcentajeConRating = totalJugadores > 0 
-          ? Math.round((jugadoresConRating / totalJugadores) * 100)
+        
+        const porcentajeMuestra = players.length > 0 
+          ? (jugadoresConRatingMuestra / players.length) * 100
           : 0
+        
+        // Estimar total de jugadores con rating
+        const jugadoresConRatingEstimado = Math.round((totalJugadores * porcentajeMuestra) / 100)
 
         setAdminStats({
           totalJugadores,
           jugadoresRecientes,
-          jugadoresConRating,
-          porcentajeConRating,
+          jugadoresConRating: jugadoresConRatingEstimado,
+          porcentajeConRating: Math.round(porcentajeMuestra),
           promedioRating: stats.averageRating || 0
         })
         
         console.log('✅ Admin stats updated:', {
           totalJugadores,
           jugadoresRecientes,
-          porcentajeConRating
+          porcentajeConRating: Math.round(porcentajeMuestra),
+          jugadoresConRatingEstimado,
+          promedioRating: stats.averageRating
         })
       }
     } catch (_error) {
@@ -148,7 +157,7 @@ export default function DashboardPage() {
         // Cargar jugadores recientes para métricas
         searchPlayers({
           page: 1,
-          limit: 50, // Reducido para mejor performance
+          limit: 100, // Aumentado para obtener más datos para métricas
           sortBy: 'createdAt',
           sortOrder: 'desc'
         })
@@ -376,10 +385,28 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Debug Info - Simple */}
+      <div className="mt-8 p-4 bg-gray-800 rounded-lg">
+        <h3 className="text-lg font-semibold text-white mb-2">🔍 Debug Info</h3>
+        <p className="text-gray-300">Players loaded: {players.length}</p>
+        <p className="text-gray-300">Loading: {loading ? 'Yes' : 'No'}</p>
+        <p className="text-gray-300">Error: {error ? String(error) : 'None'}</p>
+        {players.length > 0 && (
+          <div className="mt-2">
+            <p className="text-gray-300">Sample players:</p>
+            <ul className="text-sm text-gray-400">
+              {players.slice(0, 3).map(player => (
+                <li key={player.id}>{player.player_name} - {player.team_name}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
       {/* Error State */}
       {error && (
         <div className="mt-8 p-4 bg-red-900/20 border border-red-700 rounded-lg">
-          <p className="text-red-400">Error: {error}</p>
+          <p className="text-red-400">Error: {typeof error === 'string' ? error : error?.message || 'Error desconocido'}</p>
           <Button 
             onClick={() =>searchPlayers({
               page: 1,

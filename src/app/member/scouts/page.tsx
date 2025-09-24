@@ -37,7 +37,7 @@ const AVAILABLE_CATEGORIES: DisplayCategory[] = [
     _key: 'scout_elo',
     label: 'Scout ELO',
     getValue: (scout) => scout.scout_elo,
-    format: (value) => value ? value.toFixed(0) : 'N/A'
+    format: (value) => value ? Number(value).toFixed(0) : 'N/A'
   },
   {
     _key: 'total_reports',
@@ -49,7 +49,7 @@ const AVAILABLE_CATEGORIES: DisplayCategory[] = [
     _key: 'roi',
     label: 'ROI',
     getValue: (scout) => scout.roi,
-    format: (value) => value ? `${value.toFixed(1)}%` : 'N/A'
+    format: (value) => value ? `${Number(value).toFixed(1)}%` : 'N/A'
   },
   {
     _key: 'max_profit',
@@ -120,8 +120,8 @@ export default function ScoutsPage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
 
   // 🔍 ESTADO PARA FILTROS AVANZADOS
-  const [activeFilters, setActiveFilters] = useState<any>({})
-  const [showFilterDropdowns, setShowFilterDropdowns] = useState<Record<string, boolean>>({})
+  const [activeFilters, setActiveFilters] = useState<Record<string, unknown>>({})
+  const [_showFilterDropdowns, _setShowFilterDropdowns] = useState<Record<string, boolean>>({})
   
   // 🏷️ ESTADO PARA FILTROS MULTI-SELECT
   const [selectedNationalities, setSelectedNationalities] = useState<string[]>([])
@@ -735,7 +735,7 @@ export default function ScoutsPage() {
         {/* Error State */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
-            <p className="text-red-600">Error loading scouts: {error}</p>
+            <p className="text-red-600">Error loading scouts: {typeof error === 'string' ? error : error?.message || 'Unknown error'}</p>
           </div>
         )}
 
@@ -845,7 +845,16 @@ export default function ScoutsPage() {
                         <div className="flex" style={{ minWidth: `${Math.max(getSelectedCategoriesData().length * 140, 100)}px` }}>
                           {getSelectedCategoriesData().map((category, catIndex, array) => {
                             const value = category.getValue(scout)
-                            const formattedValue = category.format ? category.format(value) : (value || 'N/A')
+                            let formattedValue = category.format ? category.format(value) : (value || 'N/A')
+                            
+                            // Ensure formattedValue is always a string
+                            if (typeof formattedValue === 'object') {
+                              formattedValue = JSON.stringify(formattedValue);
+                            } else if (formattedValue === null || formattedValue === undefined) {
+                              formattedValue = "N/A";
+                            } else {
+                              formattedValue = String(formattedValue);
+                            }
                             
                             return (
                               <div 

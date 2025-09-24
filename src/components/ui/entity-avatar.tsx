@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 interface EntityData {
   // Player fields
   id_player?: string;

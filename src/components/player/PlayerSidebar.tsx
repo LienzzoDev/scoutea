@@ -1,11 +1,14 @@
 "use client";
 
 import { Facebook, Twitter, Linkedin, Send } from "lucide-react";
+import Image from "next/image";
+
+
 import { Button } from "@/components/ui/button";
 import type { Player } from "@/types/player";
 
 interface PlayerSidebarProps {
-  _player: Player;
+  player: Player;
 }
 
 export default function PlayerSidebar({ player }: PlayerSidebarProps) {

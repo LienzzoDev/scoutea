@@ -265,7 +265,7 @@ export async function POST(
       
       // Filtrar solo los campos que no son null
       const filteredData = Object.fromEntries(
-        Object.entries(playerData).filter(([key, value]) => value !== null)
+        Object.entries(playerData).filter(([_key, value]) => value !== null)
       )
       
       console.log('✅ Datos filtrados para el formulario:', filteredData)

@@ -14,6 +14,7 @@
  */
 
 import { NextRequest } from 'next/server'
+import { logger } from '../logging/production-logger'
 
 export interface RateLimitConfig {
   windowMs: number // Time window in milliseconds
@@ -220,7 +221,7 @@ export class RateLimiter {
     }
 
     if (process.env.NODE_ENV === 'development' && keysToDelete.length > 0) {
-      console.log(`🧹 Rate limiter cleanup: removed ${keysToDelete.length} expired entries`)
+      logger.debug('Rate limiter cleanup', { removedEntries: keysToDelete.length })
     }
   }
 

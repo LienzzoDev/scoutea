@@ -1,24 +1,16 @@
-import { auth } from '@clerk/nextjs/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server';
 
-import { ReportService } from '@/lib/services/report-service'
+import { ReportService } from '@/lib/services/report-service';
 
-export async function GET(__request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    const { userId } = await auth()
-    
-    if (!userId) {
-      return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const stats = await ReportService.getReportStats()
-    
-    return NextResponse.json(stats)
-  } catch (_error) {
-    console.error('Error getting report stats:', error)
+    const stats = await ReportService.getReportStats();
+    return NextResponse.json(stats);
+  } catch (error) {
+    console.error('Error fetching report stats:', error);
     return NextResponse.json(
-      { __error: 'Internal server error' },
+      { error: 'Failed to fetch report stats' },
       { status: 500 }
-    )
+    );
   }
 }

@@ -1,56 +1,36 @@
-'use client'
+import { useState } from 'react';
 
-import { useEntityList } from '../useEntityList'
-
-interface ScoutList {
-  id: string
-  userId: string
-  scoutId: string
-  createdAt: string
-  scout: {
-    id_scout: string
-    scout_name?: string
-    name?: string
-    surname?: string
-    nationality?: string
-    scout_level?: string
-    scout_elo?: number
-    total_reports?: number
-    url_profile?: string
-  }
+export interface Scout {
+  id: string;
+  name: string;
+  email: string;
+  specialization: string;
+  // Add other scout properties as needed
 }
 
-interface UseScoutListReturn {
-  scoutList: ScoutList[]
-  isInList: (scoutId: string) => boolean
-  addToList: (scoutId: string) => Promise<boolean>
-  removeFromList: (scoutId: string) => Promise<boolean>
-  loading: boolean
-  error: string | null
-  refreshList: () => Promise<void>
-}
+export const useScoutList = () => {
+  const [scouts, setScouts] = useState<Scout[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
-export function useScoutList(): UseScoutListReturn {
-  const {
-    entityList,
-    loading,
-    error,
-    isInList,
-    addToList,
-    removeFromList,
-    refreshList
-  } = useEntityList({
-    entityType: 'scout',
-    apiEndpoint: '/api/scout-list'
-  })
+  const fetchScouts = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/scouts');
+      if (!response.ok) throw new Error('Failed to fetch scouts');
+      const data = await response.json();
+      setScouts(data);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return {
-    scoutList: entityList as ScoutList[],
+    scouts,
     loading,
     error,
-    isInList,
-    addToList,
-    removeFromList,
-    refreshList
-  }
-}
+    fetchScouts,
+  };
+};

@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useEffect } from "react";
 
 import AuthGuard from "@/components/auth/AuthGuard";
+import { PlayerProfileDebug } from "@/components/debug/player-profile-debug";
 import MemberNavbar from "@/components/layout/member-navbar";
 import PlayerFeatures from "@/components/player/PlayerFeatures";
 import PlayerHeader from "@/components/player/PlayerHeader";
@@ -29,6 +30,7 @@ export default function PlayerProfilePage() {
     isSaving,
     player,
     loading,
+    error,
     
     // Derived state
     isPlayerInList,
@@ -45,8 +47,10 @@ export default function PlayerProfilePage() {
     if (process.env.NODE_ENV === 'development') {
       console.log('PlayerProfilePage: player data:', player);
       console.log('PlayerProfilePage: loading state:', loading);
+      console.log('PlayerProfilePage: error state:', error);
+      console.log('PlayerProfilePage: playerId:', playerId);
     }
-  }, [player, loading]);
+  }, [player, loading, error, playerId]);
 
   // Mostrar loading si está cargando
   if (loading) {
@@ -65,8 +69,39 @@ export default function PlayerProfilePage() {
     );
   }
 
-  // Mostrar error si no se encuentra el jugador
-  if (!player) {
+  // Mostrar error si hay un error específico
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#f8f7f4]">
+        <MemberNavbar />
+        <main className="max-w-7xl mx-auto px-6" style={{ marginTop: "55px" }}>
+          <div className="flex items-center justify-center h-96">
+            <div className="text-center max-w-md">
+              <div className="text-red-600 text-6xl mb-4">⚠️</div>
+              <p className="text-[#6d6d6d] text-lg mb-2">Error al cargar el jugador</p>
+              <p className="text-sm text-red-600 mb-4">{error.message}</p>
+              <p className="text-xs text-gray-500 mb-4">Player ID: {playerId}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="bg-[#8c1a10] text-white px-4 py-2 rounded hover:bg-[#a01e12] transition-colors"
+              >
+                Reintentar
+              </button>
+            </div>
+          </div>
+        </main>
+        <PlayerProfileDebug 
+          playerId={playerId} 
+          player={player} 
+          loading={loading} 
+          error={error} 
+        />
+      </div>
+    );
+  }
+
+  // Mostrar error si no se encuentra el jugador (después de cargar)
+  if (!loading && !player) {
     return (
       <div className="min-h-screen bg-[#f8f7f4]">
         <MemberNavbar />
@@ -78,6 +113,12 @@ export default function PlayerProfilePage() {
             </div>
           </div>
         </main>
+        <PlayerProfileDebug 
+          playerId={playerId} 
+          player={player} 
+          loading={loading} 
+          error={error} 
+        />
       </div>
     );
   }
@@ -128,6 +169,14 @@ export default function PlayerProfilePage() {
           </div>
         </div>
       </main>
+      
+      {/* Debug Component */}
+      <PlayerProfileDebug 
+        playerId={playerId} 
+        player={player} 
+        loading={loading} 
+        error={error} 
+      />
     </div>
     </AuthGuard>
   );

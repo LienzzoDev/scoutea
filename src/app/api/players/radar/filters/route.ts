@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/db';
 
 export async function GET() {
   try {
@@ -13,7 +11,7 @@ export async function GET() {
         }
       },
       select: {
-        position___player: true,
+        position_player: true,
         nationality_1: true,
         team_country: true,
         age: true,

@@ -15,8 +15,8 @@ import { useTeams, Team } from "@/hooks/team/useTeams"
 export default function EquiposPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
   const _router = useRouter()
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [_selectedTeam, _setSelectedTeam] = useState<Team | null>(null)
+  const [_isModalOpen, _setIsModalOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
 
@@ -156,7 +156,7 @@ export default function EquiposPage() {
         {/* Error State */}
         {error && (
           <div className="mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg">
-            <p className="text-red-400">Error: {error}</p>
+            <p className="text-red-400">Error: {typeof error === 'string' ? error : error?.message || 'Error desconocido'}</p>
             <Button 
               onClick={() =>searchTeams()}
               variant="outline" className="mt-2 border-red-700 text-red-400 hover:bg-red-900/20">

@@ -27,8 +27,8 @@ function MemberGuard({ children }: MemberGuardProps) {
       }
 
       // Verificar si el perfil está completo usando metadatos públicos de Clerk (seguro)
-      const _profileCompleted = (user?.publicMetadata as any)?.profile === 'completed'
-      const hasSubscription = (user?.publicMetadata as any)?.subscription?.status === 'active'
+      const _profileCompleted = (user?.publicMetadata as Record<string, unknown>)?.profile === 'completed'
+      const hasSubscription = (user?.publicMetadata as Record<string, unknown>)?.subscription?.status === 'active'
       const userRole = getUserRole(user)
       
       // Si es admin, permitir acceso sin verificar perfil o suscripción
