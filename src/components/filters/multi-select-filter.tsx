@@ -29,7 +29,7 @@ export default function MultiSelectFilter({
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Filtrar opciones basado en búsqueda
-  const filteredOptions = options.filter(option =>
+  const filteredOptions = (options || []).filter(option =>
     option.toLowerCase().includes(searchTerm.toLowerCase())
   )
 

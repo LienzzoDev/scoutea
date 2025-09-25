@@ -122,7 +122,7 @@ export async function GET(__request: NextRequest) {
     
     return NextResponse.json(result)
   } catch (_error) {
-    console.error('Error getting scouts:', error)
+    console.error('Error getting scouts:', _error)
     return NextResponse.json(
       { __error: 'Internal server error' },
       { status: 500 }

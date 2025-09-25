@@ -44,13 +44,13 @@ const CustomTooltip = ({ active, payload, label }: unknown) => {
         <p className="font-semibold text-[#2e3138] mb-2">{label}</p>
         <div className="space-y-1">
           <p className="text-sm">
-            <span className="text-[#8c1a10] font-medium">Jugador:</span> {Math.round(data.playerValue)}
+            <span className="text-[#8c1a10] font-medium">Jugador:</span> {Math.round(Number(data.playerValue) || 0)}
           </p>
           <p className="text-sm">
-            <span className="text-[#6d6d6d] font-medium">Percentil:</span> {Math.round(data.percentile)}%
+            <span className="text-[#6d6d6d] font-medium">Percentil:</span> {Math.round(Number(data.percentile) || 0)}%
           </p>
           <p className="text-sm">
-            <span className="text-[#6d6d6d] font-medium">Ranking:</span> #{data.rank} de {data.totalPlayers}
+            <span className="text-[#6d6d6d] font-medium">Ranking:</span> #{Number(data.rank) || 1} de {Number(data.totalPlayers) || 1}
           </p>
           {data.dataCompleteness && data.dataCompleteness < 100 && (
             <p className="text-xs text-orange-600">
@@ -94,6 +94,8 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
       ratingMax
     };
     
+    console.log('🔍 PlayerRadar: Applying filters:', filters);
+    console.log('🔍 PlayerRadar: Current radarData length:', radarData.length);
     applyFilters(filters);
   }, [selectedPosition, selectedNationality, selectedCompetition, ageMin, ageMax, ratingMin, ratingMax, applyFilters]);
 
@@ -119,9 +121,9 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
 
   // Prepare chart data
   const chartData = sortedRadarData.map(item => {
-    // Convert comparison average to percentile (assuming 50 is the baseline)
+    // Use comparison average directly (it's already in 0-100 scale)
     const comparisonPercentile = item.comparisonAverage ? 
-      Math.min(100, Math.max(0, (item.comparisonAverage / 100) * 100)) : 50;
+      Math.min(100, Math.max(0, item.comparisonAverage)) : 50;
     
     const chartItem = {
       category: item.category,
@@ -141,6 +143,19 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
       dataCompleteness: item.dataCompleteness,
       comparisonAverage: item.comparisonAverage
     };
+    
+    // Debug logging for all categories to see filter effects
+    console.log(`🔍 PlayerRadar Chart Data: ${item.category}`, {
+      playerValue: item.playerValue,
+      comparisonAverage: item.comparisonAverage,
+      comparisonPercentile: comparisonPercentile,
+      percentile: item.percentile,
+      rank: item.rank,
+      totalPlayers: item.totalPlayers,
+      chartAverage: chartItem.Average,
+      showRaw: showRaw,
+      showAvg: showAvg
+    });
     
     // Debug logging for radar data
     if (item.category === 'Finalización' || item.category === 'Finishing') {
@@ -523,19 +538,19 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
                 <div className="flex justify-center items-center gap-3 mb-1">
                   <div className="text-center">
                     <p className="text-lg font-bold text-[#8c1a10]">
-                      {Math.round(item.playerValue)}
+                      {Math.round(Number(item.playerValue) || 0)}
                     </p>
                     <p className="text-xs text-[#8c1a10]">Jugador</p>
                   </div>
                   <div className="text-center">
                     <p className="text-lg font-bold text-[#2563eb]">
-                      {Math.round(item.comparisonAverage || 50)}
+                      {Math.round(Number(item.comparisonAverage) || 50)}
                     </p>
                     <p className="text-xs text-[#2563eb]">Promedio</p>
                   </div>
                 </div>
                 <p className="text-xs text-[#6d6d6d]">
-                  {Math.round(item.percentile || 50)}% | #{item.rank || 1}/{item.totalPlayers || 1}
+                  {Math.round(Number(item.percentile) || 50)}% | #{Number(item.rank) || 1}/{Number(item.totalPlayers) || 1}
                 </p>
                 {item.dataCompleteness && item.dataCompleteness < 100 && (
                   <p className="text-xs text-orange-600 mt-1">
@@ -548,15 +563,15 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
         )}
       </div>
 
-      {/* Debug Panel */}
-      {process.env.NODE_ENV === 'development' && (
+      {/* Debug Panel - Temporarily disabled */}
+      {/* {process.env.NODE_ENV === 'development' && (
         <RadarDebugPanel
           playerId={playerId}
           basePlayerData={radarData}
           radarData={radarData}
           selectedPosition={selectedPosition}
         />
-      )}
+      )} */}
     </div>
   );
 }

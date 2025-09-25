@@ -1,7 +1,7 @@
 'use client'
 
 interface Tab {
-  _key: string
+  key: string
   label: string
   count?: number
 }

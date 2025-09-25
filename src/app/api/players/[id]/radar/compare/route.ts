@@ -4,10 +4,10 @@ import { RadarCalculationService } from '@/lib/services/RadarCalculationService'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const playerId = params.id;
+    const { id: playerId } = await params;
     const { searchParams } = new URL(request.url);
 
     console.log('🔍 Radar Compare API: Loading comparison data for player:', playerId);
@@ -167,7 +167,7 @@ export async function GET(
       { 
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
-        playerId: params.id
+        playerId: playerId || 'unknown'
       },
       { status: 500 }
     );

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export interface RadarData {
   category: string;
@@ -28,6 +28,12 @@ export const usePlayerRadar = (playerId: string) => {
   const [filterOptions, setFilterOptions] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Use ref to always have access to the latest baseData
+  const baseDataRef = useRef<RadarData[]>([]);
+  
+  // Create a stable reference to the apply filters function
+  const applyFiltersRef = useRef<((filters: RadarFilters) => Promise<void>) | null>(null);
 
   // Load base data and initial comparison data
   const loadInitialData = useCallback(async () => {
@@ -51,6 +57,7 @@ export const usePlayerRadar = (playerId: string) => {
         console.log('✅ usePlayerRadar: Base radar data loaded:', radarResult.radarData?.length || 0, 'categories');
         const baseRadarData = radarResult.radarData || [];
         setBaseData(baseRadarData);
+        baseDataRef.current = baseRadarData;
         
         // Process comparison data if available
         if (comparisonResponse.ok) {
@@ -114,10 +121,13 @@ export const usePlayerRadar = (playerId: string) => {
   }, [playerId]);
 
   // Apply filters and get comparison data
-  const applyFilters = useCallback(async (filters: RadarFilters) => {
-    // Get current base data from state
-    const currentBaseData = baseData;
-    if (!currentBaseData.length) return;
+  const applyFiltersImpl = useCallback(async (filters: RadarFilters) => {
+    // Get current base data from ref to avoid stale closure
+    const currentBaseData = baseDataRef.current;
+    if (!currentBaseData.length) {
+      console.log('⚠️ usePlayerRadar: No base data available for filtering');
+      return;
+    }
     
     try {
       console.log('🔍 usePlayerRadar: Applying filters:', filters);
@@ -132,6 +142,7 @@ export const usePlayerRadar = (playerId: string) => {
       
       const endpoint = `/api/players/${playerId}/radar/compare?${params}`;
       console.log('🔍 usePlayerRadar: Fetching comparison from:', endpoint);
+      console.log('🔍 usePlayerRadar: Filters being applied:', filters);
       
       const response = await fetch(endpoint);
       
@@ -162,6 +173,7 @@ export const usePlayerRadar = (playerId: string) => {
           });
           
           console.log('✅ usePlayerRadar: Merged base data with comparison data');
+          console.log('🔍 usePlayerRadar: Sample merged data:', mergedData[0]);
           setRadarData(mergedData);
         } else {
           console.warn('⚠️ usePlayerRadar: No comparisonData in response, using base data with defaults');
@@ -192,6 +204,16 @@ export const usePlayerRadar = (playerId: string) => {
       setRadarData(dataWithDefaults);
     }
   }, [playerId]);
+
+  // Update the ref whenever the implementation changes
+  applyFiltersRef.current = applyFiltersImpl;
+
+  // Create a stable function that always calls the latest implementation
+  const applyFilters = useCallback(async (filters: RadarFilters) => {
+    if (applyFiltersRef.current) {
+      await applyFiltersRef.current(filters);
+    }
+  }, []);
 
   // Load initial data when playerId changes
   useEffect(() => {

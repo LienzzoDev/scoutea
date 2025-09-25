@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 
 interface Category {
-  _key: string
+  key: string
   label: string
 }
 

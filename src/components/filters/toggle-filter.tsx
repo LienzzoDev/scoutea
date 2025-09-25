@@ -100,9 +100,9 @@ export default function ToggleFilter({
             </div>
             
             <div className="flex gap-2">
-              {options.map((option) => (
+              {options.map((option, index) => (
                 <button
-                  key={option.value?.toString() || 'undefined'}
+                  key={`${option.label}-${index}`}
                   onClick={() => handleSelection(option.value)}
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     selectedValue === option.value

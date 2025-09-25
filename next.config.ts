@@ -70,15 +70,18 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: [],
   },
-  webpack: (config) => {
-    // Configuración básica de webpack para evitar errores
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      fs: false,
+  // Configuración condicional de webpack solo cuando no se usa Turbopack
+  ...(process.env.TURBOPACK !== '1' && {
+    webpack: (config) => {
+      // Configuración básica de webpack para evitar errores
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+      }
+      
+      return config
     }
-    
-    return config
-  },
+  }),
   // Configuración para evitar problemas de caché
   onDemandEntries: {
     maxInactiveAge: 25 * 1000,

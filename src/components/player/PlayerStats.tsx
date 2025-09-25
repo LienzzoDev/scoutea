@@ -1,6 +1,8 @@
 "use client";
 
-import { PlayerBeeswarm, PlayerLollipop, PlayerRadar } from "../dynamic-imports";
+import PlayerRadar from "./PlayerRadar";
+import PlayerBeeswarm from "./PlayerBeeswarm";
+import PlayerLollipop from "./PlayerLollipop";
 
 interface PlayerStatsProps {
   playerId: string;

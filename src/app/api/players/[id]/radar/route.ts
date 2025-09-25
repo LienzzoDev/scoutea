@@ -4,10 +4,10 @@ import { RadarCalculationService } from '@/lib/services/RadarCalculationService'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const playerId = params.id;
+    const { id: playerId } = await params;
     const { searchParams } = new URL(request.url);
     const period = searchParams.get('period') || '2023-24';
 
@@ -98,7 +98,7 @@ export async function GET(
       { 
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
-        playerId: params.id
+        playerId: playerId || 'unknown'
       },
       { status: 500 }
     );
