@@ -5,7 +5,7 @@ import { CompetitionService } from '@/lib/services/competition-service'
 
 export async function GET(
   __request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth()
@@ -14,14 +14,15 @@ export async function GET(
       return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
     }
 
-    const competition = await CompetitionService.getCompetitionById(params.id)
+    const { id } = await params
+    const competition = await CompetitionService.getCompetitionById(id)
     
     if (!competition) {
       return NextResponse.json({ __error: 'Competition not found' }, { status: 404 })
     }
     
     return NextResponse.json(competition)
-  } catch (_error) {
+  } catch (error) {
     console.error('Error getting competition:', error)
     return NextResponse.json(
       { __error: 'Internal server error' },
@@ -31,8 +32,8 @@ export async function GET(
 }
 
 export async function PUT(
-  __request: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth()
@@ -41,11 +42,12 @@ export async function PUT(
       return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
     }
 
-    const _body = await request.json()
-    const competition = await CompetitionService.updateCompetition(params.id, body)
+    const { id } = await params
+    const body = await request.json()
+    const competition = await CompetitionService.updateCompetition(id, body)
     
     return NextResponse.json(competition)
-  } catch (_error) {
+  } catch (error) {
     console.error('Error updating competition:', error)
     return NextResponse.json(
       { __error: 'Internal server error' },
@@ -56,7 +58,7 @@ export async function PUT(
 
 export async function DELETE(
   __request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth()
@@ -65,10 +67,11 @@ export async function DELETE(
       return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
     }
 
-    await CompetitionService.deleteCompetition(params.id)
+    const { id } = await params
+    await CompetitionService.deleteCompetition(id)
     
     return NextResponse.json({ message: 'Competition deleted successfully' })
-  } catch (_error) {
+  } catch (error) {
     console.error('Error deleting competition:', error)
     return NextResponse.json(
       { __error: 'Internal server error' },
