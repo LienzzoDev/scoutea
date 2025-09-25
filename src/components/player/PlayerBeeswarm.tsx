@@ -41,7 +41,7 @@ export default function PlayerBeeswarm({ playerId }: PlayerBeeswarmProps) {
   });
 
   // Calculate statistics
-  const values = filteredData.map(d => d.value).filter(v => v > 0);
+  const values = filteredData.map(d => d.value).filter(v => isFinite(v) && !isNaN(v));
   const stats = values.length > 0 ? {
     min: Math.min(...values),
     max: Math.max(...values),
@@ -53,6 +53,11 @@ export default function PlayerBeeswarm({ playerId }: PlayerBeeswarmProps) {
     avg: 50,
     count: 0
   };
+
+  // Ensure min and max are different to avoid division by zero
+  if (stats.min === stats.max) {
+    stats.max = stats.min + 1;
+  }
 
   // Normalize values for display
   const normalizedData = filteredData.map(player => ({
@@ -388,10 +393,25 @@ function BeeswarmChart({
   // Calculate value range for scaling
   const valueRange = showNorm ? [0, 100] : [stats.min, stats.max];
   const valueScale = (value: number) => {
+    // Handle invalid values
+    if (!isFinite(value) || isNaN(value)) {
+      return margin.left + chartWidth / 2; // Center position for invalid values
+    }
+    
     const normalizedValue = showNorm ? 
       ((value - stats.min) / (stats.max - stats.min)) * 100 : 
       value;
-    return margin.left + ((normalizedValue - valueRange[0]) / (valueRange[1] - valueRange[0])) * chartWidth;
+    
+    // Handle division by zero or invalid range
+    const rangeDiff = valueRange[1] - valueRange[0];
+    if (rangeDiff === 0 || !isFinite(rangeDiff)) {
+      return margin.left + chartWidth / 2; // Center position
+    }
+    
+    const scaledValue = margin.left + ((normalizedValue - valueRange[0]) / rangeDiff) * chartWidth;
+    
+    // Ensure the result is finite
+    return isFinite(scaledValue) ? scaledValue : margin.left + chartWidth / 2;
   };
 
   // Simple beeswarm positioning (avoiding overlaps)
@@ -402,16 +422,16 @@ function BeeswarmChart({
     
     return {
       ...d,
-      x,
-      y,
+      x: isFinite(x) ? x : margin.left + chartWidth / 2,
+      y: isFinite(y) ? y : margin.top + chartHeight / 2,
       isHighlighted: d.id === highlightPlayerId
     };
   });
 
   // Calculate reference lines
-  const avgX = valueScale(showNorm ? 50 : stats.avg);
-  const minX = valueScale(showNorm ? 0 : stats.min);
-  const maxX = valueScale(showNorm ? 100 : stats.max);
+  const avgX = valueScale(showNorm ? 50 : (stats.avg || 0));
+  const minX = valueScale(showNorm ? 0 : (stats.min || 0));
+  const maxX = valueScale(showNorm ? 100 : (stats.max || 100));
 
   // Generate tick marks
   const ticks = showNorm ? 

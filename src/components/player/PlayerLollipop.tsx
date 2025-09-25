@@ -43,7 +43,7 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
   });
 
   // Calculate statistics
-  const values = filteredData.map(d => d.value).filter(v => v > 0);
+  const values = filteredData.map(d => d.value).filter(v => isFinite(v) && !isNaN(v));
   const stats = values.length > 0 ? {
     min: Math.min(...values),
     max: Math.max(...values),
@@ -55,6 +55,11 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
     avg: 50,
     count: 0
   };
+
+  // Ensure min and max are different to avoid division by zero
+  if (stats.min === stats.max) {
+    stats.max = stats.min + 1;
+  }
 
   return (
     <div className="bg-white p-6">
@@ -408,16 +413,28 @@ function LollipopChart({
   const maxDisplayValue = showNorm ? 100 : stats.max;
   
   const valueScale = (value: number) => {
+    // Handle invalid values
+    if (!isFinite(value) || isNaN(value)) {
+      return 0; // Start position for invalid values
+    }
+    
     const normalizedValue = showNorm ? 
       ((value - stats.min) / (stats.max - stats.min)) * 100 : 
       value;
-    return (normalizedValue / maxDisplayValue) * chartWidth;
+    
+    // Handle division by zero or invalid values
+    if (!isFinite(normalizedValue) || isNaN(normalizedValue) || maxDisplayValue === 0) {
+      return 0;
+    }
+    
+    const scaledValue = (normalizedValue / maxDisplayValue) * chartWidth;
+    return isFinite(scaledValue) ? Math.max(0, scaledValue) : 0;
   };
 
   // Calculate reference lines
-  const avgX = valueScale(showNorm ? 50 : stats.avg);
-  const minX = valueScale(showNorm ? 0 : stats.min);
-  const maxX = valueScale(showNorm ? 100 : stats.max);
+  const avgX = valueScale(showNorm ? 50 : (stats.avg || 0));
+  const minX = valueScale(showNorm ? 0 : (stats.min || 0));
+  const maxX = valueScale(showNorm ? 100 : (stats.max || 100));
 
   const rowHeight = Math.max(20, chartHeight / Math.max(data.length, 1));
 
