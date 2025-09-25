@@ -3,33 +3,9 @@
 import { useState, useEffect } from 'react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
-import RadarDebugPanel from '../debug/RadarDebugPanel';
 import { usePlayerRadar } from '@/hooks/player/usePlayerRadar';
 
-interface RadarData {
-  category: string;
-  playerValue: number;
-  comparisonAverage?: number;
-  positionAverage?: number; // Keep for backward compatibility
-  percentile: number;
-  basePercentile?: number; // Original percentile without filters
-  rank: number;
-  totalPlayers: number;
-  maxValue?: number;
-  minValue?: number;
-  dataCompleteness?: number;
-  sourceAttributes?: string[];
-}
 
-interface FilterOptions {
-  positions: Array<{ value: string; label: string; count: number }>;
-  nationalities: Array<{ value: string; label: string; count: number }>;
-  competitions: Array<{ value: string; label: string; count: number }>;
-  ranges: {
-    age: { min: number; max: number };
-    rating: { min: number; max: number };
-  };
-}
 
 interface PlayerRadarProps {
   playerId: string;

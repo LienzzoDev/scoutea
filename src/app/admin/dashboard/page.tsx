@@ -16,7 +16,6 @@ import { useEffect, useState, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { usePlayers } from "@/hooks/player/usePlayers"
-import PlayersDiagnostic from "@/components/debug/PlayersDiagnostic"
 
 export default function DashboardPage() {
   const { isSignedIn, isLoaded } = useAuth()
