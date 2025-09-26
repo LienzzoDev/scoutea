@@ -74,14 +74,14 @@ export default function PlanSelector({ plans }: PlanSelectorProps) {
           disabled={!selectedPlan}
           className="bg-[#8c1a10] hover:bg-[#6d1410] text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {selectedPlan ? `Suscribirse - Plan ${plans.find(p => p.id === selectedPlan)?.name}` : 'Selecciona un Plan'}
+          {selectedPlan ? `Registrarse como ${plans.find(p => p.id === selectedPlan)?.name}` : 'Selecciona tu Rol'}
           <ArrowRight className="ml-2 w-5 h-5" />
         </button>
         <button 
           onClick={handleSubscribeLater}
           className="border border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 inline-flex items-center justify-center"
         >
-          Suscribirse más tarde
+          Decidir más tarde
         </button>
         <button 
           onClick={handleLogin}
@@ -152,7 +152,7 @@ export default function PlanSelector({ plans }: PlanSelectorProps) {
                   handlePlanSelect(plan.id)
                 }}
               >
-                {selectedPlan === plan.id ? 'Seleccionado' : 'Seleccionar Plan'}
+                {selectedPlan === plan.id ? `✓ ${plan.name} Seleccionado` : `Elegir ${plan.name}`}
               </button>
             </div>
           </div>
@@ -162,10 +162,10 @@ export default function PlanSelector({ plans }: PlanSelectorProps) {
       {/* Final CTA */}
       <div className="text-center bg-white rounded-2xl p-8 shadow-lg">
         <h2 className="text-3xl font-bold text-[#000000] mb-4">
-          ¿Listo para comenzar?
+          ¿Listo para unirte?
         </h2>
         <p className="text-[#6d6d6d] mb-6">
-          Únete a cientos de scouts y analistas que ya confían en Scoutea
+          Únete a cientos de profesionales del fútbol que ya forman parte de nuestra comunidad
         </p>
         <div className="flex items-center justify-center gap-4">
           <button 
@@ -173,7 +173,7 @@ export default function PlanSelector({ plans }: PlanSelectorProps) {
             disabled={!selectedPlan}
             className="bg-[#8c1a10] hover:bg-[#6d1410] text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {selectedPlan ? `Comenzar con ${plans.find(p => p.id === selectedPlan)?.name}` : 'Selecciona un Plan'}
+            {selectedPlan ? `Comenzar como ${plans.find(p => p.id === selectedPlan)?.name}` : 'Selecciona tu Rol'}
             <ArrowRight className="ml-2 w-5 h-5" />
           </button>
           <button 

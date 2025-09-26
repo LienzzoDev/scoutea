@@ -21,38 +21,40 @@ export const metadata: Metadata = {
 export default function HomePage() {
   const plans = [
     {
-      id: 'basic',
-      name: 'Basic',
-      price: { monthly: 10, yearly: 8 },
-      description: 'Perfecto para empezar',
+      id: 'member',
+      name: 'Miembro',
+      price: { monthly: 20, yearly: 17 },
+      description: 'Para analistas y profesionales del fútbol',
       features: [
-        'Acceso a base de datos de jugadores',
-        'Búsqueda básica y filtros',
-        'Perfiles de jugadores detallados',
-        'Comparaciones básicas',
-        'Soporte por email',
-        'Actualizaciones mensuales'
+        'Acceso completo a base de datos de jugadores',
+        'Búsqueda avanzada y filtros',
+        'Perfiles detallados de jugadores',
+        'Comparaciones y análisis',
+        'Estadísticas avanzadas',
+        'Reportes personalizados',
+        'Soporte prioritario 24/7',
+        'Actualizaciones semanales'
       ],
-      popular: false,
+      popular: true,
       color: 'from-blue-500 to-blue-600'
     },
     {
-      id: 'premium',
-      name: 'Premium',
+      id: 'scout',
+      name: 'Scout',
       price: { monthly: 20, yearly: 17 },
-      description: 'Para profesionales serios',
+      description: 'Para scouts profesionales',
       features: [
-        'Todo lo de Basic',
-        'Análisis avanzados y estadísticas',
-        'Reportes personalizados',
-        'API access',
-        'Soporte prioritario 24/7',
-        'Actualizaciones semanales',
-        'Exportación de datos',
-        'Integración con herramientas externas'
+        'Todo lo de Miembro',
+        'Herramientas de scouting avanzadas',
+        'Creación de reportes de jugadores',
+        'Sistema de seguimiento de talentos',
+        'Red de contactos con otros scouts',
+        'Acceso a eventos y torneos',
+        'Certificación profesional',
+        'Mentorías y formación continua'
       ],
-      popular: true,
-      color: 'from-purple-500 to-purple-600'
+      popular: false,
+      color: 'from-green-500 to-green-600'
     }
   ]
 
@@ -64,12 +66,12 @@ export default function HomePage() {
       <main className="max-w-7xl mx-auto px-6 py-16">
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold text-[#000000] mb-6">
-            Descubre el Futuro del
+            Únete a la Comunidad de
             <span className="text-[#8c1a10]"> Scouting</span>
           </h1>
           <p className="text-xl text-[#6d6d6d] mb-8 max-w-3xl mx-auto">
-            La plataforma más avanzada para scouts, analistas y profesionales del fútbol. 
-            Accede a datos detallados de miles de jugadores y toma decisiones informadas.
+            Elige tu rol en la plataforma más avanzada del fútbol profesional. 
+            Tanto si eres analista como scout, tendrás acceso a las mejores herramientas del mercado.
           </p>
           
           <PlanSelector plans={plans} />
