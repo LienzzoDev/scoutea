@@ -1,36 +1,138 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { handleApiResponse } from '@/lib/utils/api-response';
 
-export interface Scout {
+interface ScoutListItem {
   id: string;
-  name: string;
-  email: string;
-  specialization: string;
-  // Add other scout properties as needed
+  userId: string;
+  scoutId: string;
+  createdAt: string;
+  updatedAt: string;
+  scout: {
+    id_scout: string;
+    scout_name: string | null;
+    name: string | null;
+    surname: string | null;
+    nationality: string | null;
+    scout_level: string | null;
+    scout_elo: number | null;
+    total_reports: number | null;
+    url_profile: string | null;
+  };
 }
 
 export const useScoutList = () => {
-  const [scouts, setScouts] = useState<Scout[]>([]);
+  const [scoutList, setScoutList] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchScouts = async () => {
-    setLoading(true);
+  // Cargar la lista de scouts del usuario
+  const loadScoutList = useCallback(async () => {
     try {
-      const response = await fetch('/api/scouts');
-      if (!response.ok) throw new Error('Failed to fetch scouts');
-      const data = await response.json();
-      setScouts(data);
+      setLoading(true);
+      setError(null);
+      console.log('🔍 useScoutList: Loading user scout list...');
+      
+      const response = await fetch('/api/scout-list');
+      const result = await handleApiResponse(response);
+      
+      if (result.success) {
+        const scoutIds = result.data?.scoutList?.map((item: ScoutListItem) => item.scoutId) || [];
+        console.log('✅ useScoutList: Loaded scout list:', scoutIds.length);
+        setScoutList(scoutIds);
+      } else {
+        console.error('❌ useScoutList: Failed to load scout list:', result.error);
+        setError(result.error || 'Error al cargar la lista');
+        setScoutList([]);
+      }
     } catch (err) {
-      setError(err);
+      console.error('❌ useScoutList: Error loading scout list:', err);
+      setError('Error de conexión');
+      setScoutList([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Añadir scout a la lista
+  const addToList = useCallback(async (scoutId: string): Promise<boolean> => {
+    try {
+      console.log('🚀 useScoutList: Adding scout to list:', scoutId);
+      setError(null);
+      
+      const response = await fetch('/api/scout-list', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ scoutId }),
+      });
+
+      const result = await handleApiResponse(response);
+      
+      if (result.success) {
+        setScoutList(prev => [...prev, scoutId]);
+        console.log('✅ useScoutList: Scout added to list successfully');
+        return true;
+      } else {
+        console.error('❌ useScoutList: Failed to add scout to list:', result.error);
+        setError(result.error || 'Error al añadir scout');
+        return false;
+      }
+    } catch (err) {
+      console.error('❌ useScoutList: Error adding scout to list:', err);
+      setError('Error de conexión');
+      return false;
+    }
+  }, []);
+
+  // Remover scout de la lista
+  const removeFromList = useCallback(async (scoutId: string): Promise<boolean> => {
+    try {
+      console.log('🚀 useScoutList: Removing scout from list:', scoutId);
+      setError(null);
+      
+      const response = await fetch(`/api/scout-list/${scoutId}`, {
+        method: 'DELETE',
+      });
+
+      const result = await handleApiResponse(response);
+      
+      if (result.success) {
+        setScoutList(prev => prev.filter(id => id !== scoutId));
+        console.log('✅ useScoutList: Scout removed from list successfully');
+        return true;
+      } else {
+        console.error('❌ useScoutList: Failed to remove scout from list:', result.error);
+        setError(result.error || 'Error al remover scout');
+        return false;
+      }
+    } catch (err) {
+      console.error('❌ useScoutList: Error removing scout from list:', err);
+      setError('Error de conexión');
+      return false;
+    }
+  }, []);
+
+  // Crear un Set para búsquedas más eficientes
+  const scoutListSet = useMemo(() => new Set(scoutList), [scoutList]);
+
+  // Verificar si un scout está en la lista (optimizado)
+  const isInList = useCallback((scoutId: string): boolean => {
+    return scoutListSet.has(scoutId);
+  }, [scoutListSet]);
+
+  // Cargar la lista al montar el hook
+  useEffect(() => {
+    loadScoutList();
+  }, [loadScoutList]);
 
   return {
-    scouts,
+    scoutList,
     loading,
     error,
-    fetchScouts,
+    addToList,
+    removeFromList,
+    isInList,
+    loadScoutList,
   };
 };

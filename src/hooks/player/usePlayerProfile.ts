@@ -1,15 +1,25 @@
 import { useState, useEffect } from 'react';
 
 import type { Player } from '@/types/player';
+import { usePlayerList } from './usePlayerList';
 
 export const usePlayerProfile = (playerId: string) => {
   const [player, setPlayer] = useState<Player | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [activeTab, setActiveTab] = useState('info');
-  const [activeStatsTab, setActiveStatsTab] = useState('overview');
-  const [activeFeaturesTab, setActiveFeaturesTab] = useState('radar');
+  const [activeStatsTab, setActiveStatsTab] = useState('period');
+  const [activeFeaturesTab, setActiveFeaturesTab] = useState('on-the-pitch');
   const [isSaving, setIsSaving] = useState(false);
+
+  // Hook para manejar la lista de jugadores
+  const { 
+    addToList, 
+    removeFromList, 
+    isInList,
+    loading: listLoading,
+    error: listError 
+  } = usePlayerList();
 
   const fetchPlayer = async () => {
     if (!playerId) {
@@ -71,10 +81,9 @@ export const usePlayerProfile = (playerId: string) => {
       
       setPlayer(data);
     } catch (err) {
-      console.error('❌ Error fetching player:', {
-        error: err,
+      console.error('❌ Error fetching player:', err);
+      console.error('📋 Error details:', {
         message: err instanceof Error ? err.message : 'Unknown error',
-        stack: err instanceof Error ? err.stack : undefined,
         playerId,
         timestamp: new Date().toISOString()
       });
@@ -94,15 +103,30 @@ export const usePlayerProfile = (playerId: string) => {
     fetchPlayer();
   };
 
-  // Mock functions for player list management
-  const isPlayerInList = false;
-  const listLoading = false;
-  
+  // Función para manejar toggle de lista (añadir/remover jugador)
   const handleToggleList = async () => {
+    if (!player?.id_player) return;
+    
     setIsSaving(true);
-    // Mock implementation
-    setTimeout(() => setIsSaving(false), 1000);
+    try {
+      const isCurrentlyInList = isInList(player.id_player);
+      
+      if (isCurrentlyInList) {
+        console.log('🚀 Removing player from list:', player.id_player);
+        await removeFromList(player.id_player);
+      } else {
+        console.log('🚀 Adding player to list:', player.id_player);
+        await addToList(player.id_player);
+      }
+    } catch (error) {
+      console.error('❌ Error toggling player list:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  // Verificar si el jugador está en la lista
+  const isPlayerInList = player?.id_player ? isInList(player.id_player) : false;
 
   const getStatValue = (_statName: string) => {
     // Mock implementation

@@ -30,33 +30,33 @@ const AVAILABLE_CATEGORIES: DisplayCategory[] = [
   {
     key: 'scout_level',
     label: 'Scout Level',
-    getValue: (scout) => scout.scout_level,
-    format: (value) => value || 'N/A'
+    getValue: (scout) => scout?.scout_level || null,
+    format: (value) => String(value || 'N/A')
   },
   {
     key: 'scout_elo',
     label: 'Scout ELO',
-    getValue: (scout) => scout.scout_elo,
-    format: (value) => value ? Number(value).toFixed(0) : 'N/A'
+    getValue: (scout) => scout?.scout_elo || null,
+    format: (value) => value ? String(Number(value).toFixed(0)) : 'N/A'
   },
   {
     key: 'total_reports',
     label: 'Total Reports',
-    getValue: (scout) => scout.total_reports,
-    format: (value) => value ? value.toString() : '0'
+    getValue: (scout) => scout?.total_reports || null,
+    format: (value) => value ? String(value) : '0'
   },
   {
     key: 'roi',
     label: 'ROI',
-    getValue: (scout) => scout.roi,
+    getValue: (scout) => scout?.roi || null,
     format: (value) => value ? `${Number(value).toFixed(1)}%` : 'N/A'
   },
   {
     key: 'max_profit',
     label: 'Max Profit',
-    getValue: (scout) => scout.max_profit_report,
+    getValue: (scout) => scout?.max_profit_report || null,
     format: (value) => {
-      if (!value) return 'N/A'
+      if (!value || typeof value !== 'number') return 'N/A'
       if (value >= 1000000) return `€${(value / 1000000).toFixed(1)}M`
       if (value >= 1000) return `€${(value / 1000).toFixed(0)}K`
       return `€${value}`
@@ -65,46 +65,46 @@ const AVAILABLE_CATEGORIES: DisplayCategory[] = [
   {
     key: 'nationality',
     label: 'Nationality',
-    getValue: (scout) => scout.nationality,
-    format: (value) => value || 'N/A'
+    getValue: (scout) => scout?.nationality || null,
+    format: (value) => String(value || 'N/A')
   },
   {
     key: 'country',
     label: 'Country',
-    getValue: (scout) => scout.country,
-    format: (value) => value || 'N/A'
+    getValue: (scout) => scout?.country || null,
+    format: (value) => String(value || 'N/A')
   },
   {
     key: 'expertise',
     label: 'Expertise',
-    getValue: (scout) => scout.nationality_expertise,
-    format: (value) => value || 'N/A'
+    getValue: (scout) => scout?.nationality_expertise || null,
+    format: (value) => String(value || 'N/A')
   },
   {
     key: 'competition',
     label: 'Competition',
-    getValue: (scout) => scout.competition_expertise,
-    format: (value) => value || 'N/A'
+    getValue: (scout) => scout?.competition_expertise || null,
+    format: (value) => String(value || 'N/A')
   },
   {
     key: 'age',
     label: 'Age',
-    getValue: (scout) => scout.age,
+    getValue: (scout) => scout?.age || null,
     format: (value) => value ? `${value} años` : 'N/A'
   },
   {
     key: 'ranking',
     label: 'Ranking',
-    getValue: (scout) => scout.scout_ranking,
+    getValue: (scout) => scout?.scout_ranking || null,
     format: (value) => value ? `#${value}` : 'N/A'
   },
   {
     key: 'availability',
     label: 'Availability',
-    getValue: (scout) => scout.open_to_work,
+    getValue: (scout) => scout?.open_to_work,
     format: (value) => {
-      if (value === true) return '✅ Available'
-      if (value === false) return '❌ Not Available'
+      if (value === true) return 'Available'
+      if (value === false) return 'Not Available'
       return 'N/A'
     }
   }
@@ -163,11 +163,14 @@ export default function ScoutsPage() {
   // Usar el hook de scouts real
   const { scouts = [], loading, error, searchScouts } = useScouts()
   
-  // Mock implementation for scout list functionality
-  const scoutList: any[] = []
-  const isInList = (scoutId: string) => false
-  const addToList = (scoutId: string) => console.log('Add to list:', scoutId)
-  const removeFromList = (scoutId: string) => console.log('Remove from list:', scoutId)
+  // Hook para manejar la lista de scouts del usuario
+  const { 
+    scoutList, 
+    addToList, 
+    removeFromList, 
+    isInList,
+    error: scoutListError 
+  } = useScoutList()
   
 
 
@@ -230,7 +233,12 @@ export default function ScoutsPage() {
 
   // 🎯 OBTENER CATEGORÍAS SELECCIONADAS PARA MOSTRAR
   const getSelectedCategoriesData = () => {
-    return selectedCategories
+    // Asegurar que siempre haya categorías seleccionadas
+    const categoriesToUse = selectedCategories.length > 0 
+      ? selectedCategories 
+      : ['scout_level', 'scout_elo', 'total_reports']
+    
+    return categoriesToUse
       .map(key => AVAILABLE_CATEGORIES.find(cat => cat.key === key))
       .filter(Boolean) as DisplayCategory[]
   }
@@ -364,8 +372,7 @@ export default function ScoutsPage() {
       
       case 'your-list':
         // Solo scouts que están en la lista del usuario
-        const scoutIdsInList = scoutList.map(item => item.scoutId)
-        filtered = scouts.filter(scout => scoutIdsInList.includes(scout.id_scout))
+        filtered = scouts.filter(scout => scoutList.includes(scout.id_scout))
         break
       
       default:
@@ -724,9 +731,13 @@ export default function ScoutsPage() {
         )}
 
         {/* Error State */}
-        {error && (
+        {(error || scoutListError) && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
-            <p className="text-red-600">Error loading scouts: {typeof error === 'string' ? error : error?.message || 'Unknown error'}</p>
+            <p className="text-red-600">
+              {error && `Error loading scouts: ${typeof error === 'string' ? error : error?.message || 'Unknown error'}`}
+              {error && scoutListError && ' | '}
+              {scoutListError && `Error with scout list: ${scoutListError}`}
+            </p>
           </div>
         )}
 
@@ -785,7 +796,7 @@ export default function ScoutsPage() {
                             width: array.length <= 4 ? `${100 / array.length}%` : '140px'
                           }}
                         >
-                          <h4 className="font-semibold text-[#6d6d6d] text-sm">{category.label}</h4>
+                          <h4 className="font-semibold text-[#6d6d6d] text-sm">{String(category.label)}</h4>
                         </div>
                       ))}
                     </div>
@@ -835,32 +846,55 @@ export default function ScoutsPage() {
                       >
                         <div className="flex" style={{ minWidth: `${Math.max(getSelectedCategoriesData().length * 140, 100)}px` }}>
                           {getSelectedCategoriesData().map((category, catIndex, array) => {
-                            const value = category.getValue(scout)
-                            let formattedValue = category.format ? category.format(value) : (value || 'N/A')
-                            
-                            // Ensure formattedValue is always a string
-                            if (typeof formattedValue === 'object') {
-                              formattedValue = JSON.stringify(formattedValue);
-                            } else if (formattedValue === null || formattedValue === undefined) {
-                              formattedValue = "N/A";
-                            } else {
-                              formattedValue = String(formattedValue);
+                            try {
+                              const value = category.getValue(scout)
+                              let formattedValue: string
+                              
+                              // Apply format function if exists
+                              if (category.format) {
+                                const formatted = category.format(value)
+                                formattedValue = String(formatted || 'N/A')
+                              } else {
+                                formattedValue = String(value || 'N/A')
+                              }
+                              
+                              // Final safety check - ensure it's a string
+                              if (typeof formattedValue !== 'string') {
+                                console.warn('Non-string value detected:', formattedValue, 'for category:', category.key)
+                                formattedValue = 'N/A'
+                              }
+                              
+                              return (
+                                <div 
+                                  key={category.key} 
+                                  className="p-4 text-center border-r border-[#e7e7e7] last:border-r-0 flex items-center justify-center flex-shrink-0"
+                                  style={{ 
+                                    minWidth: '140px',
+                                    width: array.length <= 4 ? `${100 / array.length}%` : '140px'
+                                  }}
+                                >
+                                  <span className="text-[#000000] font-medium text-sm">
+                                    {formattedValue}
+                                  </span>
+                                </div>
+                              )
+                            } catch (error) {
+                              console.error('Error rendering category:', category.key, error)
+                              return (
+                                <div 
+                                  key={category.key} 
+                                  className="p-4 text-center border-r border-[#e7e7e7] last:border-r-0 flex items-center justify-center flex-shrink-0"
+                                  style={{ 
+                                    minWidth: '140px',
+                                    width: array.length <= 4 ? `${100 / array.length}%` : '140px'
+                                  }}
+                                >
+                                  <span className="text-[#000000] font-medium text-sm">
+                                    Error
+                                  </span>
+                                </div>
+                              )
                             }
-                            
-                            return (
-                              <div 
-                                key={category.key} 
-                                className="p-4 text-center border-r border-[#e7e7e7] last:border-r-0 flex items-center justify-center flex-shrink-0"
-                                style={{ 
-                                  minWidth: '140px',
-                                  width: array.length <= 4 ? `${100 / array.length}%` : '140px'
-                                }}
-                              >
-                                <span className="text-[#000000] font-medium text-sm">
-                                  {formattedValue}
-                                </span>
-                              </div>
-                            )
                           })}
                         </div>
                       </div>

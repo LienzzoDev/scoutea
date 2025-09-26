@@ -10,14 +10,14 @@ export async function GET() {
     const { userId } = await auth()
 
     if (!userId) {
-      return NextResponse.json({ __error: 'No autenticado' }, { status: 401 })
+      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
 
     // Obtener o crear el usuario en la base de datos
     let user
     try {
       user = await getOrCreateUser(userId)
-    } catch (_error) {
+    } catch (error) {
       console.error('❌ Error obteniendo/creando usuario en GET:', error)
       // Si falla la creación, devolver lista vacía
       return NextResponse.json({ playerList: [] })
@@ -27,7 +27,7 @@ export async function GET() {
     const playerList = await prisma.playerList.findMany({
       where: { userId: user.id },
       include: {
-        __player: {
+        player: {
           select: {
             id_player: true,
             player_name: true,
@@ -43,17 +43,17 @@ export async function GET() {
     })
 
     return NextResponse.json({ playerList })
-  } catch (_error) {
+  } catch (error) {
     console.error('Error fetching player list:', error)
     return NextResponse.json(
-      { __error: 'Error interno del servidor' },
+      { error: 'Error interno del servidor' },
       { status: 500 }
     )
   }
 }
 
 // POST - Añadir jugador a la lista
-export async function POST(__request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     console.log('🚀 Iniciando POST /api/player-list')
     
@@ -61,14 +61,14 @@ export async function POST(__request: NextRequest) {
     console.log('👤 Usuario autenticado:', userId)
 
     if (!userId) {
-      return NextResponse.json({ __error: 'No autenticado' }, { status: 401 })
+      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
 
     const { playerId } = await request.json()
     console.log('🎯 Player ID recibido:', playerId)
 
     if (!playerId) {
-      return NextResponse.json({ __error: 'ID del jugador requerido' }, { status: 400 })
+      return NextResponse.json({ error: 'ID del jugador requerido' }, { status: 400 })
     }
 
     // Obtener o crear el usuario en la base de datos
@@ -77,10 +77,10 @@ export async function POST(__request: NextRequest) {
     try {
       user = await getOrCreateUser(userId)
       console.log('✅ Usuario obtenido/creado:', user.id)
-    } catch (_error) {
+    } catch (error) {
       console.error('❌ Error obteniendo/creando usuario en POST:', error)
       return NextResponse.json({ 
-        __error: 'Error al obtener/crear usuario en la base de datos',
+        error: 'Error al obtener/crear usuario en la base de datos',
         details: error instanceof Error ? error.message : 'Error desconocido'
       }, { status: 500 })
     }
@@ -88,13 +88,13 @@ export async function POST(__request: NextRequest) {
     // Verificar que el jugador existe
     console.log('🔍 Verificando si el jugador existe...')
     const player = await prisma.jugador.findUnique({
-      where: { id___player: playerId },
+      where: { id_player: playerId },
       select: { id_player: true }
     })
 
     if (!player) {
       console.log('❌ Jugador no encontrado:', playerId)
-      return NextResponse.json({ __error: 'Jugador no encontrado' }, { status: 404 })
+      return NextResponse.json({ error: 'Jugador no encontrado' }, { status: 404 })
     }
     console.log('✅ Jugador encontrado:', player.id_player)
 
@@ -102,7 +102,7 @@ export async function POST(__request: NextRequest) {
     console.log('🔍 Verificando si ya está en la lista...')
     const existingEntry = await prisma.playerList.findUnique({
       where: {
-        userId__playerId: {
+        userId_playerId: {
           userId: user.id,
           playerId: playerId
         }
@@ -111,7 +111,7 @@ export async function POST(__request: NextRequest) {
 
     if (existingEntry) {
       console.log('⚠️ Jugador ya está en la lista')
-      return NextResponse.json({ __error: 'El jugador ya está en tu lista' }, { status: 400 })
+      return NextResponse.json({ error: 'El jugador ya está en tu lista' }, { status: 400 })
     }
 
     // Añadir a la lista
@@ -119,10 +119,10 @@ export async function POST(__request: NextRequest) {
     const playerList = await prisma.playerList.create({
       data: {
         userId: user.id,
-        _playerId: playerId
+        playerId: playerId
       },
       include: {
-        __player: {
+        player: {
           select: {
             id_player: true,
             player_name: true,
@@ -138,12 +138,12 @@ export async function POST(__request: NextRequest) {
 
     console.log('✅ Jugador añadido exitosamente a la lista')
     return NextResponse.json({ playerList })
-  } catch (_error) {
+  } catch (error) {
     console.error('❌ Error adding player to list:', error)
     console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace')
     return NextResponse.json(
       { 
-        __error: 'Error interno del servidor',
+        error: 'Error interno del servidor',
         details: error instanceof Error ? error.message : 'Error desconocido'
       },
       { status: 500 }

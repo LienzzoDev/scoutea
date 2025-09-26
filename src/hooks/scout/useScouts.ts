@@ -16,9 +16,11 @@ export interface Scout {
   nationality: string;
   country: string;
   nationality_expertise: string;
+  competition_expertise: string;
   age: number;
   scout_ranking: number;
   open_to_work: boolean;
+  createdAt?: string;
 }
 
 export const useScouts = () => {
@@ -29,83 +31,58 @@ export const useScouts = () => {
   const searchScouts = useCallback(async (query?: string) => {
     setLoading(true);
     try {
-      // Mock data - replace with actual API call when scouts API is implemented
-      await new Promise(resolve => setTimeout(resolve, 200));
+      console.log('🔍 useScouts: Searching scouts with query:', query);
       
-      const mockScouts: any[] = [
-        {
-          id: '1',
-          id_scout: '1',
-          name: 'Carlos Rodríguez',
-          scout_name: 'Carlos Rodríguez',
-          email: 'carlos@scoutea.com',
-          specialization: 'Delanteros',
-          rating: 4.8,
-          scout_level: 'Expert',
-          scout_elo: 1850,
-          total_reports: 45,
-          roi: 15.2,
-          max_profit_report: 2500000,
-          nationality: 'Spain',
-          country: 'Spain',
-          nationality_expertise: 'La Liga',
-          age: 32,
-          scout_ranking: 15,
-          open_to_work: true
-        },
-        {
-          id: '2',
-          id_scout: '2',
-          name: 'María González',
-          scout_name: 'María González',
-          email: 'maria@scoutea.com',
-          specialization: 'Defensas',
-          rating: 4.6,
-          scout_level: 'Advanced',
-          scout_elo: 1720,
-          total_reports: 32,
-          roi: 12.8,
-          max_profit_report: 1800000,
-          nationality: 'Argentina',
-          country: 'Argentina',
-          nationality_expertise: 'Primera División',
-          age: 28,
-          scout_ranking: 23,
-          open_to_work: false
-        },
-        {
-          id: '3',
-          id_scout: '3',
-          name: 'Juan Pérez',
-          scout_name: 'Juan Pérez',
-          email: 'juan@scoutea.com',
-          specialization: 'Mediocampistas',
-          rating: 4.7,
-          scout_level: 'Expert',
-          scout_elo: 1790,
-          total_reports: 38,
-          roi: 14.1,
-          max_profit_report: 2100000,
-          nationality: 'Mexico',
-          country: 'Mexico',
-          nationality_expertise: 'Liga MX',
-          age: 35,
-          scout_ranking: 18,
-          open_to_work: true
-        }
-      ];
+      // Construir parámetros de búsqueda
+      const params = new URLSearchParams({
+        page: '1',
+        limit: '50',
+        sortBy: 'scout_elo',
+        sortOrder: 'desc'
+      });
+
+      if (query) {
+        params.append('search', query);
+      }
+
+      const response = await fetch(`/api/scouts?${params.toString()}`);
       
-      // Filter by query if provided
-      const filteredScouts = query 
-        ? mockScouts.filter(s => 
-            s.name.toLowerCase().includes(query.toLowerCase()) ||
-            s.specialization.toLowerCase().includes(query.toLowerCase())
-          )
-        : mockScouts;
-      
-      setScouts(filteredScouts);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ useScouts: Loaded scouts from API:', data.scouts?.length || 0);
+        setScouts(data.scouts || []);
+      } else {
+        console.error('❌ useScouts: Failed to load scouts from API');
+        // Fallback a datos mock si la API falla
+        const mockScouts: any[] = [
+          {
+            id: 'scout-mock-1',
+            id_scout: 'scout-mock-1',
+            name: 'Carlos Rodríguez',
+            scout_name: 'Carlos Rodríguez',
+            email: 'carlos@scoutea.com',
+            scout_level: 'Expert',
+            scout_elo: 1850,
+            total_reports: 45,
+            roi: 15.2,
+            max_profit_report: 2500000,
+            nationality: 'Spain',
+            country: 'Spain',
+            nationality_expertise: 'Spain',
+            competition_expertise: 'La Liga',
+            age: 32,
+            scout_ranking: 15,
+            open_to_work: true,
+            createdAt: new Date().toISOString()
+          }
+        ];
+        setScouts(mockScouts);
+      }
     } catch (err) {
+      console.error('❌ useScouts: Error loading scouts:', err);
       setError(err as Error);
+      // Fallback a datos mock en caso de error
+      setScouts([]);
     } finally {
       setLoading(false);
     }

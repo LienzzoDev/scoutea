@@ -2,20 +2,91 @@
 
 import { Facebook, Twitter, Linkedin, Globe, Search, Filter, Bookmark, ArrowRight, X, Play } from "lucide-react"
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import { useState } from 'react'
 
 import MemberNavbar from "@/components/layout/member-navbar"
+import ScoutHeader from "@/components/scout/ScoutHeader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useScoutProfile } from "@/hooks/scout/useScoutProfile"
 
 export default function ScoutProfilePage() {
   const _router = useRouter()
+  const params = useParams()
+  const scoutId = params.id as string
+  
+  const {
+    scout,
+    loading,
+    error,
+    isScoutInList,
+    listLoading,
+    isSaving,
+    handleToggleList,
+    refetch
+  } = useScoutProfile(scoutId)
+  
   const [activeTab, setActiveTab] = useState('info')
   const [showFilters, setShowFilters] = useState(false)
   const [_activeReportsTab, _setActiveReportsTab] = useState('qualitative')
   const [activeStatsTab, setActiveStatsTab] = useState('qualitative')
   const [message, setMessage] = useState('')
+
+  // Mostrar loading mientras se cargan los datos
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f8f7f4]">
+        <MemberNavbar />
+        <main className="max-w-7xl mx-auto px-6" style={{ marginTop: '55px' }}>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8c1a10] mx-auto mb-4"></div>
+              <p className="text-[#6d6d6d]">Loading scout profile...</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  // Mostrar error si hay algún problema
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#f8f7f4]">
+        <MemberNavbar />
+        <main className="max-w-7xl mx-auto px-6" style={{ marginTop: '55px' }}>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <p className="text-red-600 mb-4">Error loading scout profile: {error}</p>
+              <Button onClick={refetch} variant="outline">
+                Try Again
+              </Button>
+            </div>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  // Si no hay scout, mostrar not found
+  if (!scout) {
+    return (
+      <div className="min-h-screen bg-[#f8f7f4]">
+        <MemberNavbar />
+        <main className="max-w-7xl mx-auto px-6" style={{ marginTop: '55px' }}>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <p className="text-[#6d6d6d] mb-4">Scout not found</p>
+              <Button onClick={() => _router.back()} variant="outline">
+                Go Back
+              </Button>
+            </div>
+          </div>
+        </main>
+      </div>
+    )
+  }
   
   // Portfolio players data - Using real player IDs
   const portfolioPlayers = [
@@ -136,14 +207,7 @@ export default function ScoutProfilePage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6" style={{ marginTop: '55px' }}>
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-[#6d6d6d] mb-6">
-          <span>Wonderkids</span>
-          <span>›</span>
-          <span>Scouts</span>
-          <span>›</span>
-          <span className="text-[#000000]">Scout Name</span>
-        </div>
+
 
         <div className="flex gap-8">
           {/* Left Sidebar */}
@@ -172,7 +236,7 @@ export default function ScoutProfilePage() {
                   />
                 </div>
                 {/* Scout Name */}
-                <span className="text-gray-800 font-medium">Scout Name</span>
+                <span className="text-gray-800 font-medium">{scout.name}</span>
               </div>
             </div>
 
@@ -196,20 +260,26 @@ export default function ScoutProfilePage() {
                 Scout rating
               </p>
               <p className="text-2xl font-bold text-[#8c1a10] mb-2">
-                Elite Scout
+                {scout.rating}
               </p>
               <p className="text-sm text-[#6d6d6d]">Rank</p>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-[#3cc500] rounded-full"></div>
-                <span className="text-sm font-medium">A (7,75) | Rank 495</span>
+                <span className="text-sm font-medium">{scout.rank}</span>
               </div>
             </div>
           </div>
 
           {/* Right Content Area */}
           <div className="flex-1">
-            {/* Scout Name */}
-            <h1 className="text-4xl font-bold text-[#000000] mb-8">Scout Name</h1>
+            {/* Scout Header with Add to List Button */}
+            <ScoutHeader
+              scout={scout}
+              isScoutInList={isScoutInList}
+              isSaving={isSaving}
+              listLoading={listLoading}
+              onToggleList={handleToggleList}
+            />
 
             {/* Tabs */}
             <div className="flex gap-8 border-b border-[#e7e7e7] mb-6">
@@ -252,56 +322,52 @@ export default function ScoutProfilePage() {
                   {/* Left Column */}
                   <div className="space-y-0">
                     <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">User:</span>
-                      <span className="text-[#2e3138] font-medium">Loren Ipsum Dolor</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
                       <span className="text-[#6d6d6d] text-sm">Name:</span>
-                      <span className="text-[#2e3138] font-medium">Loren Ipsum Dolor</span>
+                      <span className="text-[#2e3138] font-medium">{scout.name}</span>
                     </div>
                     <div className="flex justify-between items-center py-3 border-b border-gray-100">
                       <span className="text-[#6d6d6d] text-sm">Date of Birth:</span>
-                      <span className="text-[#2e3138] font-medium">Loren Ipsum Dolor</span>
+                      <span className="text-[#2e3138] font-medium">{scout.dateOfBirth}</span>
                     </div>
                     <div className="flex justify-between items-center py-3 border-b border-gray-100">
                       <span className="text-[#6d6d6d] text-sm">Age:</span>
-                      <span className="text-[#2e3138] font-medium">XX</span>
+                      <span className="text-[#2e3138] font-medium">{scout.age}</span>
                     </div>
                     <div className="flex justify-between items-center py-3 border-b border-gray-100">
                       <span className="text-[#6d6d6d] text-sm">Country:</span>
-                      <span className="text-[#2e3138] font-medium">XX</span>
+                      <span className="text-[#2e3138] font-medium">{scout.country}</span>
                     </div>
                     <div className="flex justify-between items-center py-3 border-b border-gray-100">
                       <span className="text-[#6d6d6d] text-sm">Joining Date:</span>
-                      <span className="text-[#2e3138] font-medium">XX</span>
+                      <span className="text-[#2e3138] font-medium">{scout.joiningDate}</span>
                     </div>
                     <div className="flex justify-between items-center py-3 border-b border-gray-100">
                       <span className="text-[#6d6d6d] text-sm">Favourite Club:</span>
-                      <span className="text-[#2e3138] font-medium">XX</span>
+                      <span className="text-[#2e3138] font-medium">{scout.favouriteClub}</span>
                     </div>
                     <div className="flex justify-between items-center py-3 border-b border-gray-100">
                       <span className="text-[#6d6d6d] text-sm">Open to Work:</span>
-                      <span className="text-[#2e3138] font-medium">XX</span>
+                      <span className="text-[#2e3138] font-medium">{scout.openToWork}</span>
                     </div>
                     <div className="flex justify-between items-center py-3 border-b border-gray-100">
                       <span className="text-[#6d6d6d] text-sm">Professional Experience:</span>
-                      <span className="text-[#2e3138] font-medium">XX</span>
+                      <span className="text-[#2e3138] font-medium">{scout.professionalExperience}</span>
                     </div>
                     <div className="flex justify-between items-center py-3 border-b border-gray-100">
                       <span className="text-[#6d6d6d] text-sm">Total Reports:</span>
-                      <span className="text-[#2e3138] font-medium">XX</span>
+                      <span className="text-[#2e3138] font-medium">{scout.totalReports}</span>
                     </div>
                     <div className="flex justify-between items-center py-3 border-b border-gray-100">
                       <span className="text-[#6d6d6d] text-sm">Original Reports:</span>
-                      <span className="text-[#2e3138] font-medium">XX</span>
+                      <span className="text-[#2e3138] font-medium">{scout.originalReports}</span>
                     </div>
                     <div className="flex justify-between items-center py-3 border-b border-gray-100">
                       <span className="text-[#6d6d6d] text-sm">Nationality Expertise:</span>
-                      <span className="text-[#2e3138] font-medium">Loren Ipsum</span>
+                      <span className="text-[#2e3138] font-medium">{scout.nationalityExpertise}</span>
                     </div>
                     <div className="flex justify-between items-center py-3 border-b border-gray-100">
                       <span className="text-[#6d6d6d] text-sm">Competition Expertise:</span>
-                      <span className="text-[#2e3138] font-medium">Loren Ipsum</span>
+                      <span className="text-[#2e3138] font-medium">{scout.competitionExpertise}</span>
                     </div>
                     <div className="flex justify-between items-center py-3 border-b border-gray-100">
                       <span className="text-[#6d6d6d] text-sm">Avg Potential:</span>

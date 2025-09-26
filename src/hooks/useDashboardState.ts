@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { usePlayerList } from './player/usePlayerList';
 
 export interface DashboardState {
   activeTab: string;
@@ -25,7 +26,15 @@ export const useDashboardState = () => {
   const [_error, _setError] = useState<string | null>(null);
   const [allPlayers, setAllPlayers] = useState<unknown[]>([]);
   const [filteredPlayers, setFilteredPlayers] = useState<unknown[]>([]);
-  const [playerList, setPlayerList] = useState<string[]>([]);
+  
+  // Hook para manejar la lista de jugadores
+  const { 
+    playerList, 
+    addToList, 
+    removeFromList, 
+    isInList,
+    error: playerListError 
+  } = usePlayerList();
 
   // Opciones de filtros dinámicas
   const [filterOptions, setFilterOptions] = useState({
@@ -76,15 +85,15 @@ export const useDashboardState = () => {
     }
   }, [allPlayers]);
 
-  // Contadores de tabs
-  const tabCounts = {
+  // Contadores de tabs (memoizado para evitar re-renders)
+  const tabCounts = useMemo(() => ({
     all: filteredPlayers.length,
     list: playerList.length,
     news: 0
-  };
+  }), [filteredPlayers.length, playerList.length]);
 
-  // Categorías disponibles
-  const AVAILABLE_CATEGORIES = [
+  // Categorías disponibles (memoizado para evitar re-creación)
+  const AVAILABLE_CATEGORIES = useMemo(() => [
     { 
       key: 'name', 
       label: 'Nombre', 
@@ -121,55 +130,45 @@ export const useDashboardState = () => {
       enabled: false,
       getValue: (player: Record<string, unknown>) => player.rating
     }
-  ];
+  ], []);
 
-  // Datos de categorías seleccionadas
-  const selectedCategoriesData = AVAILABLE_CATEGORIES.filter(cat => 
-    selectedCategories.includes(cat.key)
+  // Datos de categorías seleccionadas (memoizado)
+  const selectedCategoriesData = useMemo(() => 
+    AVAILABLE_CATEGORIES.filter(cat => selectedCategories.includes(cat.key)),
+    [AVAILABLE_CATEGORIES, selectedCategories]
   );
 
-  // Funciones
-  const handleSearch = (term: string) => {
+  // Funciones (memoizadas con useCallback)
+  const handleSearch = useCallback((term: string) => {
     setSearchTerm(term);
-  };
+  }, []);
 
-  const handleTabChange = (tab: string) => {
+  const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab);
-  };
+  }, []);
 
-  const handleCategoryToggle = (categoryId: string) => {
+  const handleCategoryToggle = useCallback((categoryId: string) => {
     setSelectedCategories(prev => 
       prev.includes(categoryId) 
         ? prev.filter(id => id !== categoryId)
         : [...prev, categoryId]
     );
-  };
+  }, []);
 
-  const applyFilters = (filters: Record<string, unknown>) => {
+  const applyFilters = useCallback((filters: Record<string, unknown>) => {
     setActiveFilters(filters);
-  };
+  }, []);
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setActiveFilters({});
     setSelectedNationalities([]);
     setSelectedPositions([]);
     setSelectedTeams([]);
     setSelectedCompetitions([]);
     setSelectedAges([]);
-  };
+  }, []);
 
-  // Funciones de lista de jugadores
-  const addToList = (playerId: string) => {
-    setPlayerList(prev => [...prev, playerId]);
-  };
-
-  const removeFromList = (playerId: string) => {
-    setPlayerList(prev => prev.filter(id => id !== playerId));
-  };
-
-  const isInList = (playerId: string) => {
-    return playerList.includes(playerId);
-  };
+  // Las funciones de lista de jugadores ahora vienen del hook usePlayerList
 
   // Efecto para cargar datos iniciales
   useEffect(() => {
@@ -204,14 +203,32 @@ export const useDashboardState = () => {
       searchTerm,
       activeTab,
       activeFilters,
-      selectedNationalities,
-      selectedPositions,
-      selectedTeams,
-      selectedCompetitions,
-      selectedAges
+      selectedNationalities: selectedNationalities.length,
+      selectedPositions: selectedPositions.length,
+      selectedTeams: selectedTeams.length,
+      selectedCompetitions: selectedCompetitions.length,
+      selectedAges: selectedAges.length,
+      playerListCount: playerList.length
     });
 
     let filtered = [...allPlayers];
+
+    // Aplicar filtro por tab
+    if (activeTab === 'list') {
+      // Solo mostrar jugadores que están en la lista del usuario
+      filtered = filtered.filter((player: any) => 
+        playerList.includes(player.id_player || player.id)
+      );
+    } else if (activeTab === 'news') {
+      // Filtrar jugadores nuevos (últimos 7 días)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      filtered = filtered.filter((player: any) => {
+        const createdAt = player.createdAt ? new Date(player.createdAt) : null;
+        return createdAt && createdAt >= sevenDaysAgo;
+      });
+    }
 
     // Aplicar filtro de búsqueda
     if (searchTerm.trim()) {
@@ -289,7 +306,18 @@ export const useDashboardState = () => {
     });
 
     setFilteredPlayers(filtered);
-  }, [allPlayers, searchTerm, activeTab, activeFilters, selectedNationalities, selectedPositions, selectedTeams, selectedCompetitions, selectedAges]);
+  }, [
+    allPlayers, 
+    searchTerm, 
+    activeTab, 
+    JSON.stringify(activeFilters), // Serializar objeto para evitar cambios de referencia
+    selectedNationalities.join(','), // Convertir arrays a strings para dependencias estables
+    selectedPositions.join(','),
+    selectedTeams.join(','),
+    selectedCompetitions.join(','),
+    selectedAges.join(','),
+    playerList.join(',') // Convertir array a string para dependencia estable
+  ]);
 
   return {
     // Estados
@@ -309,7 +337,7 @@ export const useDashboardState = () => {
     
     // Datos derivados
     loading,
-    error: _error,
+    error: _error || playerListError,
     filteredPlayers,
     tabCounts,
     selectedCategoriesData,

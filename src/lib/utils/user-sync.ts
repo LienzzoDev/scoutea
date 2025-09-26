@@ -1,3 +1,4 @@
+import { prisma } from '@/lib/db'
 import { logger } from '../logging/production-logger'
 
 export interface UserSyncResult {
@@ -37,23 +38,36 @@ export class UserSyncService {
   }
 }
 
-export async function getOrCreateUser(userId: string): Promise<UserSyncResult> {
+export async function getOrCreateUser(clerkId: string) {
   try {
-    // Mock implementation - replace with actual user creation/retrieval logic
-    logger.info('Getting or creating user', { userId });
+    console.log('🔍 getOrCreateUser: Looking for user with clerkId:', clerkId);
     
-    // Simulate user creation/retrieval
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    return {
-      success: true,
-      message: 'User retrieved/created successfully',
-      userId
-    };
+    // Intentar encontrar el usuario existente
+    let user = await prisma.usuario.findUnique({
+      where: { clerkId }
+    });
+
+    if (user) {
+      console.log('✅ getOrCreateUser: User found:', user.id);
+      return user;
+    }
+
+    // Si no existe, crear uno nuevo
+    console.log('➕ getOrCreateUser: Creating new user...');
+    user = await prisma.usuario.create({
+      data: {
+        clerkId,
+        email: `user-${clerkId}@temp.com`, // Email temporal, se actualizará con webhook
+        firstName: 'Usuario',
+        lastName: 'Nuevo',
+        profileCompleted: false
+      }
+    });
+
+    console.log('✅ getOrCreateUser: User created:', user.id);
+    return user;
   } catch (error) {
-    return {
-      success: false,
-      message: `Failed to get or create user: ${error}`
-    };
+    console.error('❌ getOrCreateUser: Error:', error);
+    throw error;
   }
 }

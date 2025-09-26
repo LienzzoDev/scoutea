@@ -3,24 +3,24 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { ScoutService } from '@/lib/services/scout-service'
 
-export async function GET(__request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth()
     
     if (!userId) {
-      return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
     
     // Parámetros de búsqueda
-    const _page = parseInt(searchParams.get('page') || '1')
+    const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const sortBy = searchParams.get('sortBy') || 'createdAt'
     const sortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc'
     
     // Filtros
-    const _filters: unknown = {}
+    const filters: any = {}
     
     // Búsqueda general (para la navbar)
     const searchQuery = searchParams.get('search')
@@ -121,31 +121,31 @@ export async function GET(__request: NextRequest) {
     const result = await ScoutService.searchScouts(options)
     
     return NextResponse.json(result)
-  } catch (_error) {
-    console.error('Error getting scouts:', _error)
+  } catch (error) {
+    console.error('Error getting scouts:', error)
     return NextResponse.json(
-      { __error: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }
 }
 
-export async function POST(__request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth()
     
     if (!userId) {
-      return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const _body = await request.json()
+    const body = await request.json()
     const scout = await ScoutService.createScout(body)
     
     return NextResponse.json(scout, { status: 201 })
-  } catch (_error) {
+  } catch (error) {
     console.error('Error creating scout:', error)
     return NextResponse.json(
-      { __error: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }
