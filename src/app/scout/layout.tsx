@@ -51,10 +51,10 @@ function ScoutGuard({ children }: ScoutGuardProps) {
       console.log('🔍 ScoutGuard - getUserRole result:', getUserRole(user))
       console.log('🔍 ScoutGuard - User object keys:', Object.keys(user || {}))
 
-      // Si es admin, redirigir al dashboard de admin
+      // Si es admin, permitir acceso a todas las áreas
       if (userRole === 'admin') {
-        console.log('✅ Usuario admin, redirigiendo a dashboard de admin')
-        router.replace('/admin/dashboard')
+        console.log('✅ Usuario admin, permitiendo acceso al área de scout')
+        setIsChecking(false)
         return
       }
 

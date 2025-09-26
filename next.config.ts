@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   // Security headers configuration - disabled in development to avoid Server Actions issues
   async headers() {
     const isDevelopment = process.env.NODE_ENV === 'development'
+    const isProduction = process.env.NODE_ENV === 'production'
     
     // Skip CSP in development to avoid Server Actions conflicts
     if (isDevelopment) {
@@ -13,11 +14,11 @@ const nextConfig: NextConfig = {
     // Production CSP configuration
     const cspDirectives = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://checkout.stripe.com https://*.clerk.accounts.dev https://*.clerk.dev https://clerk.com https://challenges.cloudflare.com",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://checkout.stripe.com https://*.clerk.accounts.dev https://*.clerk.dev https://clerk.com https://challenges.cloudflare.com https://vercel.live",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.clerk.accounts.dev https://*.clerk.dev",
       "font-src 'self' https://fonts.gstatic.com https://*.clerk.accounts.dev https://*.clerk.dev",
       "img-src 'self' data: https: blob: https://*.clerk.accounts.dev https://*.clerk.dev https://img.clerk.com",
-      "connect-src 'self' https://api.stripe.com https://checkout.stripe.com https://*.clerk.accounts.dev https://*.clerk.dev https://api.clerk.com https://clerk.com https://challenges.cloudflare.com",
+      "connect-src 'self' https://api.stripe.com https://checkout.stripe.com https://*.clerk.accounts.dev https://*.clerk.dev https://api.clerk.com https://clerk.com https://challenges.cloudflare.com https://clerk-telemetry.com https://vercel.live",
       "frame-src https://js.stripe.com https://checkout.stripe.com https://*.clerk.accounts.dev https://*.clerk.dev https://challenges.cloudflare.com",
       "worker-src 'self' blob: https://*.clerk.accounts.dev https://*.clerk.dev",
       "child-src 'self' blob: https://*.clerk.accounts.dev https://*.clerk.dev",

@@ -47,10 +47,10 @@ function MemberGuard({ children }: MemberGuardProps) {
         publicMetadata: JSON.stringify(publicMetadata, null, 2)
       })
       
-      // Si es admin, redirigir al dashboard de admin
+      // Si es admin, permitir acceso a todas las áreas
       if (userRole === 'admin') {
-        console.log('✅ Usuario admin, redirigiendo a dashboard de admin')
-        _router.replace('/admin/dashboard')
+        console.log('✅ Usuario admin, permitiendo acceso al área de member')
+        setIsChecking(false)
         return
       }
 

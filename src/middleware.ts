@@ -60,8 +60,9 @@ export default clerkMiddleware(async (auth, req) => {
     if (!userId) {
       return NextResponse.redirect(new URL('/login', req.url))
     }
+    // Admin puede acceder a todas las áreas
     if (userRole === 'admin') {
-      return NextResponse.redirect(new URL('/admin/dashboard', req.url))
+      return NextResponse.next()
     }
     if (userRole === 'scout') {
       return NextResponse.redirect(new URL('/scout/dashboard', req.url))
@@ -77,8 +78,9 @@ export default clerkMiddleware(async (auth, req) => {
     if (!userId) {
       return NextResponse.redirect(new URL('/login', req.url))
     }
+    // Admin puede acceder a todas las áreas
     if (userRole === 'admin') {
-      return NextResponse.redirect(new URL('/admin/dashboard', req.url))
+      return NextResponse.next()
     }
     if (userRole === 'member') {
       return NextResponse.redirect(new URL('/member/dashboard', req.url))
