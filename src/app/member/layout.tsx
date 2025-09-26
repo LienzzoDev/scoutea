@@ -26,22 +26,52 @@ function MemberGuard({ children }: MemberGuardProps) {
         return
       }
 
-      // Verificar si el perfil está completo usando metadatos públicos de Clerk (seguro)
-      const _profileCompleted = (user?.publicMetadata as Record<string, unknown>)?.profile === 'completed'
-      const hasSubscription = (user?.publicMetadata as Record<string, unknown>)?.subscription?.status === 'active'
+      // Verificar el estado del perfil usando metadatos públicos de Clerk
+      const publicMetadata = user?.publicMetadata as Record<string, unknown>
+      const profileStatus = publicMetadata?.profile as string
+      const profileCompleted = profileStatus === 'completed'
+      const profileIncomplete = profileStatus === 'incomplete'
+      const hasProfileStatus = profileCompleted || profileIncomplete
+      const subscriptionData = publicMetadata?.subscription as Record<string, unknown>
+      const hasSubscription = subscriptionData?.status === 'active'
+      const onboardingStep = publicMetadata?.onboardingStep as string
       const userRole = getUserRole(user)
       
-      // Si es admin, permitir acceso sin verificar perfil o suscripción
+      console.log('🔍 MemberGuard - User metadata check:', {
+        userId,
+        pathname,
+        profileStatus,
+        hasSubscription,
+        userRole,
+        onboardingStep,
+        publicMetadata: JSON.stringify(publicMetadata, null, 2)
+      })
+      
+      // Si es admin, redirigir al dashboard de admin
       if (userRole === 'admin') {
-        console.log('✅ Usuario admin, permitiendo acceso sin verificar perfil/suscripción')
-        setIsChecking(false)
+        console.log('✅ Usuario admin, redirigiendo a dashboard de admin')
+        _router.replace('/admin/dashboard')
+        return
+      }
+
+      // Si es scout, redirigir al área de scout
+      if (userRole === 'scout') {
+        console.log('✅ Usuario scout, redirigiendo a área de scout')
+        _router.replace('/scout/dashboard')
+        return
+      }
+
+      // Si no es member, denegar acceso
+      if (userRole !== 'member') {
+        console.log('❌ Usuario no es member, redirigiendo a home')
+        _router.replace('/')
         return
       }
       
-      // Si el perfil no está completo, permitir acceso a planes de suscripción o welcome-plan
-      if (!profileCompleted && pathname !== '/member/subscription-plans' && pathname !== '/member/welcome-plan' && pathname !== '/member/complete-profile-after-payment') {
-        console.log('🔄 Perfil incompleto, redirigiendo a planes de suscripción')
-        _router.replace('/member/subscription-plans')
+      // Si no tiene ningún estado de perfil (nunca ha pasado por el flujo), permitir acceso solo a páginas del flujo de registro
+      if (!hasProfileStatus && pathname !== '/member/welcome-plan' && pathname !== '/member/complete-profile-after-payment' && pathname !== '/member/complete-profile') {
+        console.log('🔄 Sin estado de perfil, redirigiendo al dashboard')
+        _router.replace('/member/dashboard')
         return
       }
 
@@ -52,43 +82,28 @@ function MemberGuard({ children }: MemberGuardProps) {
         return
       }
 
-      // Permitir acceso a la página de bienvenida del plan si tiene suscripción
-      if (pathname === '/member/welcome-plan') {
-        if (hasSubscription) {
-          console.log('✅ Acceso permitido - página de bienvenida del plan con suscripción activa')
-          setIsChecking(false)
-          return
-        } else {
-          console.log('🔄 Sin suscripción, redirigiendo a planes de suscripción')
-          _router.replace('/member/subscription-plans')
-          return
-        }
-      }
-
-      // Si el perfil está completo, redirigir según el estado de suscripción
-      if (profileCompleted) {
-        if (hasSubscription) {
-          // Si tiene suscripción y no está en el dashboard, redirigir al dashboard
-          if (pathname !== '/member/dashboard' && !pathname.startsWith('/member/player/') && !pathname.startsWith('/member/scout/') && pathname !== '/member/torneos') {
-            console.log('✅ Perfil completo con suscripción, redirigiendo a dashboard')
-            _router.replace('/member/dashboard')
-            return
-          }
-        } else {
-          // Si no tiene suscripción y no está en planes de suscripción, redirigir a planes
-          if (pathname !== '/member/subscription-plans' && pathname !== '/member/torneos') {
-            console.log('✅ Perfil completo sin suscripción, redirigiendo a planes de suscripción')
-            _router.replace('/member/subscription-plans')
-            return
-          }
-        }
-      }
-
-      // Permitir acceso a la página de planes de suscripción sin verificar rol
-      if (pathname === '/member/subscription-plans') {
-        console.log('✅ Acceso permitido - página de planes de suscripción')
+      // Permitir acceso a la página de completar perfil durante el flujo de registro
+      if (pathname === '/member/complete-profile') {
+        console.log('✅ Acceso permitido - página de completar perfil')
         setIsChecking(false)
         return
+      }
+
+      // Permitir acceso a la página de bienvenida del plan durante el flujo de registro
+      if (pathname === '/member/welcome-plan') {
+        console.log('✅ Acceso permitido - página de bienvenida del plan (flujo de registro)')
+        setIsChecking(false)
+        return
+      }
+
+      // Si el perfil está completo o incompleto, permitir acceso al dashboard y otras páginas
+      if (hasProfileStatus) {
+        // Permitir acceso a todas las páginas principales
+        if (pathname === '/member/dashboard' || pathname.startsWith('/member/player/') || pathname.startsWith('/member/scout/') || pathname === '/member/torneos' || pathname === '/member/comparison' || pathname === '/member/scouts' || pathname === '/member/scout-comparison') {
+          console.log('✅ Acceso permitido - página principal')
+          setIsChecking(false)
+          return
+        }
       }
 
       // Permitir acceso a la página de torneos sin verificar rol (solo consulta)

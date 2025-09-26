@@ -1,30 +1,31 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  // Security headers configuration
+  // Security headers configuration - disabled in development to avoid Server Actions issues
   async headers() {
     const isDevelopment = process.env.NODE_ENV === 'development'
     
-    // More permissive CSP for development, stricter for production
+    // Skip CSP in development to avoid Server Actions conflicts
+    if (isDevelopment) {
+      return []
+    }
+    
+    // Production CSP configuration
     const cspDirectives = [
       "default-src 'self'",
-      isDevelopment 
-        ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https: http: localhost:*"
-        : "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://checkout.stripe.com https://*.clerk.accounts.dev https://*.clerk.dev https://clerk.com",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://checkout.stripe.com https://*.clerk.accounts.dev https://*.clerk.dev https://clerk.com https://challenges.cloudflare.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.clerk.accounts.dev https://*.clerk.dev",
       "font-src 'self' https://fonts.gstatic.com https://*.clerk.accounts.dev https://*.clerk.dev",
       "img-src 'self' data: https: blob: https://*.clerk.accounts.dev https://*.clerk.dev https://img.clerk.com",
-      isDevelopment
-        ? "connect-src 'self' https: http: ws: wss: localhost:*"
-        : "connect-src 'self' https://api.stripe.com https://checkout.stripe.com https://*.clerk.accounts.dev https://*.clerk.dev https://api.clerk.com https://clerk.com",
-      "frame-src https://js.stripe.com https://checkout.stripe.com https://*.clerk.accounts.dev https://*.clerk.dev",
+      "connect-src 'self' https://api.stripe.com https://checkout.stripe.com https://*.clerk.accounts.dev https://*.clerk.dev https://api.clerk.com https://clerk.com https://challenges.cloudflare.com",
+      "frame-src https://js.stripe.com https://checkout.stripe.com https://*.clerk.accounts.dev https://*.clerk.dev https://challenges.cloudflare.com",
       "worker-src 'self' blob: https://*.clerk.accounts.dev https://*.clerk.dev",
       "child-src 'self' blob: https://*.clerk.accounts.dev https://*.clerk.dev",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self' https://*.clerk.accounts.dev https://*.clerk.dev",
       "frame-ancestors 'none'",
-      ...(isDevelopment ? [] : ["upgrade-insecure-requests"])
+      "upgrade-insecure-requests"
     ]
 
     return [

@@ -1,6 +1,6 @@
 import { UserResource } from '@clerk/nextjs/server'
 
-export type Role = 'admin' | 'member'
+export type Role = 'admin' | 'member' | 'scout'
 
 /**
  * Obtiene el rol del usuario desde publicMetadata (seguro)
@@ -10,7 +10,7 @@ export function getUserRole(user: UserResource | null | undefined): Role | null 
 
   // Solo usar publicMetadata (seguro)
   const publicRole = (user.publicMetadata as { role?: string })?.role
-  if (publicRole && (publicRole === 'admin' || publicRole === 'member')) {
+  if (publicRole && (publicRole === 'admin' || publicRole === 'member' || publicRole === 'scout')) {
     return publicRole as Role
   }
 
@@ -39,6 +39,13 @@ export function isMember(user: UserResource | null | undefined): boolean {
 }
 
 /**
+ * Verifica si el usuario es scout
+ */
+export function isScout(user: UserResource | null | undefined): boolean {
+  return hasRole(user, 'scout')
+}
+
+/**
  * Obtiene información detallada del rol del usuario
  */
 export function getUserRoleInfo(user: UserResource | null | undefined) {
@@ -48,6 +55,7 @@ export function getUserRoleInfo(user: UserResource | null | undefined) {
     role,
     isAdmin: role === 'admin',
     isMember: role === 'member',
+    isScout: role === 'scout',
     hasRole: role !== null,
     publicMetadata: user?.publicMetadata
   }

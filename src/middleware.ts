@@ -3,11 +3,12 @@ import { NextResponse } from 'next/server'
 
 // Definir rutas con matchers
 const isAuthRoute = createRouteMatcher(['/login(.*)', '/register(.*)', '/admin-login(.*)'])
-const _isAdminRoute = createRouteMatcher(['/admin(.*)'])
+const isAdminRoute = createRouteMatcher(['/admin(.*)'])
+const isMemberRoute = createRouteMatcher(['/member(.*)'])
+const isScoutRoute = createRouteMatcher(['/scout(.*)'])
 const isWelcomeRoute = createRouteMatcher(['/member/welcome(.*)'])
 const _isWelcomePlanRoute = createRouteMatcher(['/member/welcome-plan(.*)'])
-const _isSubscriptionRoute = createRouteMatcher(['/member/subscription-plans(.*)'])
-const isDashboardRoute = createRouteMatcher(['/member/dashboard(.*)'])
+const isDashboardRoute = createRouteMatcher(['/member/dashboard(.*)', '/scout/dashboard(.*)'])
 const _isCompleteProfileRoute = createRouteMatcher(['/member/complete-profile-after-payment(.*)'])
 const isPublicRoute = createRouteMatcher(['/'])
 
@@ -43,29 +44,48 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.next()
   }
 
-  // Manejar ruta del dashboard
-  if (isDashboardRoute(req)) {
+  // Manejar rutas de admin
+  if (isAdminRoute(req)) {
     if (!userId) {
       return NextResponse.redirect(new URL('/login', req.url))
     }
+    if (userRole !== 'admin') {
+      return NextResponse.redirect(new URL('/', req.url))
+    }
+    return NextResponse.next()
+  }
 
-    // Si es admin, permitir acceso sin verificar suscripción
+  // Manejar rutas de member
+  if (isMemberRoute(req)) {
+    if (!userId) {
+      return NextResponse.redirect(new URL('/login', req.url))
+    }
     if (userRole === 'admin') {
-      return NextResponse.next()
+      return NextResponse.redirect(new URL('/admin/dashboard', req.url))
     }
-    
-    // Para usuarios member, aplicar lógica de verificación de suscripción
-    if (!profileCompleted && !hasSubscription) {
-      console.log('🔄 Perfil incompleto y sin suscripción, redirigiendo a planes de suscripción')
-      return NextResponse.redirect(new URL('/member/subscription-plans', req.url))
+    if (userRole === 'scout') {
+      return NextResponse.redirect(new URL('/scout/dashboard', req.url))
     }
-    
-    if (!profileCompleted && hasSubscription) {
-      console.log('🔄 Perfil incompleto pero con suscripción activa, redirigiendo a completar perfil')
-      return NextResponse.redirect(new URL('/member/complete-profile-after-payment', req.url))
+    if (userRole !== 'member') {
+      return NextResponse.redirect(new URL('/', req.url))
     }
-    
-    console.log('✅ Perfil completo, permitiendo acceso al dashboard')
+    return NextResponse.next()
+  }
+
+  // Manejar rutas de scout
+  if (isScoutRoute(req)) {
+    if (!userId) {
+      return NextResponse.redirect(new URL('/login', req.url))
+    }
+    if (userRole === 'admin') {
+      return NextResponse.redirect(new URL('/admin/dashboard', req.url))
+    }
+    if (userRole === 'member') {
+      return NextResponse.redirect(new URL('/member/dashboard', req.url))
+    }
+    if (userRole !== 'scout') {
+      return NextResponse.redirect(new URL('/', req.url))
+    }
     return NextResponse.next()
   }
 
@@ -80,37 +100,33 @@ export default clerkMiddleware(async (auth, req) => {
 
     console.log('👤 Usuario autenticado:', userId)
     
-    // Si estamos en la página de registro, no redirigir (dejar que el componente maneje el flujo)
-    if (req.nextUrl.pathname === '/register') {
+    // Si estamos en cualquier ruta de registro, no redirigir (dejar que el componente maneje el flujo)
+    if (req.nextUrl.pathname.startsWith('/register')) {
       console.log('🔄 Usuario en página de registro, permitiendo flujo interno')
       return NextResponse.next()
     }
     
     console.log('📋 Estado del perfil:', { userRole, profileCompleted, hasSubscription, metadata: sessionClaims?.public_metadata })
     
-    // Si es admin, redirigir al dashboard de admin
+    // Redirigir según el rol del usuario
     if (userRole === 'admin') {
       console.log('✅ Usuario admin, redirigiendo a dashboard de admin')
       return NextResponse.redirect(new URL('/admin/dashboard', req.url))
     }
     
-    // Para usuarios member, aplicar lógica de redirección basada en estado del perfil y suscripción
-    if (profileCompleted && hasSubscription) {
-      console.log('✅ Perfil completo con suscripción, redirigiendo a dashboard')
+    if (userRole === 'member') {
+      console.log('✅ Usuario member, redirigiendo a dashboard de member')
       return NextResponse.redirect(new URL('/member/dashboard', req.url))
-    } else if (profileCompleted && !hasSubscription) {
-      console.log('✅ Perfil completo sin suscripción, redirigiendo a planes de suscripción')
-      return NextResponse.redirect(new URL('/member/subscription-plans', req.url))
-    } else if (!profileCompleted && hasSubscription) {
-      console.log('💳 Usuario con suscripción activa pero perfil incompleto, redirigiendo a completar perfil')
-      return NextResponse.redirect(new URL('/member/complete-profile-after-payment', req.url))
-    } else if (!profileCompleted && isFromSuccessfulPayment) {
-      console.log('💳 Usuario viene de pago exitoso con perfil incompleto, redirigiendo a completar perfil')
-      return NextResponse.redirect(new URL('/member/complete-profile-after-payment', req.url))
-    } else {
-      console.log('🔄 Perfil incompleto y sin suscripción, redirigiendo a planes de suscripción')
-      return NextResponse.redirect(new URL('/member/subscription-plans', req.url))
     }
+    
+    if (userRole === 'scout') {
+      console.log('✅ Usuario scout, redirigiendo a dashboard de scout')
+      return NextResponse.redirect(new URL('/scout/dashboard', req.url))
+    }
+    
+    // Si no tiene rol definido, redirigir a home
+    console.log('🔄 Usuario sin rol definido, redirigiendo a home')
+    return NextResponse.redirect(new URL('/', req.url))
   }
 
   // Para cualquier otra ruta, permitir acceso
