@@ -23,7 +23,7 @@ export default function RegisterPage() {
         {/* Register Form */}
         <SignUp 
           path="/register"
-          routing="hash"
+          routing="path"
           redirectUrl="/member/welcome"
           appearance={{
             variables: {
