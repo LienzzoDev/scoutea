@@ -47,7 +47,7 @@ export default function MemberNavbar() {
     try {
       // Buscar jugadores y scouts en paralelo
       const [playersResponse, scoutsResponse] = await Promise.all([
-        fetch(`/api/players?page=1&limit=5&filters[player_name]=${encodeURIComponent(term)}`),
+        fetch(`/api/simple-players-search?filters[player_name]=${encodeURIComponent(term)}`),
         fetch(`/api/scouts?page=1&limit=5&search=${encodeURIComponent(term)}`)
       ])
 
@@ -59,7 +59,7 @@ export default function MemberNavbar() {
         scouts: scoutsData.scouts || []
       })
       setShowSearchResults(true)
-    } catch (_error) {
+    } catch (error) {
       console.error('Error searching:', error)
       setSearchResults({ players: [], scouts: [] })
     } finally {
