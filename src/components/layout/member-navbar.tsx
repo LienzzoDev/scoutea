@@ -1,7 +1,7 @@
 'use client'
 
 import { useUser } from '@clerk/nextjs'
-import { Search, ChevronDown, User, Shield, X } from "lucide-react"
+import { Search, ChevronDown, User, Shield, X, Users } from "lucide-react"
 import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 
@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import PlayerAvatar from "@/components/ui/player-avatar"
 import ScoutAvatar from "@/components/ui/scout-avatar"
-import { getUserRole } from '@/lib/auth/user-role'
+import { getUserRole, isTester } from '@/lib/auth/user-role'
+import { TesterBadge } from '@/components/ui/tester-badge'
 
 
 export default function MemberNavbar() {
@@ -18,8 +19,10 @@ export default function MemberNavbar() {
   const { user } = useUser()
   const [showWonderkidsDropdown, setShowWonderkidsDropdown] = useState(false)
   const [showWonderscoutsDropdown, setShowWonderscoutsDropdown] = useState(false)
+  const [showAreaDropdown, setShowAreaDropdown] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const wonderscoutsDropdownRef = useRef<HTMLDivElement>(null)
+  const areaDropdownRef = useRef<HTMLDivElement>(null)
 
   // 🔍 ESTADO PARA BÚSQUEDA GLOBAL
   const [searchTerm, setSearchTerm] = useState('')
@@ -34,6 +37,7 @@ export default function MemberNavbar() {
   // Obtener el rol del usuario
   const userRole = getUserRole(user)
   const isAdmin = userRole === 'admin'
+  const isUserTester = isTester(user)
 
   // 🔍 FUNCIÓN DE BÚSQUEDA GLOBAL
   const performSearch = async (term: string) => {
@@ -86,6 +90,9 @@ export default function MemberNavbar() {
       }
       if (wonderscoutsDropdownRef.current && !wonderscoutsDropdownRef.current.contains(event.target as Node)) {
         setShowWonderscoutsDropdown(false)
+      }
+      if (areaDropdownRef.current && !areaDropdownRef.current.contains(event.target as Node)) {
+        setShowAreaDropdown(false)
       }
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSearchResults(false)
@@ -367,14 +374,52 @@ export default function MemberNavbar() {
         {/* User Actions */}
         <div className="flex items-center gap-4">
           
-          {/* Botón de Admin - Solo visible para usuarios admin */}
-          {isAdmin && (
-            <Button
-              onClick={() =>_router.push('/admin/dashboard')}
-              className="bg-[#8c1a10] hover:bg-[#6d1410] text-white text-sm px-3 py-1.5 flex items-center gap-2" size="sm">
-              <Shield className="w-4 h-4" />
-              Admin
-            </Button>
+          {/* Badge de Tester */}
+          <TesterBadge />
+          
+          {/* Dropdown para cambiar entre áreas - Visible para admin y tester */}
+          {(isAdmin || isUserTester) && (
+            <div className="relative" ref={areaDropdownRef}>
+              <Button
+                onClick={() => setShowAreaDropdown(!showAreaDropdown)}
+                className="bg-[#8c1a10] hover:bg-[#6d1410] text-white text-sm px-3 py-1.5 flex items-center gap-2" 
+                size="sm"
+              >
+                {isAdmin ? <Shield className="w-4 h-4" /> : <Users className="w-4 h-4" />}
+                {isAdmin ? 'Cambiar Área' : 'Alternar Área'}
+                <ChevronDown className="w-4 h-4" />
+              </Button>
+              
+              {/* Dropdown Menu */}
+              {showAreaDropdown && (
+                <div className="absolute top-full right-0 mt-2 bg-white border border-[#e7e7e7] rounded-lg shadow-lg z-50 min-w-48">
+                  <div className="py-2">
+                    {isAdmin && (
+                      <button
+                        className="w-full text-left px-4 py-2 text-[#6d6d6d] hover:bg-gray-50 hover:text-[#8c1a10] transition-colors flex items-center gap-2"
+                        onClick={() => {
+                          setShowAreaDropdown(false)
+                          _router.push('/admin/dashboard')
+                        }}
+                      >
+                        <Shield className="w-4 h-4" />
+                        Área de Admin
+                      </button>
+                    )}
+                    <button
+                      className="w-full text-left px-4 py-2 text-[#6d6d6d] hover:bg-gray-50 hover:text-[#8c1a10] transition-colors flex items-center gap-2"
+                      onClick={() => {
+                        setShowAreaDropdown(false)
+                        _router.push('/scout/dashboard')
+                      }}
+                    >
+                      <Search className="w-4 h-4" />
+                      Área de Scouts
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
           
           <div className="w-8 h-8 bg-[#8c1a10] rounded-full flex items-center justify-center">

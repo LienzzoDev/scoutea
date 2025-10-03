@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { getTeamLogoData, generateTeamInitials } from "@/lib/utils/team-logos";
 
 interface EntityData {
   // Player fields
@@ -192,51 +193,7 @@ export default function EntityAvatar({
     return `https://flagcdn.com/${resolution}/${countryCode}.png`;
   };
 
-  // Función para obtener escudo de equipo (solo para players)
-  const getTeamBadge = (teamName: string) => {
-    if (!teamName || type !== "player") return null;
 
-    // Mapeo simplificado de equipos principales
-    const teamMap: { [key: string]: string } = {
-      "Real Madrid":
-        "https://logos-world.net/wp-content/uploads/2020/06/Real-Madrid-Logo.png",
-      "FC Barcelona":
-        "https://logos-world.net/wp-content/uploads/2020/06/Barcelona-Logo.png",
-      "Atletico Madrid":
-        "https://logos-world.net/wp-content/uploads/2020/06/Atletico-Madrid-Logo.png",
-      "Atlético Madrid":
-        "https://logos-world.net/wp-content/uploads/2020/06/Atletico-Madrid-Logo.png",
-      "Manchester City":
-        "https://logos-world.net/wp-content/uploads/2020/06/Manchester-City-Logo.png",
-      Arsenal:
-        "https://logos-world.net/wp-content/uploads/2020/06/Arsenal-Logo.png",
-      "Manchester United":
-        "https://logos-world.net/wp-content/uploads/2020/06/Manchester-United-Logo.png",
-      Liverpool:
-        "https://logos-world.net/wp-content/uploads/2020/06/Liverpool-Logo.png",
-      Chelsea:
-        "https://logos-world.net/wp-content/uploads/2020/06/Chelsea-Logo.png",
-      Tottenham:
-        "https://logos-world.net/wp-content/uploads/2020/06/Tottenham-Logo.png",
-      "Bayern Munich":
-        "https://logos-world.net/wp-content/uploads/2020/06/Bayern-Munich-Logo.png",
-      "Borussia Dortmund":
-        "https://logos-world.net/wp-content/uploads/2020/06/Borussia-Dortmund-Logo.png",
-      "Paris Saint-Germain":
-        "https://logos-world.net/wp-content/uploads/2020/06/Paris-Saint-Germain-Logo.png",
-      PSG: "https://logos-world.net/wp-content/uploads/2020/06/Paris-Saint-Germain-Logo.png",
-      Juventus:
-        "https://logos-world.net/wp-content/uploads/2020/06/Juventus-Logo.png",
-      "AC Milan":
-        "https://logos-world.net/wp-content/uploads/2020/06/AC-Milan-Logo.png",
-      "Inter Milan":
-        "https://logos-world.net/wp-content/uploads/2020/06/Inter-Milan-Logo.png",
-      Napoli:
-        "https://logos-world.net/wp-content/uploads/2020/06/Napoli-Logo.png",
-    };
-
-    return teamMap[teamName] || null;
-  };
 
   // Función para obtener color basado en el nivel del scout
   const getScoutLevelColor = (level?: string): string => {
@@ -267,9 +224,9 @@ export default function EntityAvatar({
   const entityName = getEntityName();
   const nationality = getNationality();
   const flagUrl = showFlag ? getCountryFlag(nationality || "", size) : null;
-  const teamBadgeUrl =
-    showBadge && type === "player"
-      ? getTeamBadge(entity.team_name || "")
+  const teamBadgeData =
+    showBadge && type === "player" && entity.team_name
+      ? getTeamLogoData(entity.team_name)
       : null;
 
   // Función para crear fallback con iniciales (solo para scouts)
@@ -301,12 +258,11 @@ export default function EntityAvatar({
       <Image
         src={entityImage}
         alt={entityName}
-        fill
-        className="rounded-full object-cover"
-        quality={95}
-        priority
-        placeholder="blur"
-        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+        width={size === "sm" ? 32 : size === "md" ? 48 : size === "lg" ? 64 : 96}
+        height={size === "sm" ? 32 : size === "md" ? 48 : size === "lg" ? 64 : 96}
+        className="rounded-full object-cover w-full h-full"
+        quality={75}
+
         sizes={`(min-resolution: 2dppx) ${
           size === "sm"
             ? "64px"
@@ -325,13 +281,18 @@ export default function EntityAvatar({
             : "96px"
         }`}
         onError={(e) =>{
-          // Fallback para scouts: mostrar iniciales si no hay imagen
-          if (type === "scout" && entity.url_profile) {
-            const target = e.target as HTMLImageElement;
-            const parent = target.parentElement?.parentElement;
-            if (parent) {
-              createInitialsFallback(parent);
-            }
+          // Fallback: usar imagen por defecto
+          const target = e.target as HTMLImageElement;
+          target.src = "/default-avatar.svg";
+          
+          // Fallback adicional para scouts: mostrar iniciales si no hay imagen por defecto
+          if (type === "scout") {
+            target.onerror = () => {
+              const parent = target.parentElement?.parentElement;
+              if (parent) {
+                createInitialsFallback(parent);
+              }
+            };
           }
         }}
       />
@@ -344,13 +305,11 @@ export default function EntityAvatar({
           <Image
             src={flagUrl}
             alt={`${nationality} flag`}
-            fill
-            className="rounded-sm object-cover drop-shadow-sm"
+            width={size === "sm" ? 16 : size === "md" ? 20 : size === "lg" ? 24 : 32}
+            height={size === "sm" ? 16 : size === "md" ? 20 : size === "lg" ? 24 : 32}
+            className="rounded-sm object-cover drop-shadow-sm w-full h-full"
             style={{ imageRendering: "crisp-edges" }}
-            quality={95}
-            priority
-            placeholder="blur"
-            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+            quality={75}
             sizes={`(min-resolution: 2dppx) ${
               size === "sm"
                 ? "32px"
@@ -379,44 +338,39 @@ export default function EntityAvatar({
       )}
 
       {/* Escudo del equipo (solo para players) */}
-      {teamBadgeUrl && (
+      {showBadge && type === "player" && entity.team_name && (
         <div
           className={`absolute -bottom-0.5 -left-0.5 ${badgeSizeClasses[size]}`}
         >
-          <Image
-            src={teamBadgeUrl}
-            alt={`${entity.team_name} badge`}
-            fill
-            className="rounded-sm object-cover drop-shadow-sm"
-            style={{ imageRendering: "crisp-edges" }}
-            quality={95}
-            priority
-            placeholder="blur"
-            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-            sizes={`(min-resolution: 2dppx) ${
-              size === "sm"
-                ? "40px"
-                : size === "md"
-                ? "48px"
-                : size === "lg"
-                ? "56px"
-                : "80px"
-            }, ${
-              size === "sm"
-                ? "20px"
-                : size === "md"
-                ? "24px"
-                : size === "lg"
-                ? "28px"
-                : "40px"
-            }`}
-            onError={(e) =>{
-              const parent = e.currentTarget.parentElement;
-              if (parent) {
-                parent.style.display = "none";
-              }
-            }}
-          />
+          {teamBadgeData ? (
+            <Image
+              src={teamBadgeData.primary}
+              alt={`${entity.team_name} badge`}
+              width={size === "sm" ? 20 : size === "md" ? 24 : size === "lg" ? 28 : 40}
+              height={size === "sm" ? 20 : size === "md" ? 24 : size === "lg" ? 28 : 40}
+              className="rounded-sm object-cover drop-shadow-sm w-full h-full"
+              style={{ imageRendering: "crisp-edges" }}
+              quality={75}
+              onError={(e) =>{
+                // Si falla la imagen, mostrar fallback de texto
+                const parent = e.currentTarget.parentElement;
+                if (parent) {
+                  const initials = generateTeamInitials(entity.team_name || '');
+                  parent.innerHTML = `
+                    <div class="${badgeSizeClasses[size]} bg-gray-500 rounded-sm flex items-center justify-center text-white font-bold" style="font-size: ${size === "sm" ? "8px" : size === "md" ? "10px" : "12px"};">
+                      ${initials}
+                    </div>
+                  `;
+                }
+              }}
+            />
+          ) : (
+            // Fallback de texto directo si no hay datos del equipo
+            <div className={`${badgeSizeClasses[size]} bg-gray-500 rounded-sm flex items-center justify-center text-white font-bold`} 
+                 style={{ fontSize: size === "sm" ? "8px" : size === "md" ? "10px" : "12px" }}>
+              {generateTeamInitials(entity.team_name || '')}
+            </div>
+          )}
         </div>
       )}
     </div>

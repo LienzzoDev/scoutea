@@ -21,6 +21,10 @@ export const useDashboardState = () => {
   const [selectedCompetitions, setSelectedCompetitions] = useState<string[]>([]);
   const [selectedAges, setSelectedAges] = useState<string[]>([]);
   
+  // Estados de ordenamiento
+  const [sortBy, setSortBy] = useState<string>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  
   // Estados de datos
   const [loading, setLoading] = useState(false);
   const [_error, _setError] = useState<string | null>(null);
@@ -121,20 +125,108 @@ export const useDashboardState = () => {
     { 
       key: 'nationality', 
       label: 'Nacionalidad', 
-      enabled: false,
+      enabled: true,
       getValue: (player: Record<string, unknown>) => player.nationality_1 || player.nationality
     },
     { 
       key: 'rating', 
       label: 'Rating', 
       enabled: false,
-      getValue: (player: Record<string, unknown>) => player.rating
+      getValue: (player: Record<string, unknown>) => player.player_rating || player.rating
+    },
+    { 
+      key: 'height', 
+      label: 'Altura', 
+      enabled: false,
+      getValue: (player: Record<string, unknown>) => player.height ? `${player.height} cm` : player.height
+    },
+    { 
+      key: 'foot', 
+      label: 'Pie Hábil', 
+      enabled: false,
+      getValue: (player: Record<string, unknown>) => player.correct_foot || player.foot
+    },
+    { 
+      key: 'market_value', 
+      label: 'Valor de Mercado', 
+      enabled: false,
+      getValue: (player: Record<string, unknown>) => {
+        const value = player.player_trfm_value || player.market_value;
+        if (!value) return value;
+        const numValue = typeof value === 'string' ? parseFloat(value) : value;
+        return `€${numValue.toFixed(2)}M`;
+      }
+    },
+    { 
+      key: 'birth_date', 
+      label: 'Fecha de Nacimiento', 
+      enabled: false,
+      getValue: (player: Record<string, unknown>) => {
+        const date = player.correct_date_of_birth || player.date_of_birth || player.birth_date;
+        return date ? new Date(date as string).toLocaleDateString('es-ES') : date;
+      }
+    },
+    { 
+      key: 'team_country', 
+      label: 'País del Equipo', 
+      enabled: false,
+      getValue: (player: Record<string, unknown>) => player.team_country || player.country
+    },
+    { 
+      key: 'competition', 
+      label: 'Competición', 
+      enabled: false,
+      getValue: (player: Record<string, unknown>) => player.team_competition || player.competition
+    },
+    { 
+      key: 'contract_expires', 
+      label: 'Fin de Contrato', 
+      enabled: false,
+      getValue: (player: Record<string, unknown>) => {
+        const date = player.contract_expires;
+        return date ? new Date(date as string).toLocaleDateString('es-ES') : 'N/A';
+      }
+    },
+    { 
+      key: 'on_loan', 
+      label: 'Cedido', 
+      enabled: false,
+      getValue: (player: Record<string, unknown>) => player.on_loan ? 'Sí' : 'No'
+    },
+    { 
+      key: 'goals', 
+      label: 'Goles', 
+      enabled: false,
+      getValue: (player: Record<string, unknown>) => player.goals || 0
+    },
+    { 
+      key: 'assists', 
+      label: 'Asistencias', 
+      enabled: false,
+      getValue: (player: Record<string, unknown>) => player.assists || 0
+    },
+    { 
+      key: 'matches_played', 
+      label: 'Partidos Jugados', 
+      enabled: false,
+      getValue: (player: Record<string, unknown>) => player.matches_played || player.games || 0
+    },
+    { 
+      key: 'minutes_played', 
+      label: 'Minutos Jugados', 
+      enabled: false,
+      getValue: (player: Record<string, unknown>) => {
+        const minutes = player.minutes_played || player.minutes;
+        return minutes ? `${minutes}'` : 0;
+      }
     }
   ], []);
 
-  // Datos de categorías seleccionadas (memoizado)
+  // Datos de categorías seleccionadas (memoizado) - ordenadas según selección
   const selectedCategoriesData = useMemo(() => 
-    AVAILABLE_CATEGORIES.filter(cat => selectedCategories.includes(cat.key)),
+    selectedCategories
+      .map(categoryKey => AVAILABLE_CATEGORIES.find(cat => cat.key === categoryKey))
+      .filter(Boolean) as typeof AVAILABLE_CATEGORIES,
     [AVAILABLE_CATEGORIES, selectedCategories]
   );
 
@@ -151,7 +243,7 @@ export const useDashboardState = () => {
     setSelectedCategories(prev => 
       prev.includes(categoryId) 
         ? prev.filter(id => id !== categoryId)
-        : [...prev, categoryId]
+        : [categoryId, ...prev]
     );
   }, []);
 
@@ -168,33 +260,67 @@ export const useDashboardState = () => {
     setSelectedAges([]);
   }, []);
 
+  // Función para manejar ordenamiento
+  const handleSort = useCallback((categoryKey: string) => {
+    if (sortBy === categoryKey) {
+      // Si ya está ordenado por esta columna, cambiar dirección
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Si es una nueva columna, ordenar ascendente
+      setSortBy(categoryKey);
+      setSortOrder('asc');
+    }
+  }, [sortBy]);
+
   // Las funciones de lista de jugadores ahora vienen del hook usePlayerList
 
   // Efecto para cargar datos iniciales
   useEffect(() => {
+    let isMounted = true;
+    
     const loadRealPlayers = async () => {
+      if (!isMounted) return;
+      
       setLoading(true);
       try {
         console.log('🔍 useDashboardState: Loading real players...');
-        const response = await fetch('/api/players-simple?page=1&limit=100'); // Cargar más jugadores para filtrar
+        const response = await fetch('/api/players-simple?page=1&limit=100');
+        
+        if (!isMounted) return;
         
         if (response.ok) {
           const data = await response.json();
-          console.log('✅ useDashboardState: Loaded players:', data.players?.length || 0);
-          setAllPlayers(data.players || []);
+          if (isMounted) {
+            console.log('✅ useDashboardState: Loaded players:', data.players?.length || 0);
+            setAllPlayers(data.players || []);
+          }
         } else {
-          console.error('❌ useDashboardState: Failed to load players');
-          setAllPlayers([]);
+          if (isMounted) {
+            console.error('❌ useDashboardState: Failed to load players');
+            setAllPlayers([]);
+          }
         }
       } catch (error) {
-        console.error('❌ useDashboardState: Error loading players:', error);
-        setAllPlayers([]);
+        if (isMounted) {
+          console.error('❌ useDashboardState: Error loading players:', error);
+          setAllPlayers([]);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
-    loadRealPlayers();
+    // Usar setTimeout para evitar problemas con promesas no cacheadas
+    const timeoutId = setTimeout(() => {
+      loadRealPlayers();
+    }, 0);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, []); // Solo cargar una vez al inicio
 
   // Efecto para aplicar filtros
@@ -300,12 +426,43 @@ export const useDashboardState = () => {
       });
     }
 
-    console.log('✅ useDashboardState: Filters applied:', {
-      originalCount: allPlayers.length,
-      filteredCount: filtered.length
+    // Aplicar ordenamiento
+    const sortedFiltered = [...filtered].sort((a: any, b: any) => {
+      const categoryConfig = AVAILABLE_CATEGORIES.find(cat => cat.key === sortBy);
+      if (!categoryConfig) return 0;
+
+      const aValue = categoryConfig.getValue(a);
+      const bValue = categoryConfig.getValue(b);
+
+      // Manejar valores nulos/undefined
+      if (aValue == null && bValue == null) return 0;
+      if (aValue == null) return sortOrder === 'asc' ? 1 : -1;
+      if (bValue == null) return sortOrder === 'asc' ? -1 : 1;
+
+      // Determinar tipo de ordenamiento
+      const isNumeric = typeof aValue === 'number' && typeof bValue === 'number';
+      
+      let comparison = 0;
+      if (isNumeric) {
+        comparison = (aValue as number) - (bValue as number);
+      } else {
+        // Ordenamiento alfabético
+        const aStr = String(aValue).toLowerCase();
+        const bStr = String(bValue).toLowerCase();
+        comparison = aStr.localeCompare(bStr);
+      }
+
+      return sortOrder === 'asc' ? comparison : -comparison;
     });
 
-    setFilteredPlayers(filtered);
+    console.log('✅ useDashboardState: Filters and sorting applied:', {
+      originalCount: allPlayers.length,
+      filteredCount: filtered.length,
+      sortBy,
+      sortOrder
+    });
+
+    setFilteredPlayers(sortedFiltered);
   }, [
     allPlayers, 
     searchTerm, 
@@ -316,7 +473,10 @@ export const useDashboardState = () => {
     selectedTeams.join(','),
     selectedCompetitions.join(','),
     selectedAges.join(','),
-    playerList.join(',') // Convertir array a string para dependencia estable
+    playerList.join(','), // Convertir array a string para dependencia estable
+    sortBy,
+    sortOrder,
+    AVAILABLE_CATEGORIES // Agregar categorías para acceso en ordenamiento
   ]);
 
   return {
@@ -334,6 +494,8 @@ export const useDashboardState = () => {
     selectedCompetitions,
     selectedAges,
     filterOptions,
+    sortBy,
+    sortOrder,
     
     // Datos derivados
     loading,
@@ -348,6 +510,7 @@ export const useDashboardState = () => {
     handleCategoryToggle,
     applyFilters,
     clearFilters,
+    handleSort,
     setSelectedNationalities,
     setSelectedPositions,
     setSelectedTeams,

@@ -45,10 +45,7 @@ export default function PlanSelector({ plans }: PlanSelectorProps) {
     }
   }
 
-  const handleSubscribeLater = () => {
-    localStorage.removeItem('selectedPlan')
-    router.push('/register')
-  }
+
 
   const handleLogin = () => {
     router.push('/login')
@@ -76,12 +73,6 @@ export default function PlanSelector({ plans }: PlanSelectorProps) {
         >
           {selectedPlan ? `Registrarse como ${plans.find(p => p.id === selectedPlan)?.name}` : 'Selecciona tu Rol'}
           <ArrowRight className="ml-2 w-5 h-5" />
-        </button>
-        <button 
-          onClick={handleSubscribeLater}
-          className="border border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 inline-flex items-center justify-center"
-        >
-          Decidir más tarde
         </button>
         <button 
           onClick={handleLogin}
@@ -175,12 +166,6 @@ export default function PlanSelector({ plans }: PlanSelectorProps) {
           >
             {selectedPlan ? `Comenzar como ${plans.find(p => p.id === selectedPlan)?.name}` : 'Selecciona tu Rol'}
             <ArrowRight className="ml-2 w-5 h-5" />
-          </button>
-          <button 
-            onClick={handleSubscribeLater}
-            className="border border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 inline-flex items-center justify-center"
-          >
-            Explorar primero
           </button>
           <button 
             onClick={handleLogin}

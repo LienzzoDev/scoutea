@@ -21,7 +21,7 @@ export default function WelcomePage() {
     // Obtener el plan de suscripción desde los metadatos del usuario o URL params
     if (user) {
       const metadata = user.publicMetadata as Record<string, unknown>
-      const _subscription = metadata?.subscription
+      const subscription = metadata?.subscription as Record<string, unknown>
       const planFromUrl = searchParams.get('plan')
       
       console.log('🔍 Metadata del usuario:', metadata)
@@ -33,7 +33,7 @@ export default function WelcomePage() {
         setSubscriptionPlan(planFromUrl)
         console.log('✅ Plan obtenido desde URL:', planFromUrl)
       } else if (subscription && subscription.plan) {
-        setSubscriptionPlan(subscription.plan)
+        setSubscriptionPlan(subscription.plan as string)
         console.log('✅ Plan detectado desde metadatos:', subscription.plan)
       } else {
         console.log('❌ No se encontró plan en metadatos ni URL')
@@ -48,18 +48,12 @@ export default function WelcomePage() {
       basic: [
         { icon: Users, text: "Acceso a base de datos de jugadores" },
         { icon: BarChart3, text: "Reportes básicos de rendimiento" },
-        { icon: Target, text: "Análisis de 50 jugadores por mes" },
-        { icon: TrendingUp, text: "Estadísticas básicas" },
         { icon: Globe, text: "Soporte por email" }
       ],
       premium: [
-        { icon: Users, text: "Acceso completo a base de datos de jugadores" },
-        { icon: BarChart3, text: "Reportes avanzados y personalizados" },
-        { icon: Target, text: "Análisis ilimitado de jugadores" },
-        { icon: TrendingUp, text: "Estadísticas avanzadas y predicciones" },
-        { icon: Trophy, text: "Comparaciones entre jugadores" },
-        { icon: Zap, text: "Alertas en tiempo real"},
-        { icon: Shield, text: "Datos exclusivos de ligas premium"},
+        { icon: Users, text: "Acceso completo a base de datos" },
+        { icon: BarChart3, text: "Reportes avanzados y comparaciones" },
+        { icon: Trophy, text: "Análisis ilimitado de jugadores" },
         { icon: Headphones, text: "Soporte prioritario 24/7"}
       ]
     }
@@ -115,27 +109,24 @@ export default function WelcomePage() {
           </p>
         </div>
 
-        {/* Features Section */}
+        {/* Features Section - Simplified */}
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="text-2xl font-bold text-[#000000] text-center">
-              Características incluidas en tu plan {planName}
+              Tu plan {planName} incluye
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
               {features.map((feature, index) => {
                 const IconComponent = feature.icon
+                const uniqueKey = `welcome-${Date.now()}-${index}-${feature.text.replace(/\s+/g, '-').toLowerCase()}`
                 return (
-                  <div key={index} className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
-                    <div className="flex-shrink-0">
-                      <div className="w-10 h-10 bg-[#8c1a10] rounded-full flex items-center justify-center">
-                        <IconComponent className="w-5 h-5 text-white" />
-                      </div>
+                  <div key={uniqueKey} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-8 h-8 bg-[#8c1a10] rounded-full flex items-center justify-center flex-shrink-0">
+                      <IconComponent className="w-4 h-4 text-white" />
                     </div>
-                    <div>
-                      <p className="text-[#000000] font-medium">{feature.text}</p>
-                    </div>
+                    <p className="text-[#000000] font-medium">{feature.text}</p>
                   </div>
                 )
               })}
@@ -143,63 +134,13 @@ export default function WelcomePage() {
           </CardContent>
         </Card>
 
-        {/* Next Steps */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-xl font-bold text-[#000000] text-center">
-              ¿Qué puedes hacer ahora?
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center p-6 bg-white rounded-lg border border-[#e7e7e7]">
-                <Users className="w-12 h-12 text-[#8c1a10] mx-auto mb-4" />
-                <h3 className="font-semibold text-[#000000] mb-2">Explorar Jugadores</h3>
-                <p className="text-[#6d6d6d] text-sm">Descubre talentos en nuestra base de datos</p>
-              </div>
-              <div className="text-center p-6 bg-white rounded-lg border border-[#e7e7e7]">
-                <BarChart3 className="w-12 h-12 text-[#8c1a10] mx-auto mb-4" />
-                <h3 className="font-semibold text-[#000000] mb-2">Crear Reportes</h3>
-                <p className="text-[#6d6d6d] text-sm">Genera análisis detallados de rendimiento</p>
-              </div>
-              <div className="text-center p-6 bg-white rounded-lg border border-[#e7e7e7]">
-                <Target className="w-12 h-12 text-[#8c1a10] mx-auto mb-4" />
-                <h3 className="font-semibold text-[#000000] mb-2">Comparar Talentos</h3>
-                <p className="text-[#6d6d6d] text-sm">Analiza y compara diferentes jugadores</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Action Buttons */}
+        {/* Action Button */}
         <div className="text-center">
           <Button
             onClick={() =>_router.push('/member/dashboard')}
-            className="bg-[#8c1a10] hover:bg-[#6d1410] text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl mr-4">
-            Ir al Dashboard
+            className="bg-[#8c1a10] hover:bg-[#6d1410] text-white font-semibold px-12 py-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl text-lg">
+            Comenzar a explorar
           </Button>
-          <Button
-            onClick={() =>_router.push('/member/subscription-plans')}
-            variant="outline" className="border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200">
-            Completar Perfil
-          </Button>
-        </div>
-
-        {/* Support Section */}
-        <div className="mt-12 text-center">
-          <div className="bg-white rounded-lg p-6 border border-[#e7e7e7]">
-            <Headphones className="w-8 h-8 text-[#8c1a10] mx-auto mb-3" />
-            <h3 className="font-semibold text-[#000000] mb-2">¿Necesitas ayuda?</h3>
-            <p className="text-[#6d6d6d] text-sm mb-4">
-              Nuestro equipo de soporte está aquí para ayudarte a aprovechar al máximo tu suscripción
-            </p>
-            <Button
-              variant="outline"
-              className="border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white"
-            >
-              Contactar Soporte
-            </Button>
-          </div>
         </div>
       </main>
     </div>

@@ -33,12 +33,11 @@ export async function POST(request: NextRequest) {
 
     console.log('User info:', { userEmail, userName })
 
-    // Actualizar metadatos del usuario para marcar que está en proceso de pago
+    // Actualizar metadatos del usuario para marcar el plan seleccionado
     const currentMetadata = user.publicMetadata || {}
     await clerkClient.users.updateUser(userId, {
       publicMetadata: {
         ...currentMetadata,
-        onboardingStep: 'payment',
         selectedPlan: plan
       }
     })
@@ -59,10 +58,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // URLs de redirección - redirigir según el rol después del pago
+    // URLs de redirección - usar página de procesamiento para manejar la transición
     const baseUrl = request.nextUrl.origin
-    const dashboardUrl = plan === 'scout' ? '/scout/dashboard' : '/member/dashboard'
-    const successUrl = `${baseUrl}${dashboardUrl}?payment=success&session_id={CHECKOUT_SESSION_ID}`
+    const successUrl = `${baseUrl}/member/payment-processing?session_id={CHECKOUT_SESSION_ID}&plan=${plan}`
     const cancelUrl = `${baseUrl}/member/welcome-plan?plan=${plan}&step=3&payment=cancelled`
 
     console.log('Creating Stripe session with:', {

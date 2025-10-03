@@ -1,17 +1,18 @@
-import { auth, clerkClient } from '@clerk/nextjs/server'
+import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 
-import { UserService } from '@/lib/services/user-service'
+import { TransactionService } from '@/lib/services/transaction-service'
+import { logger } from '@/lib/logging/production-logger'
 
-export async function POST(__request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth()
     
     if (!userId) {
-      return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const _body = await request.json()
+    const body = await request.json()
     const {
       firstName,
       lastName,
@@ -26,81 +27,63 @@ export async function POST(__request: NextRequest) {
     } = body
 
     // Validar datos requeridos
-    if (!firstName || !lastName || !nationality || !bio || !experience || !specialization) {
+    if (!firstName || !lastName) {
       return NextResponse.json(
-        { __error: 'Missing required fields' },
+        { error: 'Missing required fields: firstName and lastName are required' },
         { status: 400 }
       )
     }
 
-    // Verificar si el usuario existe, si no, crearlo
-    let updatedUser
-    try {
-      updatedUser = await UserService.updateUser(userId, {
-        firstName,
-        lastName,
-        nationality,
-        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
-        location,
-        bio,
-        experience: parseInt(experience),
-        specialization,
-        languages,
-        profileCompleted: true
-      })
-    } catch (_error) {
-      // Si el usuario no existe, crearlo
-      if (error.code === 'P2025') {
-        console.log('🔄 Usuario no encontrado, creándolo...')
-        
-        // Crear usuario con el email proporcionado
-        updatedUser = await UserService.createUser({
-          clerkId: userId,
-          email: email || `temp-${userId}@scoutea.com`, // Usar email proporcionado o temporal
-          firstName,
-          lastName,
-          nationality,
-          dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
-          location,
-          bio,
-          experience: parseInt(experience),
-          specialization,
-          languages,
-          profileCompleted: true
-        })
-      } else {
-        throw error
-      }
-    }
+    logger.info('Updating user profile', { userId, firstName, lastName })
 
-    // Actualizar metadatos de Clerk usando funciones integradas (más eficiente)
-    try {
-      const clerk = await clerkClient()
-      const user = await clerk.users.getUser(userId)
-      const existingMetadata = user.publicMetadata || {}
+    // Usar el servicio de transacciones para completar el perfil
+    const result = await TransactionService.completeUserProfile(userId, {
+      firstName,
+      lastName,
+      nationality,
+      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+      location,
+      bio,
+      experience: experience ? parseInt(experience) : undefined,
+      specialization,
+      languages
+    })
 
-      await clerk.users.updateUser(userId, {
-        publicMetadata: {
-          ...existingMetadata, // Preservar metadatos existentes
-          role: 'member',
-          profile: 'completed'
-        }
+    if (!result.success) {
+      logger.error('Failed to complete user profile', {
+        userId,
+        error: result.error,
+        rollbackPerformed: result.rollbackPerformed
       })
 
-      console.log('✅ Clerk metadata updated successfully for user:', userId)
-    } catch (_error) {
-      console.warn('Warning: Could not update Clerk metadata:', error)
+      return NextResponse.json({
+        error: result.error || 'Failed to update profile',
+        rollbackPerformed: result.rollbackPerformed
+      }, { status: 500 })
     }
+
+    logger.info('User profile completed successfully', {
+      userId,
+      roleResult: result.data.roleResult
+    })
 
     return NextResponse.json({ 
       success: true,
-      user: updatedUser
+      message: 'Profile updated successfully',
+      user: result.data.profileData,
+      roleResult: result.data.roleResult
     })
-  } catch (_error) {
-    console.error('Error updating user profile:', error)
-    return NextResponse.json(
-      { __error: 'Internal server error' },
-      { status: 500 }
-    )
+
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    
+    logger.error('Error updating user profile', error as Error, {
+      userId: (await auth()).userId
+    })
+
+    return NextResponse.json({
+      error: 'Internal server error',
+      details: errorMessage
+    }, { status: 500 })
   }
 }

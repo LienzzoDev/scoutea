@@ -1,6 +1,6 @@
 'use client'
 
-import { Search, Filter, ArrowRight, X } from "lucide-react"
+import { Search, Filter, ArrowRight, X, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback, useRef } from 'react'
 
@@ -123,6 +123,10 @@ export default function ScoutsPage() {
   const [activeFilters, setActiveFilters] = useState<Record<string, unknown>>({})
   const [showFilterDropdowns, setShowFilterDropdowns] = useState<Record<string, boolean>>({})
   
+  // 📊 ESTADO PARA ORDENAMIENTO
+  const [sortBy, setSortBy] = useState<string>('scout_elo')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  
   // 🏷️ ESTADO PARA FILTROS MULTI-SELECT
   const [selectedNationalities, setSelectedNationalities] = useState<string[]>([])
   const [selectedLevels, setSelectedLevels] = useState<string[]>([])
@@ -215,8 +219,8 @@ export default function ScoutsPage() {
         // Remover categoría (mínimo 1 categoría)
         newCategories = prev.length > 1 ? prev.filter(key => key !== categoryKey) : prev
       } else {
-        // Añadir categoría (sin límite máximo)
-        newCategories = [...prev, categoryKey]
+        // Añadir categoría al principio (izquierda)
+        newCategories = [categoryKey, ...prev]
       }
       
       // 💾 GUARDAR EN LOCALSTORAGE
@@ -350,6 +354,18 @@ export default function ScoutsPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // 📊 FUNCIÓN PARA MANEJAR ORDENAMIENTO
+  const handleSort = useCallback((categoryKey: string) => {
+    if (sortBy === categoryKey) {
+      // Si ya está ordenado por esta columna, cambiar dirección
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      // Si es una nueva columna, ordenar descendente por defecto (mejor para métricas)
+      setSortBy(categoryKey)
+      setSortOrder('desc')
+    }
+  }, [sortBy])
+
   // Filtrar scouts según la pestaña activa y filtros aplicados
   const getFilteredScouts = () => {
     if (!scouts || scouts.length === 0) return []
@@ -455,15 +471,46 @@ export default function ScoutsPage() {
       })
     }
 
-    console.log('🔍 Filtered scouts:', filtered.length, 'from', scouts.length, 'with __filters: ', {
+    // Aplicar ordenamiento
+    const sortedFiltered = [...filtered].sort((a: Scout, b: Scout) => {
+      const categoryConfig = AVAILABLE_CATEGORIES.find(cat => cat.key === sortBy)
+      if (!categoryConfig) return 0
+
+      const aValue = categoryConfig.getValue(a)
+      const bValue = categoryConfig.getValue(b)
+
+      // Manejar valores nulos/undefined
+      if (aValue == null && bValue == null) return 0
+      if (aValue == null) return sortOrder === 'asc' ? 1 : -1
+      if (bValue == null) return sortOrder === 'asc' ? -1 : 1
+
+      // Determinar tipo de ordenamiento
+      const isNumeric = typeof aValue === 'number' && typeof bValue === 'number'
+      
+      let comparison = 0
+      if (isNumeric) {
+        comparison = (aValue as number) - (bValue as number)
+      } else {
+        // Ordenamiento alfabético
+        const aStr = String(aValue).toLowerCase()
+        const bStr = String(bValue).toLowerCase()
+        comparison = aStr.localeCompare(bStr)
+      }
+
+      return sortOrder === 'asc' ? comparison : -comparison
+    })
+
+    console.log('🔍 Filtered and sorted scouts:', sortedFiltered.length, 'from', scouts.length, 'with filters and sort:', {
       activeFilters,
       selectedNationalities,
       selectedLevels,
       selectedCountries,
-      selectedExpertise
+      selectedExpertise,
+      sortBy,
+      sortOrder
     })
     
-    return filtered
+    return sortedFiltered
   }
 
   const filteredScouts = getFilteredScouts()
@@ -787,18 +834,38 @@ export default function ScoutsPage() {
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                   >
                     <div className="flex" style={{ minWidth: `${Math.max(getSelectedCategoriesData().length * 140, 100)}px` }}>
-                      {getSelectedCategoriesData().map((category, index, array) => (
-                        <div 
-                          key={category.key} 
-                          className="p-4 text-center border-r border-[#e7e7e7] last:border-r-0 flex-shrink-0"
-                          style={{ 
-                            minWidth: '140px',
-                            width: array.length <= 4 ? `${100 / array.length}%` : '140px'
-                          }}
-                        >
-                          <h4 className="font-semibold text-[#6d6d6d] text-sm">{String(category.label)}</h4>
-                        </div>
-                      ))}
+                      {getSelectedCategoriesData().map((category, index, array) => {
+                        const isActive = sortBy === category.key
+                        const getSortIcon = () => {
+                          if (!isActive) return <ArrowUpDown className="w-3 h-3 text-gray-400" />
+                          return sortOrder === 'asc' 
+                            ? <ArrowUp className="w-3 h-3 text-[#8c1a10]" />
+                            : <ArrowDown className="w-3 h-3 text-[#8c1a10]" />
+                        }
+
+                        return (
+                          <div 
+                            key={category.key} 
+                            className={`p-4 text-center border-r border-[#e7e7e7] last:border-r-0 flex-shrink-0 cursor-pointer hover:bg-gray-50 transition-colors ${
+                              isActive ? 'bg-gray-50' : ''
+                            }`}
+                            style={{ 
+                              minWidth: '140px',
+                              width: array.length <= 4 ? `${100 / array.length}%` : '140px'
+                            }}
+                            onClick={() => handleSort(category.key)}
+                          >
+                            <div className="flex items-center justify-center gap-1">
+                              <h4 className={`font-semibold text-sm ${
+                                isActive ? 'text-[#8c1a10]' : 'text-[#6d6d6d]'
+                              }`}>
+                                {String(category.label)}
+                              </h4>
+                              {getSortIcon()}
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
 

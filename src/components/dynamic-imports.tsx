@@ -2,17 +2,17 @@ import dynamic from 'next/dynamic';
 
 // Player Components with Loading Skeletons
 export const PlayerRadar = dynamic(() => import('./player/PlayerRadar'), {
-  loading: () => import('./player/PlayerRadarSkeleton').then(mod => ({ default: mod.default })),
+  loading: () => <div className="h-96 bg-gray-100 rounded-lg animate-pulse"></div>,
   ssr: false
 });
 
 export const PlayerTable = dynamic(() => import('./player/PlayerTable'), {
-  loading: () => import('./player/PlayerTableSkeleton').then(mod => ({ default: mod.default }))
+  loading: () => <div className="h-96 bg-gray-100 rounded-lg animate-pulse"></div>
 });
 
 // Admin Components with Loading Skeletons
 export const AdminPlayerFilters = dynamic(() => import('./player/AdminPlayerFilters'), {
-  loading: () => import('./admin/AdminDashboardSkeleton').then(mod => ({ default: mod.default }))
+  loading: () => <div className="h-10 w-full bg-gray-200 rounded animate-pulse"></div>
 });
 
 export const AdminMultiSelectFilter = dynamic(() => import('./filters/admin-multi-select-filter'), {
@@ -21,7 +21,7 @@ export const AdminMultiSelectFilter = dynamic(() => import('./filters/admin-mult
   }
 });
 
-export const AdminPageLayout = dynamic(() => import('./layout/admin-page-layout').then(mod => ({ default: mod.AdminPageLayout })), {
+export const AdminPageLayout = dynamic(() => import('./layout/admin-page-layout'), {
   loading: () => {
     return (
       <div className="space-y-6">

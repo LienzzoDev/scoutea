@@ -33,6 +33,15 @@ export const useScoutList = () => {
       console.log('🔍 useScoutList: Loading user scout list...');
       
       const response = await fetch('/api/scout-list');
+      
+      // Si no está autenticado o no existe el usuario, no es un error crítico
+      if (response.status === 401 || response.status === 404) {
+        console.log('ℹ️  useScoutList: User not authenticated or not found - using empty list');
+        setScoutList([]);
+        setError(null); // No mostrar error
+        return;
+      }
+      
       const result = await handleApiResponse(response);
       
       if (result.success) {
@@ -41,12 +50,15 @@ export const useScoutList = () => {
         setScoutList(scoutIds);
       } else {
         console.error('❌ useScoutList: Failed to load scout list:', result.error);
-        setError(result.error || 'Error al cargar la lista');
+        // Solo mostrar error si no es problema de autenticación
+        if (!result.error?.includes('Usuario no encontrado') && !result.error?.includes('No autorizado')) {
+          setError(result.error || 'Error al cargar la lista');
+        }
         setScoutList([]);
       }
     } catch (err) {
-      console.error('❌ useScoutList: Error loading scout list:', err);
-      setError('Error de conexión');
+      console.log('ℹ️  useScoutList: Could not load scout list (user may not be authenticated)');
+      setError(null); // No mostrar error de conexión como crítico
       setScoutList([]);
     } finally {
       setLoading(false);

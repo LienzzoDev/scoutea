@@ -3,13 +3,17 @@
 import { Facebook, Twitter, Linkedin, Globe, Search, Filter, Bookmark, ArrowRight, X, Play } from "lucide-react"
 import Image from 'next/image'
 import { useRouter, useParams } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import MemberNavbar from "@/components/layout/member-navbar"
 import ScoutHeader from "@/components/scout/ScoutHeader"
+import ScoutEconomicInfo from "@/components/scout/ScoutEconomicInfo"
+import { QualitativeDashboard } from "@/components/scout/qualitative-dashboard"
+import { QuantitativeDashboard } from "@/components/scout/quantitative-dashboard"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useScoutProfile } from "@/hooks/scout/useScoutProfile"
+import ScoutContactForm from "@/components/scout/ScoutContactForm"
 
 export default function ScoutProfilePage() {
   const _router = useRouter()
@@ -32,6 +36,195 @@ export default function ScoutProfilePage() {
   const [_activeReportsTab, _setActiveReportsTab] = useState('qualitative')
   const [activeStatsTab, setActiveStatsTab] = useState('qualitative')
   const [message, setMessage] = useState('')
+  
+  // Portfolio filters state
+  const [portfolioSearchTerm, setPortfolioSearchTerm] = useState('')
+  const [portfolioFilters, setPortfolioFilters] = useState({
+    nationality: '',
+    competition: '',
+    position: '',
+    ageRange: '',
+    rating: ''
+  })
+  const [filteredPortfolioPlayers, setFilteredPortfolioPlayers] = useState([])
+
+  // Portfolio players data - Using real player IDs from database
+  const portfolioPlayers = [
+    {
+      id_player: "cmfnrkrmq0000zwoo8yafzumb", // Lionel Messi (real ID)
+      name: "Lionel Messi",
+      age: "36 Años",
+      nationality: "Argentina",
+      competition: "MLS",
+      position: "RW",
+      rating: 9.5,
+      image: `/placeholder.svg?height=48&width=48&query=messi`,
+    },
+    {
+      id_player: "cmfnrks3n0003zwooeq01yf4u", // Erling Haaland (real ID)
+      name: "Erling Haaland",
+      age: "23 Años",
+      nationality: "Norway",
+      competition: "Premier League",
+      position: "ST",
+      rating: 9.2,
+      image: `/placeholder.svg?height=48&width=48&query=haaland`,
+    },
+    {
+      id_player: "cmfnrw2nc0002zw6k058yeyr5", // Luka Modric (real ID)
+      name: "Luka Modric",
+      age: "38 Años",
+      nationality: "Croatia",
+      competition: "La Liga",
+      position: "CM",
+      rating: 8.8,
+      image: `/placeholder.svg?height=48&width=48&query=modric`,
+    },
+    {
+      id_player: "cmfnrks080002zwoore7ta0q9", // Kevin De Bruyne (real ID)
+      name: "Kevin De Bruyne",
+      age: "32 Años",
+      nationality: "Belgium",
+      competition: "Premier League",
+      position: "CAM",
+      rating: 9.1,
+      image: `/placeholder.svg?height=48&width=48&query=debruyne`,
+    },
+    {
+      id_player: "cmfnrw2di0000zw6krkw3f124", // Kylian Mbappé (real ID)
+      name: "Kylian Mbappé",
+      age: "25 Años",
+      nationality: "France",
+      competition: "La Liga",
+      position: "LW",
+      rating: 9.3,
+      image: `/placeholder.svg?height=48&width=48&query=mbappe`,
+    },
+    {
+      id_player: "cmfnrkrwv0001zwooihwhxh1m", // Virgil van Dijk (real ID)
+      name: "Virgil van Dijk",
+      age: "32 Años",
+      nationality: "Netherlands",
+      competition: "Premier League",
+      position: "CB",
+      rating: 8.9,
+      image: `/placeholder.svg?height=48&width=48&query=vandijk`,
+    }
+  ]
+
+  // Filter and search functions
+  const handlePortfolioSearch = (searchTerm: string) => {
+    setPortfolioSearchTerm(searchTerm)
+    filterPortfolioPlayers(searchTerm, portfolioFilters)
+  }
+
+  const handlePortfolioFilter = (filterType: string, value: string) => {
+    const newFilters = { ...portfolioFilters, [filterType]: value }
+    setPortfolioFilters(newFilters)
+    filterPortfolioPlayers(portfolioSearchTerm, newFilters)
+  }
+
+  const filterPortfolioPlayers = (searchTerm: string, filters: typeof portfolioFilters) => {
+    let filtered = portfolioPlayers
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(player => 
+        player.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        player.id_player.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
+
+    // Apply other filters
+    if (filters.nationality) {
+      filtered = filtered.filter(player => player.nationality === filters.nationality)
+    }
+    if (filters.competition) {
+      filtered = filtered.filter(player => player.competition === filters.competition)
+    }
+    if (filters.position) {
+      filtered = filtered.filter(player => player.position === filters.position)
+    }
+
+    setFilteredPortfolioPlayers(filtered)
+  }
+
+  const clearPortfolioFilters = () => {
+    setPortfolioSearchTerm('')
+    setPortfolioFilters({
+      nationality: '',
+      competition: '',
+      position: '',
+      ageRange: '',
+      rating: ''
+    })
+    setFilteredPortfolioPlayers(portfolioPlayers)
+  }
+
+  // Initialize filtered players when component mounts
+  useEffect(() => {
+    setFilteredPortfolioPlayers(portfolioPlayers)
+  }, [])
+
+  // Reports data - Using real player IDs from database
+  const reports = [
+    {
+      id_player: "cmfnrkrmq0000zwoo8yafzumb", // Lionel Messi (real ID)
+      scoutName: "Gines Mesas",
+      profileType: "Extremo Derecho",
+      playerName: "Lionel Messi",
+      age: "36 Años",
+      nationality: "Argentina",
+      description: "Exceptional technical ability and vision. One of the greatest players of all time with incredible dribbling skills and playmaking ability.",
+      rating: 5,
+      date: "15/12/2023",
+      hasVideo: true,
+      playerImage: `/placeholder.svg?height=48&width=48&query=messi`,
+      mainImage: `/placeholder.svg?height=200&width=300&query=messi action`,
+    },
+    {
+      id_player: "cmfnrks3n0003zwooeq01yf4u", // Erling Haaland (real ID)
+      scoutName: "Gines Mesas",
+      profileType: "Delantero Centro",
+      playerName: "Erling Haaland",
+      age: "23 Años",
+      nationality: "Norway",
+      description: "Clinical finisher with exceptional pace and physical presence. Perfect striker for modern football with great positioning.",
+      rating: 5,
+      date: "10/12/2023",
+      hasVideo: false,
+      playerImage: `/placeholder.svg?height=48&width=48&query=haaland`,
+      mainImage: `/placeholder.svg?height=200&width=300&query=haaland action`,
+    },
+    {
+      id_player: "cmfnrw2nc0002zw6k058yeyr5", // Luka Modric (real ID)
+      scoutName: "Gines Mesas",
+      profileType: "Mediocentro",
+      playerName: "Luka Modric",
+      age: "38 Años",
+      nationality: "Croatia",
+      description: "Master of midfield with incredible passing range and game intelligence. Still performing at the highest level despite his age.",
+      rating: 4,
+      date: "05/12/2023",
+      hasVideo: true,
+      playerImage: `/placeholder.svg?height=48&width=48&query=modric`,
+      mainImage: `/placeholder.svg?height=200&width=300&query=modric action`,
+    },
+    {
+      id_player: "cmfnrks080002zwoore7ta0q9", // Kevin De Bruyne (real ID)
+      scoutName: "Gines Mesas",
+      profileType: "Mediapunta",
+      playerName: "Kevin De Bruyne",
+      age: "32 Años",
+      nationality: "Belgium",
+      description: "Outstanding playmaker with exceptional crossing and long-range shooting ability. Key player for both club and country.",
+      rating: 5,
+      date: "01/12/2023",
+      hasVideo: false,
+      playerImage: `/placeholder.svg?height=48&width=48&query=debruyne`,
+      mainImage: `/placeholder.svg?height=200&width=300&query=debruyne action`,
+    }
+  ]  
 
   // Mostrar loading mientras se cargan los datos
   if (loading) {
@@ -88,118 +281,6 @@ export default function ScoutProfilePage() {
     )
   }
   
-  // Portfolio players data - Using real player IDs
-  const portfolioPlayers = [
-    {
-      id_player: "cmfmeeqfb0001zweuke6bhyhp", // Lionel Messi
-      name: "Lionel Messi",
-      age: "36 Años",
-      nationality: "Argentina",
-      competition: "MLS",
-      image: `/placeholder.svg?height=48&width=48&query=messi`,
-    },
-    {
-      id_player: "cmfmeeqgg0005zweuz9xrsvg0", // Erling Haaland
-      name: "Erling Haaland",
-      age: "23 Años",
-      nationality: "Norway",
-      competition: "Premier League",
-      image: `/placeholder.svg?height=48&width=48&query=haaland`,
-    },
-    {
-      id_player: "cmfmeeqgb0002zweuhotgu0so", // Luka Modric
-      name: "Luka Modric",
-      age: "38 Años",
-      nationality: "Croatia",
-      competition: "La Liga",
-      image: `/placeholder.svg?height=48&width=48&query=modric`,
-    },
-    {
-      id_player: "cmfmeeqgg0006zweuwi52syzd", // Kevin De Bruyne
-      name: "Kevin De Bruyne",
-      age: "32 Años",
-      nationality: "Belgium",
-      competition: "Premier League",
-      image: `/placeholder.svg?height=48&width=48&query=debruyne`,
-    },
-    {
-      id_player: "cmfmeeqge0003zweuhorp7o1t", // Kylian Mbappé
-      name: "Kylian Mbappé",
-      age: "25 Años",
-      nationality: "France",
-      competition: "La Liga",
-      image: `/placeholder.svg?height=48&width=48&query=mbappe`,
-    },
-    {
-      id_player: "cmfmeeqgf0004zweu8ncmex9l", // Virgil van Dijk
-      name: "Virgil van Dijk",
-      age: "32 Años",
-      nationality: "Netherlands",
-      competition: "Premier League",
-      image: `/placeholder.svg?height=48&width=48&query=vandijk`,
-    }
-  ]
-
-  // Reports data - Using real player IDs
-  const reports = [
-    {
-      id_player: "cmfmeeqfb0001zweuke6bhyhp", // Lionel Messi
-      scoutName: "Gines Mesas",
-      profileType: "Extremo Derecho",
-      playerName: "Lionel Messi",
-      age: "36 Años",
-      nationality: "Argentina",
-      description: "Exceptional technical ability and vision. One of the greatest players of all time with incredible dribbling skills and playmaking ability.",
-      rating: 5,
-      date: "15/12/2023",
-      hasVideo: true,
-      playerImage: `/placeholder.svg?height=48&width=48&query=messi`,
-      mainImage: `/placeholder.svg?height=200&width=300&query=messi action`,
-    },
-    {
-      id_player: "cmfmeeqgg0005zweuz9xrsvg0", // Erling Haaland
-      scoutName: "Gines Mesas",
-      profileType: "Delantero Centro",
-      playerName: "Erling Haaland",
-      age: "23 Años",
-      nationality: "Norway",
-      description: "Clinical finisher with exceptional pace and physical presence. Perfect striker for modern football with great positioning.",
-      rating: 5,
-      date: "10/12/2023",
-      hasVideo: false,
-      playerImage: `/placeholder.svg?height=48&width=48&query=haaland`,
-      mainImage: `/placeholder.svg?height=200&width=300&query=haaland action`,
-    },
-    {
-      id_player: "cmfmeeqgb0002zweuhotgu0so", // Luka Modric
-      scoutName: "Gines Mesas",
-      profileType: "Mediocentro",
-      playerName: "Luka Modric",
-      age: "38 Años",
-      nationality: "Croatia",
-      description: "Master of midfield with incredible passing range and game intelligence. Still performing at the highest level despite his age.",
-      rating: 4,
-      date: "05/12/2023",
-      hasVideo: true,
-      playerImage: `/placeholder.svg?height=48&width=48&query=modric`,
-      mainImage: `/placeholder.svg?height=200&width=300&query=modric action`,
-    },
-    {
-      id_player: "cmfmeeqgg0006zweuwi52syzd", // Kevin De Bruyne
-      scoutName: "Gines Mesas",
-      profileType: "Mediapunta",
-      playerName: "Kevin De Bruyne",
-      age: "32 Años",
-      nationality: "Belgium",
-      description: "Outstanding playmaker with exceptional crossing and long-range shooting ability. Key player for both club and country.",
-      rating: 5,
-      date: "01/12/2023",
-      hasVideo: false,
-      playerImage: `/placeholder.svg?height=48&width=48&query=debruyne`,
-      mainImage: `/placeholder.svg?height=200&width=300&query=debruyne action`,
-    }
-  ]
-  
   return (
     <div className="min-h-screen bg-[#f8f7f4]">
       {/* Header */}
@@ -207,8 +288,6 @@ export default function ScoutProfilePage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6" style={{ marginTop: '55px' }}>
-
-
         <div className="flex gap-8">
           {/* Left Sidebar */}
           <div className="w-80 h-fit bg-white rounded-lg p-6 space-y-6">
@@ -287,25 +366,25 @@ export default function ScoutProfilePage() {
                 className={`pb-3 font-medium ${activeTab === 'info' ? 'border-b-2 border-[#8c1a10] text-[#2e3138]' : 'text-[#6d6d6d]'}`}
                 onClick={() => setActiveTab('info')}
               >
-                Info
+                Información
               </button>
               <button 
                 className={`pb-3 font-medium ${activeTab === 'portfolio' ? 'border-b-2 border-[#8c1a10] text-[#2e3138]' : 'text-[#6d6d6d]'}`}
                 onClick={() => setActiveTab('portfolio')}
               >
-                Portfolio
+                Portafolio
               </button>
               <button 
                 className={`pb-3 font-medium ${activeTab === 'reports' ? 'border-b-2 border-[#8c1a10] text-[#2e3138]' : 'text-[#6d6d6d]'}`}
                 onClick={() => setActiveTab('reports')}
               >
-                Reports
+                Reportes
               </button>
               <button 
                 className={`pb-3 font-medium ${activeTab === 'stats' ? 'border-b-2 border-[#8c1a10] text-[#2e3138]' : 'text-[#6d6d6d]'}`}
                 onClick={() => setActiveTab('stats')}
               >
-                Stats
+                Estadísticas
               </button>
               <button 
                 className={`pb-3 font-medium ${activeTab === 'contacto' ? 'border-b-2 border-[#8c1a10] text-[#2e3138]' : 'text-[#6d6d6d]'}`}
@@ -317,158 +396,7 @@ export default function ScoutProfilePage() {
 
             {/* Tab Content */}
             {activeTab === 'info' && (
-              <div className="bg-white p-6">
-                <div className="grid grid-cols-2 gap-8">
-                  {/* Left Column */}
-                  <div className="space-y-0">
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Name:</span>
-                      <span className="text-[#2e3138] font-medium">{scout.name}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Date of Birth:</span>
-                      <span className="text-[#2e3138] font-medium">{scout.dateOfBirth}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Age:</span>
-                      <span className="text-[#2e3138] font-medium">{scout.age}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Country:</span>
-                      <span className="text-[#2e3138] font-medium">{scout.country}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Joining Date:</span>
-                      <span className="text-[#2e3138] font-medium">{scout.joiningDate}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Favourite Club:</span>
-                      <span className="text-[#2e3138] font-medium">{scout.favouriteClub}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Open to Work:</span>
-                      <span className="text-[#2e3138] font-medium">{scout.openToWork}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Professional Experience:</span>
-                      <span className="text-[#2e3138] font-medium">{scout.professionalExperience}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Total Reports:</span>
-                      <span className="text-[#2e3138] font-medium">{scout.totalReports}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Original Reports:</span>
-                      <span className="text-[#2e3138] font-medium">{scout.originalReports}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Nationality Expertise:</span>
-                      <span className="text-[#2e3138] font-medium">{scout.nationalityExpertise}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Competition Expertise:</span>
-                      <span className="text-[#2e3138] font-medium">{scout.competitionExpertise}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Avg Potential:</span>
-                      <div className="flex gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <div
-                            key={star}
-                            className={`w-4 h-4 rounded-full ${
-                              star <= 3 ? 'bg-red-500' : 'bg-gray-200'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center py-3">
-                      <span className="text-[#6d6d6d] text-sm">Avg Initial Age:</span>
-                      <span className="text-[#2e3138] font-medium">XXX</span>
-                    </div>
-                  </div>
-
-                  {/* Right Column */}
-                  <div className="space-y-0">
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Total Investment:</span>
-                      <span className="text-[#2e3138] font-medium">1.200.000 €</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Net Profit:</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[#2e3138] font-medium">1.200.000 €</span>
-                        <span className="text-green-600 text-sm">(+82%)</span>
-                        <span className="text-green-600">↗</span>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">ROI:</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[#2e3138] font-medium">XX%</span>
-                        <span className="text-green-600 text-sm">(+82%)</span>
-                        <span className="text-green-600">↗</span>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Avg Initial TRFM Value:</span>
-                      <span className="text-[#2e3138] font-medium">1.200.000 €</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Max Report Profit:</span>
-                      <span className="text-[#2e3138] font-medium">1.200.000 €</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Min Report Profit:</span>
-                      <span className="text-[#2e3138] font-medium">1.200.000 €</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Avg Profit per Report:</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-green-600">↗</span>
-                        <span className="text-[#2e3138] font-medium">1.200.000 €</span>
-                        <span className="text-green-600 text-sm">(+82%)</span>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Transfer Team Pts:</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[#2e3138] font-medium">XX</span>
-                        <span className="text-green-600 text-sm">(+82%)</span>
-                        <span className="text-green-600">↗</span>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Avg Initial Team Level:</span>
-                      <span className="text-[#2e3138] font-medium">XX</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Transfer Competition Pts:</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-green-600">↗</span>
-                        <span className="text-[#2e3138] font-medium">XX</span>
-                        <span className="text-green-600 text-sm">(+82%)</span>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Avg Initial Competition Level:</span>
-                      <span className="text-[#2e3138] font-medium">XXX</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Scout ELO:</span>
-                      <span className="text-[#2e3138] font-medium">XX</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-[#6d6d6d] text-sm">Scout Level:</span>
-                      <span className="text-[#2e3138] font-medium">XXX</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3">
-                      <span className="text-[#6d6d6d] text-sm">Scout Ranking:</span>
-                      <span className="text-[#2e3138] font-medium">XXX</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ScoutEconomicInfo scout={scout} />
             )}
 
             {activeTab === 'portfolio' && (
@@ -479,7 +407,9 @@ export default function ScoutProfilePage() {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#6d6d6d] w-4 h-4" />
                     <Input 
                       placeholder="Search by name or ID..." 
-                      className="pl-10 w-80 bg-[#ffffff] border-[#e7e7e7]" 
+                      className="pl-10 w-80 bg-[#ffffff] border-[#e7e7e7]"
+                      value={portfolioSearchTerm}
+                      onChange={(e) => handlePortfolioSearch(e.target.value)}
                     />
                   </div>
                   <Button
@@ -489,6 +419,11 @@ export default function ScoutProfilePage() {
                   >
                     <Filter className="w-4 h-4 text-[#8c1a10]" />
                     Filters
+                    {(portfolioFilters.nationality || portfolioFilters.competition || portfolioFilters.position) && (
+                      <span className="ml-1 bg-[#8c1a10] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                        {Object.values(portfolioFilters).filter(Boolean).length}
+                      </span>
+                    )}
                   </Button>
                 </div>
 
@@ -499,366 +434,217 @@ export default function ScoutProfilePage() {
                     <div className="flex items-center justify-between mb-6">
                       <div className="flex items-center gap-3">
                         <h3 className="font-semibold text-[#000000]">Filters</h3>
-                        <div className="flex items-center gap-1 px-2 py-1 bg-red-50 border border-red-200 rounded-md">
+                        <button 
+                          onClick={clearPortfolioFilters}
+                          className="flex items-center gap-1 px-2 py-1 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors"
+                        >
                           <span className="text-red-600 text-sm">Clean Filters</span>
                           <X className="w-3 h-3 text-red-600" />
-                        </div>
+                        </button>
                       </div>
                       <button 
-                        onClick={() =>setShowFilters(false)}
+                        onClick={() => setShowFilters(false)}
                         className="text-gray-400 hover:text-gray-600">
                         <X className="w-5 h-5" />
                       </button>
                     </div>
 
                     {/* Filter Options */}
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                      <Button
-                        variant="outline"
-                        className="flex items-center justify-between border-black text-gray-700 bg-white hover:bg-gray-50"
-                      >
-                        <span>Reports</span>
-                        <span className="text-xs">▼</span>
-                      </Button>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Nationality</label>
+                        <select
+                          value={portfolioFilters.nationality}
+                          onChange={(e) => handlePortfolioFilter('nationality', e.target.value)}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-[#8c1a10] focus:border-transparent"
+                        >
+                          <option value="">All Nationalities</option>
+                          <option value="Argentina">Argentina</option>
+                          <option value="Norway">Norway</option>
+                          <option value="Croatia">Croatia</option>
+                          <option value="Belgium">Belgium</option>
+                          <option value="France">France</option>
+                          <option value="Netherlands">Netherlands</option>
+                        </select>
+                      </div>
                       
-                      <Button
-                        variant="outline"
-                        className="flex items-center justify-between border-black text-gray-700 bg-white hover:bg-gray-50"
-                      >
-                        <span>Contact</span>
-                        <span className="text-xs">▼</span>
-                      </Button>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Competition</label>
+                        <select
+                          value={portfolioFilters.competition}
+                          onChange={(e) => handlePortfolioFilter('competition', e.target.value)}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-[#8c1a10] focus:border-transparent"
+                        >
+                          <option value="">All Competitions</option>
+                          <option value="Premier League">Premier League</option>
+                          <option value="La Liga">La Liga</option>
+                          <option value="MLS">MLS</option>
+                        </select>
+                      </div>
                       
-                      <Button
-                        variant="outline"
-                        className="flex items-center justify-between border-black text-gray-700 bg-white hover:bg-gray-50"
-                      >
-                        <span>Stats</span>
-                        <span className="text-xs">▼</span>
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        className="flex items-center justify-between border-black text-gray-700 bg-white hover:bg-gray-50"
-                      >
-                        <span>Passport</span>
-                        <span className="text-xs">▼</span>
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        className="flex items-center justify-between border-black text-gray-700 bg-white hover:bg-gray-50"
-                      >
-                        <span>Initial info</span>
-                        <span className="text-xs">▼</span>
-                      </Button>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>
+                        <select
+                          value={portfolioFilters.position}
+                          onChange={(e) => handlePortfolioFilter('position', e.target.value)}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-[#8c1a10] focus:border-transparent"
+                        >
+                          <option value="">All Positions</option>
+                          <option value="ST">Striker</option>
+                          <option value="LW">Left Wing</option>
+                          <option value="RW">Right Wing</option>
+                          <option value="CAM">Attacking Mid</option>
+                          <option value="CM">Central Mid</option>
+                          <option value="CB">Center Back</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+                        <select
+                          value={portfolioFilters.rating}
+                          onChange={(e) => handlePortfolioFilter('rating', e.target.value)}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-[#8c1a10] focus:border-transparent"
+                        >
+                          <option value="">All Ratings</option>
+                          <option value="9+">9.0+</option>
+                          <option value="8+">8.0+</option>
+                          <option value="7+">7.0+</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
                 )}
+
+                {/* Results Count */}
+                <div className="mb-4">
+                  <p className="text-sm text-[#6d6d6d]">
+                    Showing {filteredPortfolioPlayers.length} of {portfolioPlayers.length} players
+                  </p>
+                </div>
 
                 {/* Portfolio Players List */}
                 <div className="space-y-4">
-                  {portfolioPlayers.map((player) => (
-                    <div
-                      key={player.id_player}
-                      className="bg-[#ffffff] rounded-lg p-6 flex items-center justify-between border border-[#e7e7e7] cursor-pointer hover:bg-gray-50 transition-colors"
-                      onClick={() => _router.push(`/member/player/${player.id_player}`)}
-                    >
-                      <div className="flex items-center gap-4">
-                        <img
-                          src={player.image || "/placeholder.svg"}
-                          alt={player.name}
-                          className="w-12 h-12 rounded-full object-cover"
-                        />
-                        <div>
-                          <h3 className="font-semibold text-[#000000]">{player.name}</h3>
-                          <p className="text-[#6d6d6d] text-sm">
-                            {player.age} • {player.nationality}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-16">
-                        <div>
-                          <p className="text-[#6d6d6d] text-sm mb-1">Competition</p>
-                          <p className="font-medium text-[#000000]">{player.competition}</p>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                          <Bookmark className="w-5 h-5 text-[#8c1a10] fill-current" />
-                          <ArrowRight 
-                            className="w-5 h-5 text-[#6d6d6d] cursor-pointer hover:text-[#8c1a10] transition-colors" 
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              _router.push(`/member/player/${player.id_player}`)
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'reports' && (
-              <div className="bg-white p-6">
-                {/* Search and Filters */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#6d6d6d] w-4 h-4" />
-                    <Input 
-                      placeholder="Search by name or ID..." 
-                      className="pl-10 w-80 bg-[#ffffff] border-[#e7e7e7]" 
-                    />
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="flex items-center gap-2 border-[#e7e7e7] text-[#6d6d6d] bg-transparent"
-                    onClick={() => setShowFilters(!showFilters)}
-                  >
-                    <Filter className="w-4 h-4 text-[#8c1a10]" />
-                    Filters
-                  </Button>
-                </div>
-
-                {/* Filters Panel */}
-                {showFilters && (
-                  <div className="bg-white rounded-lg p-6 border border-[#e7e7e7] mb-6">
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-3">
-                        <h3 className="font-semibold text-[#000000]">Filters</h3>
-                        <div className="flex items-center gap-1 px-2 py-1 bg-red-50 border border-red-200 rounded-md">
-                          <span className="text-red-600 text-sm">Clean Filters</span>
-                          <X className="w-3 h-3 text-red-600" />
-                        </div>
-                      </div>
-                      <button 
-                        onClick={() =>setShowFilters(false)}
-                        className="text-gray-400 hover:text-gray-600">
-                        <X className="w-5 h-5" />
-                      </button>
-                    </div>
-
-                    {/* Filter Options */}
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                      <Button
-                        variant="outline"
-                        className="flex items-center justify-between border-black text-gray-700 bg-white hover:bg-gray-50"
+                  {filteredPortfolioPlayers.length > 0 ? (
+                    filteredPortfolioPlayers.map((player) => (
+                      <div
+                        key={player.id_player}
+                        className="bg-[#ffffff] rounded-lg p-6 flex items-center justify-between border border-[#e7e7e7] cursor-pointer hover:bg-gray-50 transition-colors"
+                        onClick={() => _router.push(`/member/player/${player.id_player}`)}
                       >
-                        <span>Reports</span>
-                        <span className="text-xs">▼</span>
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        className="flex items-center justify-between border-black text-gray-700 bg-white hover:bg-gray-50"
-                      >
-                        <span>Contact</span>
-                        <span className="text-xs">▼</span>
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        className="flex items-center justify-between border-black text-gray-700 bg-white hover:bg-gray-50"
-                      >
-                        <span>Stats</span>
-                        <span className="text-xs">▼</span>
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        className="flex items-center justify-between border-black text-gray-700 bg-white hover:bg-gray-50"
-                      >
-                        <span>Passport</span>
-                        <span className="text-xs">▼</span>
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        className="flex items-center justify-between border-black text-gray-700 bg-white hover:bg-gray-50"
-                      >
-                        <span>Initial info</span>
-                        <span className="text-xs">▼</span>
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Reports Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {reports.map((report) => (
-                    <div
-                      key={report.id_player}
-                      className="bg-white rounded-lg border border-[#e7e7e7] overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
-                      onClick={() => _router.push(`/member/player/${report.id_player}`)}
-                    >
-                      {/* Header */}
-                      <div className="p-4 border-b border-[#e7e7e7]">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-semibold text-[#000000]">{report.scoutName}</h3>
-                          <span className="text-[#6d6d6d] text-sm">{report.profileType}</span>
-                        </div>
-                      </div>
-
-                      {/* Player Info */}
-                      <div className="p-4">
-                        <div className="flex items-center gap-3 mb-4">
+                        <div className="flex items-center gap-4">
                           <img
-                            src={report.playerImage || "/placeholder.svg"}
-                            alt={report.playerName}
+                            src={player.image || "/placeholder.svg"}
+                            alt={player.name}
                             className="w-12 h-12 rounded-full object-cover"
                           />
                           <div>
-                            <h4 className="font-medium text-[#000000]">{report.playerName}</h4>
+                            <h3 className="font-semibold text-[#000000]">{player.name}</h3>
                             <p className="text-[#6d6d6d] text-sm">
-                              {report.age} • {report.nationality}
+                              {player.position} • {player.age} • {player.nationality}
                             </p>
                           </div>
                         </div>
 
-                        {/* Main Image */}
-                        <div className="relative mb-4">
-                          <img
-                            src={report.mainImage || "/placeholder.svg"}
-                            alt="Player in action"
-                            className="w-full h-48 object-cover rounded-lg"
-                          />
-                          {report.hasVideo && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center">
-                                <Play className="w-6 h-6 text-white ml-1" />
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                        <div className="flex items-center gap-16">
+                          <div>
+                            <p className="text-[#6d6d6d] text-sm mb-1">Competition</p>
+                            <p className="font-medium text-[#000000]">{player.competition}</p>
+                          </div>
 
-                        {/* Description */}
-                        <p className="text-[#6d6d6d] text-sm mb-4 leading-relaxed">
-                          {report.description}
-                        </p>
+                          <div>
+                            <p className="text-[#6d6d6d] text-sm mb-1">Rating</p>
+                            <p className="font-medium text-[#8c1a10]">{player.rating}</p>
+                          </div>
 
-                        {/* Rating */}
-                        <div className="flex items-center gap-1 mb-4">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <div
-                              key={star}
-                              className={`w-4 h-4 rounded-full ${
-                                star <= report.rating ? 'bg-red-500' : 'bg-gray-200'
-                              }`}
+                          <div className="flex items-center gap-3">
+                            <Bookmark className="w-5 h-5 text-[#8c1a10] fill-current" />
+                            <ArrowRight 
+                              className="w-5 h-5 text-[#6d6d6d] cursor-pointer hover:text-[#8c1a10] transition-colors" 
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                _router.push(`/member/player/${player.id_player}`)
+                              }}
                             />
-                          ))}
-                        </div>
-
-                        {/* Date */}
-                        <div className="text-[#6d6d6d] text-sm">
-                          {report.date}
+                          </div>
                         </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12">
+                      <p className="text-[#6d6d6d] mb-4">No players found matching your criteria</p>
+                      <Button 
+                        onClick={clearPortfolioFilters}
+                        variant="outline"
+                        className="border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white"
+                      >
+                        Clear Filters
+                      </Button>
                     </div>
-                  ))}
+                  )}
                 </div>
+              </div>
+            )}
+
+            {/* Other tabs content would go here */}
+            {activeTab === 'reports' && (
+              <div className="bg-white p-6">
+                <p className="text-[#6d6d6d]">Reports content coming soon...</p>
               </div>
             )}
 
             {activeTab === 'stats' && (
-              <div className="bg-white">
-                {/* Stats Sub-navigation */}
-                <div className="border-b border-gray-200">
-                  <div className="flex">
-                    <button
-                      onClick={() => setActiveStatsTab('qualitative')}
-                      className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                        activeStatsTab === 'qualitative'
-                          ? 'text-black border-[#8c1a10]'
-                          : 'text-gray-500 border-transparent hover:text-gray-700'
-                      }`}
-                    >
-                      Qualitative
-                    </button>
-                    <button
-                      onClick={() => setActiveStatsTab('quantitative')}
-                      className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                        activeStatsTab === 'quantitative'
-                          ? 'text-black border-[#8c1a10]'
-                          : 'text-gray-500 border-transparent hover:text-gray-700'
-                      }`}
-                    >
-                      Quantitative
-                    </button>
-                    <button
-                      onClick={() => setActiveStatsTab('awards')}
-                      className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                        activeStatsTab === 'awards'
-                          ? 'text-black border-[#8c1a10]'
-                          : 'text-gray-500 border-transparent hover:text-gray-700'
-                      }`}
-                    >
-                      Awards
-                    </button>
-                  </div>
+              <div className="bg-white rounded-lg">
+                {/* Stats Sub-tabs */}
+                <div className="flex gap-6 border-b border-[#e7e7e7] px-6 pt-6">
+                  <button 
+                    className={`pb-3 font-medium ${activeStatsTab === 'qualitative' ? 'border-b-2 border-[#8c1a10] text-[#2e3138]' : 'text-[#6d6d6d]'}`}
+                    onClick={() => setActiveStatsTab('qualitative')}
+                  >
+                    Qualitative
+                  </button>
+                  <button 
+                    className={`pb-3 font-medium ${activeStatsTab === 'quantitative' ? 'border-b-2 border-[#8c1a10] text-[#2e3138]' : 'text-[#6d6d6d]'}`}
+                    onClick={() => setActiveStatsTab('quantitative')}
+                  >
+                    Quantitative
+                  </button>
                 </div>
 
                 {/* Stats Content */}
-                <div className="p-6">
-                  {activeStatsTab === 'qualitative' && (
-                    <div>
-                      <h3 className="text-lg font-semibold text-[#000000] mb-4">Qualitative Analysis</h3>
-                      <p className="text-[#6d6d6d]">Qualitative stats content coming soon...</p>
+                {activeStatsTab === 'qualitative' && (
+                  <div className="p-6">
+                    <div className="text-center">
+                      <h2 className="text-2xl font-bold text-[#8B4513] mb-4">Qualidades de Scout</h2>
+                      <p className="text-[#6d6d6d] mb-6">Dashboard cualitativo con análisis de datos del scout</p>
+                      <QualitativeDashboard scoutId={scoutId} />
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {activeStatsTab === 'quantitative' && (
-                    <div>
-                      <h3 className="text-lg font-semibold text-[#000000] mb-4">Quantitative Analysis</h3>
-                      <p className="text-[#6d6d6d]">Quantitative stats content coming soon...</p>
+                {activeStatsTab === 'quantitative' && (
+                  <div className="p-6">
+                    <div className="text-center">
+                      <h2 className="text-2xl font-bold text-[#8B4513] mb-4">Análisis Cuantitativo</h2>
+                      <p className="text-[#6d6d6d] mb-6">Dashboard cuantitativo con métricas comparativas del scout</p>
+                      <QuantitativeDashboard scoutId={scoutId} />
                     </div>
-                  )}
-
-                  {activeStatsTab === 'awards' && (
-                    <div>
-                      <h3 className="text-lg font-semibold text-[#000000] mb-4">Awards & Recognition</h3>
-                      <p className="text-[#6d6d6d]">Awards content coming soon...</p>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             )}
 
             {activeTab === 'contacto' && (
-              <div className="bg-white p-6">
-                <div className="max-w-md mx-auto">
-                  <div className="bg-white rounded-lg p-6 border border-gray-200">
-                    <h3 className="text-xl font-bold text-[#000000] mb-4">Send message</h3>
-                    
-                    <div className="mb-6">
-                      <textarea
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        placeholder="Send message to Scout Name..." className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#8c1a10] focus:border-transparent" />
-                    </div>
-                    
-                    <div className="flex justify-end">
-                      <Button
-                        onClick={() =>{
-                          // Handle send message logic here
-                          console.log('Sending message:', message)
-                          setMessage('')
-                        }}
-                        className="bg-[#8c1a10] hover:bg-[#6d1410] text-white">
-                        Send
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+              <div className="max-w-4xl mx-auto">
+                <ScoutContactForm 
+                  scoutId={scoutId} 
+                  scoutName={scout.name || scout.scout_name || 'Scout'} 
+                />
               </div>
             )}
           </div>
         </div>
       </main>
-
-
     </div>
   )
 }

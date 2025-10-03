@@ -4,10 +4,11 @@ import { Bookmark, BookmarkCheck } from "lucide-react";
 import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useBreadcrumbNavigation } from "@/hooks/useBreadcrumbNavigation";
 import type { Player } from "@/types/player";
 
 interface PlayerHeaderProps {
-  _player: Player;
+  player: Player;
   isPlayerInList: boolean;
   isSaving: boolean;
   listLoading: boolean;
@@ -21,6 +22,8 @@ export default function PlayerHeader({
   listLoading,
   onToggleList,
 }: PlayerHeaderProps) {
+  const { navigateToHome, navigateToPlayers } = useBreadcrumbNavigation();
+
   // Debug: Log player data in header only when it changes
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
@@ -33,11 +36,24 @@ export default function PlayerHeader({
     <>
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-[#6d6d6d] mb-6">
-        <span>Wonderkids</span>
-        <span>›</span>
-        <span>Players</span>
-        <span>›</span>
-        <span className="text-[#2e3138]">{player.player_name || "Player Name"}
+        <button
+          onClick={navigateToHome}
+          className="hover:text-[#8c1a10] hover:underline transition-colors cursor-pointer"
+          title="Ir al dashboard principal"
+        >
+          Wonderkids
+        </button>
+        <span className="text-gray-400">›</span>
+        <button
+          onClick={navigateToPlayers}
+          className="hover:text-[#8c1a10] hover:underline transition-colors cursor-pointer"
+          title="Volver a la página anterior"
+        >
+          Players
+        </button>
+        <span className="text-gray-400">›</span>
+        <span className="text-[#2e3138] font-medium">
+          {player.player_name || "Player Name"}
         </span>
       </div>
 

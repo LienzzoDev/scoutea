@@ -1,62 +1,50 @@
 import { UserResource } from '@clerk/nextjs/server'
 
-export type Role = 'admin' | 'member' | 'scout'
+export type Role = 'member' | 'scout' | 'admin' | 'tester'
 
 /**
- * Obtiene el rol del usuario desde publicMetadata (seguro)
+ * Sistema de roles simplificado
+ * Solo verifica si el usuario tiene el rol 'member', 'scout' o 'admin' en publicMetadata
  */
 export function getUserRole(user: UserResource | null | undefined): Role | null {
-  if (!user) return null
-
-  // Solo usar publicMetadata (seguro)
-  const publicRole = (user.publicMetadata as { role?: string })?.role
-  if (publicRole && (publicRole === 'admin' || publicRole === 'member' || publicRole === 'scout')) {
-    return publicRole as Role
+  if (!user?.publicMetadata) return null
+  
+  const role = user.publicMetadata.role as string
+  
+  // Solo roles válidos
+  if (role === 'member' || role === 'scout' || role === 'admin' || role === 'tester') {
+    return role as Role
   }
-
+  
   return null
 }
 
 /**
- * Verifica si el usuario tiene un rol específico
+ * Verifica si el usuario tiene acceso al área de members
  */
-export function hasRole(user: UserResource | null | undefined, role: Role): boolean {
-  return getUserRole(user) === role
+export function canAccessMemberArea(user: UserResource | null | undefined): boolean {
+  const role = getUserRole(user)
+  return role === 'member' || role === 'tester' || role === 'admin'
 }
 
 /**
- * Verifica si el usuario es admin
+ * Verifica si el usuario tiene acceso al área de scouts
+ */
+export function canAccessScoutArea(user: UserResource | null | undefined): boolean {
+  const role = getUserRole(user)
+  return role === 'scout' || role === 'tester' || role === 'admin'
+}
+
+/**
+ * Verifica si el usuario es admin (acceso total)
  */
 export function isAdmin(user: UserResource | null | undefined): boolean {
-  return hasRole(user, 'admin')
+  return getUserRole(user) === 'admin'
 }
 
 /**
- * Verifica si el usuario es member
+ * Verifica si el usuario es tester (acceso a member y scout)
  */
-export function isMember(user: UserResource | null | undefined): boolean {
-  return hasRole(user, 'member')
-}
-
-/**
- * Verifica si el usuario es scout
- */
-export function isScout(user: UserResource | null | undefined): boolean {
-  return hasRole(user, 'scout')
-}
-
-/**
- * Obtiene información detallada del rol del usuario
- */
-export function getUserRoleInfo(user: UserResource | null | undefined) {
-  const role = getUserRole(user)
-  
-  return {
-    role,
-    isAdmin: role === 'admin',
-    isMember: role === 'member',
-    isScout: role === 'scout',
-    hasRole: role !== null,
-    publicMetadata: user?.publicMetadata
-  }
+export function isTester(user: UserResource | null | undefined): boolean {
+  return getUserRole(user) === 'tester'
 }

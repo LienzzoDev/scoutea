@@ -29,6 +29,8 @@ export default function MemberDashboard() {
     selectedCompetitions,
     selectedAges,
     filterOptions,
+    sortBy,
+    sortOrder,
     
     // Datos derivados
     loading,
@@ -43,6 +45,7 @@ export default function MemberDashboard() {
     handleCategoryToggle,
     applyFilters,
     clearFilters,
+    handleSort,
     setSelectedNationalities,
     setSelectedPositions,
     setSelectedTeams,
@@ -367,6 +370,25 @@ export default function MemberDashboard() {
                     Ver todos los jugadores
                   </button>
                 )}
+                
+                {/* Debug button - only in development and when payment=success */}
+                {process.env.NODE_ENV === 'development' && 
+                 typeof window !== 'undefined' && 
+                 new URLSearchParams(window.location.search).get('payment') === 'success' && (
+                  <div className="mt-6">
+                    <button
+                      onClick={async () => {
+                        const response = await fetch('/api/debug/payment-status')
+                        const data = await response.json()
+                        console.log('🔍 Payment status debug:', data)
+                        alert(JSON.stringify(data, null, 2))
+                      }}
+                      className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                    >
+                      Debug Payment Status
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <PlayerTable
@@ -375,6 +397,9 @@ export default function MemberDashboard() {
                 isInList={isInList}
                 addToList={addToList}
                 removeFromList={removeFromList}
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSort={handleSort}
               />
             )}
           </div>

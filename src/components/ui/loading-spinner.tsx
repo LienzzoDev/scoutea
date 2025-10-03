@@ -5,7 +5,7 @@ interface LoadingSpinnerProps {
   className?: string;
 }
 
-function LoadingSpinner({
+export function LoadingSpinner({
   size = "md",
   variant = "default",
   text,
@@ -108,5 +108,4 @@ export function LoadingCard({ text = "Cargando datos..." }: { text?: string }) {
   );
 }
 
-export { LoadingSpinner };
 export default LoadingSpinner;

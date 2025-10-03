@@ -58,7 +58,6 @@ export default function CompleteProfilePage() {
   const handleSkip = () => {
     // Guardar en localStorage que el perfil fue omitido
     localStorage.setItem('profileStatus', 'incomplete')
-    localStorage.setItem('profileSkippedAt', new Date().toISOString())
     
     // Ir directamente al paso 3 (confirmar rol)
     router.push(`/member/welcome-plan?plan=${selectedPlan}&step=3&profile=skipped`)

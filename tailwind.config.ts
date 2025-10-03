@@ -49,8 +49,9 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
+        sans: ['Onest', 'var(--font-plus-jakarta-sans)', 'system-ui', 'sans-serif'],
         mono: ['var(--font-mono)', 'monospace'],
+        onest: ['Onest', 'system-ui', 'sans-serif'],
       },
     },
   },

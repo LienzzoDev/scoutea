@@ -1,14 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useToast } from '@/hooks/use-toast'
-
-interface Scout {
-  id: string
-  name: string
-  country: string
-  rating: string
-  rank: string
-  // Añadir más campos según sea necesario
-}
+import type { Scout } from '@/types/scout'
 
 interface UseScoutProfileReturn {
   scout: Scout | null
@@ -37,18 +29,44 @@ export function useScoutProfile(scoutId: string): UseScoutProfileReturn {
       setLoading(true)
       setError(null)
       
+      console.log('🔍 Fetching scout with ID:', scoutId)
+      
       const response = await fetch(`/api/scouts/${scoutId}`)
       
+      console.log('📡 API Response:', response.status, response.statusText)
+      
       if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error(`Scout not found. ID "${scoutId}" does not exist in the database.`)
+        }
         throw new Error(`Error ${response.status}: ${response.statusText}`)
       }
       
       const data = await response.json()
+      console.log('✅ Scout data received:', data.scout?.scout_name || data.scout?.name)
       setScout(data.scout)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido'
       setError(errorMessage)
-      console.error('Error fetching scout:', err)
+      
+      // Log detallado del error
+      console.error('❌ Error fetching scout:', errorMessage)
+      console.error('📋 Error details:', {
+        scoutId,
+        errorType: typeof err,
+        errorConstructor: err?.constructor?.name,
+        errorMessage,
+        fullError: err
+      })
+      
+      // Mostrar toast de error solo si no es un error de red
+      if (!(err instanceof TypeError && err.message.includes('fetch'))) {
+        toast({
+          title: "Scout not found",
+          description: `The scout with ID "${scoutId}" could not be found. Please check the URL or try a different scout.`,
+          variant: "destructive",
+        })
+      }
     } finally {
       setLoading(false)
     }
@@ -63,6 +81,12 @@ export function useScoutProfile(scoutId: string): UseScoutProfileReturn {
       const response = await fetch(`/api/my-scouts/check/${scoutId}`)
       
       if (!response.ok) {
+        // Si es error 401 (no autorizado) o 404 (usuario no encontrado), no es crítico
+        if (response.status === 401 || response.status === 404) {
+          console.log('ℹ️  User not authenticated or not found in database - skipping scout list check')
+          setIsScoutInList(false)
+          return
+        }
         throw new Error(`Error ${response.status}: ${response.statusText}`)
       }
       
@@ -71,7 +95,9 @@ export function useScoutProfile(scoutId: string): UseScoutProfileReturn {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido'
       setListError(errorMessage)
-      console.error('Error checking scout in list:', err)
+      console.log('ℹ️  Could not check scout list (user may not be authenticated):', errorMessage)
+      // No mostrar error crítico, solo log
+      setIsScoutInList(false)
     } finally {
       setListLoading(false)
     }
@@ -94,11 +120,20 @@ export function useScoutProfile(scoutId: string): UseScoutProfileReturn {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          scoutId: scout.id
+          scoutId: scout.id_scout || scout.id
         })
       })
 
       if (!response.ok) {
+        // Si es error de autenticación, mostrar mensaje específico
+        if (response.status === 401 || response.status === 404) {
+          toast({
+            title: "Authentication required",
+            description: "Please sign in to add scouts to your list",
+            variant: "destructive",
+          })
+          return
+        }
         throw new Error(`Error ${response.status}: ${response.statusText}`)
       }
 
@@ -111,8 +146,8 @@ export function useScoutProfile(scoutId: string): UseScoutProfileReturn {
       toast({
         title: isScoutInList ? "Scout removed from list" : "Scout added to list",
         description: isScoutInList 
-          ? `${scout.name} has been removed from your scout list`
-          : `${scout.name} has been added to your scout list`,
+          ? `${scout.scout_name || scout.name} has been removed from your scout list`
+          : `${scout.scout_name || scout.name} has been added to your scout list`,
         variant: "default",
       })
 

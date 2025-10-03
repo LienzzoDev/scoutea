@@ -26,7 +26,6 @@ export async function POST(request: NextRequest) {
     // Limpiar metadatos - remover rol y onboardingStep si no hay suscripción activa
     const cleanedMetadata = {
       ...currentMetadata,
-      onboardingStep: 'payment', // Mantener en paso de pago
       // Remover rol hasta que el pago sea exitoso
       role: undefined
     }

@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
+
+
 export default function RegisterPage() {
   const searchParams = useSearchParams()
   const [selectedPlan, setSelectedPlan] = useState('')
@@ -13,7 +15,30 @@ export default function RegisterPage() {
   useEffect(() => {
     const plan = searchParams.get('plan') || localStorage.getItem('selectedPlan') || ''
     setSelectedPlan(plan)
+    
+    // Debug: Log registration attempt
+    console.log('🔍 Registration page loaded with plan:', plan)
   }, [searchParams])
+
+
+
+  // Debug: Listen for Clerk events
+  useEffect(() => {
+    const handleClerkEvent = (event: any) => {
+      console.log('🔍 Clerk event:', event)
+    }
+    
+    // Add event listener if available
+    if (typeof window !== 'undefined') {
+      window.addEventListener('clerk:loaded', handleClerkEvent)
+      window.addEventListener('clerk:signUp', handleClerkEvent)
+      
+      return () => {
+        window.removeEventListener('clerk:loaded', handleClerkEvent)
+        window.removeEventListener('clerk:signUp', handleClerkEvent)
+      }
+    }
+  }, [])
 
   const getPlanInfo = (plan: string) => {
     const info = {
@@ -32,6 +57,8 @@ export default function RegisterPage() {
   }
 
   const planInfo = getPlanInfo(selectedPlan)
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f8f7f4] to-[#e8e6e0]">
@@ -84,6 +111,8 @@ export default function RegisterPage() {
                 <SignUp 
                   path="/register"
                   routing="path"
+                  signInUrl="/login"
+                  afterSignUpUrl={selectedPlan ? `/member/complete-profile?plan=${selectedPlan}` : "/member/complete-profile"}
                   redirectUrl={selectedPlan ? `/member/complete-profile?plan=${selectedPlan}` : "/member/complete-profile"}
                   appearance={{
                     variables: {
@@ -149,6 +178,7 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
+
     </div>
   )
 }

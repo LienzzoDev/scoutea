@@ -1,4 +1,6 @@
-import { prisma } from '@/lib/db'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 export async function createSampleScouts(): Promise<{ success: boolean; message: string; scouts?: any[] }> {
   try {
@@ -147,5 +149,12 @@ export async function createSampleScouts(): Promise<{ success: boolean; message:
       success: false,
       message: `Failed to create sample scouts: ${error instanceof Error ? error.message : 'Unknown error'}`
     };
+  } finally {
+    await prisma.$disconnect()
   }
+}
+
+// Ejecutar si se llama directamente
+if (require.main === module) {
+  createSampleScouts()
 }

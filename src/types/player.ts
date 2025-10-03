@@ -16,11 +16,36 @@ export interface Player {
   correct_nationality_1?: string | null;
   nationality_2?: string | null;
   correct_nationality_2?: string | null;
+  national_tier?: string | null;
+  correct_national_tier?: string | null;
   team_name?: string | null;
   correct_team_name?: string | null;
   team_country?: string | null;
+  team_level?: string | null;
+  team_elo?: number | null;
+  team_competition?: string | null;
+  competition_country?: string | null;
+  competition_tier?: string | null;
+  competition_level?: string | null;
+  on_loan?: boolean | null;
+  owner_club?: string | null;
+  owner_club_country?: string | null;
+  agency?: string | null;
+  correct_agency?: string | null;
+  contract_end?: Date | null;
+  correct_contract_end?: Date | null;
   player_rating?: number | null;
   player_trfm_value?: number | null;
+  previous_trfm_value?: number | null;
+  previous_trfm_value_date?: Date | null;
+  trfm_value_change_percent?: number | null;
+  trfm_value_last_updated?: Date | null;
+  // Campos de redes sociales
+  facebook_profile?: string | null;
+  twitter_profile?: string | null;
+  linkedin_profile?: string | null;
+  telegram_profile?: string | null;
+  instagram_profile?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

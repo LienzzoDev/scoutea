@@ -22,7 +22,7 @@ export default function HomePage() {
   const plans = [
     {
       id: 'member',
-      name: 'Miembro',
+      name: 'Básica (players)',
       price: { monthly: 20, yearly: 17 },
       description: 'Para analistas y profesionales del fútbol',
       features: [
@@ -40,11 +40,11 @@ export default function HomePage() {
     },
     {
       id: 'scout',
-      name: 'Scout',
+      name: 'Premium (players + scouts)',
       price: { monthly: 20, yearly: 17 },
       description: 'Para scouts profesionales',
       features: [
-        'Todo lo de Miembro',
+        'Todo lo del plan Básico',
         'Herramientas de scouting avanzadas',
         'Creación de reportes de jugadores',
         'Sistema de seguimiento de talentos',
@@ -118,7 +118,7 @@ export default function HomePage() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-16">
+      <footer className="border-t border-gray-200 mt-16" style={{ backgroundColor: '#edebe6' }}>
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="text-center text-[#6d6d6d]">
             <p>&copy; 2024 Scoutea. Todos los derechos reservados.</p>

@@ -34,20 +34,15 @@ export default function WelcomePlanPage() {
       // Obtener datos del perfil desde localStorage
       const profileStatus = localStorage.getItem('profileStatus') || 'incomplete'
       const profileData = localStorage.getItem('profileData')
-      const profileSkippedAt = localStorage.getItem('profileSkippedAt')
 
       // Preparar metadatos (sin asignar rol hasta que el pago sea exitoso)
       const metadata: any = {
-        profile: profileStatus,
-        onboardingStep: 'payment', // Marcar que está en el paso de pago
         selectedPlan: selectedPlan
       }
 
       // Agregar datos del perfil si están disponibles
       if (profileStatus === 'completed' && profileData) {
         metadata.profileData = JSON.parse(profileData)
-      } else if (profileStatus === 'incomplete' && profileSkippedAt) {
-        metadata.profileSkippedAt = profileSkippedAt
       }
 
       // Actualizar metadatos del usuario usando la API
@@ -76,7 +71,6 @@ export default function WelcomePlanPage() {
       // Limpiar localStorage después de actualizar metadatos
       localStorage.removeItem('profileStatus')
       localStorage.removeItem('profileData')
-      localStorage.removeItem('profileSkippedAt')
 
       // Crear sesión de checkout
       console.log('🔄 Iniciando creación de sesión de checkout...')

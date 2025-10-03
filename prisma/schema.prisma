@@ -10,9 +10,9 @@ datasource db {
 }
 
 model Usuario {
-  id               String       @id @default(cuid())
-  clerkId          String       @unique
-  email            String       @unique
+  id               String            @id @default(cuid())
+  clerkId          String            @unique
+  email            String            @unique
   firstName        String
   lastName         String
   nationality      String?
@@ -25,12 +25,14 @@ model Usuario {
   website          String?
   linkedin         String?
   twitter          String?
-  profileCompleted Boolean      @default(false)
+  profileCompleted Boolean           @default(false)
   subscription     Json?
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
-  playerLists      PlayerList[]
-  scoutLists       ScoutList[]
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  onDemandMessages     OnDemandMessage[]
+  scoutContactMessages ScoutContactMessage[]
+  playerLists          PlayerList[]
+  scoutLists           ScoutList[]
 
   @@index([clerkId])
   @@index([email])
@@ -39,7 +41,7 @@ model Usuario {
 }
 
 model Jugador {
-  id_player                       String          @id @default(cuid())
+  id_player                       String              @id @default(cuid())
   player_name                     String
   complete_player_name            String?
   date_of_birth                   DateTime?
@@ -95,7 +97,7 @@ model Jugador {
   pre_team_loan_from              String?
   team_loan_from                  String?
   correct_team_loan_from          String?
-  on_loan                         Boolean?        @default(false)
+  on_loan                         Boolean?            @default(false)
   agency                          String?
   correct_agency                  String?
   contract_end                    DateTime?
@@ -104,6 +106,10 @@ model Jugador {
   player_rating_norm              Float?
   player_trfm_value               Float?
   player_trfm_value_norm          Float?
+  previous_trfm_value             Float?
+  previous_trfm_value_date        DateTime?
+  trfm_value_change_percent       Float?
+  trfm_value_last_updated         DateTime?
   total_fmi_pts_norm              Float?
   player_elo                      Float?
   player_level                    String?
@@ -117,16 +123,34 @@ model Jugador {
   url_instagram                   String?
   video                           String?
   existing_club                   String?
-  createdAt                       DateTime        @default(now())
-  updatedAt                       DateTime        @updatedAt
+  
+  // NUEVAS FOREIGN KEYS NORMALIZADAS
+  team_id                         String?
+  position_id                     String?
+  nationality_id                  String?
+  agency_id                       String?
+  
+  createdAt                       DateTime            @default(now())
+  updatedAt                       DateTime            @updatedAt
+  
+  // RELACIONES EXISTENTES
+  atributos                       Atributos?
   beeswarmData                    BeeswarmData[]
+  dataPopulationLogs              DataPopulationLog[]
   lollipopData                    LollipopData[]
   playerLists                     PlayerList[]
-
-  radarMetrics                    RadarMetrics[]
-  dataPopulationLogs              DataPopulationLog[]
-  atributos                       Atributos?
   playerStats3m                   PlayerStats3m?
+  radarMetrics                    RadarMetrics[]
+  reportes                        Reporte[]
+  scoutPlayerReports              ScoutPlayerReport[]
+  
+  // NUEVAS RELACIONES NORMALIZADAS
+  team                            Team?               @relation("PlayerTeam", fields: [team_id], references: [id])
+  position                        Position?           @relation("PlayerPosition", fields: [position_id], references: [id])
+  nationality                     Country?            @relation("PlayerNationality", fields: [nationality_id], references: [id])
+  agencyRelation                  Agency?             @relation("PlayerAgency", fields: [agency_id], references: [id])
+  corrections                     PlayerCorrection[]  @relation("PlayerCorrections")
+  metrics                         PlayerMetric[]      @relation("PlayerMetrics")
 
   @@index([player_name])
   @@index([position_player])
@@ -134,6 +158,10 @@ model Jugador {
   @@index([nationality_1])
   @@index([player_rating])
   @@index([createdAt])
+  @@index([team_id])
+  @@index([position_id])
+  @@index([nationality_id])
+  @@index([agency_id])
   @@index([createdAt(sort: Desc), id_player], map: "idx_player_pagination")
   @@index([player_rating(sort: Desc), createdAt(sort: Desc)], map: "idx_player_rating_created")
   @@index([player_name, position_player, nationality_1], map: "idx_player_search_composite")
@@ -256,6 +284,7 @@ model Reporte {
   report_status               String?
   report_validation           String?
   report_author               String?
+  scout_id                    String?
   report_date                 DateTime?
   report_type                 String?
   id_player                   String?
@@ -337,6 +366,11 @@ model Reporte {
   form_text_report            String?
   createdAt                   DateTime  @default(now())
   updatedAt                   DateTime  @updatedAt
+  
+  // Relations
+  scout                       Scout?    @relation(fields: [scout_id], references: [id_scout])
+  player                      Jugador?  @relation(fields: [id_player], references: [id_player])
+  scoutPlayerReports          ScoutPlayerReport[]
 
   @@index([report_status])
   @@index([report_validation])
@@ -351,12 +385,14 @@ model Reporte {
   @@index([position_player])
   @@index([nationality_1])
   @@index([agency])
+  @@index([scout_id])
   @@index([createdAt])
   @@map("reportes")
 }
 
 model Scout {
-  id_scout                           String    @id @default(cuid())
+  id_scout                           String      @id @default(cuid())
+  clerkId                            String?     @unique
   join_date                          DateTime?
   scout_name                         String?
   name                               String?
@@ -391,33 +427,65 @@ model Scout {
   total_investment_rank              Int?
   total_investment_orig              Float?
   total_investment_orig_rank         Int?
+  previous_total_investment          Float?
+  previous_total_investment_date     DateTime?
+  total_investment_change_percent    Float?
+  total_investment_last_updated      DateTime?
   net_profits                        Float?
   net_profits_rank                   Int?
   net_profits_orig                   Float?
   net_profits_orig_rank              Int?
+  previous_net_profits               Float?
+  previous_net_profits_date          DateTime?
+  net_profits_change_percent         Float?
+  net_profits_last_updated           DateTime?
   roi                                Float?
   roi_norm                           Float?
   roi_rank                           Int?
   roi_orig                           Float?
   roi_orig_rank                      Int?
+  previous_roi                       Float?
+  previous_roi_date                  DateTime?
+  roi_change_percent                 Float?
+  roi_last_updated                   DateTime?
   avg_initial_trfm_value             Float?
   avg_initial_trfm_value_rank        Int?
   avg_initial_trfm_value_orig        Float?
   avg_initial_trfm_value_orig_rank   Int?
+  previous_avg_initial_trfm_value    Float?
+  previous_avg_initial_trfm_value_date DateTime?
+  avg_initial_trfm_value_change_percent Float?
+  avg_initial_trfm_value_last_updated DateTime?
   max_profit_report                  Float?
   max_profit_report_rank             Int?
+  previous_max_profit_report         Float?
+  previous_max_profit_report_date    DateTime?
+  max_profit_report_change_percent   Float?
+  max_profit_report_last_updated     DateTime?
   min_profit_report                  Float?
   min_profit_report_rank             Int?
+  previous_min_profit_report         Float?
+  previous_min_profit_report_date    DateTime?
+  min_profit_report_change_percent   Float?
+  min_profit_report_last_updated     DateTime?
   avg_profit_report                  Float?
   avg_profit_report_norm             Float?
   avg_profit_report_rank             Int?
   avg_profit_report_orig             Float?
   avg_profit_report_orig_rank        Int?
+  previous_avg_profit_report         Float?
+  previous_avg_profit_report_date    DateTime?
+  avg_profit_report_change_percent   Float?
+  avg_profit_report_last_updated     DateTime?
   transfer_team_pts                  Float?
   transfer_team_pts_norm             Float?
   transfer_team_pts_rank             Int?
   transfer_team_pts_orig             Float?
   transfer_team_pts_orig_rank        Int?
+  previous_transfer_team_pts         Float?
+  previous_transfer_team_pts_date    DateTime?
+  transfer_team_pts_change_percent   Float?
+  transfer_team_pts_last_updated     DateTime?
   avg_initial_team_elo               Float?
   avg_initial_team_level             String?
   transfer_competition_pts           Float?
@@ -425,20 +493,34 @@ model Scout {
   transfer_competition_pts_rank      Int?
   transfer_competition_pts_orig      Float?
   transfer_competition_pts_orig_rank Int?
+  previous_transfer_competition_pts  Float?
+  previous_transfer_competition_pts_date DateTime?
+  transfer_competition_pts_change_percent Float?
+  transfer_competition_pts_last_updated DateTime?
   avg_initial_competition_elo        Float?
   avg_initial_competition_level      String?
   scout_elo                          Float?
   scout_level                        String?
   scout_ranking                      Int?
-  createdAt                          DateTime  @default(now())
-  updatedAt                          DateTime  @updatedAt
+  
+  // NUEVA FOREIGN KEY NORMALIZADA
+  nationality_id                     String?
+  
+  createdAt                          DateTime    @default(now())
+  updatedAt                          DateTime    @updatedAt
   scoutLists                         ScoutList[]
+  reportes                           Reporte[]
+  scoutPlayerReports                 ScoutPlayerReport[]
+  
+  // NUEVA RELACIÓN NORMALIZADA
+  nationalityCountry                 Country?    @relation("ScoutNationality", fields: [nationality_id], references: [id])
 
   @@index([scout_name])
   @@index([name])
   @@index([surname])
   @@index([nationality])
   @@index([email])
+  @@index([clerkId])
   @@index([country])
   @@index([favourite_club])
   @@index([open_to_work])
@@ -450,29 +532,25 @@ model Scout {
   @@index([scout_level])
   @@index([scout_ranking])
   @@index([createdAt])
+  @@index([nationality_id])
   @@map("scouts")
 }
 
-
-
 model RadarMetrics {
-  id              String   @id @default(cuid())
-  playerId        String
-  category        String   // One of the 9 categories
-  playerValue     Float    // Calculated category value (0-100)
-  period          String   // e.g., "2023-24"
-  calculatedAt    DateTime @default(now())
-  dataCompleteness Float   // Percentage of non-null source attributes
-  sourceAttributes Json    // Array of attributes used in calculation
-  
-  // Comparison data (calculated on-demand)
-  comparisonAverage Float?
+  id                String   @id @default(cuid())
+  playerId          String
+  category          String
+  playerValue       Float
   percentile        Float?
-  rank             Int?
-  totalPlayers     Int?
-  
-  player          Jugador  @relation(fields: [playerId], references: [id_player], onDelete: Cascade)
-  
+  period            String
+  calculatedAt      DateTime @default(now())
+  comparisonAverage Float?
+  dataCompleteness  Float
+  rank              Int?
+  sourceAttributes  Json
+  totalPlayers      Int?
+  player            Jugador  @relation(fields: [playerId], references: [id_player], onDelete: Cascade)
+
   @@unique([playerId, category, period])
   @@index([category, period])
   @@index([playerId])
@@ -481,20 +559,20 @@ model RadarMetrics {
 }
 
 model DataPopulationLog {
-  id          String   @id @default(cuid())
-  playerId    String
-  tableName   String   // "atributos" or "player_stats_3m"
-  fieldName   String
-  originalValue String? // "null" if was null
-  populatedValue Float
-  populationMethod String // "position_average", "league_average", etc.
-  createdAt   DateTime @default(now())
-  
-  player      Jugador  @relation(fields: [playerId], references: [id_player], onDelete: Cascade)
-  
+  id               String   @id @default(cuid())
+  playerId         String
+  tableName        String
+  fieldName        String
+  originalValue    String?
+  populatedValue   Float
+  populationMethod String
+  createdAt        DateTime @default(now())
+  player           Jugador  @relation(fields: [playerId], references: [id_player], onDelete: Cascade)
+
   @@index([playerId, tableName])
   @@index([tableName, fieldName])
   @@index([createdAt])
+  @@index([playerId, tableName], map: "idx_data_population_log_player_table")
   @@map("data_population_log")
 }
 
@@ -579,181 +657,131 @@ model ScoutList {
 }
 
 model PlayerStats3m {
-  // Identificadores
-  id_player                       String    @id
-  wyscout_id                      BigInt?
-  stats_evo_3m                    Decimal?  @db.Decimal(6,2)
-  
-  // Partidos y minutos jugados
-  matches_played_tot_3m           Int?
-  matches_played_tot_3m_norm      Decimal?  @db.Decimal(5,2)
-  matches_played_tot_3m_rank      Int?
-  minutes_played_tot_3m           Int?
-  minutes_played_tot_3m_norm      Decimal?  @db.Decimal(5,2)
-  minutes_played_tot_3m_rank      Int?
-  
-  // Goles
-  goals_p90_3m                    Decimal?  @db.Decimal(7,3)
-  goals_p90_3m_norm               Decimal?  @db.Decimal(5,2)
-  goals_p90_3m_rank               Int?
-  goals_tot_3m                    Int?
-  goals_tot_3m_norm               Decimal?  @db.Decimal(5,2)
-  
-  // Asistencias
-  assists_p90_3m                  Decimal?  @db.Decimal(7,3)
-  assists_p90_3m_norm             Decimal?  @db.Decimal(5,2)
-  assists_p90_3m_rank             Int?
-  assists_tot_3m                  Int?
-  assists_tot_3m_norm             Decimal?  @db.Decimal(5,2)
-  
-  // Tarjetas amarillas
-  yellow_cards_p90_3m             Decimal?  @db.Decimal(7,3)
-  yellow_cards_p90_3m_norm        Decimal?  @db.Decimal(5,2)
-  yellow_cards_p90_rank           Int?
-  yellow_cards_p90_3m_norm_neg    Decimal?  @db.Decimal(5,2)
-  yellow_cards_tot_3m             Int?
-  yellow_cards_tot_3m_norm        Decimal?  @db.Decimal(5,2)
-  
-  // Tarjetas rojas
-  red_cards_p90_3m                Decimal?  @db.Decimal(7,3)
-  red_cards_p90_3m_norm           Decimal?  @db.Decimal(5,2)
-  red_cards_p90_rank              Int?
-  red_cards_p90_3m_norm_neg       Decimal?  @db.Decimal(5,2)
-  red_cards_tot_3m                Int?
-  red_cards_tot_3m_norm           Decimal?  @db.Decimal(5,2)
-  
-  // Goles encajados (porteros)
-  conceded_goals_p90_3m           Decimal?  @db.Decimal(7,3)
-  conceded_goals_p90_3m_norm      Decimal?  @db.Decimal(5,2)
-  conceded_goals_p90_3m_rank      Int?
-  conceded_goals_p90_3m_norm_neg  Decimal?  @db.Decimal(5,2)
-  conceded_goals_tot_3m           Int?
-  conceded_goals_tot_3m_norm      Decimal?  @db.Decimal(5,2)
-  
-  // Goles evitados (puede ser negativo)
-  prevented_goals_p90_3m          Decimal?  @db.Decimal(7,3)
-  prevented_goals_p90_3m_norm     Decimal?  @db.Decimal(5,2)
-  prevented_goals_p90_rank        Int?
-  prevented_goals_tot_3m          Decimal?  @db.Decimal(7,3)
-  prevented_goals_tot_3m_norm     Decimal?  @db.Decimal(5,2)
-  
-  // Disparos en contra
-  shots_against_p90_3m            Decimal?  @db.Decimal(7,3)
-  shots_against_p90_3m_norm       Decimal?  @db.Decimal(5,2)
-  shots_against_p90_3m_rank       Int?
-  shots_against_tot_3m            Int?
-  shots_against_tot_3m_norm       Decimal?  @db.Decimal(5,2)
-  
-  // Porterías a cero
-  clean_sheets_percent_3m         Decimal?  @db.Decimal(5,2) @map("clean_sheets_%_3m")
-  clean_sheets_percent_3m_norm    Decimal?  @db.Decimal(5,2) @map("clean_sheets_%_3m_norm")
-  clean_sheets_percent_3m_rank    Int?      @map("clean_sheets_%_3m_rank")
-  clean_sheets_tot_3m             Int?
-  clean_sheets_tot_3m_norm        Decimal?  @db.Decimal(5,2)
-  
-  // Porcentaje de paradas
-  save_rate_percent_3m            Decimal?  @db.Decimal(5,2) @map("save_rate_%_3m")
-  save_rate_percent_3m_norm       Decimal?  @db.Decimal(5,2) @map("save_rate_%_3m_norm")
-  save_rate_percent_3m_rank       Int?      @map("save_rate_%_3m_rank")
-  
-  // Entradas
-  tackles_p90_3m                  Decimal?  @db.Decimal(7,3)
-  tackles_p90_3m_norm             Decimal?  @db.Decimal(5,2)
-  tackles_p90_3m_rank             Int?
-  tackles_tot_3m                  Int?
-  tackles_tot_3m_norm             Decimal?  @db.Decimal(5,2)
-  
-  // Intercepciones
-  interceptions_p90_3m            Decimal?  @db.Decimal(7,3)
-  interceptions_p90_3m_norm       Decimal?  @db.Decimal(5,2)
-  interceptions_p90_3m_rank       Int?
-  interceptions_tot_3m            Int?
-  interceptions_tot_3m_norm       Decimal?  @db.Decimal(5,2)
-  
-  // Faltas
-  fouls_p90_3m                    Decimal?  @db.Decimal(7,3)
-  fouls_p90_3m_norm               Decimal?  @db.Decimal(5,2)
-  fouls_p90_3m_rank               Int?
-  fouls_p90_3m_norm_neg           Decimal?  @db.Decimal(5,2)
-  fouls_tot_3m                    Int?
-  fouls_tot_3m_norm               Decimal?  @db.Decimal(5,2)
-  
-  // Pases
-  passes_p90_3m                   Decimal?  @db.Decimal(7,3)
-  passes_p90_3m_norm              Decimal?  @db.Decimal(5,2)
-  passes_p90_3m_rank              Int?
-  passes_tot_3m                   Int?
-  passes_tot_3m_norm              Decimal?  @db.Decimal(5,2)
-  
-  // Pases hacia adelante
-  forward_passes_p90_3m           Decimal?  @db.Decimal(7,3)
-  forward_passes_p90_3m_norm      Decimal?  @db.Decimal(5,2)
-  forward_passes_p90_3m_rank      Int?
-  forward_passes_tot_3m           Int?
-  forward_passes_tot_3m_norm      Decimal?  @db.Decimal(5,2)
-  
-  // Centros
-  crosses_p90_3m                  Decimal?  @db.Decimal(7,3)
-  crosses_p90_3m_norm             Decimal?  @db.Decimal(5,2)
-  crosses_p90_3m_rank             Int?
-  crosses_tot_3m                  Int?
-  crosses_tot_3m_norm             Decimal?  @db.Decimal(5,2)
-  
-  // Precisión de pases
-  accurate_passes_percent_3m      Decimal?  @db.Decimal(5,2) @map("accurate_passes_%_3m")
-  accurate_passes_percent_3m_norm Decimal?  @db.Decimal(5,2) @map("accurate_passes_%_3m_norm")
-  accurate_passes_percent_3m_rank Int?      @map("accurate_passes_%_3m_rank")
-  
-  // Disparos
-  shots_p90_3m                    Decimal?  @db.Decimal(7,3)
-  shots_p90_3m_norm               Decimal?  @db.Decimal(5,2)
-  shots_p90_3m_rank               Int?
-  shots_tot_3m                    Int?
-  shots_tot_3m_norm               Decimal?  @db.Decimal(5,2)
-  
-  // Efectividad
-  effectiveness_percent_3m        Decimal?  @db.Decimal(5,2) @map("effectiveness_%_3m")
-  effectiveness_percent_3m_norm   Decimal?  @db.Decimal(5,2) @map("effectiveness_%_3m_norm")
-  effectiveness_percent_3m_rank   Int?      @map("effectiveness_%_3m_rank")
-  
-  // Duelos ofensivos
-  off_duels_p90_3m                Decimal?  @db.Decimal(7,3)
-  off_duels_p90_3m_norm           Decimal?  @db.Decimal(5,2)
-  off_duels_p90_3m_rank           Int?
-  off_duels_tot_3m                Int?
-  off_duels_tot_3m_norm           Decimal?  @db.Decimal(5,2)
-  off_duels_won_percent_3m        Decimal?  @db.Decimal(5,2) @map("off_duels_won_%_3m")
-  off_duels_won_percent_3m_norm   Decimal?  @db.Decimal(5,2) @map("off_duels_won_%_3m_norm")
-  off_duels_won_percent_3m_rank   Int?      @map("off_duels_won_%_3m_rank")
-  
-  // Duelos defensivos
-  def_duels_p90_3m                Decimal?  @db.Decimal(7,3)
-  def_duels_p90_3m_norm           Decimal?  @db.Decimal(5,2)
-  def_duels_p90_3m_rank           Int?
-  def_duels_tot_3m                Int?
-  def_duels_tot_3m_norm           Decimal?  @db.Decimal(5,2)
-  def_duels_won_percent_3m        Decimal?  @db.Decimal(5,2) @map("def_duels_won_%_3m")
-  def_duels_won_percent_3m_norm   Decimal?  @db.Decimal(5,2) @map("def_duels_won_%_3m_norm")
-  def_duels_won_percent_3m_rank   Int?      @map("def_duels_won_%_3m_rank")
-  
-  // Duelos aéreos
-  aerials_duels_p90_3m            Decimal?  @db.Decimal(7,3)
-  aerials_duels_p90_3m_norm       Decimal?  @db.Decimal(5,2)
-  aerials_duels_p90_3m_rank       Int?
-  aerials_duels_tot_3m            Int?
-  aerials_duels_tot_3m_norm       Decimal?  @db.Decimal(5,2)
-  aerials_duels_won_percent_3m    Decimal?  @db.Decimal(5,2) @map("aerials_duels_won_%_3m")
-  aerials_duels_won_percent_3m_norm Decimal? @db.Decimal(5,2) @map("aerials_duels_won_%_3m_norm")
+  id_player                         String   @id
+  wyscout_id                        BigInt?
+  stats_evo_3m                      Decimal? @db.Decimal(6, 2)
+  matches_played_tot_3m             Int?
+  matches_played_tot_3m_norm        Decimal? @db.Decimal(5, 2)
+  matches_played_tot_3m_rank        Int?
+  minutes_played_tot_3m             Int?
+  minutes_played_tot_3m_norm        Decimal? @db.Decimal(5, 2)
+  minutes_played_tot_3m_rank        Int?
+  goals_p90_3m                      Decimal? @db.Decimal(7, 3)
+  goals_p90_3m_norm                 Decimal? @db.Decimal(5, 2)
+  goals_p90_3m_rank                 Int?
+  goals_tot_3m                      Int?
+  goals_tot_3m_norm                 Decimal? @db.Decimal(5, 2)
+  assists_p90_3m                    Decimal? @db.Decimal(7, 3)
+  assists_p90_3m_norm               Decimal? @db.Decimal(5, 2)
+  assists_p90_3m_rank               Int?
+  assists_tot_3m                    Int?
+  assists_tot_3m_norm               Decimal? @db.Decimal(5, 2)
+  yellow_cards_p90_3m               Decimal? @db.Decimal(7, 3)
+  yellow_cards_p90_3m_norm          Decimal? @db.Decimal(5, 2)
+  yellow_cards_p90_rank             Int?
+  yellow_cards_p90_3m_norm_neg      Decimal? @db.Decimal(5, 2)
+  yellow_cards_tot_3m               Int?
+  yellow_cards_tot_3m_norm          Decimal? @db.Decimal(5, 2)
+  red_cards_p90_3m                  Decimal? @db.Decimal(7, 3)
+  red_cards_p90_3m_norm             Decimal? @db.Decimal(5, 2)
+  red_cards_p90_rank                Int?
+  red_cards_p90_3m_norm_neg         Decimal? @db.Decimal(5, 2)
+  red_cards_tot_3m                  Int?
+  red_cards_tot_3m_norm             Decimal? @db.Decimal(5, 2)
+  conceded_goals_p90_3m             Decimal? @db.Decimal(7, 3)
+  conceded_goals_p90_3m_norm        Decimal? @db.Decimal(5, 2)
+  conceded_goals_p90_3m_rank        Int?
+  conceded_goals_p90_3m_norm_neg    Decimal? @db.Decimal(5, 2)
+  conceded_goals_tot_3m             Int?
+  conceded_goals_tot_3m_norm        Decimal? @db.Decimal(5, 2)
+  prevented_goals_p90_3m            Decimal? @db.Decimal(7, 3)
+  prevented_goals_p90_3m_norm       Decimal? @db.Decimal(5, 2)
+  prevented_goals_p90_rank          Int?
+  prevented_goals_tot_3m            Decimal? @db.Decimal(7, 3)
+  prevented_goals_tot_3m_norm       Decimal? @db.Decimal(5, 2)
+  shots_against_p90_3m              Decimal? @db.Decimal(7, 3)
+  shots_against_p90_3m_norm         Decimal? @db.Decimal(5, 2)
+  shots_against_p90_3m_rank         Int?
+  shots_against_tot_3m              Int?
+  shots_against_tot_3m_norm         Decimal? @db.Decimal(5, 2)
+  clean_sheets_percent_3m           Decimal? @map("clean_sheets_%_3m") @db.Decimal(5, 2)
+  clean_sheets_percent_3m_norm      Decimal? @map("clean_sheets_%_3m_norm") @db.Decimal(5, 2)
+  clean_sheets_percent_3m_rank      Int?     @map("clean_sheets_%_3m_rank")
+  clean_sheets_tot_3m               Int?
+  clean_sheets_tot_3m_norm          Decimal? @db.Decimal(5, 2)
+  save_rate_percent_3m              Decimal? @map("save_rate_%_3m") @db.Decimal(5, 2)
+  save_rate_percent_3m_norm         Decimal? @map("save_rate_%_3m_norm") @db.Decimal(5, 2)
+  save_rate_percent_3m_rank         Int?     @map("save_rate_%_3m_rank")
+  tackles_p90_3m                    Decimal? @db.Decimal(7, 3)
+  tackles_p90_3m_norm               Decimal? @db.Decimal(5, 2)
+  tackles_p90_3m_rank               Int?
+  tackles_tot_3m                    Int?
+  tackles_tot_3m_norm               Decimal? @db.Decimal(5, 2)
+  interceptions_p90_3m              Decimal? @db.Decimal(7, 3)
+  interceptions_p90_3m_norm         Decimal? @db.Decimal(5, 2)
+  interceptions_p90_3m_rank         Int?
+  interceptions_tot_3m              Int?
+  interceptions_tot_3m_norm         Decimal? @db.Decimal(5, 2)
+  fouls_p90_3m                      Decimal? @db.Decimal(7, 3)
+  fouls_p90_3m_norm                 Decimal? @db.Decimal(5, 2)
+  fouls_p90_3m_rank                 Int?
+  fouls_p90_3m_norm_neg             Decimal? @db.Decimal(5, 2)
+  fouls_tot_3m                      Int?
+  fouls_tot_3m_norm                 Decimal? @db.Decimal(5, 2)
+  passes_p90_3m                     Decimal? @db.Decimal(7, 3)
+  passes_p90_3m_norm                Decimal? @db.Decimal(5, 2)
+  passes_p90_3m_rank                Int?
+  passes_tot_3m                     Int?
+  passes_tot_3m_norm                Decimal? @db.Decimal(5, 2)
+  forward_passes_p90_3m             Decimal? @db.Decimal(7, 3)
+  forward_passes_p90_3m_norm        Decimal? @db.Decimal(5, 2)
+  forward_passes_p90_3m_rank        Int?
+  forward_passes_tot_3m             Int?
+  forward_passes_tot_3m_norm        Decimal? @db.Decimal(5, 2)
+  crosses_p90_3m                    Decimal? @db.Decimal(7, 3)
+  crosses_p90_3m_norm               Decimal? @db.Decimal(5, 2)
+  crosses_p90_3m_rank               Int?
+  crosses_tot_3m                    Int?
+  crosses_tot_3m_norm               Decimal? @db.Decimal(5, 2)
+  accurate_passes_percent_3m        Decimal? @map("accurate_passes_%_3m") @db.Decimal(5, 2)
+  accurate_passes_percent_3m_norm   Decimal? @map("accurate_passes_%_3m_norm") @db.Decimal(5, 2)
+  accurate_passes_percent_3m_rank   Int?     @map("accurate_passes_%_3m_rank")
+  shots_p90_3m                      Decimal? @db.Decimal(7, 3)
+  shots_p90_3m_norm                 Decimal? @db.Decimal(5, 2)
+  shots_p90_3m_rank                 Int?
+  shots_tot_3m                      Int?
+  shots_tot_3m_norm                 Decimal? @db.Decimal(5, 2)
+  effectiveness_percent_3m          Decimal? @map("effectiveness_%_3m") @db.Decimal(5, 2)
+  effectiveness_percent_3m_norm     Decimal? @map("effectiveness_%_3m_norm") @db.Decimal(5, 2)
+  effectiveness_percent_3m_rank     Int?     @map("effectiveness_%_3m_rank")
+  off_duels_p90_3m                  Decimal? @db.Decimal(7, 3)
+  off_duels_p90_3m_norm             Decimal? @db.Decimal(5, 2)
+  off_duels_p90_3m_rank             Int?
+  off_duels_tot_3m                  Int?
+  off_duels_tot_3m_norm             Decimal? @db.Decimal(5, 2)
+  off_duels_won_percent_3m          Decimal? @map("off_duels_won_%_3m") @db.Decimal(5, 2)
+  off_duels_won_percent_3m_norm     Decimal? @map("off_duels_won_%_3m_norm") @db.Decimal(5, 2)
+  off_duels_won_percent_3m_rank     Int?     @map("off_duels_won_%_3m_rank")
+  def_duels_p90_3m                  Decimal? @db.Decimal(7, 3)
+  def_duels_p90_3m_norm             Decimal? @db.Decimal(5, 2)
+  def_duels_p90_3m_rank             Int?
+  def_duels_tot_3m                  Int?
+  def_duels_tot_3m_norm             Decimal? @db.Decimal(5, 2)
+  def_duels_won_percent_3m          Decimal? @map("def_duels_won_%_3m") @db.Decimal(5, 2)
+  def_duels_won_percent_3m_norm     Decimal? @map("def_duels_won_%_3m_norm") @db.Decimal(5, 2)
+  def_duels_won_percent_3m_rank     Int?     @map("def_duels_won_%_3m_rank")
+  aerials_duels_p90_3m              Decimal? @db.Decimal(7, 3)
+  aerials_duels_p90_3m_norm         Decimal? @db.Decimal(5, 2)
+  aerials_duels_p90_3m_rank         Int?
+  aerials_duels_tot_3m              Int?
+  aerials_duels_tot_3m_norm         Decimal? @db.Decimal(5, 2)
+  aerials_duels_won_percent_3m      Decimal? @map("aerials_duels_won_%_3m") @db.Decimal(5, 2)
+  aerials_duels_won_percent_3m_norm Decimal? @map("aerials_duels_won_%_3m_norm") @db.Decimal(5, 2)
   aerials_duels_won_percent_3m_rank Int?     @map("aerials_duels_won_%_3m_rank")
-  
-  // Metadatos
-  created_at                      DateTime  @default(now()) @map("created_at")
-  updated_at                      DateTime  @updatedAt @map("updated_at")
-  
-  // Relación con jugador
-  player                          Jugador   @relation(fields: [id_player], references: [id_player], onDelete: Cascade)
-  
-  // Índices
+  created_at                        DateTime @default(now()) @map("created_at")
+  updated_at                        DateTime @updatedAt @map("updated_at")
+  player                            Jugador  @relation(fields: [id_player], references: [id_player], onDelete: Cascade)
+
   @@index([id_player])
   @@index([goals_p90_3m(sort: Desc)])
   @@index([assists_p90_3m(sort: Desc)])
@@ -764,288 +792,274 @@ model PlayerStats3m {
   @@index([save_rate_percent_3m(sort: Desc)])
   @@index([created_at(sort: Desc)])
   @@index([updated_at(sort: Desc)])
-  
+  @@index([id_player], map: "idx_player_stats_3m_player_id")
   @@map("player_stats_3m")
 }
 
+model OnDemandMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  userEmail String
+  userName  String
+  message   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      Usuario  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("on_demand_messages")
+}
+
+model ScoutContactMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  userEmail String
+  userName  String
+  scoutId   String
+  scoutName String
+  message   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      Usuario  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([scoutId])
+  @@index([createdAt])
+  @@map("scout_contact_messages")
+}
+
 model Atributos {
-  // Identificadores y totales
-  id_player                        String  @id
-  id_fmi                          Int?
-  total_fmi_pts                   Int?
-  total_fmi_pts_norm              Int?
-  
-  // Habilidades técnicas (jugador de campo)
-  corners_fmi                     Int?
-  crossing_fmi                    Int?
-  dribbling_fmi                   Int?
-  finishing_fmi                   Int?
-  first_touch_fmi                 Int?
-  free_kick_taking_fmi            Int?
-  heading_fmi                     Int?
-  long_shots_fmi                  Int?
-  passing_fmi                     Int?
-  penalty_taking_fmi              Int?
-  tackling_fmi                    Int?
-  technique_fmi                   Int?
-  marking_fmi                     Int?
-  off_the_ball_fmi                Int?
-  positioning_fmi                 Int?
-  long_throws_fmi                 Int?
-  
-  // Atributos físicos
-  acceleration_fmi                Int?
-  agility_fmi                     Int?
-  balance_fmi                     Int?
-  jumping_fmi                     Int?
-  natural_fitness_fmi             Int?
-  pace_fmi                        Int?
-  stamina_fmi                     Int?
-  strength_fmi                    Int?
-  
-  // Atributos mentales
-  aggression_fmi                  Int?
-  anticipation_fmi                Int?
-  bravery_fmi                     Int?
-  composure_fmi                   Int?
-  concentration_fmi               Int?
-  decisions_fmi                   Int?
-  determination_fmi               Int?
-  flair_fmi                       Int?
-  leadership_fmi                  Int?
-  team_work_fmi                   Int?
-  vision_fmi                      Int?
-  work_rate_fmi                   Int?
-  
-  // Portero (GK)
-  aerial_ability_fmi              Int?
-  command_of_area_fmi             Int?
-  communication_fmi               Int?
-  eccentricity_fmi                Int?
-  handling_fmi                    Int?
-  kicking_fmi                     Int?
-  one_on_ones_fmi                 Int?
-  tendency_to_punch_fmi           Int?
-  reflexes_fmi                    Int?
-  rushing_out_fmi                 Int?
-  throwing_fmi                    Int?
-  
-  // Dominancia de pie
-  left_foot_fmi                   Int?
-  right_foot_fmi                  Int?
-  
-  // Consistencia, personalidad y disponibilidad
-  consistency_fmi                 Int?
-  dirtiness_fmi                   Int?
-  important_matches_fmi           Int?
-  injury_proness_fmi              Int?
-  versality_fmi                   Int?
-  adaptability_fmi                Int?
-  ambition_fmi                    Int?
-  loyalty_fmi                     Int?
-  pressure_fmi                    Int?
-  professional_fmi                Int?
-  sportsmanship_fmi               Int?
-  temperament_fmi                 Int?
-  controversy_fmi                 Int?
-  
-  // Aptitud por posición (rating + nivel)
-  goalkeeper_fmi                  Int?
-  gk_level                        Int?
-  defender_right_fmi              Int?
-  rb_level                        Int?
-  defender_central_fmi            Int?
-  cb_level                        Int?
-  defender_left_fmi               Int?
-  lb_level                        Int?
-  wing_back_right_fmi             Int?
-  rwb_level                       Int?
-  defensive_midfielder_fmi        Int?
-  dm_level                        Int?
-  wing_back_left_fmi              Int?
-  lwb_level                       Int?
-  midfielder_right_fmi            Int?
-  rm_level                        Int?
-  midfielder_central_fmi          Int?
-  cm_level                        Int?
-  midfielder_left_fmi             Int?
-  lm_level                        Int?
-  attacking_mid_right_fmi         Int?
-  rw_level                        Int?
-  attacking_mid_central_fmi       Int?
-  am_level                        Int?
-  attacking_mid_left_fmi          Int?
-  lw_level                        Int?
-  striker_fmi                     Int?
-  st_level                        Int?
-  
-  // Roles/estilos de Portero (con % de pertenencia)
-  gk_dominator                    Int?
-  gk_dominator_percent            Int?
-  gk_reactive                     Int?
-  gk_reactive_percent             Int?
-  gk_initiator                    Int?
-  gk_initiator_percent            Int?
-  
-  // Roles/estilos de Defensa Central (con %)
-  central_def_aggressor           Int?
-  central_def_aggressor_percent   Int?
-  central_def_spreader            Int?
-  central_def_spreader_percent    Int?
-  central_def_anchor              Int?
-  central_def_anchor_percent      Int?
-  
-  // Roles/estilos de Defensa/Laterales (con %)
-  wide_def_overlapper             Int?
-  wide_def_overlapper_percent     Int?
-  wide_def_progressor             Int?
-  wide_def_progressor_percent     Int?
-  wide_def_safety                 Int?
-  wide_def_safety_percent         Int?
-  
-  // Mediocentro (con %)
-  deep_mid_box_to_box             Int?
-  deep_mid_box_to_box_percent     Int?
-  deep_mid_distributor            Int?
-  deep_mid_distributor_percent    Int?
-  deep_mid_builder                Int?
-  deep_mid_builder_percent        Int?
-  
-  // Mediapunta/Interior avanzado (con %)
-  advanced_mid_box_crasher        Int?
-  advanced_mid_box_crasher_percent Int?
-  advanced_mid_creator            Int?
-  advanced_mid_creator_percent    Int?
-  advanced_mid_orchestrator       Int?
+  id_player                         String   @id
+  id_fmi                            Int?
+  total_fmi_pts                     Int?
+  total_fmi_pts_norm                Int?
+  corners_fmi                       Int?
+  crossing_fmi                      Int?
+  dribbling_fmi                     Int?
+  finishing_fmi                     Int?
+  first_touch_fmi                   Int?
+  free_kick_taking_fmi              Int?
+  heading_fmi                       Int?
+  long_shots_fmi                    Int?
+  passing_fmi                       Int?
+  penalty_taking_fmi                Int?
+  tackling_fmi                      Int?
+  technique_fmi                     Int?
+  marking_fmi                       Int?
+  off_the_ball_fmi                  Int?
+  positioning_fmi                   Int?
+  long_throws_fmi                   Int?
+  acceleration_fmi                  Int?
+  agility_fmi                       Int?
+  balance_fmi                       Int?
+  jumping_fmi                       Int?
+  natural_fitness_fmi               Int?
+  pace_fmi                          Int?
+  stamina_fmi                       Int?
+  strength_fmi                      Int?
+  aggression_fmi                    Int?
+  anticipation_fmi                  Int?
+  bravery_fmi                       Int?
+  composure_fmi                     Int?
+  concentration_fmi                 Int?
+  decisions_fmi                     Int?
+  determination_fmi                 Int?
+  flair_fmi                         Int?
+  leadership_fmi                    Int?
+  team_work_fmi                     Int?
+  vision_fmi                        Int?
+  work_rate_fmi                     Int?
+  aerial_ability_fmi                Int?
+  command_of_area_fmi               Int?
+  communication_fmi                 Int?
+  eccentricity_fmi                  Int?
+  handling_fmi                      Int?
+  kicking_fmi                       Int?
+  one_on_ones_fmi                   Int?
+  tendency_to_punch_fmi             Int?
+  reflexes_fmi                      Int?
+  rushing_out_fmi                   Int?
+  throwing_fmi                      Int?
+  left_foot_fmi                     Int?
+  right_foot_fmi                    Int?
+  consistency_fmi                   Int?
+  dirtiness_fmi                     Int?
+  important_matches_fmi             Int?
+  injury_proness_fmi                Int?
+  versality_fmi                     Int?
+  adaptability_fmi                  Int?
+  ambition_fmi                      Int?
+  loyalty_fmi                       Int?
+  pressure_fmi                      Int?
+  professional_fmi                  Int?
+  sportsmanship_fmi                 Int?
+  temperament_fmi                   Int?
+  controversy_fmi                   Int?
+  goalkeeper_fmi                    Int?
+  gk_level                          Int?
+  defender_right_fmi                Int?
+  rb_level                          Int?
+  defender_central_fmi              Int?
+  cb_level                          Int?
+  defender_left_fmi                 Int?
+  lb_level                          Int?
+  wing_back_right_fmi               Int?
+  rwb_level                         Int?
+  defensive_midfielder_fmi          Int?
+  dm_level                          Int?
+  wing_back_left_fmi                Int?
+  lwb_level                         Int?
+  midfielder_right_fmi              Int?
+  rm_level                          Int?
+  midfielder_central_fmi            Int?
+  cm_level                          Int?
+  midfielder_left_fmi               Int?
+  lm_level                          Int?
+  attacking_mid_right_fmi           Int?
+  rw_level                          Int?
+  attacking_mid_central_fmi         Int?
+  am_level                          Int?
+  attacking_mid_left_fmi            Int?
+  lw_level                          Int?
+  striker_fmi                       Int?
+  st_level                          Int?
+  gk_dominator                      Int?
+  gk_dominator_percent              Int?
+  gk_reactive                       Int?
+  gk_reactive_percent               Int?
+  gk_initiator                      Int?
+  gk_initiator_percent              Int?
+  central_def_aggressor             Int?
+  central_def_aggressor_percent     Int?
+  central_def_spreader              Int?
+  central_def_spreader_percent      Int?
+  central_def_anchor                Int?
+  central_def_anchor_percent        Int?
+  wide_def_overlapper               Int?
+  wide_def_overlapper_percent       Int?
+  wide_def_progressor               Int?
+  wide_def_progressor_percent       Int?
+  wide_def_safety                   Int?
+  wide_def_safety_percent           Int?
+  deep_mid_box_to_box               Int?
+  deep_mid_box_to_box_percent       Int?
+  deep_mid_distributor              Int?
+  deep_mid_distributor_percent      Int?
+  deep_mid_builder                  Int?
+  deep_mid_builder_percent          Int?
+  advanced_mid_box_crasher          Int?
+  advanced_mid_box_crasher_percent  Int?
+  advanced_mid_creator              Int?
+  advanced_mid_creator_percent      Int?
+  advanced_mid_orchestrator         Int?
   advanced_mid_orchestrator_percent Int?
-  
-  // Extremos/ataque por banda (con %)
-  wide_att_outlet                 Int?
-  wide_att_outlet_percent         Int?
-  wide_att_unlocker               Int?
-  wide_att_unlocker_percent       Int?
-  wide_att_threat                 Int?
-  wide_att_threat_percent         Int?
-  
-  // Delantero centro (con %)
-  central_att_roamer              Int?
-  central_att_roamer_percent      Int?
-  central_att_target              Int?
-  central_att_target_percent      Int?
-  central_att_finisher            Int?
-  central_att_finisher_percent    Int?
-  
-  // Arquetipos físico-técnicos (índice + nivel)
-  sprinter                        Int?
-  sprinter_level                  Int?
-  marathonian                     Int?
-  marathonian_level               Int?
-  bomberman                       Int?
-  bomberman_level                 Int?
-  three_sixty                     Int?    // 360º renombrado para Prisma
-  three_sixty_level               Int?    // 360º_level renombrado
-  the_rock                        Int?
-  the_rock_level                  Int?
-  air_flyer                       Int?
-  air_flyer_level                 Int?
-  one_vs_one_off                  Int?    // 1vs1_off renombrado
-  one_vs_one_off_level            Int?    // 1vs1_off_level renombrado
-  intelligence                    Int?
-  intelligence_level              Int?
-  game_pace                       Int?
-  game_pace_level                 Int?
-  striking                        Int?
-  striking_level                  Int?
-  ball_control                    Int?
-  ball_control_level              Int?
-  creativity                      Int?
-  creativity_level                Int?
-  one_vs_one_def                  Int?    // 1vs1_def renombrado
-  one_vs_one_def_level            Int?    // 1vs1_def_level renombrado
-  reliability                     Int?
-  reliability_level               Int?
-  competitiveness                 Int?
-  competitiveness_level           Int?
-  injury_resistance               Int?
-  injury_resistance_level         Int?
-  transition                      Int?
-  transition_level                Int?
-  keeping_the_ball                Int?
-  keeping_the_ball_level          Int?
-  progression                     Int?
-  progression_level               Int?
-  finishing_archetype             Int?
-  finishing_level                 Int?
-  set_piece                       Int?
-  set_piece_level                 Int?
-  aerial_play                     Int?
-  aerial_play_level               Int?
-  ball_recovery                   Int?
-  ball_recovery_level             Int?
-  defensive_shape                 Int?
-  defensive_shape_level           Int?
-  goal_saving                     Int?
-  goal_saving_level               Int?
-  
-  // Tendencias y "dominance" táctico-estilístico
-  // Ataque
-  positional_att_tendency         Int?
-  positional_att_tendency_percent Int?
-  direct_att_tendency             Int?
-  direct_att_tendency_percent     Int?
-  positional_att_dominance        Int?
-  positional_att_dominance_level  Int?
-  direct_att_dominance            Int?
-  direct_att_dominance_level      Int?
-  
-  // Defensa (altura del bloque)
-  low_block_def_tendency          Int?
-  low_block_def_tendency_percent  Int?
-  high_block_def_tendency         Int?
-  high_block_def_tendency_percent Int?
-  low_block_def_dominance         Int?
-  low_block_def_dominance_level   Int?
-  high_block_def_dominance        Int?
-  high_block_def_dominance_level  Int?
-  
-  // Influencia por fase
-  influence_off_tendency          Int?
-  influence_off_tendency_percent  Int?
-  influence_def_tendency          Int?
-  influence_def_tendency_percent  Int?
-  influence_off_dominance         Int?
-  influence_off_dominance_level   Int?
-  influence_def_dominance         Int?
-  influence_def_dominance_level   Int?
-  
-  // Espacios de juego
-  open_spaces_tendency            Int?
-  open_spaces_tendency_percent    Int?
-  tight_spaces_tendency           Int?
-  tight_spaces_tendency_percent   Int?
-  open_spaces_dominance           Int?
-  open_spaces_dominance_level     Int?
-  tight_spaces_dominance          Int?
-  tight_spaces_dominance_level    Int?
-  
-  // Perfil de pie
-  right_foot_tendency             Int?
-  right_foot_tendency_percent     Int?
-  left_foot_tendency              Int?
-  left_foot_tendency_percent      Int?
-  right_foot_dominance            Int?
-  right_foot_dominance_level      Int?
-  left_foot_dominance             Int?
-  left_foot_dominance_level       Int?
-  
-  // Timestamps
-  createdAt                       DateTime @default(now())
-  updatedAt                       DateTime @updatedAt
-  
-  // Relación con Jugador
-  player                          Jugador  @relation(fields: [id_player], references: [id_player], onDelete: Cascade)
-  
-  // Índices para optimización
+  wide_att_outlet                   Int?
+  wide_att_outlet_percent           Int?
+  wide_att_unlocker                 Int?
+  wide_att_unlocker_percent         Int?
+  wide_att_threat                   Int?
+  wide_att_threat_percent           Int?
+  central_att_roamer                Int?
+  central_att_roamer_percent        Int?
+  central_att_target                Int?
+  central_att_target_percent        Int?
+  central_att_finisher              Int?
+  central_att_finisher_percent      Int?
+  sprinter                          Int?
+  sprinter_level                    Int?
+  marathonian                       Int?
+  marathonian_level                 Int?
+  bomberman                         Int?
+  bomberman_level                   Int?
+  three_sixty                       Int?
+  three_sixty_level                 Int?
+  the_rock                          Int?
+  the_rock_level                    Int?
+  air_flyer                         Int?
+  air_flyer_level                   Int?
+  one_vs_one_off                    Int?
+  one_vs_one_off_level              Int?
+  intelligence                      Int?
+  intelligence_level                Int?
+  game_pace                         Int?
+  game_pace_level                   Int?
+  striking                          Int?
+  striking_level                    Int?
+  ball_control                      Int?
+  ball_control_level                Int?
+  creativity                        Int?
+  creativity_level                  Int?
+  one_vs_one_def                    Int?
+  one_vs_one_def_level              Int?
+  reliability                       Int?
+  reliability_level                 Int?
+  competitiveness                   Int?
+  competitiveness_level             Int?
+  injury_resistance                 Int?
+  injury_resistance_level           Int?
+  transition                        Int?
+  transition_level                  Int?
+  keeping_the_ball                  Int?
+  keeping_the_ball_level            Int?
+  progression                       Int?
+  progression_level                 Int?
+  finishing_archetype               Int?
+  finishing_level                   Int?
+  set_piece                         Int?
+  set_piece_level                   Int?
+  aerial_play                       Int?
+  aerial_play_level                 Int?
+  ball_recovery                     Int?
+  ball_recovery_level               Int?
+  defensive_shape                   Int?
+  defensive_shape_level             Int?
+  goal_saving                       Int?
+  goal_saving_level                 Int?
+  positional_att_tendency           Int?
+  positional_att_tendency_percent   Int?
+  direct_att_tendency               Int?
+  direct_att_tendency_percent       Int?
+  positional_att_dominance          Int?
+  positional_att_dominance_level    Int?
+  direct_att_dominance              Int?
+  direct_att_dominance_level        Int?
+  low_block_def_tendency            Int?
+  low_block_def_tendency_percent    Int?
+  high_block_def_tendency           Int?
+  high_block_def_tendency_percent   Int?
+  low_block_def_dominance           Int?
+  low_block_def_dominance_level     Int?
+  high_block_def_dominance          Int?
+  high_block_def_dominance_level    Int?
+  influence_off_tendency            Int?
+  influence_off_tendency_percent    Int?
+  influence_def_tendency            Int?
+  influence_def_tendency_percent    Int?
+  influence_off_dominance           Int?
+  influence_off_dominance_level     Int?
+  influence_def_dominance           Int?
+  influence_def_dominance_level     Int?
+  open_spaces_tendency              Int?
+  open_spaces_tendency_percent      Int?
+  tight_spaces_tendency             Int?
+  tight_spaces_tendency_percent     Int?
+  open_spaces_dominance             Int?
+  open_spaces_dominance_level       Int?
+  tight_spaces_dominance            Int?
+  tight_spaces_dominance_level      Int?
+  right_foot_tendency               Int?
+  right_foot_tendency_percent       Int?
+  left_foot_tendency                Int?
+  left_foot_tendency_percent        Int?
+  right_foot_dominance              Int?
+  right_foot_dominance_level        Int?
+  left_foot_dominance               Int?
+  left_foot_dominance_level         Int?
+  createdAt                         DateTime @default(now())
+  updatedAt                         DateTime @updatedAt
+  player                            Jugador  @relation(fields: [id_player], references: [id_player], onDelete: Cascade)
+
   @@index([id_fmi])
   @@index([total_fmi_pts])
   @@index([sprinter_level])
@@ -1056,6 +1070,172 @@ model Atributos {
   @@index([goalkeeper_fmi])
   @@index([striker_fmi])
   @@index([createdAt])
-  
   @@map("atributos")
+}
+
+model ScoutPlayerReport {
+  id        String   @id @default(cuid())
+  scoutId   String
+  playerId  String
+  reportId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  scout     Scout    @relation(fields: [scoutId], references: [id_scout], onDelete: Cascade)
+  player    Jugador  @relation(fields: [playerId], references: [id_player], onDelete: Cascade)
+  report    Reporte  @relation(fields: [reportId], references: [id_report], onDelete: Cascade)
+  
+  @@unique([scoutId, playerId, reportId])
+  @@index([scoutId])
+  @@index([playerId])
+  @@index([reportId])
+  @@index([scoutId, playerId])
+  @@index([createdAt])
+  @@map("scout_player_reports")
+}
+
+// ============================================================================
+// NUEVAS TABLAS NORMALIZADAS - FASE 1 DE OPTIMIZACIÓN
+// ============================================================================
+
+model Country {
+  id                String        @id @default(cuid())
+  name              String        @unique
+  code              String        @unique // ES, BR, AR, FR, etc.
+  confederation     String?       // UEFA, CONMEBOL, AFC, etc.
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  // Relaciones
+  players           Jugador[]     @relation("PlayerNationality")
+  teams             Team[]
+  competitions      Competition[]
+  scouts            Scout[]       @relation("ScoutNationality")
+  agencies          Agency[]
+  
+  @@index([code])
+  @@index([confederation])
+  @@map("countries")
+}
+
+model Position {
+  id                String        @id @default(cuid())
+  name              String        @unique // "Goalkeeper", "Centre-Back", etc.
+  short_name        String        @unique // "GK", "CB", "CM", etc.
+  category          String        // "Goalkeeper", "Defender", "Midfielder", "Forward"
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  // Relaciones
+  players           Jugador[]     @relation("PlayerPosition")
+  
+  @@index([category])
+  @@map("positions")
+}
+
+model Competition {
+  id                String        @id @default(cuid())
+  name              String        @unique
+  short_name        String?       // "EPL", "LaLiga", etc.
+  country_id        String
+  tier              Int           // 1, 2, 3, etc.
+  confederation     String?       // UEFA, CONMEBOL, etc.
+  season_format     String?       // "League", "Cup", "Playoff"
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  // Relaciones
+  country           Country       @relation(fields: [country_id], references: [id])
+  teams             Team[]
+  
+  @@index([country_id])
+  @@index([tier])
+  @@index([confederation])
+  @@map("competitions")
+}
+
+model Team {
+  id                String        @id @default(cuid())
+  name              String        @unique
+  short_name        String?       // "FCB", "RMA", etc.
+  country_id        String
+  competition_id    String?
+  founded_year      Int?
+  stadium           String?
+  website_url       String?
+  logo_url          String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  // Relaciones
+  country           Country       @relation(fields: [country_id], references: [id])
+  competition       Competition?  @relation(fields: [competition_id], references: [id])
+  players           Jugador[]     @relation("PlayerTeam")
+  
+  @@index([country_id])
+  @@index([competition_id])
+  @@index([name])
+  @@map("teams")
+}
+
+model Agency {
+  id                String        @id @default(cuid())
+  name              String        @unique
+  country_id        String?
+  website_url       String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  // Relaciones
+  country           Country?      @relation(fields: [country_id], references: [id])
+  players           Jugador[]     @relation("PlayerAgency")
+  
+  @@index([country_id])
+  @@map("agencies")
+}
+
+model PlayerCorrection {
+  id                String        @id @default(cuid())
+  player_id         String
+  field_name        String        // "team_name", "position", "nationality", etc.
+  original_value    String?
+  corrected_value   String
+  correction_date   DateTime      @default(now())
+  corrected_by      String?       // Usuario que hizo la corrección
+  is_verified       Boolean       @default(false)
+  
+  // Relaciones
+  player            Jugador       @relation("PlayerCorrections", fields: [player_id], references: [id_player], onDelete: Cascade)
+  
+  @@unique([player_id, field_name])
+  @@index([field_name])
+  @@index([correction_date])
+  @@map("player_corrections")
+}
+
+model PlayerMetric {
+  id                String        @id @default(cuid())
+  player_id         String
+  metric_name       String        // "goals_p90", "assists_p90", "pass_accuracy", etc.
+  value             Float
+  period            String        // "3m", "season", "career"
+  category          String?       // "attack", "defense", "passing", "physical"
+  
+  // Métricas calculadas
+  percentile        Float?        // Percentil comparativo (0-100)
+  rank              Int?          // Ranking global
+  total_players     Int?          // Total de jugadores en la comparación
+  
+  date_calculated   DateTime      @default(now())
+  data_source       String?       // "wyscout", "manual", "calculated"
+  
+  // Relaciones
+  player            Jugador       @relation("PlayerMetrics", fields: [player_id], references: [id_player], onDelete: Cascade)
+  
+  @@unique([player_id, metric_name, period])
+  @@index([metric_name, period])
+  @@index([category, period])
+  @@index([player_id, category])
+  @@map("player_metrics")
 }
