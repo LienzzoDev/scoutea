@@ -241,12 +241,11 @@ export default function ScoutJobsPage() {
                 <MapPin className="w-4 h-4" />
                 Ciudad
               </label>
-              <Select value={filters.city} onValueChange={(value) => setFilters(prev => ({ ...prev, city: value }))}>
+              <Select value={filters.city || undefined} onValueChange={(value) => setFilters(prev => ({ ...prev, city: value }))}>
                 <SelectTrigger className="h-10 bg-[#f8f7f4] border-[#e7e7e7]">
                   <SelectValue placeholder="Seleccionar ciudad" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas las ciudades</SelectItem>
                   {cities.map(city => (
                     <SelectItem key={city} value={city}>{city}</SelectItem>
                   ))}
@@ -274,12 +273,11 @@ export default function ScoutJobsPage() {
                 <Tag className="w-4 h-4" />
                 Categoría
               </label>
-              <Select value={filters.category} onValueChange={(value) => setFilters(prev => ({ ...prev, category: value }))}>
+              <Select value={filters.category || undefined} onValueChange={(value) => setFilters(prev => ({ ...prev, category: value }))}>
                 <SelectTrigger className="h-10 bg-[#f8f7f4] border-[#e7e7e7]">
                   <SelectValue placeholder="Seleccionar categoría" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas las categorías</SelectItem>
                   {categories.map(category => (
                     <SelectItem key={category} value={category}>{category}</SelectItem>
                   ))}

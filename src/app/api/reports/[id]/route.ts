@@ -1,78 +1,152 @@
-import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
-
-import { ReportService } from '@/lib/services/report-service'
+import { auth } from '@clerk/nextjs/server'
+import { prisma } from '@/lib/db'
 
 export async function GET(
-  __request: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth()
     
     if (!userId) {
-      return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    const report = await ReportService.getReportById(params.id)
-    
+    const { id } = await params
+    const reportId = id
+
+    // Obtener el reporte con información del jugador
+    const report = await prisma.reporte.findUnique({
+      where: { id_report: reportId },
+      include: {
+        player: {
+          select: {
+            id_player: true,
+            player_name: true,
+            position_player: true,
+            nationality_1: true,
+            team_name: true,
+            date_of_birth: true
+          }
+        },
+        scout: {
+          select: {
+            clerkId: true
+          }
+        }
+      }
+    })
+
     if (!report) {
-      return NextResponse.json({ __error: 'Report not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Reporte no encontrado' }, { status: 404 })
     }
-    
-    return NextResponse.json(report)
-  } catch (_error) {
-    console.error('Error getting report:', error)
+
+    // Verificar que el reporte pertenece al usuario autenticado
+    if (report.scout?.clerkId !== userId) {
+      return NextResponse.json({ error: 'No tienes permiso para ver este reporte' }, { status: 403 })
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: report
+    })
+
+  } catch (error) {
+    console.error('Error fetching report:', error)
     return NextResponse.json(
-      { __error: 'Internal server error' },
+      { 
+        error: 'Error interno del servidor',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 }
 
 export async function PUT(
-  __request: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth()
     
     if (!userId) {
-      return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    const _body = await request.json()
-    const report = await ReportService.updateReport(params.id, body)
-    
-    return NextResponse.json(report)
-  } catch (_error) {
+    const { id } = await params
+    const reportId = id
+    const body = await request.json()
+
+    console.log('PUT /api/reports/[id] - reportId:', reportId)
+    console.log('PUT /api/reports/[id] - body:', body)
+    console.log('PUT /api/reports/[id] - userId:', userId)
+
+    // Verificar que el reporte existe y pertenece al scout
+    const report = await prisma.reporte.findUnique({
+      where: { id_report: reportId },
+      include: {
+        scout: {
+          select: {
+            clerkId: true,
+            id_scout: true
+          }
+        }
+      }
+    })
+
+    console.log('PUT /api/reports/[id] - report found:', !!report)
+    console.log('PUT /api/reports/[id] - report.scout:', report?.scout)
+
+    if (!report) {
+      return NextResponse.json({ 
+        success: false,
+        error: 'Reporte no encontrado' 
+      }, { status: 404 })
+    }
+
+    if (report.scout?.clerkId !== userId) {
+      return NextResponse.json({ 
+        success: false,
+        error: 'No tienes permiso para editar este reporte' 
+      }, { status: 403 })
+    }
+
+    // Actualizar el reporte
+    console.log('PUT /api/reports/[id] - Updating report...')
+    const updatedReport = await prisma.reporte.update({
+      where: { id_report: reportId },
+      data: {
+        form_text_report: body.reportText || null,
+        form_url_report: body.urlReport || null,
+        form_url_video: body.urlVideo || null,
+        url_secondary: body.imageUrl || null,
+        form_potential: body.potential ? body.potential.toString() : null,
+        updatedAt: new Date()
+      }
+    })
+
+    console.log('PUT /api/reports/[id] - Report updated successfully')
+
+    return NextResponse.json({
+      success: true,
+      data: updatedReport
+    })
+
+  } catch (error) {
     console.error('Error updating report:', error)
     return NextResponse.json(
-      { __error: 'Internal server error' },
+      { 
+        success: false,
+        error: 'Error al actualizar el reporte',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
-  }
-}
-
-export async function DELETE(
-  __request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const { userId } = await auth()
-    
-    if (!userId) {
-      return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
-    }
-
-    await ReportService.deleteReport(params.id)
-    
-    return NextResponse.json({ message: 'Report deleted successfully' })
-  } catch (_error) {
-    console.error('Error deleting report:', error)
-    return NextResponse.json(
-      { __error: 'Internal server error' },
-      { status: 500 }
-    )
+  } finally {
+    await prisma.$disconnect()
   }
 }

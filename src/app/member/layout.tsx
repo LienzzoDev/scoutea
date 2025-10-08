@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { canAccessMemberArea, isAdmin } from '@/lib/auth/user-role'
+import { ErrorBoundary } from '@/components/error/ErrorBoundary'
 
 interface MemberGuardProps {
   children: React.ReactNode
@@ -59,8 +60,10 @@ export default function MemberLayout({
   children: React.ReactNode
 }) {
   return (
-    <MemberGuard>
-      {children}
-    </MemberGuard>
+    <ErrorBoundary>
+      <MemberGuard>
+        {children}
+      </MemberGuard>
+    </ErrorBoundary>
   )
 }

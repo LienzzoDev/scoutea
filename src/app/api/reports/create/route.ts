@@ -1,25 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { z } from 'zod'
+import { prisma } from '@/lib/db'
+import { ScoutReportCreateSchema } from '@/lib/validation/api-schemas'
 
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth()
-    
+
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
     const body = await request.json()
-    
-    // Validar campos requeridos
-    const requiredFields = ['playerName', 'dateOfBirth', 'team', 'nationality1', 'urlReference', 'potential']
-    for (const field of requiredFields) {
-      if (!body[field]) {
-        return NextResponse.json({ error: `Campo requerido: ${field}` }, { status: 400 })
+
+    // Validar con Zod
+    let validatedData;
+    try {
+      validatedData = ScoutReportCreateSchema.parse(body);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json({
+          error: 'Datos inválidos',
+          details: error.errors.map((err) => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        }, { status: 400 });
       }
+      throw error;
     }
 
     // Obtener el scout del usuario actual
@@ -36,7 +45,7 @@ export async function POST(request: NextRequest) {
     let player = await prisma.jugador.findFirst({
       where: {
         player_name: {
-          equals: body.playerName,
+          equals: validatedData.playerName,
           mode: 'insensitive'
         }
       }
@@ -46,17 +55,17 @@ export async function POST(request: NextRequest) {
     if (!player) {
       player = await prisma.jugador.create({
         data: {
-          player_name: body.playerName,
-          date_of_birth: new Date(body.dateOfBirth),
-          position_player: body.position || null,
-          height: body.height ? parseFloat(body.height) : null,
-          foot: body.foot || null,
-          team_name: body.team,
-          team_country: body.teamCountry || null,
-          nationality_1: body.nationality1,
-          nationality_2: body.nationality2 || null,
-          national_tier: body.nationalTier || null,
-          agency: body.agency || null,
+          player_name: validatedData.playerName,
+          date_of_birth: new Date(validatedData.dateOfBirth),
+          position_player: validatedData.position || null,
+          height: validatedData.height || null,
+          foot: validatedData.foot || null,
+          team_name: validatedData.team,
+          team_country: validatedData.teamCountry || null,
+          nationality_1: validatedData.nationality1,
+          nationality_2: validatedData.nationality2 || null,
+          national_tier: validatedData.nationalTier || null,
+          agency: validatedData.agency || null,
         }
       })
     }
@@ -66,24 +75,25 @@ export async function POST(request: NextRequest) {
       data: {
         scout_id: scout.id_scout,
         id_player: player.id_player,
-        player_name: body.playerName,
+        player_name: validatedData.playerName,
         report_date: new Date(),
         report_type: 'original',
-        form_url_reference: body.urlReference,
-        form_url_report: body.urlReport || null,
-        form_url_video: body.urlVideo || null,
-        form_text_report: body.reportText || null,
-        form_potential: body.potential.toString(),
-        form_player_name: body.playerName,
-        form_date_of_birth: body.dateOfBirth,
-        form_team_name: body.team,
-        form_position_player: body.position || null,
-        form_foot: body.foot || null,
-        form_height: body.height || null,
-        form_nationality_1: body.nationality1,
-        form_nationality_2: body.nationality2 || null,
-        form_national_tier: body.nationalTier || null,
-        form_agency: body.agency || null,
+        form_url_reference: validatedData.urlReference,
+        form_url_report: validatedData.urlReport || null,
+        form_url_video: validatedData.urlVideo || null,
+        form_text_report: validatedData.reportText || null,
+        form_potential: validatedData.potential.toString(),
+        url_secondary: validatedData.imageUrl || null,
+        form_player_name: validatedData.playerName,
+        form_date_of_birth: validatedData.dateOfBirth,
+        form_team_name: validatedData.team,
+        form_position_player: validatedData.position || null,
+        form_foot: validatedData.foot || null,
+        form_height: validatedData.height?.toString() || null,
+        form_nationality_1: validatedData.nationality1,
+        form_nationality_2: validatedData.nationality2 || null,
+        form_national_tier: validatedData.nationalTier || null,
+        form_agency: validatedData.agency || null,
         // Copiar datos del jugador al reporte
         date_of_birth: player.date_of_birth,
         position_player: player.position_player,

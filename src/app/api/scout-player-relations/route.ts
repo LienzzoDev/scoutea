@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { ScoutPlayerService } from '@/lib/services/scout-player-service'
+import { prisma } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,26 +13,73 @@ export async function GET(request: NextRequest) {
         if (!scoutId) {
           return NextResponse.json({ error: 'scoutId is required' }, { status: 400 })
         }
-        const scoutReports = await ScoutPlayerService.getScoutReports(scoutId)
+        const scoutReports = await prisma.reporte.findMany({
+          where: { scout_id: scoutId },
+          include: {
+            player: true,
+            scout: true
+          },
+          orderBy: {
+            report_date: 'desc'
+          }
+        })
         return NextResponse.json(scoutReports)
 
       case 'player-reports':
         if (!playerId) {
           return NextResponse.json({ error: 'playerId is required' }, { status: 400 })
         }
-        const playerReports = await ScoutPlayerService.getPlayerReports(playerId)
+        const playerReports = await prisma.reporte.findMany({
+          where: { id_player: playerId },
+          include: {
+            player: true,
+            scout: true
+          },
+          orderBy: {
+            report_date: 'desc'
+          }
+        })
         return NextResponse.json(playerReports)
 
       case 'scout-stats':
         if (!scoutId) {
           return NextResponse.json({ error: 'scoutId is required' }, { status: 400 })
         }
-        const stats = await ScoutPlayerService.getScoutPlayerStats(scoutId)
-        return NextResponse.json(stats)
+        const [totalReports, totalPlayers] = await Promise.all([
+          prisma.reporte.count({
+            where: { scout_id: scoutId }
+          }),
+          prisma.player.count({
+            where: {
+              reporte: {
+                some: {
+                  scout_id: scoutId
+                }
+              }
+            }
+          })
+        ])
+        return NextResponse.json({
+          totalReports,
+          totalPlayers
+        })
 
       case 'history':
       default:
-        const history = await ScoutPlayerService.getScoutPlayerHistory(scoutId || undefined, playerId || undefined)
+        const whereClause: any = {}
+        if (scoutId) whereClause.scout_id = scoutId
+        if (playerId) whereClause.id_player = playerId
+
+        const history = await prisma.reporte.findMany({
+          where: whereClause,
+          include: {
+            player: true,
+            scout: true
+          },
+          orderBy: {
+            report_date: 'desc'
+          }
+        })
         return NextResponse.json(history)
     }
   } catch (error) {
@@ -57,16 +104,33 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           )
         }
-        const relation = await ScoutPlayerService.createScoutPlayerReport({
-          scoutId,
-          playerId,
-          reportId
+        // The relation is already established through the reporte table
+        // Just verify the report exists
+        const report = await prisma.reporte.findUnique({
+          where: { id_report: reportId },
+          include: {
+            player: true,
+            scout: true
+          }
         })
-        return NextResponse.json(relation, { status: 201 })
+
+        if (!report) {
+          return NextResponse.json(
+            { error: 'Report not found' },
+            { status: 404 }
+          )
+        }
+
+        return NextResponse.json(report, { status: 201 })
 
       case 'migrate-existing':
-        const migrationResult = await ScoutPlayerService.migrateExistingReports()
-        return NextResponse.json(migrationResult)
+        // Migration is not needed as relations are already in the reporte table
+        const reportCount = await prisma.reporte.count()
+        return NextResponse.json({
+          success: true,
+          message: 'No migration needed - relations exist in reporte table',
+          totalReports: reportCount
+        })
 
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 })

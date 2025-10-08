@@ -1,9 +1,7 @@
-import { PrismaClient } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { RadarCalculationService } from '../../../../../../lib/services/RadarCalculationService';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/db';
 
 export async function GET(
   __request: NextRequest,

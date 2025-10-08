@@ -2,16 +2,10 @@
 
 import { Bookmark, BookmarkCheck } from "lucide-react";
 import { useEffect } from "react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-
-interface Scout {
-  id: string;
-  name: string;
-  country: string;
-  rating: string;
-  rank: string;
-}
+import type { Scout } from "@/types/scout";
 
 interface ScoutHeaderProps {
   scout: Scout;
@@ -40,17 +34,21 @@ export default function ScoutHeader({
     <>
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-[#6d6d6d] mb-6">
-        <span>Wonderkids</span>
+        <Link href="/member/dashboard" className="hover:text-[#8c1a10] transition-colors cursor-pointer">
+          Wonderkids
+        </Link>
         <span>›</span>
-        <span>Scouts</span>
+        <Link href="/member/scouts" className="hover:text-[#8c1a10] transition-colors cursor-pointer">
+          Scouts
+        </Link>
         <span>›</span>
-        <span className="text-[#2e3138]">{scout.name || "Scout Name"}
+        <span className="text-[#2e3138]">{scout.scout_name || scout.name || "Scout Name"}
         </span>
       </div>
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-[#2e3138]">{scout.name || "Scout Name"}
+        <h1 className="text-3xl font-bold text-[#2e3138]">{scout.scout_name || scout.name || "Scout Name"}
         </h1>
         <Button
           onClick={onToggleList}

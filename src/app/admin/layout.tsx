@@ -1,4 +1,5 @@
 import AdminGuard from '@/components/auth/admin-guard'
+import { ErrorBoundary } from '@/components/error/ErrorBoundary'
 
 export default function AdminLayout({
   children,
@@ -6,9 +7,11 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   return (
-    <AdminGuard>
-      {children}
-    </AdminGuard>
+    <ErrorBoundary>
+      <AdminGuard>
+        {children}
+      </AdminGuard>
+    </ErrorBoundary>
   )
 }
 

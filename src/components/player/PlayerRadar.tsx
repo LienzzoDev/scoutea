@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 import { usePlayerRadar } from '@/hooks/player/usePlayerRadar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 
@@ -215,9 +216,14 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
               Período
             </label>
-            <select className="w-full p-2 border border-gray-300 rounded-md bg-white">
-              <option value="2023-24">2023-24</option>
-            </select>
+            <Select defaultValue="2023-24">
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2023-24">2023-24</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <div>
@@ -305,52 +311,52 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
               Posición
             </label>
-            <select 
-              className="w-full p-2 border border-gray-300 rounded-md bg-white"
-              value={selectedPosition}
-              onChange={(e) => setSelectedPosition(e.target.value)}
-            >
-              <option value="">Todas las Posiciones</option>
-              {filterOptions?.positions.map(pos => (
-                <option key={pos.value} value={pos.value}>
-                  {pos.label} ({pos.count})
-                </option>
-              ))}
-            </select>
+            <Select value={selectedPosition || undefined} onValueChange={setSelectedPosition}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Todas las Posiciones" />
+              </SelectTrigger>
+              <SelectContent>
+                {filterOptions?.positions.map(pos => (
+                  <SelectItem key={pos.value} value={pos.value}>
+                    {pos.label} ({pos.count})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
               Nacionalidad
             </label>
-            <select 
-              className="w-full p-2 border border-gray-300 rounded-md bg-white"
-              value={selectedNationality}
-              onChange={(e) => setSelectedNationality(e.target.value)}
-            >
-              <option value="">Todas las Nacionalidades</option>
-              {filterOptions?.nationalities.map(nat => (
-                <option key={nat.value} value={nat.value}>
-                  {nat.label} ({nat.count})
-                </option>
-              ))}
-            </select>
+            <Select value={selectedNationality || undefined} onValueChange={setSelectedNationality}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Todas las Nacionalidades" />
+              </SelectTrigger>
+              <SelectContent>
+                {filterOptions?.nationalities.map(nat => (
+                  <SelectItem key={nat.value} value={nat.value}>
+                    {nat.label} ({nat.count})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
               Competición
             </label>
-            <select 
-              className="w-full p-2 border border-gray-300 rounded-md bg-white"
-              value={selectedCompetition}
-              onChange={(e) => setSelectedCompetition(e.target.value)}
-            >
-              <option value="">Todas las Competiciones</option>
-              {filterOptions?.competitions.map(comp => (
-                <option key={comp.value} value={comp.value}>
-                  {comp.label} ({comp.count})
-                </option>
-              ))}
-            </select>
+            <Select value={selectedCompetition || undefined} onValueChange={setSelectedCompetition}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Todas las Competiciones" />
+              </SelectTrigger>
+              <SelectContent>
+                {filterOptions?.competitions.map(comp => (
+                  <SelectItem key={comp.value} value={comp.value}>
+                    {comp.label} ({comp.count})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="grid grid-cols-2 gap-2">

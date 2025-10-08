@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { usePlayerLollipop, type LollipopData } from '@/hooks/player/usePlayerLollipop';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface PlayerLollipopProps {
   playerId?: string; // Optional: highlight specific player
@@ -93,42 +94,49 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
               Período
             </label>
-            <select className="w-full p-2 border border-gray-300 rounded-md bg-white">
-              <option value="2023-24">2023-24</option>
-            </select>
+            <Select defaultValue="2023-24">
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2023-24">2023-24</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
               Estadísticas
             </label>
-            <select 
-              className="w-full p-2 border border-gray-300 rounded-md bg-white"
-              value={selectedMetric}
-              onChange={(e) => setSelectedMetric(e.target.value)}
-            >
-              {metrics.map(metric => (
-                <option key={metric.value} value={metric.value}>
-                  {metric.label}
-                </option>
-              ))}
-            </select>
+            <Select value={selectedMetric} onValueChange={setSelectedMetric}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar estadística" />
+              </SelectTrigger>
+              <SelectContent>
+                {metrics.map(metric => (
+                  <SelectItem key={metric.value} value={metric.value}>
+                    {metric.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
               Mostrar Top
             </label>
-            <select 
-              className="w-full p-2 border border-gray-300 rounded-md bg-white"
-              value={topN}
-              onChange={(e) => setTopN(parseInt(e.target.value))}
-            >
-              <option value={10}>Top 10</option>
-              <option value={20}>Top 20</option>
-              <option value={30}>Top 30</option>
-              <option value={50}>Top 50</option>
-            </select>
+            <Select value={topN.toString()} onValueChange={(val) => setTopN(parseInt(val))}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar cantidad" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">Top 10</SelectItem>
+                <SelectItem value="20">Top 20</SelectItem>
+                <SelectItem value="30">Top 30</SelectItem>
+                <SelectItem value="50">Top 50</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
@@ -222,54 +230,54 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
               Posición
             </label>
-            <select 
-              className="w-full p-2 border border-gray-300 rounded-md bg-white"
-              value={selectedPosition}
-              onChange={(e) => setSelectedPosition(e.target.value)}
-            >
-              <option value="">Todas las Posiciones</option>
-              {filterOptions?.positions.map(pos => (
-                <option key={pos.value} value={pos.value}>
-                  {pos.label} ({pos.count})
-                </option>
-              ))}
-            </select>
+            <Select value={selectedPosition || undefined} onValueChange={setSelectedPosition}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Todas las Posiciones" />
+              </SelectTrigger>
+              <SelectContent>
+                {filterOptions?.positions.map(pos => (
+                  <SelectItem key={pos.value} value={pos.value}>
+                    {pos.label} ({pos.count})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
               Nacionalidad
             </label>
-            <select 
-              className="w-full p-2 border border-gray-300 rounded-md bg-white"
-              value={selectedNationality}
-              onChange={(e) => setSelectedNationality(e.target.value)}
-            >
-              <option value="">Todas las Nacionalidades</option>
-              {filterOptions?.nationalities.map(nat => (
-                <option key={nat.value} value={nat.value}>
-                  {nat.label} ({nat.count})
-                </option>
-              ))}
-            </select>
+            <Select value={selectedNationality || undefined} onValueChange={setSelectedNationality}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Todas las Nacionalidades" />
+              </SelectTrigger>
+              <SelectContent>
+                {filterOptions?.nationalities.map(nat => (
+                  <SelectItem key={nat.value} value={nat.value}>
+                    {nat.label} ({nat.count})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
               Competición
             </label>
-            <select 
-              className="w-full p-2 border border-gray-300 rounded-md bg-white"
-              value={selectedCompetition}
-              onChange={(e) => setSelectedCompetition(e.target.value)}
-            >
-              <option value="">Todas las Competiciones</option>
-              {filterOptions?.competitions.map(comp => (
-                <option key={comp.value} value={comp.value}>
-                  {comp.label} ({comp.count})
-                </option>
-              ))}
-            </select>
+            <Select value={selectedCompetition || undefined} onValueChange={setSelectedCompetition}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Todas las Competiciones" />
+              </SelectTrigger>
+              <SelectContent>
+                {filterOptions?.competitions.map(comp => (
+                  <SelectItem key={comp.value} value={comp.value}>
+                    {comp.label} ({comp.count})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="grid grid-cols-2 gap-2">

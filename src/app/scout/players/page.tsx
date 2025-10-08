@@ -72,7 +72,7 @@ export default function ScoutPlayersPage() {
           </div>
 
           {/* Page Title */}
-          <h1 className="text-4xl font-bold text-[#000000] mb-8">Players Database</h1>
+          <h1 className="text-4xl font-bold text-[#000000] mb-8">Mis Jugadores Reportados</h1>
 
           {/* Selector de Categorías */}
           <CategorySelector
@@ -323,18 +323,24 @@ export default function ScoutPlayersPage() {
                   <p className="text-[#6d6d6d] text-lg">
                     {searchTerm
                       ? `No se encontraron jugadores para "${searchTerm}"`
-                      : "No se encontraron jugadores"}
+                      : "No tienes jugadores reportados"}
                   </p>
                   <p className="text-[#6d6d6d] text-sm mt-2">
                     {searchTerm
                       ? "Intenta con otros términos de búsqueda"
-                      : "No hay jugadores disponibles en este momento"}
+                      : "Aquí aparecerán los jugadores sobre los que hayas creado reportes"}
                   </p>
-                  {searchTerm && (
+                  {searchTerm ? (
                     <button
                       onClick={() => handleSearch("")}
                       className="mt-4 px-4 py-2 bg-[#8c1a10] text-white rounded-lg hover:bg-[#6d1410] transition-colors">
-                      Ver todos los jugadores
+                      Ver todos tus jugadores
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => window.location.href = '/scout/reports'}
+                      className="mt-4 px-4 py-2 bg-[#8c1a10] text-white rounded-lg hover:bg-[#6d1410] transition-colors">
+                      Crear un reporte
                     </button>
                   )}
                 </div>

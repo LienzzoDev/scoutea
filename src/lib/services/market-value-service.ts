@@ -188,12 +188,14 @@ export class MarketValueService {
    */
   static formatValue(value?: number | null): string {
     if (!value) return "Por determinar";
+    // El valor está en millones, convertir a euros completos
+    const valueInEuros = value * 1_000_000;
     return new Intl.NumberFormat('es-ES', {
       style: 'currency',
       currency: 'EUR',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
-    }).format(value);
+    }).format(valueInEuros);
   }
 
   /**

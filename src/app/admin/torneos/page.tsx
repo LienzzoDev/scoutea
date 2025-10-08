@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { LoadingPage, LoadingCard } from "@/components/ui/loading-spinner"
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 import { useTournaments, TorneoFilters } from "@/hooks/tournament/useTournaments"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 export default function TorneosPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
@@ -203,65 +204,81 @@ export default function TorneosPage() {
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Tipo de Torneo
                   </label>
-                  <select
-                    value={filters.tipo_torneo || ''}
-                    onChange={(e) =>handleFilterChange('tipo_torneo', e.target.value)}
-                    className="w-full p-2 bg-[#1F2937] border border-slate-600 rounded-md text-white">
-                    <option value="">Todos</option>
-                    {filterOptions.tiposTorneo.map((tipo: string) => (
-                      <option key={tipo} value={tipo}>
-                        {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
-                      </option>
-                    ))}
-                  </select>
+                  <Select
+                    value={filters.tipo_torneo || undefined}
+                    onValueChange={(value) => handleFilterChange('tipo_torneo', value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filterOptions.tiposTorneo.map((tipo: string) => (
+                        <SelectItem key={tipo} value={tipo}>
+                          {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Categoría
                   </label>
-                  <select
-                    value={filters.categoria || ''}
-                    onChange={(e) =>handleFilterChange('categoria', e.target.value)}
-                    className="w-full p-2 bg-[#1F2937] border border-slate-600 rounded-md text-white">
-                    <option value="">Todas</option>
-                    {filterOptions.categorias.map((categoria: string) => (
-                      <option key={categoria} value={categoria}>
-                        {categoria}
-                      </option>
-                    ))}
-                  </select>
+                  <Select
+                    value={filters.categoria || undefined}
+                    onValueChange={(value) => handleFilterChange('categoria', value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Todas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filterOptions.categorias.map((categoria: string) => (
+                        <SelectItem key={categoria} value={categoria}>
+                          {categoria}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Género
                   </label>
-                  <select
-                    value={filters.genero || ''}
-                    onChange={(e) =>handleFilterChange('genero', e.target.value)}
-                    className="w-full p-2 bg-[#1F2937] border border-slate-600 rounded-md text-white">
-                    <option value="">Todos</option>
-                    {filterOptions.generos.map((genero: string) => (
-                      <option key={genero} value={genero}>
-                        {genero.charAt(0).toUpperCase() + genero.slice(1)}
-                      </option>
-                    ))}
-                  </select>
+                  <Select
+                    value={filters.genero || undefined}
+                    onValueChange={(value) => handleFilterChange('genero', value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filterOptions.generos.map((genero: string) => (
+                        <SelectItem key={genero} value={genero}>
+                          {genero.charAt(0).toUpperCase() + genero.slice(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Estado
                   </label>
-                  <select
-                    value={filters.estado || ''}
-                    onChange={(e) =>handleFilterChange('estado', e.target.value)}
-                    className="w-full p-2 bg-[#1F2937] border border-slate-600 rounded-md text-white">
-                    <option value="">Todos</option>
-                    {filterOptions.estados.map((estado: string) => (
-                      <option key={estado} value={estado}>
-                        {estado.charAt(0).toUpperCase() + estado.slice(1)}
-                      </option>
-                    ))}
-                  </select>
+                  <Select
+                    value={filters.estado || undefined}
+                    onValueChange={(value) => handleFilterChange('estado', value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filterOptions.estados.map((estado: string) => (
+                        <SelectItem key={estado} value={estado}>
+                          {estado.charAt(0).toUpperCase() + estado.slice(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             )}

@@ -15,12 +15,12 @@ export default function NewPlayerReportPage() {
           <span>›</span>
           <span>Players</span>
           <span>›</span>
-          <span className="text-[#000000]">New Report</span>
+          <span className="text-[#000000]">New Player</span>
         </div>
 
         {/* Page Title */}
         <h1 className="text-4xl font-bold text-[#000000] mb-8">
-          New Player Report
+          New Player
         </h1>
 
         {/* Form */}

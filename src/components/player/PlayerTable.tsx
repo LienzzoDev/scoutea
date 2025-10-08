@@ -67,7 +67,7 @@ export default function PlayerTable({
   return (
     <div className="bg-white rounded-lg border border-[#e7e7e7] overflow-hidden">
       {/* HEADER */}
-      <div className="bg-[#f8f9fa] border-b border-[#e7e7e7] flex">
+      <div className="bg-[#f8f9fa] border-b border-[#e7e7e7] flex items-stretch">
         {/* Columna fija - Player Info */}
         <div className="w-80 p-4 border-r border-[#e7e7e7] flex-shrink-0">
           <h4 className="font-semibold text-[#6d6d6d] text-sm">
@@ -83,7 +83,7 @@ export default function PlayerTable({
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           <div
-            className="flex"
+            className="flex items-stretch"
             style={{
               minWidth: `${Math.max(
                 selectedCategories.length * 140,
@@ -95,7 +95,7 @@ export default function PlayerTable({
               const isActive = sortBy === category.key;
               const getSortIcon = () => {
                 if (!isActive) return <ArrowUpDown className="w-3 h-3 text-gray-400" />;
-                return sortOrder === 'asc' 
+                return sortOrder === 'asc'
                   ? <ArrowUp className="w-3 h-3 text-[#8c1a10]" />
                   : <ArrowDown className="w-3 h-3 text-[#8c1a10]" />;
               };
@@ -103,7 +103,7 @@ export default function PlayerTable({
               return (
                 <div
                   key={category.key}
-                  className={`p-4 text-center border-r border-[#e7e7e7] last:border-r-0 flex-shrink-0 cursor-pointer hover:bg-gray-50 transition-colors ${
+                  className={`p-4 text-center border-r border-[#e7e7e7] last:border-r-0 flex-shrink-0 self-stretch cursor-pointer hover:bg-gray-50 transition-colors ${
                     isActive ? 'bg-gray-50' : ''
                   }`}
                   style={{
@@ -142,7 +142,7 @@ export default function PlayerTable({
         {players.map((player, index) => (
           <div
             key={player.id_player}
-            className="flex cursor-pointer hover:bg-gray-50 transition-colors"
+            className="flex items-stretch cursor-pointer hover:bg-gray-50 transition-colors"
             onClick={() =>
               _router.push(`/member/player/${player.id_player}`)
             }
@@ -181,7 +181,7 @@ export default function PlayerTable({
               }}
             >
               <div
-                className="flex"
+                className="flex items-stretch"
                 style={{
                   minWidth: `${Math.max(
                     selectedCategories.length * 140,
@@ -193,7 +193,7 @@ export default function PlayerTable({
                   let formattedValue = category.format
                     ? category.format(value)
                     : value || "N/A";
-                  
+
                   // Ensure formattedValue is always a string
                   if (typeof formattedValue === 'object') {
                     formattedValue = JSON.stringify(formattedValue);
@@ -206,9 +206,9 @@ export default function PlayerTable({
                   return (
                     <div
                       key={`${player.id_player}-${category.key}`}
-                      className={`text-center border-r border-[#e7e7e7] last:border-r-0 flex-shrink-0 ${
-                        category.key === "nationality" || category.key === "team" 
-                          ? "p-3" 
+                      className={`text-center border-r border-[#e7e7e7] last:border-r-0 flex-shrink-0 self-stretch ${
+                        category.key === "nationality" || category.key === "team"
+                          ? "p-3"
                           : "p-4"
                       }`}
                       style={{

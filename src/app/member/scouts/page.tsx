@@ -12,6 +12,7 @@ import MemberNavbar from "@/components/layout/member-navbar"
 import BookmarkButton from "@/components/ui/bookmark-button"
 import { Button } from "@/components/ui/button"
 import EntityTabs from "@/components/ui/entity-tabs"
+import FlagIcon from "@/components/ui/flag-icon"
 import { Input } from "@/components/ui/input"
 import ScoutAvatar from "@/components/ui/scout-avatar"
 import { useScoutList } from "@/hooks/scout/useScoutList"
@@ -66,12 +67,6 @@ const AVAILABLE_CATEGORIES: DisplayCategory[] = [
     key: 'nationality',
     label: 'Nationality',
     getValue: (scout) => scout?.nationality || null,
-    format: (value) => String(value || 'N/A')
-  },
-  {
-    key: 'country',
-    label: 'Country',
-    getValue: (scout) => scout?.country || null,
     format: (value) => String(value || 'N/A')
   },
   {
@@ -820,36 +815,36 @@ export default function ScoutsPage() {
             ) : (
               <div className="bg-white rounded-lg border border-[#e7e7e7] overflow-hidden">
                 {/* HEADER */}
-                <div className="bg-[#f8f9fa] border-b border-[#e7e7e7] flex">
+                <div className="bg-[#f8f9fa] border-b border-[#e7e7e7] flex items-stretch">
                   {/* Columna fija - Scout Info */}
                   <div className="w-80 p-4 border-r border-[#e7e7e7] flex-shrink-0">
                     <h4 className="font-semibold text-[#6d6d6d] text-sm">Scout Info</h4>
                   </div>
                   
                   {/* Headers scrolleables */}
-                  <div 
+                  <div
                     ref={headerScrollRef}
                     className="flex-1 overflow-x-auto scrollbar-hide"
                     onScroll={(e) => handleScroll(e.currentTarget.scrollLeft)}
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                   >
-                    <div className="flex" style={{ minWidth: `${Math.max(getSelectedCategoriesData().length * 140, 100)}px` }}>
+                    <div className="flex items-stretch" style={{ minWidth: `${Math.max(getSelectedCategoriesData().length * 140, 100)}px` }}>
                       {getSelectedCategoriesData().map((category, index, array) => {
                         const isActive = sortBy === category.key
                         const getSortIcon = () => {
                           if (!isActive) return <ArrowUpDown className="w-3 h-3 text-gray-400" />
-                          return sortOrder === 'asc' 
+                          return sortOrder === 'asc'
                             ? <ArrowUp className="w-3 h-3 text-[#8c1a10]" />
                             : <ArrowDown className="w-3 h-3 text-[#8c1a10]" />
                         }
 
                         return (
-                          <div 
-                            key={category.key} 
-                            className={`p-4 text-center border-r border-[#e7e7e7] last:border-r-0 flex-shrink-0 cursor-pointer hover:bg-gray-50 transition-colors ${
+                          <div
+                            key={category.key}
+                            className={`p-4 text-center border-r border-[#e7e7e7] last:border-r-0 flex-shrink-0 self-stretch cursor-pointer hover:bg-gray-50 transition-colors ${
                               isActive ? 'bg-gray-50' : ''
                             }`}
-                            style={{ 
+                            style={{
                               minWidth: '140px',
                               width: array.length <= 4 ? `${100 / array.length}%` : '140px'
                             }}
@@ -880,19 +875,19 @@ export default function ScoutsPage() {
                   {filteredScouts.map((scout, index) => (
                     <div
                       key={scout.id_scout}
-                      className="flex cursor-pointer hover:bg-gray-50 transition-colors"
+                      className="flex items-stretch cursor-pointer hover:bg-gray-50 transition-colors"
                       onClick={() => _router.push(`/member/scout/${scout.id_scout}`)}
                     >
                       {/* Columna fija - Scout Info */}
                       <div className="w-80 p-4 border-r border-[#e7e7e7] flex-shrink-0">
                         <div className="flex items-center gap-4">
-                          <ScoutAvatar scout={scout} size="md" />
+                          <ScoutAvatar scout={scout} size="md" showFlag={false} />
                           <div>
                             <h3 className="font-semibold text-[#000000]">
                               {scout.scout_name || scout.name || 'Unknown Scout'}
                             </h3>
                             <p className="text-[#6d6d6d] text-sm">
-                              {scout.age ? `${scout.age} años` : 'Age N/A'} • {scout.nationality || 'Unknown nationality'}
+                              {scout.age ? `${scout.age} años` : 'Age N/A'}
                             </p>
                             {scout.scout_level && (
                               <p className="text-[#8c1a10] text-xs font-medium mt-1">
@@ -904,19 +899,19 @@ export default function ScoutsPage() {
                       </div>
                       
                       {/* Valores scrolleables */}
-                      <div 
+                      <div
                         ref={(el) =>{
                           if (el) rowScrollRefs.current[index] = el
                         }}
                         className="flex-1 overflow-x-auto scrollbar-hide" onScroll={(e) => handleScroll(e.currentTarget.scrollLeft)}
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                       >
-                        <div className="flex" style={{ minWidth: `${Math.max(getSelectedCategoriesData().length * 140, 100)}px` }}>
+                        <div className="flex items-stretch" style={{ minWidth: `${Math.max(getSelectedCategoriesData().length * 140, 100)}px` }}>
                           {getSelectedCategoriesData().map((category, catIndex, array) => {
                             try {
                               const value = category.getValue(scout)
                               let formattedValue: string
-                              
+
                               // Apply format function if exists
                               if (category.format) {
                                 const formatted = category.format(value)
@@ -924,25 +919,42 @@ export default function ScoutsPage() {
                               } else {
                                 formattedValue = String(value || 'N/A')
                               }
-                              
+
                               // Final safety check - ensure it's a string
                               if (typeof formattedValue !== 'string') {
                                 console.warn('Non-string value detected:', formattedValue, 'for category:', category.key)
                                 formattedValue = 'N/A'
                               }
-                              
+
                               return (
-                                <div 
-                                  key={category.key} 
-                                  className="p-4 text-center border-r border-[#e7e7e7] last:border-r-0 flex items-center justify-center flex-shrink-0"
-                                  style={{ 
+                                <div
+                                  key={category.key}
+                                  className={`text-center border-r border-[#e7e7e7] last:border-r-0 flex items-center justify-center flex-shrink-0 self-stretch ${
+                                    category.key === "nationality"
+                                      ? "p-3"
+                                      : "p-4"
+                                  }`}
+                                  style={{
                                     minWidth: '140px',
                                     width: array.length <= 4 ? `${100 / array.length}%` : '140px'
                                   }}
                                 >
-                                  <span className="text-[#000000] font-medium text-sm">
-                                    {formattedValue}
-                                  </span>
+                                  {/* Columna de Nacionalidad - mostrar bandera */}
+                                  {category.key === "nationality" ? (
+                                    <div className="flex flex-col items-center justify-center gap-2">
+                                      <FlagIcon
+                                        nationality={value as string}
+                                        size="lg"
+                                      />
+                                      <p className="font-medium text-[#000000] text-xs text-center">
+                                        {formattedValue}
+                                      </p>
+                                    </div>
+                                  ) : (
+                                    <span className="text-[#000000] font-medium text-sm">
+                                      {formattedValue}
+                                    </span>
+                                  )}
                                 </div>
                               )
                             } catch (error) {

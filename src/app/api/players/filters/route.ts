@@ -19,14 +19,14 @@ import type { FilterOptions } from '@/types/player'
  * @param request - Request HTTP (puede incluir parámetros opcionales)
  * @returns Opciones para todos los filtros disponibles
  */
-export async function GET(__request: NextRequest): Promise<NextResponse<FilterOptions | { _error: string }>> {
+export async function GET(request: NextRequest): Promise<NextResponse<FilterOptions | { error: string }>> {
   try {
     // 🔐 VERIFICAR AUTENTICACIÓN
     const { userId } = await auth()
-    
+
     if (!userId) {
       return NextResponse.json(
-        { __error: 'No autorizado. Debes iniciar sesión para acceder a los filtros.' }, 
+        { error: 'No autorizado. Debes iniciar sesión para acceder a los filtros.' },
         { status: 401 }
       )
     }
@@ -44,7 +44,7 @@ export async function GET(__request: NextRequest): Promise<NextResponse<FilterOp
     // ✅ VALIDAR PARÁMETROS
     if (minCount < 0 || minCount >1000) {
       return NextResponse.json(
-        { __error: 'El parámetro min_count debe estar entre 0 y 1000.' },
+        { error: 'El parámetro min_count debe estar entre 0 y 1000.' },
         { status: 400 }
       )
     }
@@ -131,7 +131,7 @@ export async function GET(__request: NextRequest): Promise<NextResponse<FilterOp
   } catch (error) {
     // 🚨 MANEJO DE ERRORES
     console.error('❌ Error generating filter options:', {
-      __error: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
       userId: (await auth()).userId,
       timestamp: new Date().toISOString()
@@ -142,7 +142,7 @@ export async function GET(__request: NextRequest): Promise<NextResponse<FilterOp
       // 🗄️ ERROR DE BASE DE DATOS
       if (error.message.includes('database') || error.message.includes('connection')) {
         return NextResponse.json(
-          { __error: 'Error de conexión con la base de datos. Los filtros no están disponibles temporalmente.' },
+          { error: 'Error de conexión con la base de datos. Los filtros no están disponibles temporalmente.' },
           { status: 503 } // Service Unavailable
         )
       }
@@ -150,7 +150,7 @@ export async function GET(__request: NextRequest): Promise<NextResponse<FilterOp
       // 📊 ERROR DE AGREGACIÓN (consultas GROUP BY complejas)
       if (error.message.includes('aggregate') || error.message.includes('group')) {
         return NextResponse.json(
-          { __error: 'Error al procesar los datos de filtros. Por favor, inténtalo de nuevo.' },
+          { error: 'Error al procesar los datos de filtros. Por favor, inténtalo de nuevo.' },
           { status: 500 }
         )
       }
@@ -158,7 +158,7 @@ export async function GET(__request: NextRequest): Promise<NextResponse<FilterOp
 
     // 📤 ERROR GENÉRICO
     return NextResponse.json(
-      { __error: 'Error interno del servidor. No se pudieron generar las opciones de filtros.' },
+      { error: 'Error interno del servidor. No se pudieron generar las opciones de filtros.' },
       { status: 500 }
     )
   }
@@ -174,14 +174,14 @@ export async function GET(__request: NextRequest): Promise<NextResponse<FilterOp
  * @param request - Request HTTP
  * @returns Opciones de filtros recién calculadas
  */
-export async function POST(_request: NextRequest): Promise<NextResponse<FilterOptions | { _error: string }>> {
+export async function POST(_request: NextRequest): Promise<NextResponse<FilterOptions | { error: string }>> {
   try {
     // 🔐 VERIFICAR AUTENTICACIÓN Y PERMISOS DE ADMIN
     const { userId, sessionClaims } = await auth()
-    
+
     if (!userId) {
       return NextResponse.json(
-        { __error: 'No autorizado. Debes iniciar sesión.' }, 
+        { error: 'No autorizado. Debes iniciar sesión.' },
         { status: 401 }
       )
     }
@@ -190,7 +190,7 @@ export async function POST(_request: NextRequest): Promise<NextResponse<FilterOp
     const userRole = sessionClaims?.public_metadata?.role
     if (userRole !== 'admin') {
       return NextResponse.json(
-        { __error: 'Acceso denegado. Solo los administradores pueden refrescar filtros.' },
+        { error: 'Acceso denegado. Solo los administradores pueden refrescar filtros.' },
         { status: 403 }
       )
     }
@@ -240,17 +240,18 @@ export async function POST(_request: NextRequest): Promise<NextResponse<FilterOp
 
     return response
 
-  } catch (_error) {
+  } catch (error) {
     // 🚨 MANEJO DE ERRORES
     console.error('❌ Error refreshing filter options:', {
-      __error: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error.message : 'Unknown error',
       adminId: (await auth()).userId,
       timestamp: new Date().toISOString()
     })
 
     return NextResponse.json(
-      { __error: 'Error interno del servidor. No se pudieron refrescar las opciones de filtros.' },
+      { error: 'Error interno del servidor. No se pudieron refrescar las opciones de filtros.' },
       { status: 500 }
     )
   }
 }
+

@@ -3,7 +3,7 @@
 import { Filter } from "lucide-react";
 import React, { memo, useMemo } from "react";
 
-import AdminMultiSelectFilter from "@/components/filters/admin-multi-select-filter";
+import MultiSelectFilter from "@/components/filters/multi-select-filter";
 import { Button } from "@/components/ui/button";
 
 interface FilterOptions {
@@ -108,12 +108,13 @@ const AdminPlayerFilters = memo<AdminPlayerFiltersProps>(function AdminPlayerFil
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 Nacionalidad
               </label>
-              <AdminMultiSelectFilter
+              <MultiSelectFilter
                 label="Nacionalidad"
                 options={memoizedFilterOptions.nationalities}
                 selectedValues={selectedNationalities}
                 onSelectionChange={onNationalitiesChange}
                 placeholder="Seleccionar nacionalidades"
+                theme="dark"
               />
             </div>
 
@@ -122,12 +123,13 @@ const AdminPlayerFilters = memo<AdminPlayerFiltersProps>(function AdminPlayerFil
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 Posición
               </label>
-              <AdminMultiSelectFilter
+              <MultiSelectFilter
                 label="Posición"
                 options={memoizedFilterOptions.positions}
                 selectedValues={selectedPositions}
                 onSelectionChange={onPositionsChange}
                 placeholder="Seleccionar posiciones"
+                theme="dark"
               />
             </div>
 
@@ -136,12 +138,13 @@ const AdminPlayerFilters = memo<AdminPlayerFiltersProps>(function AdminPlayerFil
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 Equipo
               </label>
-              <AdminMultiSelectFilter
+              <MultiSelectFilter
                 label="Equipo"
                 options={memoizedFilterOptions.teams}
                 selectedValues={selectedTeams}
                 onSelectionChange={onTeamsChange}
                 placeholder="Seleccionar equipos"
+                theme="dark"
               />
             </div>
 
@@ -150,12 +153,13 @@ const AdminPlayerFilters = memo<AdminPlayerFiltersProps>(function AdminPlayerFil
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 Agencia
               </label>
-              <AdminMultiSelectFilter
+              <MultiSelectFilter
                 label="Agencia"
                 options={memoizedFilterOptions.agencies}
                 selectedValues={selectedAgencies}
                 onSelectionChange={onAgenciesChange}
                 placeholder="Seleccionar agencias"
+                theme="dark"
               />
             </div>
           </div>

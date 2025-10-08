@@ -15,8 +15,11 @@ interface BarChartProps {
 
 export function BarChart({ data, title, maxValue, showRanking = true }: BarChartProps) {
   // Filtrar datos válidos y manejar valores null/undefined
-  const validData = data.filter(d => d.value !== null && d.value !== undefined && !isNaN(d.value))
+  const validData = data.filter(d => d.value !== null && d.value !== undefined && !isNaN(d.value) && isFinite(d.value))
   const calculatedMaxValue = maxValue || (validData.length > 0 ? Math.max(...validData.map(d => d.value)) * 1.2 : 100)
+  
+  // Asegurar que calculatedMaxValue nunca sea 0 o NaN
+  const safeMaxValue = isFinite(calculatedMaxValue) && calculatedMaxValue > 0 ? calculatedMaxValue : 100
   
   // Dimensiones del SVG y área de gráfico
   const svgWidth = 350
@@ -33,7 +36,7 @@ export function BarChart({ data, title, maxValue, showRanking = true }: BarChart
   // Generate Y-axis ticks
   const tickCount = 5
   const ticks = Array.from({ length: tickCount }, (_, i) => 
-    Math.round((calculatedMaxValue / (tickCount - 1)) * i)
+    Math.round((safeMaxValue / (tickCount - 1)) * i)
   )
 
   // Default colors for bars
@@ -94,7 +97,7 @@ export function BarChart({ data, title, maxValue, showRanking = true }: BarChart
 
           {/* Y-axis labels and grid lines */}
           {ticks.map((tick, index) => {
-            const y = margin.top + chartHeight - (tick / calculatedMaxValue) * chartHeight
+            const y = margin.top + chartHeight - (tick / safeMaxValue) * chartHeight
             return (
               <g key={`tick-${tick}-${index}`}>
                 <text
@@ -128,9 +131,13 @@ export function BarChart({ data, title, maxValue, showRanking = true }: BarChart
           {/* Bars */}
           {validData.map((item, index) => {
             const safeValue = item.value || 0
-            const barHeight = (safeValue / calculatedMaxValue) * chartHeight
+            const barHeight = isFinite(safeValue / safeMaxValue) 
+              ? (safeValue / safeMaxValue) * chartHeight 
+              : 0
             const x = margin.left + gap + index * (barWidth + gap)
-            const y = margin.top + chartHeight - barHeight
+            const y = isFinite(barHeight) 
+              ? margin.top + chartHeight - barHeight 
+              : margin.top + chartHeight
             const color = item.color || defaultColors[index % defaultColors.length]
 
             return (

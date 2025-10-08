@@ -1,31 +1,61 @@
 'use client'
 
-import { Play, Filter, Video, FileText, Share2, Plus, X, Search } from 'lucide-react'
+import { Play, Filter, Video, FileText, Share2, Plus, X, Search, Trash2, ExternalLink, Edit } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useToast } from '@/hooks/use-toast'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-interface PlayerData {
+// Función para convertir URLs de YouTube a formato embebido
+function getYouTubeEmbedUrl(url: string): string | null {
+  if (!url) return null
+  
+  try {
+    // Patrones de URL de YouTube
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/,
+      /youtube\.com\/embed\/([^&\s]+)/,
+      /youtube\.com\/v\/([^&\s]+)/
+    ]
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern)
+      if (match && match[1]) {
+        return `https://www.youtube.com/embed/${match[1]}`
+      }
+    }
+    
+    // Si no es YouTube, devolver la URL original
+    return url
+  } catch (error) {
+    console.error('Error parsing video URL:', error)
+    return url
+  }
+}
+
+interface ReportData {
+  id_report: string
+  report_date: Date | null
+  report_type: string | null
+  form_text_report: string | null
+  form_url_report: string | null
+  form_url_video: string | null
+  url_secondary: string | null
+  form_potential: string | null
+  roi: number | null
+  profit: number | null
+  potential: number | null
   player: {
     id_player: string
     player_name: string
     position_player: string | null
     nationality_1: string | null
     team_name: string | null
-    player_rating: number | null
     age: number | null
   }
-  latestReport: {
-    id_report: string
-    report_date: Date | null
-    report_type: string | null
-    roi: number | null
-    profit: number | null
-    potential: number | null
-  }
-  totalReports: number
 }
 
 interface Report {
@@ -35,36 +65,47 @@ interface Report {
   content: string
   rating: number
   date: string
-  type: 'scouting' | 'analysis' | 'follow-up' | 'recommendation'
+  type: 'video' | 'written' | 'social' | 'scouting'
   hasVideo?: boolean
   image?: string
   videoUrl?: string
+  urlReport?: string
   roi?: number
   profit?: number
 }
 
 interface ScoutReportsSectionProps {
-  players: PlayerData[]
+  reports: ReportData[]
   isLoading: boolean
   error: string | null
+  onReportDeleted?: (reportId: string) => void
 }
 
 const REPORT_TYPES = [
   { key: 'all', label: 'Todos los reportes', icon: Filter },
-  { key: 'scouting', label: 'Scouting', icon: Video },
-  { key: 'analysis', label: 'Análisis', icon: FileText },
-  { key: 'follow-up', label: 'Seguimiento', icon: Share2 },
+  { key: 'video', label: 'Video Reporte', icon: Video },
+  { key: 'written', label: 'Scouteo (escrito)', icon: FileText },
+  { key: 'social', label: 'Redes sociales', icon: Share2 },
 ] as const
 
 export default function ScoutReportsSection({
-  players,
+  reports,
   isLoading,
-  error
+  error,
+  onReportDeleted
 }: ScoutReportsSectionProps) {
+  const { toast } = useToast()
   const [selectedFilter, setSelectedFilter] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false)
   const [selectedVideoReport, setSelectedVideoReport] = useState<Report | null>(null)
+  const [deletingReportId, setDeletingReportId] = useState<string | null>(null)
+  const [showFilters, setShowFilters] = useState(false)
+  const [advancedFilters, setAdvancedFilters] = useState({
+    nationality: '',
+    position: '',
+    rating: ''
+  })
 
   // Función para abrir el modal de video
   const openVideoModal = (report: Report) => {
@@ -78,98 +119,137 @@ export default function ScoutReportsSection({
     setSelectedVideoReport(null)
   }
 
-  // Reportes de ejemplo con imágenes reales
-  const mockReports: Report[] = useMemo(() => {
-    // Usar siempre los reportes de ejemplo para mostrar las imágenes
-    return [
-      {
-        id: 'report-1',
-        playerName: 'Jude Bellingham',
-        profileType: 'CAM • Inglaterra',
-        content: 'Reporte de análisis para Jude Bellingham. Actualmente en Real Madrid. Excelente visión de juego y capacidad de llegada al área. Su adaptación al fútbol español ha sido excepcional, mostrando una madurez táctica impresionante para su edad.',
-        rating: 5,
-        date: '15/1/2024',
-        type: 'analysis',
-        hasVideo: true,
-        image: 'https://picsum.photos/400/200?random=1',
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-        roi: 35.2,
-        profit: 40000000,
-      },
-      {
-        id: 'report-2',
-        playerName: 'Gavi',
-        profileType: 'CM • España',
-        content: 'Reporte de seguimiento para Gavi. Actualmente en FC Barcelona. Jugador con una técnica excepcional y gran inteligencia táctica. Su progresión en el primer equipo ha sido notable, consolidándose como una pieza clave en el mediocampo.',
-        rating: 4,
-        date: '10/1/2024',
-        type: 'follow-up',
-        hasVideo: true,
-        image: 'https://picsum.photos/400/200?random=2',
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-        roi: 22.8,
-        profit: 20000000,
-      },
-      {
-        id: 'report-3',
-        playerName: 'Pedri González',
-        profileType: 'CM • España',
-        content: 'Reporte de scouting para Pedri González. Actualmente en FC Barcelona. Centrocampista con una visión de juego extraordinaria y excelente control del balón. Su capacidad para dictar el ritmo del partido es excepcional.',
-        rating: 4,
-        date: '5/1/2024',
-        type: 'scouting',
-        hasVideo: false,
-        image: 'https://picsum.photos/400/200?random=3',
-        roi: 25.5,
-        profit: 20000000,
-      },
-      {
-        id: 'report-4',
-        playerName: 'Erling Haaland',
-        profileType: 'ST • Noruega',
-        content: 'Reporte de análisis para Erling Haaland. Actualmente en Manchester City. Delantero con una capacidad goleadora excepcional y gran físico. Su adaptación a la Premier League ha sido perfecta, siendo el máximo goleador.',
-        rating: 5,
-        date: '28/12/2023',
-        type: 'analysis',
-        hasVideo: true,
-        image: 'https://picsum.photos/400/200?random=4',
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-        roi: 45.0,
-        profit: 60000000,
-      },
-      {
-        id: 'report-5',
-        playerName: 'Kylian Mbappé',
-        profileType: 'LW • Francia',
-        content: 'Reporte de seguimiento para Kylian Mbappé. Actualmente en PSG. Extremo con una velocidad y definición excepcionales. Su capacidad para desequilibrar partidos es única en el fútbol actual.',
-        rating: 5,
-        date: '20/12/2023',
-        type: 'follow-up',
-        hasVideo: true,
-        image: 'https://picsum.photos/400/200?random=5',
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-        roi: 50.0,
-        profit: 80000000,
-      },
-      {
-        id: 'report-6',
-        playerName: 'Jamal Musiala',
-        profileType: 'CAM • Alemania',
-        content: 'Reporte de scouting para Jamal Musiala. Actualmente en Bayern Munich. Mediapunta con una técnica refinada y gran capacidad de regate. Su progresión en el Bayern ha sido impresionante.',
-        rating: 4,
-        date: '15/12/2023',
-        type: 'scouting',
-        hasVideo: false,
-        image: 'https://picsum.photos/400/200?random=6',
-        roi: 28.5,
-        profit: 25000000,
+  // Función para eliminar reporte
+  const handleDeleteReport = async (reportId: string, playerName: string) => {
+    if (!confirm(`¿Estás seguro de que quieres eliminar el reporte de ${playerName}?`)) {
+      return
+    }
+
+    setDeletingReportId(reportId)
+
+    try {
+      // Llamar al callback inmediatamente para actualización optimista
+      if (onReportDeleted) {
+        onReportDeleted(reportId)
       }
-    ]
-  }, [players])
+
+      const response = await fetch(`/api/reports/${reportId}/delete`, {
+        method: 'DELETE'
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        toast({
+          title: "¡Éxito!",
+          description: "Reporte eliminado correctamente"
+        })
+      } else {
+        throw new Error(result.error || 'Error al eliminar el reporte')
+      }
+    } catch (error) {
+      console.error('Error deleting report:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al eliminar el reporte",
+        variant: "destructive"
+      })
+      // En caso de error, podríamos recargar para restaurar el estado
+      // pero por ahora solo mostramos el error
+    } finally {
+      setDeletingReportId(null)
+    }
+  }
+
+  // Convertir los datos reales de reportes a formato de visualización
+  const realReports: Report[] = useMemo(() => {
+    return reports.map((reportData, index) => {
+      const { player, report_type, report_date, form_text_report, form_url_video, form_url_report, url_secondary, form_potential, roi, profit, potential } = reportData
+      
+      // Determinar el tipo de reporte basado en el contenido
+      let reportType: 'video' | 'written' | 'social' | 'scouting' = 'written'
+      
+      // Si tiene video, es Video Reporte
+      if (form_url_video) {
+        reportType = 'video'
+      }
+      // Si tiene URL de reporte externo (redes sociales, etc.)
+      else if (form_url_report && !form_text_report) {
+        reportType = 'social'
+      }
+      // Si tiene texto escrito
+      else if (form_text_report) {
+        reportType = 'written'
+      }
+      // Fallback basado en report_type de la BD
+      else if (report_type) {
+        const typeStr = report_type.toLowerCase()
+        if (typeStr.includes('video')) {
+          reportType = 'video'
+        } else if (typeStr.includes('social') || typeStr.includes('redes')) {
+          reportType = 'social'
+        }
+      }
+
+      // Formatear la fecha
+      const formattedDate = report_date 
+        ? new Date(report_date).toLocaleDateString('es-ES', {
+            day: 'numeric',
+            month: 'numeric',
+            year: 'numeric'
+          })
+        : 'Sin fecha'
+
+      // Calcular rating basado en el potencial (escala de 1-5)
+      const potentialValue = potential || (form_potential ? parseFloat(form_potential) : null)
+      const rating = potentialValue 
+        ? Math.min(5, Math.max(1, Math.round(potentialValue)))
+        : 3
+
+      // Contenido del reporte
+      const content = form_text_report || `Reporte de ${reportType === 'scouting' ? 'scouting' : reportType === 'analysis' ? 'análisis' : reportType === 'follow-up' ? 'seguimiento' : 'recomendación'} para ${player.player_name}. ${player.team_name ? `Actualmente en ${player.team_name}.` : ''}`
+
+      return {
+        id: reportData.id_report,
+        playerName: player.player_name,
+        profileType: `${player.position_player || 'N/A'} • ${player.nationality_1 || 'N/A'}`,
+        content,
+        rating,
+        date: formattedDate,
+        type: reportType,
+        hasVideo: !!form_url_video,
+        videoUrl: form_url_video || undefined,
+        urlReport: form_url_report || undefined,
+        image: url_secondary || `https://picsum.photos/400/200?random=${index + 1}`,
+        roi: roi || undefined,
+        profit: profit || undefined,
+      }
+    })
+  }, [reports])
+
+  // Obtener opciones únicas para los filtros
+  const filterOptions = useMemo(() => {
+    const nationalities = new Set<string>()
+    const positions = new Set<string>()
+    
+    reports.forEach(report => {
+      if (report.player.nationality_1) {
+        nationalities.add(report.player.nationality_1)
+      }
+      if (report.player.position_player) {
+        positions.add(report.player.position_player)
+      }
+    })
+    
+    return {
+      nationalities: Array.from(nationalities).sort(),
+      positions: Array.from(positions).sort()
+    }
+  }, [reports])
 
   // Filtrar reportes según el tipo seleccionado y término de búsqueda
   const filteredReports = useMemo(() => {
-    let filtered = mockReports
+    let filtered = realReports
 
     // Filtrar por tipo
     if (selectedFilter !== 'all') {
@@ -188,8 +268,26 @@ export default function ScoutReportsSection({
       )
     }
 
+    // Filtros avanzados
+    if (advancedFilters.nationality) {
+      filtered = filtered.filter(report => 
+        report.profileType.includes(advancedFilters.nationality)
+      )
+    }
+
+    if (advancedFilters.position) {
+      filtered = filtered.filter(report => 
+        report.profileType.includes(advancedFilters.position)
+      )
+    }
+
+    if (advancedFilters.rating) {
+      const minRating = parseFloat(advancedFilters.rating)
+      filtered = filtered.filter(report => report.rating >= minRating)
+    }
+
     return filtered
-  }, [selectedFilter, searchTerm, mockReports])
+  }, [selectedFilter, searchTerm, advancedFilters, realReports])
 
   // Calcular rating promedio
   const averageRating = useMemo(() => {
@@ -224,7 +322,7 @@ export default function ScoutReportsSection({
       {/* Header with New Report Button */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-[#000000]">Your Reports</h2>
-        <Link href="/scout/players/new">
+        <Link href="/scout/reports/new">
           <Button className="bg-[#8B0000] hover:bg-[#660000] text-white">
             <Plus className="w-4 h-4 mr-2" />
             New Report
@@ -232,24 +330,39 @@ export default function ScoutReportsSection({
         </Link>
       </div>
 
-      {/* Search Bar */}
+      {/* Search Bar and Filters */}
       <div className="mb-6">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#6d6d6d] w-4 h-4" />
-          <Input
-            placeholder="Buscar reportes por jugador, tipo, contenido..."
-            className="pl-10 bg-[#ffffff] border-[#e7e7e7] focus:border-[#8B0000] focus:ring-[#8B0000]"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm('')}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6d6d6d] hover:text-[#8B0000] transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+        <div className="flex items-center gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#6d6d6d] w-4 h-4" />
+            <Input
+              placeholder="Buscar reportes por jugador, tipo, contenido..."
+              className="pl-10 bg-[#ffffff] border-[#e7e7e7] focus:border-[#8B0000] focus:ring-[#8B0000]"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6d6d6d] hover:text-[#8B0000] transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          <Button
+            variant="outline"
+            className="flex items-center gap-2 border-[#e7e7e7] text-[#6d6d6d] bg-transparent"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <Filter className="w-4 h-4 text-[#8B0000]" />
+            Filtros
+            {(advancedFilters.nationality || advancedFilters.position || advancedFilters.rating) && (
+              <span className="ml-1 bg-[#8B0000] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {Object.values(advancedFilters).filter(Boolean).length}
+              </span>
+            )}
+          </Button>
         </div>
         {searchTerm && (
           <p className="text-sm text-[#6d6d6d] mt-2">
@@ -258,27 +371,109 @@ export default function ScoutReportsSection({
         )}
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex flex-wrap gap-2 mb-6 p-4 bg-gray-50 rounded-xl">
+      {/* Advanced Filters Panel */}
+      {showFilters && (
+        <div className="bg-white rounded-lg p-6 border border-[#e7e7e7] mb-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <h3 className="font-semibold text-[#000000]">Filtros Avanzados</h3>
+              {(advancedFilters.nationality || advancedFilters.position || advancedFilters.rating) && (
+                <button
+                  onClick={() => setAdvancedFilters({ nationality: '', position: '', rating: '' })}
+                  className="flex items-center gap-1 px-2 py-1 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors"
+                >
+                  <span className="text-red-600 text-sm">Limpiar Filtros</span>
+                  <X className="w-3 h-3 text-red-600" />
+                </button>
+              )}
+            </div>
+            <button
+              onClick={() => setShowFilters(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Nacionalidad</label>
+              <Select
+                value={advancedFilters.nationality || undefined}
+                onValueChange={(value) => setAdvancedFilters({ ...advancedFilters, nationality: value })}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Todas las nacionalidades" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filterOptions.nationalities.map(nat => (
+                    <SelectItem key={nat} value={nat}>{nat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Posición</label>
+              <Select
+                value={advancedFilters.position || undefined}
+                onValueChange={(value) => setAdvancedFilters({ ...advancedFilters, position: value })}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Todas las posiciones" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filterOptions.positions.map(pos => (
+                    <SelectItem key={pos} value={pos}>{pos}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Rating Mínimo</label>
+              <Select
+                value={advancedFilters.rating || undefined}
+                onValueChange={(value) => setAdvancedFilters({ ...advancedFilters, rating: value })}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Todos los ratings" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5 estrellas</SelectItem>
+                  <SelectItem value="4">4+ estrellas</SelectItem>
+                  <SelectItem value="3">3+ estrellas</SelectItem>
+                  <SelectItem value="2">2+ estrellas</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Category Pills */}
+      <div className="flex flex-wrap gap-3 mb-6">
         {REPORT_TYPES.map((type) => {
           const Icon = type.icon
           const isActive = selectedFilter === type.key
-          const count = type.key === 'all' ? mockReports.length : mockReports.filter(r => r.type === type.key).length
+          const count = type.key === 'all' ? realReports.length : realReports.filter(r => r.type === type.key).length
           
           return (
             <button
               key={type.key}
               onClick={() => setSelectedFilter(type.key)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-full font-medium transition-all ${
                 isActive
-                  ? 'bg-[#8B0000] text-white'
-                  : 'bg-white text-[#6d6d6d] hover:bg-gray-100'
+                  ? 'bg-[#8B0000] text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
               <Icon className="w-4 h-4" />
-              <span className="text-sm font-medium">{type.label}</span>
-              <span className={`text-xs px-2 py-1 rounded-full ${
-                isActive ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'
+              <span className="text-sm">{type.label}</span>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                isActive 
+                  ? 'bg-white/20 text-white' 
+                  : 'bg-white text-gray-700'
               }`}>
                 {count}
               </span>
@@ -348,7 +543,7 @@ export default function ScoutReportsSection({
               </Button>
             </div>
           ) : (
-            <Link href="/scout/players/new">
+            <Link href="/scout/reports/new">
               <Button className="bg-[#8B0000] hover:bg-[#660000] text-white">
                 <Plus className="w-4 h-4 mr-2" />
                 Crear primer reporte
@@ -359,9 +554,36 @@ export default function ScoutReportsSection({
       ) : (
         <div className="columns-1 md:columns-2 gap-6 space-y-6">
           {filteredReports.map((report) => (
-            <div key={report.id} className="bg-white rounded-xl border border-[#e7e7e7] p-4 break-inside-avoid">
+            <div key={report.id} className="bg-white rounded-xl border border-[#e7e7e7] p-4 break-inside-avoid relative">
+              {/* Action Buttons */}
+              <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+                {/* Edit Button */}
+                <Link href={`/scout/reports/${report.id}/edit`}>
+                  <button
+                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Editar reporte"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                </Link>
+                
+                {/* Delete Button */}
+                <button
+                  onClick={() => handleDeleteReport(report.id, report.playerName)}
+                  disabled={deletingReportId === report.id}
+                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Eliminar reporte"
+                >
+                  {deletingReportId === report.id ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+
               {/* Header */}
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-3 pr-16">
                 <div className="flex items-center gap-2">
                   <div>
                     <h3 className="font-semibold text-[#2e3138]">{report.playerName}</h3>
@@ -369,14 +591,14 @@ export default function ScoutReportsSection({
                   </div>
                   {/* Type Badge */}
                   <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    report.type === 'scouting' ? 'bg-red-100 text-red-700' :
-                    report.type === 'analysis' ? 'bg-blue-100 text-blue-700' :
-                    report.type === 'follow-up' ? 'bg-green-100 text-green-700' :
-                    'bg-purple-100 text-purple-700'
+                    report.type === 'video' ? 'bg-red-100 text-red-700' :
+                    report.type === 'written' ? 'bg-blue-100 text-blue-700' :
+                    report.type === 'social' ? 'bg-green-100 text-green-700' :
+                    'bg-gray-100 text-gray-700'
                   }`}>
-                    {report.type === 'scouting' ? '🔍' : 
-                     report.type === 'analysis' ? '📊' : 
-                     report.type === 'follow-up' ? '👁️' : '⭐'}
+                    {report.type === 'video' ? '🎥' : 
+                     report.type === 'written' ? '📝' : 
+                     report.type === 'social' ? '🔗' : '📋'}
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -394,28 +616,46 @@ export default function ScoutReportsSection({
                 </div>
               </div>
 
-              {/* Image/Video */}
-              {report.image && (
+              {/* Video o Image */}
+              {report.hasVideo && report.videoUrl ? (
+                <div className="relative mb-3">
+                  {(() => {
+                    const embedUrl = getYouTubeEmbedUrl(report.videoUrl)
+                    const isYouTube = embedUrl?.includes('youtube.com/embed')
+                    
+                    if (isYouTube) {
+                      return (
+                        <iframe
+                          src={embedUrl || ''}
+                          className="w-full h-48 rounded-xl"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          title="Video del reporte"
+                        />
+                      )
+                    } else {
+                      return (
+                        <video 
+                          controls
+                          className="w-full h-48 object-cover rounded-xl bg-black"
+                          poster={report.image}
+                        >
+                          <source src={report.videoUrl} type="video/mp4" />
+                          Tu navegador no soporta la reproducción de video.
+                        </video>
+                      )
+                    }
+                  })()}
+                </div>
+              ) : report.image ? (
                 <div className="relative mb-3">
                   <img 
                     src={report.image} 
                     alt="Report visual" 
                     className="w-full h-32 object-cover rounded-xl" 
                   />
-                  {report.hasVideo && (
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        openVideoModal(report)
-                      }}
-                      className="absolute bottom-2 right-2 bg-[#8B0000] text-white px-3 py-1 rounded-xl flex items-center gap-1 hover:bg-[#660000] transition-colors"
-                    >
-                      <Play className="w-3 h-3" />
-                      <span className="text-xs">Play</span>
-                    </button>
-                  )}
                 </div>
-              )}
+              ) : null}
 
               {/* Content */}
               <p className="text-sm text-[#6d6d6d] mb-3 leading-relaxed">
@@ -438,6 +678,19 @@ export default function ScoutReportsSection({
                     </div>
                   )}
                 </div>
+              )}
+
+              {/* Original Report Link */}
+              {report.urlReport && (
+                <a
+                  href={report.urlReport}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 mb-2 text-xs font-medium text-[#8B0000] bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Ver reporte original
+                </a>
               )}
 
               {/* Date */}
@@ -467,15 +720,34 @@ export default function ScoutReportsSection({
 
             {/* Video Player */}
             <div className="mb-4">
-              <video
-                controls
-                autoPlay
-                className="w-full h-auto rounded-lg"
-                poster={selectedVideoReport.image}
-              >
-                <source src={selectedVideoReport.videoUrl} type="video/mp4" />
-                Tu navegador no soporta la reproducción de video.
-              </video>
+              {(() => {
+                const embedUrl = getYouTubeEmbedUrl(selectedVideoReport.videoUrl || '')
+                const isYouTube = embedUrl?.includes('youtube.com/embed')
+                
+                if (isYouTube) {
+                  return (
+                    <iframe
+                      src={`${embedUrl}?autoplay=1`}
+                      className="w-full aspect-video rounded-lg"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title="Video del reporte"
+                    />
+                  )
+                } else {
+                  return (
+                    <video
+                      controls
+                      autoPlay
+                      className="w-full h-auto rounded-lg"
+                      poster={selectedVideoReport.image}
+                    >
+                      <source src={selectedVideoReport.videoUrl} type="video/mp4" />
+                      Tu navegador no soporta la reproducción de video.
+                    </video>
+                  )
+                }
+              })()}
             </div>
 
             {/* Report Info */}
@@ -483,14 +755,14 @@ export default function ScoutReportsSection({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    selectedVideoReport.type === 'scouting' ? 'bg-red-100 text-red-700' :
-                    selectedVideoReport.type === 'analysis' ? 'bg-blue-100 text-blue-700' :
-                    selectedVideoReport.type === 'follow-up' ? 'bg-green-100 text-green-700' :
-                    'bg-purple-100 text-purple-700'
+                    selectedVideoReport.type === 'video' ? 'bg-red-100 text-red-700' :
+                    selectedVideoReport.type === 'written' ? 'bg-blue-100 text-blue-700' :
+                    selectedVideoReport.type === 'social' ? 'bg-green-100 text-green-700' :
+                    'bg-gray-100 text-gray-700'
                   }`}>
-                    {selectedVideoReport.type === 'scouting' ? '🔍 Scouting' : 
-                     selectedVideoReport.type === 'analysis' ? '📊 Análisis' : 
-                     selectedVideoReport.type === 'follow-up' ? '👁️ Seguimiento' : '⭐ Recomendación'}
+                    {selectedVideoReport.type === 'video' ? '🎥 Video Reporte' : 
+                     selectedVideoReport.type === 'written' ? '📝 Scouteo (escrito)' : 
+                     selectedVideoReport.type === 'social' ? '🔗 Redes sociales' : '📋 Reporte'}
                   </div>
                   <span className="text-sm text-[#6d6d6d]">{selectedVideoReport.date}</span>
                 </div>

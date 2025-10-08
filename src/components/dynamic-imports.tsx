@@ -15,7 +15,7 @@ export const AdminPlayerFilters = dynamic(() => import('./player/AdminPlayerFilt
   loading: () => <div className="h-10 w-full bg-gray-200 rounded animate-pulse"></div>
 });
 
-export const AdminMultiSelectFilter = dynamic(() => import('./filters/admin-multi-select-filter'), {
+export const MultiSelectFilter = dynamic(() => import('./filters/multi-select-filter'), {
   loading: () => {
     return <div className="h-10 w-full bg-gray-200 rounded animate-pulse"></div>;
   }

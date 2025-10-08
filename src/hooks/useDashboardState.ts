@@ -1,11 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { usePlayerList } from './player/usePlayerList';
-
-export interface DashboardState {
-  activeTab: string;
-  selectedFilters: Record<string, unknown>;
-  searchQuery: string;
-}
+import type { PlayerData, PlayerFilters, FilterOptions, Category } from '@/types/dashboard';
 
 export const useDashboardState = () => {
   // Estados básicos
@@ -14,7 +9,7 @@ export const useDashboardState = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [_paymentSuccess, _setPaymentSuccess] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(['name', 'position', 'age', 'team']);
-  const [activeFilters, setActiveFilters] = useState<Record<string, unknown>>({});
+  const [activeFilters, setActiveFilters] = useState<PlayerFilters>({});
   const [selectedNationalities, setSelectedNationalities] = useState<string[]>([]);
   const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
@@ -362,10 +357,12 @@ export const useDashboardState = () => {
         const name = player.player_name || player.name || '';
         const team = player.team_name || player.team || '';
         const position = player.position_player || player.position || '';
-        
+        const nationality = player.nationality_1 || player.nationality || '';
+
         return name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                team.toLowerCase().includes(searchTerm.toLowerCase()) ||
-               position.toLowerCase().includes(searchTerm.toLowerCase());
+               position.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               nationality.toLowerCase().includes(searchTerm.toLowerCase());
       });
     }
 

@@ -200,6 +200,48 @@ export const useScoutPlayersState = () => {
         const minutes = player.minutes_played || player.minutes;
         return minutes ? `${minutes}'` : 0;
       }
+    },
+    { 
+      key: 'total_reports', 
+      label: 'Total Reportes', 
+      enabled: false,
+      getValue: (player: Record<string, unknown>) => player.total_reports || 0
+    },
+    { 
+      key: 'latest_report_date', 
+      label: 'Último Reporte', 
+      enabled: false,
+      getValue: (player: Record<string, unknown>) => {
+        const date = player.latest_report_date;
+        return date ? new Date(date as string).toLocaleDateString('es-ES') : 'N/A';
+      }
+    },
+    { 
+      key: 'latest_roi', 
+      label: 'ROI', 
+      enabled: false,
+      getValue: (player: Record<string, unknown>) => {
+        const roi = player.latest_roi;
+        return roi ? `${Number(roi).toFixed(2)}%` : 'N/A';
+      }
+    },
+    { 
+      key: 'latest_profit', 
+      label: 'Beneficio', 
+      enabled: false,
+      getValue: (player: Record<string, unknown>) => {
+        const profit = player.latest_profit;
+        return profit ? `€${Number(profit).toFixed(2)}M` : 'N/A';
+      }
+    },
+    { 
+      key: 'latest_potential', 
+      label: 'Potencial', 
+      enabled: false,
+      getValue: (player: Record<string, unknown>) => {
+        const potential = player.latest_potential;
+        return potential ? Number(potential).toFixed(1) : 'N/A';
+      }
     }
   ], []);
 
@@ -274,16 +316,89 @@ export const useScoutPlayersState = () => {
       
       setLoading(true);
       try {
-        console.log('🔍 useScoutPlayersState: Loading scout players...');
-        const response = await fetch('/api/players-simple?page=1&limit=100');
+        console.log('🔍 useScoutPlayersState: Loading scout profile...');
+        
+        // Primero obtener el perfil del scout para conseguir el id_scout
+        const profileResponse = await fetch('/api/scout/profile');
         
         if (!isMounted) return;
         
-        if (response.ok) {
-          const data = await response.json();
+        if (!profileResponse.ok) {
           if (isMounted) {
-            console.log('✅ useScoutPlayersState: Loaded players:', data.players?.length || 0);
-            setAllPlayers(data.players || []);
+            console.error('❌ useScoutPlayersState: Failed to load scout profile');
+            setAllPlayers([]);
+            setError('Error al cargar el perfil del scout');
+          }
+          return;
+        }
+        
+        const profileData = await profileResponse.json();
+        const scoutId = profileData.scout?.id_scout;
+        
+        if (!scoutId) {
+          if (isMounted) {
+            console.error('❌ useScoutPlayersState: No scout ID found');
+            setAllPlayers([]);
+            setError('No se encontró el ID del scout');
+          }
+          return;
+        }
+        
+        console.log('🔍 useScoutPlayersState: Loading players for scout:', scoutId);
+        
+        // Ahora obtener los jugadores reportados por este scout
+        const playersResponse = await fetch(`/api/scout/players?scoutId=${scoutId}`);
+        
+        if (!isMounted) return;
+        
+        if (playersResponse.ok) {
+          const playersData = await playersResponse.json();
+          if (isMounted) {
+            // Transformar los datos para que coincidan con el formato esperado
+            const players = (playersData.data || []).map((item: any) => {
+              // El item ya es el jugador directamente, con reportes en item.reportes[0]
+              const latestReport = item.reportes?.[0];
+
+              // Calcular edad si hay fecha de nacimiento
+              let age = null;
+              if (item.date_of_birth) {
+                const today = new Date();
+                const birthDate = new Date(item.date_of_birth);
+                age = today.getFullYear() - birthDate.getFullYear();
+                const monthDiff = today.getMonth() - birthDate.getMonth();
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                  age--;
+                }
+              }
+
+              return {
+                id_player: item.id_player,
+                player_name: item.player_name,
+                position_player: item.position_player,
+                nationality_1: item.nationality_1,
+                team_name: item.team_name,
+                team_competition: item.team_competition,
+                player_rating: item.player_rating,
+                age: age,
+                height: item.height,
+                correct_foot: item.correct_foot,
+                player_trfm_value: item.player_trfm_value,
+                date_of_birth: item.date_of_birth,
+                team_country: item.team_country,
+                contract_expires: item.contract_expires,
+                on_loan: item.on_loan,
+                // Agregar información del último reporte
+                latest_report_date: latestReport?.report_date,
+                latest_report_type: latestReport?.report_type,
+                latest_roi: latestReport?.roi,
+                latest_profit: latestReport?.profit,
+                latest_potential: latestReport?.potential,
+                total_reports: item.reportes?.length || 0,
+              };
+            });
+
+            console.log('✅ useScoutPlayersState: Loaded players with reports:', players.length);
+            setAllPlayers(players);
           }
         } else {
           if (isMounted) {

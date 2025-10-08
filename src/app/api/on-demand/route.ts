@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { PrismaClient } from '@prisma/client'
 import { Resend } from 'resend'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/db'
 
 // Inicializar Resend solo si la API key está disponible
 let resend: Resend | null = null

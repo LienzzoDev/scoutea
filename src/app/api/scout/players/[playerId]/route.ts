@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-
-import { ScoutPlayerService } from '@/lib/services/scout-player-service'
+import { prisma } from '@/lib/db'
 
 export async function GET(
   request: NextRequest,
@@ -9,7 +8,7 @@ export async function GET(
 ) {
   try {
     const { userId } = await auth()
-    
+
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
@@ -20,20 +19,42 @@ export async function GET(
       return NextResponse.json({ error: 'Player ID requerido' }, { status: 400 })
     }
 
-    const reports = await ScoutPlayerService.getPlayerReports(playerId)
+    // Get player with all their reports
+    const player = await prisma.player.findUnique({
+      where: { id_player: playerId },
+      include: {
+        reporte: {
+          include: {
+            scout: {
+              select: {
+                id_scout: true,
+                scout_name: true
+              }
+            }
+          },
+          orderBy: {
+            report_date: 'desc'
+          }
+        }
+      }
+    })
 
-    if (reports.length === 0) {
+    if (!player) {
       return NextResponse.json({ error: 'Jugador no encontrado' }, { status: 404 })
     }
-
-    // Obtener información del jugador del primer reporte
-    const playerInfo = reports[0].player
 
     return NextResponse.json({
       success: true,
       data: {
-        player: playerInfo,
-        reports: reports.map(r => ({
+        player: {
+          id_player: player.id_player,
+          player_name: player.player_name,
+          position_player: player.position_player,
+          nationality_1: player.nationality_1,
+          team_name: player.team_name,
+          date_of_birth: player.date_of_birth
+        },
+        reports: player.reporte.map(r => ({
           id_report: r.id_report,
           report_date: r.report_date,
           report_type: r.report_type,
@@ -50,5 +71,7 @@ export async function GET(
       { error: 'Error interno del servidor' },
       { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 }

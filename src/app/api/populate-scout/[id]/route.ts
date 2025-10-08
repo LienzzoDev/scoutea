@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/db'
 
 const reportTypes = ['Scouting Report', 'Performance Analysis', 'Potential Assessment', 'Transfer Recommendation']
 const potentialLevels = ['High', 'Medium', 'Low']

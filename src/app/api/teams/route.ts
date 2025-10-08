@@ -1,7 +1,9 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 
 import { prisma } from '@/lib/db'
+import { TeamSearchQuerySchema, TeamCreateSchema } from '@/lib/validation/api-schemas'
 
 export interface TeamFilters {
   team_name?: string
@@ -23,48 +25,77 @@ export interface TeamSearchOptions {
 }
 
 // GET /api/teams - Buscar equipos con filtros
-export async function GET(__request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth()
-    
+
     if (!userId) {
-      return NextResponse.json({ __error: 'No autorizado' }, { status: 401 })
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
-    
-    // Parsear parámetros de búsqueda
-    const _page = parseInt(searchParams.get('page') || '1')
-    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100)
-    const sortBy = searchParams.get('sortBy') || 'team_name'
-    const sortOrder = (searchParams.get('sortOrder') || 'asc') as 'asc' | 'desc'
-    
-    // Parsear filtros
-    const _filters: TeamFilters = {}
-    
-    if (searchParams.get('filters[team_name]')) {
-      filters.team_name = searchParams.get('filters[team_name]')!
+
+    // Validar parámetros con Zod
+    let params;
+    try {
+      params = TeamSearchQuerySchema.parse({
+        page: searchParams.get('page'),
+        limit: searchParams.get('limit'),
+        sortBy: searchParams.get('sortBy'),
+        sortOrder: searchParams.get('sortOrder'),
+        'filters[team_name]': searchParams.get('filters[team_name]'),
+        'filters[team_country]': searchParams.get('filters[team_country]'),
+        'filters[competition]': searchParams.get('filters[competition]'),
+        'filters[competition_country]': searchParams.get('filters[competition_country]'),
+        'filters[min_rating]': searchParams.get('filters[min_rating]'),
+        'filters[max_rating]': searchParams.get('filters[max_rating]'),
+        'filters[min_value]': searchParams.get('filters[min_value]'),
+        'filters[max_value]': searchParams.get('filters[max_value]')
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json({
+          error: 'Parámetros inválidos',
+          details: error.errors.map((err) => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        }, { status: 400 });
+      }
+      throw error;
     }
-    if (searchParams.get('filters[team_country]')) {
-      filters.team_country = searchParams.get('filters[team_country]')!
+
+    const page = params.page;
+    const limit = params.limit;
+    const sortBy = params.sortBy || 'team_name';
+    const sortOrder = params.sortOrder;
+
+    // Construir filtros desde parámetros validados
+    const filters: TeamFilters = {}
+
+    if (params['filters[team_name]']) {
+      filters.team_name = params['filters[team_name]']
     }
-    if (searchParams.get('filters[competition]')) {
-      filters.competition = searchParams.get('filters[competition]')!
+    if (params['filters[team_country]']) {
+      filters.team_country = params['filters[team_country]']
     }
-    if (searchParams.get('filters[competition_country]')) {
-      filters.competition_country = searchParams.get('filters[competition_country]')!
+    if (params['filters[competition]']) {
+      filters.competition = params['filters[competition]']
     }
-    if (searchParams.get('filters[min_rating]')) {
-      filters.min_rating = parseFloat(searchParams.get('filters[min_rating]')!)
+    if (params['filters[competition_country]']) {
+      filters.competition_country = params['filters[competition_country]']
     }
-    if (searchParams.get('filters[max_rating]')) {
-      filters.max_rating = parseFloat(searchParams.get('filters[max_rating]')!)
+    if (params['filters[min_rating]']) {
+      filters.min_rating = parseFloat(params['filters[min_rating]'])
     }
-    if (searchParams.get('filters[min_value]')) {
-      filters.min_value = parseFloat(searchParams.get('filters[min_value]')!)
+    if (params['filters[max_rating]']) {
+      filters.max_rating = parseFloat(params['filters[max_rating]'])
     }
-    if (searchParams.get('filters[max_value]')) {
-      filters.max_value = parseFloat(searchParams.get('filters[max_value]')!)
+    if (params['filters[min_value]']) {
+      filters.min_value = parseFloat(params['filters[min_value]'])
+    }
+    if (params['filters[max_value]']) {
+      filters.max_value = parseFloat(params['filters[max_value]'])
     }
 
     const skip = (page - 1) * limit
@@ -129,7 +160,7 @@ export async function GET(__request: NextRequest) {
 
     return NextResponse.json({
       teams,
-      _pagination: {
+      pagination: {
         page,
         limit,
         total,
@@ -139,46 +170,55 @@ export async function GET(__request: NextRequest) {
       }
     })
 
-  } catch (_error) {
+  } catch (error) {
     console.error('❌ Error searching teams:', error)
     return NextResponse.json(
-      { __error: 'Error interno del servidor' },
+      { error: 'Error interno del servidor' },
       { status: 500 }
     )
   }
 }
 
 // POST /api/teams - Crear un nuevo equipo
-export async function POST(__request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth()
-    
+
     if (!userId) {
-      return NextResponse.json({ __error: 'No autorizado' }, { status: 401 })
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    const _body = await request.json()
-    
-    // Validar datos requeridos
-    if (!body.team_name || typeof body.team_name !== 'string') {
-      return NextResponse.json(
-        { __error: 'El nombre del equipo es requerido' },
-        { status: 400 }
-      )
+    const body = await request.json()
+
+    // Validar datos con Zod
+    let validatedData;
+    try {
+      validatedData = TeamCreateSchema.parse(body);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json({
+          error: 'Datos inválidos',
+          details: error.errors.map((err) => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        }, { status: 400 });
+      }
+      throw error;
     }
 
     // Crear el equipo
     const team = await prisma.equipo.create({
       data: {
-        team_name: body.team_name.trim(),
+        team_name: validatedData.team_name,
         correct_team_name: body.correct_team_name?.trim(),
-        team_country: body.team_country?.trim(),
+        team_country: validatedData.country,
         url_trfm_advisor: body.url_trfm_advisor?.trim(),
         url_trfm: body.url_trfm?.trim(),
         owner_club: body.owner_club?.trim(),
         owner_club_country: body.owner_club_country?.trim(),
         pre_competition: body.pre_competition?.trim(),
-        competition: body.competition?.trim(),
+        competition: validatedData.competition,
         correct_competition: body.correct_competition?.trim(),
         competition_country: body.competition_country?.trim(),
         team_trfm_value: body.team_trfm_value ? parseFloat(body.team_trfm_value) : null,
@@ -193,18 +233,18 @@ export async function POST(__request: NextRequest) {
     console.log('✅ Equipo creado exitosamente:', team.team_name)
     return NextResponse.json(team, { status: 201 })
 
-  } catch (_error) {
+  } catch (error) {
     console.error('❌ Error creating team:', error)
-    
+
     if (error instanceof Error) {
       return NextResponse.json(
-        { __error: `Error específico: ${error.message}` },
+        { error: `Error específico: ${error.message}` },
         { status: 500 }
       )
     }
-    
+
     return NextResponse.json(
-      { __error: 'Error interno del servidor' },
+      { error: 'Error interno del servidor' },
       { status: 500 }
     )
   }

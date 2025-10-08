@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { usePlayerBeeswarm, BeeswarmData } from '@/hooks/player/usePlayerBeeswarm';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface PlayerBeeswarmProps {
   playerId?: string; // Optional: highlight specific player
@@ -99,25 +100,31 @@ export default function PlayerBeeswarm({ playerId }: PlayerBeeswarmProps) {
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
               Período
             </label>
-            <select className="w-full p-2 border border-[#8c1a10] rounded-md bg-white">
-              <option>Period</option>
-            </select>
+            <Select defaultValue="period">
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar período..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="period">Period</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
               Estadísticas
             </label>
-            <select 
-              className="w-full p-2 border border-[#8c1a10] rounded-md bg-white"
-              value={selectedMetric}
-              onChange={(e) => setSelectedMetric(e.target.value)}
-            >
-              {metrics.map(metric => (
-                <option key={metric.value} value={metric.value}>
-                  {metric.label}
-                </option>
-              ))}
-            </select>
+            <Select value={selectedMetric} onValueChange={setSelectedMetric}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar estadística..." />
+              </SelectTrigger>
+              <SelectContent>
+                {metrics.map(metric => (
+                  <SelectItem key={metric.value} value={metric.value}>
+                    {metric.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -206,18 +213,18 @@ export default function PlayerBeeswarm({ playerId }: PlayerBeeswarmProps) {
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
               Posición
             </label>
-            <select 
-              className="w-full p-2 border border-[#8c1a10] rounded-md bg-white"
-              value={selectedPosition}
-              onChange={(e) => setSelectedPosition(e.target.value)}
-            >
-              <option value="">Todas las Posiciones</option>
-              {filterOptions?.positions.map(pos => (
-                <option key={pos.value} value={pos.value}>
-                  {pos.label} ({pos.count})
-                </option>
-              ))}
-            </select>
+            <Select value={selectedPosition || undefined} onValueChange={setSelectedPosition}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Todas las Posiciones" />
+              </SelectTrigger>
+              <SelectContent>
+                {filterOptions?.positions.map(pos => (
+                  <SelectItem key={pos.value} value={pos.value}>
+                    {pos.label} ({pos.count})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
@@ -253,35 +260,35 @@ export default function PlayerBeeswarm({ playerId }: PlayerBeeswarmProps) {
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
               Nacionalidad
             </label>
-            <select 
-              className="w-full p-2 border border-[#8c1a10] rounded-md bg-white"
-              value={selectedNationality}
-              onChange={(e) => setSelectedNationality(e.target.value)}
-            >
-              <option value="">Todas las Nacionalidades</option>
-              {filterOptions?.nationalities.map(nat => (
-                <option key={nat.value} value={nat.value}>
-                  {nat.label} ({nat.count})
-                </option>
-              ))}
-            </select>
+            <Select value={selectedNationality || undefined} onValueChange={setSelectedNationality}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Todas las Nacionalidades" />
+              </SelectTrigger>
+              <SelectContent>
+                {filterOptions?.nationalities.map(nat => (
+                  <SelectItem key={nat.value} value={nat.value}>
+                    {nat.label} ({nat.count})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
               Competición
             </label>
-            <select 
-              className="w-full p-2 border border-[#8c1a10] rounded-md bg-white"
-              value={selectedCompetition}
-              onChange={(e) => setSelectedCompetition(e.target.value)}
-            >
-              <option value="">Todas las Competiciones</option>
-              {filterOptions?.competitions.map(comp => (
-                <option key={comp.value} value={comp.value}>
-                  {comp.label} ({comp.count})
-                </option>
-              ))}
-            </select>
+            <Select value={selectedCompetition || undefined} onValueChange={setSelectedCompetition}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Todas las Competiciones" />
+              </SelectTrigger>
+              <SelectContent>
+                {filterOptions?.competitions.map(comp => (
+                  <SelectItem key={comp.value} value={comp.value}>
+                    {comp.label} ({comp.count})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
         </div>

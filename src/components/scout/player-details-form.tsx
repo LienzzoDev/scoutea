@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
+import { MediaUpload } from "@/components/scout/media-upload"
 
 export function PlayerDetailsForm() {
   const router = useRouter()
@@ -32,7 +33,8 @@ export function PlayerDetailsForm() {
     urlReference: '',
     reportText: '',
     urlReport: '',
-    urlVideo: ''
+    urlVideo: '',
+    imageUrl: ''
   })
 
   const handleInputChange = (field: string, value: string) => {
@@ -137,6 +139,7 @@ export function PlayerDetailsForm() {
           reportText: formData.reportText || null,
           urlReport: formData.urlReport || null,
           urlVideo: formData.urlVideo || null,
+          imageUrl: formData.imageUrl || null,
           potential
         })
       })
@@ -350,7 +353,7 @@ export function PlayerDetailsForm() {
             <Label htmlFor="nationality-2" className="text-sm font-medium text-foreground">
               Nationality 2
             </Label>
-            <Select value={formData.nationality2} onValueChange={(value) => handleInputChange('nationality2', value)}>
+            <Select value={formData.nationality2 || undefined} onValueChange={(value) => handleInputChange('nationality2', value)}>
               <SelectTrigger
                 id="nationality-2"
                 className="h-12 rounded-lg border-0 bg-muted/50 px-4 text-foreground focus:ring-2 focus:ring-ring"
@@ -358,7 +361,6 @@ export function PlayerDetailsForm() {
                 <SelectValue placeholder="Select nationality" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
                 <SelectItem value="spanish">Spanish</SelectItem>
                 <SelectItem value="english">English</SelectItem>
                 <SelectItem value="german">German</SelectItem>
@@ -451,20 +453,13 @@ export function PlayerDetailsForm() {
             />
           </div>
 
-          {/* URL Video */}
-          <div className="space-y-2">
-            <Label htmlFor="url-video" className="text-sm font-medium text-foreground">
-              URL video
-            </Label>
-            <Input
-              id="url-video"
-              type="url"
-              placeholder="https://example.com/video"
-              value={formData.urlVideo}
-              onChange={(e) => handleInputChange('urlVideo', e.target.value)}
-              className="h-12 rounded-lg border-0 bg-muted/50 px-4 text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
-            />
-          </div>
+          {/* Media Upload (Image or Video) */}
+          <MediaUpload
+            imageValue={formData.imageUrl}
+            videoValue={formData.urlVideo}
+            onImageChange={(url) => handleInputChange('imageUrl', url)}
+            onVideoChange={(url) => handleInputChange('urlVideo', url)}
+          />
 
           {/* Potential Rating */}
           <div className="space-y-3">

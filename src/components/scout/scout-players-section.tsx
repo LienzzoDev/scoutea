@@ -143,17 +143,19 @@ export default function ScoutPlayersSection({
     const teams = new Set<string>()
     const reportTypes = new Set<string>()
 
-    players.forEach((playerData) => {
-      if (playerData.player.nationality_1) {
-        nationalities.add(playerData.player.nationality_1)
-      }
-      if (playerData.player.team_name) {
-        teams.add(playerData.player.team_name)
-      }
-      if (playerData.latestReport.report_type) {
-        reportTypes.add(playerData.latestReport.report_type)
-      }
-    })
+    if (Array.isArray(players) && players.length > 0) {
+      players.forEach((playerData) => {
+        if (playerData?.player?.nationality_1) {
+          nationalities.add(playerData.player.nationality_1)
+        }
+        if (playerData?.player?.team_name) {
+          teams.add(playerData.player.team_name)
+        }
+        if (playerData?.latestReport?.report_type) {
+          reportTypes.add(playerData.latestReport.report_type)
+        }
+      })
+    }
 
     return {
       nationalities: Array.from(nationalities).sort(),
@@ -372,7 +374,7 @@ export default function ScoutPlayersSection({
         <Link href="/scout/players/new">
           <Button className="bg-[#8B0000] hover:bg-[#660000] text-white">
             <Plus className="w-4 h-4 mr-2" />
-            New Player Report
+            New Player
           </Button>
         </Link>
       </div>

@@ -14,6 +14,22 @@ const _optionalString = z.string().optional()
 const email = z.string().email()
 const url = z.string().url()
 
+// Pagination schemas (defined early because used by many other schemas)
+export const PaginationSchema = z.object({
+  page: z.number().int().min(1).default(1),
+  limit: z.number().int().min(1).max(100).default(20),
+  sortBy: z.string().max(50).optional(),
+  sortOrder: z.enum(['asc', 'desc']).default('asc')
+})
+
+// Paginated query schema (for URL search params - string inputs)
+export const PaginatedQuerySchema = z.object({
+  page: z.string().nullable().optional().transform(val => val ? parseInt(val) : 1).pipe(z.number().int().min(1)),
+  limit: z.string().nullable().optional().transform(val => val ? parseInt(val) : 20).pipe(z.number().int().min(1).max(100)),
+  sortBy: z.string().nullable().optional(),
+  sortOrder: z.enum(['asc', 'desc']).nullable().optional().transform(val => val || 'asc')
+})
+
 // Player-related schemas
 export const PlayerSearchSchema = z.object({
   query: z.string()
@@ -102,6 +118,28 @@ export const TeamUpdateSchema = TeamCreateSchema.partial().extend({
   id: nonEmptyString
 })
 
+export const TeamFiltersSchema = z.object({
+  team_name: z.string().max(100).optional(),
+  team_country: z.string().max(50).optional(),
+  competition: z.string().max(100).optional(),
+  competition_country: z.string().max(50).optional(),
+  min_rating: z.string().optional().transform(val => val ? parseFloat(val) : undefined).pipe(z.number().min(0).max(100).optional()),
+  max_rating: z.string().optional().transform(val => val ? parseFloat(val) : undefined).pipe(z.number().min(0).max(100).optional()),
+  min_value: z.string().optional().transform(val => val ? parseFloat(val) : undefined).pipe(z.number().min(0).optional()),
+  max_value: z.string().optional().transform(val => val ? parseFloat(val) : undefined).pipe(z.number().min(0).optional())
+})
+
+export const TeamSearchQuerySchema = PaginatedQuerySchema.extend({
+  'filters[team_name]': z.string().nullable().optional(),
+  'filters[team_country]': z.string().nullable().optional(),
+  'filters[competition]': z.string().nullable().optional(),
+  'filters[competition_country]': z.string().nullable().optional(),
+  'filters[min_rating]': z.string().nullable().optional(),
+  'filters[max_rating]': z.string().nullable().optional(),
+  'filters[min_value]': z.string().nullable().optional(),
+  'filters[max_value]': z.string().nullable().optional()
+})
+
 // Competition/Tournament schemas
 export const CompetitionCreateSchema = z.object({
   name: nonEmptyString
@@ -157,12 +195,52 @@ export const ReportUpdateSchema = ReportCreateSchema.partial().extend({
   id: nonEmptyString
 })
 
-// Pagination schema
-export const PaginationSchema = z.object({
-  page: z.number().int().min(1).default(1),
-  limit: z.number().int().min(1).max(100).default(20),
-  sortBy: z.string().max(50).optional(),
-  sortOrder: z.enum(['asc', 'desc']).default('asc')
+// Scout Report Create Schema (form-based)
+export const ScoutReportCreateSchema = z.object({
+  playerName: nonEmptyString.min(2).max(100),
+  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  team: nonEmptyString.max(100),
+  nationality1: nonEmptyString.max(50),
+  urlReference: url,
+  potential: z.number().int().min(1).max(10),
+  position: z.string().max(50).optional(),
+  height: z.number().min(150).max(220).optional(),
+  foot: z.enum(['Left', 'Right', 'Both']).optional(),
+  teamCountry: z.string().max(50).optional(),
+  nationality2: z.string().max(50).optional(),
+  nationalTier: z.string().max(50).optional(),
+  agency: z.string().max(100).optional(),
+  urlReport: url.optional(),
+  urlVideo: url.optional(),
+  reportText: z.string().max(10000).optional(),
+  imageUrl: url.optional()
+})
+
+// Scout Report for Existing Player Schema
+export const ScoutReportForExistingSchema = z.object({
+  playerId: nonEmptyString,
+  potential: z.number().int().min(1).max(10),
+  urlReport: url.optional(),
+  urlVideo: url.optional(),
+  reportText: z.string().max(10000).optional(),
+  imageUrl: url.optional()
+})
+
+// Scout schemas
+export const ScoutFiltersSchema = z.object({
+  name: z.string().max(100).optional(),
+  country: z.string().max(50).optional(),
+  specialization: z.string().max(100).optional(),
+  min_reports: z.string().optional().transform(val => val ? parseInt(val) : undefined).pipe(z.number().int().min(0).optional()),
+  max_reports: z.string().optional().transform(val => val ? parseInt(val) : undefined).pipe(z.number().int().min(0).optional())
+})
+
+export const ScoutSearchQuerySchema = PaginatedQuerySchema.extend({
+  'filters[name]': z.string().nullable().optional(),
+  'filters[country]': z.string().nullable().optional(),
+  'filters[specialization]': z.string().nullable().optional(),
+  'filters[min_reports]': z.string().nullable().optional(),
+  'filters[max_reports]': z.string().nullable().optional()
 })
 
 // API Response schemas
@@ -202,12 +280,19 @@ export type PlayerUpdateInput = z.infer<typeof PlayerUpdateSchema>
 export type PlayerFiltersInput = z.infer<typeof PlayerFiltersSchema>
 export type TeamCreateInput = z.infer<typeof TeamCreateSchema>
 export type TeamUpdateInput = z.infer<typeof TeamUpdateSchema>
+export type TeamFiltersInput = z.infer<typeof TeamFiltersSchema>
+export type TeamSearchQueryInput = z.infer<typeof TeamSearchQuerySchema>
 export type CompetitionCreateInput = z.infer<typeof CompetitionCreateSchema>
 export type CompetitionUpdateInput = z.infer<typeof CompetitionUpdateSchema>
 export type UserProfileUpdateInput = z.infer<typeof UserProfileUpdateSchema>
 export type ReportCreateInput = z.infer<typeof ReportCreateSchema>
 export type ReportUpdateInput = z.infer<typeof ReportUpdateSchema>
+export type ScoutReportCreateInput = z.infer<typeof ScoutReportCreateSchema>
+export type ScoutReportForExistingInput = z.infer<typeof ScoutReportForExistingSchema>
+export type ScoutFiltersInput = z.infer<typeof ScoutFiltersSchema>
+export type ScoutSearchQueryInput = z.infer<typeof ScoutSearchQuerySchema>
 export type PaginationInput = z.infer<typeof PaginationSchema>
+export type PaginatedQueryInput = z.infer<typeof PaginatedQuerySchema>
 export type RadarComparisonInput = z.infer<typeof RadarComparisonSchema>
 
 // Validation helper functions

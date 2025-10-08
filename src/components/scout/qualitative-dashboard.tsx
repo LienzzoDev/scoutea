@@ -4,6 +4,7 @@ import { ChevronDown, Loader2 } from 'lucide-react'
 import { DonutChart } from '../donut-chart'
 import { QualitativeData, QualitativeFilters } from '@/lib/services/scout-qualitative-service'
 import { useScoutQualitativeWithFilters } from '@/hooks/scout/useScoutQualitativeWithFilters'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface QualitativeDashboardProps {
   scoutId: string
@@ -173,17 +174,21 @@ export function QualitativeDashboard({ scoutId }: QualitativeDashboardProps) {
                   <label className='block text-sm font-medium text-[#8B4513] mb-2'>
                     {filter.label}
                   </label>
-                  <select
+                  <Select
                     value={selectedFilters[filter.id as keyof QualitativeFilters] || 'todos'}
-                    onChange={e => handleFilterChange(filter.id, e.target.value)}
-                    className='w-full bg-white border border-[#8B4513] text-gray-900 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B4513] focus:border-transparent hover:border-[#7A3F12] transition-colors'
+                    onValueChange={value => handleFilterChange(filter.id, value)}
                   >
-                    {getFilterOptions(filter.id).map((option, index) => (
-                      <option key={`${filter.id}-${option}-${index}`} value={option.toLowerCase()}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className='w-full'>
+                      <SelectValue placeholder="Seleccionar..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getFilterOptions(filter.id).map((option, index) => (
+                        <SelectItem key={`${filter.id}-${option}-${index}`} value={option.toLowerCase()}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               ))}
             </div>

@@ -147,18 +147,23 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
               {player.on_loan === true ? "Sí" : player.on_loan === false ? "No" : "Por confirmar"}
             </span>
           </div>
-          <div className="flex justify-between items-center py-3 border-b border-gray-100">
-            <span className="text-[#6d6d6d] text-sm">Club Propietario:</span>
-            <span className="font-medium text-[#2e3138]">
-              {player.on_loan ? getDisplayValue(player.owner_club, null) : "No aplica"}
-            </span>
-          </div>
-          <div className="flex justify-between items-center py-3 border-b border-gray-100">
-            <span className="text-[#6d6d6d] text-sm">País Propietario:</span>
-            <span className="font-medium text-[#2e3138]">
-              {player.on_loan ? getDisplayValue(player.owner_club_country, null) : "No aplica"}
-            </span>
-          </div>
+          {/* Solo mostrar Club Propietario y País Propietario si está en préstamo */}
+          {player.on_loan && (
+            <>
+              <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                <span className="text-[#6d6d6d] text-sm">Club Propietario:</span>
+                <span className="font-medium text-[#2e3138]">
+                  {getDisplayValue(player.owner_club, null)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                <span className="text-[#6d6d6d] text-sm">País Propietario:</span>
+                <span className="font-medium text-[#2e3138]">
+                  {getDisplayValue(player.owner_club_country, null)}
+                </span>
+              </div>
+            </>
+          )}
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">Fin de Contrato:</span>
             <span className="font-medium text-[#2e3138]">

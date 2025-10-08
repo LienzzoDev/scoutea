@@ -2,6 +2,7 @@
 
 import { Facebook, Twitter, Linkedin, Globe, Search, Filter, Bookmark, ArrowRight, X, Play } from "lucide-react"
 import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
@@ -14,11 +15,23 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useScoutProfile } from "@/hooks/scout/useScoutProfile"
 import ScoutContactForm from "@/components/scout/ScoutContactForm"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
+interface PortfolioPlayer {
+  id_player: string
+  name: string
+  age: string
+  nationality: string
+  competition: string
+  position: string
+  rating: number
+  image: string
+}
 
 export default function ScoutProfilePage() {
   const _router = useRouter()
   const params = useParams()
-  const scoutId = params.id as string
+  const scoutId = params?.id as string
   
   const {
     scout,
@@ -46,71 +59,11 @@ export default function ScoutProfilePage() {
     ageRange: '',
     rating: ''
   })
-  const [filteredPortfolioPlayers, setFilteredPortfolioPlayers] = useState([])
-
-  // Portfolio players data - Using real player IDs from database
-  const portfolioPlayers = [
-    {
-      id_player: "cmfnrkrmq0000zwoo8yafzumb", // Lionel Messi (real ID)
-      name: "Lionel Messi",
-      age: "36 Años",
-      nationality: "Argentina",
-      competition: "MLS",
-      position: "RW",
-      rating: 9.5,
-      image: `/placeholder.svg?height=48&width=48&query=messi`,
-    },
-    {
-      id_player: "cmfnrks3n0003zwooeq01yf4u", // Erling Haaland (real ID)
-      name: "Erling Haaland",
-      age: "23 Años",
-      nationality: "Norway",
-      competition: "Premier League",
-      position: "ST",
-      rating: 9.2,
-      image: `/placeholder.svg?height=48&width=48&query=haaland`,
-    },
-    {
-      id_player: "cmfnrw2nc0002zw6k058yeyr5", // Luka Modric (real ID)
-      name: "Luka Modric",
-      age: "38 Años",
-      nationality: "Croatia",
-      competition: "La Liga",
-      position: "CM",
-      rating: 8.8,
-      image: `/placeholder.svg?height=48&width=48&query=modric`,
-    },
-    {
-      id_player: "cmfnrks080002zwoore7ta0q9", // Kevin De Bruyne (real ID)
-      name: "Kevin De Bruyne",
-      age: "32 Años",
-      nationality: "Belgium",
-      competition: "Premier League",
-      position: "CAM",
-      rating: 9.1,
-      image: `/placeholder.svg?height=48&width=48&query=debruyne`,
-    },
-    {
-      id_player: "cmfnrw2di0000zw6krkw3f124", // Kylian Mbappé (real ID)
-      name: "Kylian Mbappé",
-      age: "25 Años",
-      nationality: "France",
-      competition: "La Liga",
-      position: "LW",
-      rating: 9.3,
-      image: `/placeholder.svg?height=48&width=48&query=mbappe`,
-    },
-    {
-      id_player: "cmfnrkrwv0001zwooihwhxh1m", // Virgil van Dijk (real ID)
-      name: "Virgil van Dijk",
-      age: "32 Años",
-      nationality: "Netherlands",
-      competition: "Premier League",
-      position: "CB",
-      rating: 8.9,
-      image: `/placeholder.svg?height=48&width=48&query=vandijk`,
-    }
-  ]
+  const [filteredPortfolioPlayers, setFilteredPortfolioPlayers] = useState<PortfolioPlayer[]>([])
+  const [portfolioPlayers, setPortfolioPlayers] = useState<PortfolioPlayer[]>([])
+  const [portfolioLoading, setPortfolioLoading] = useState(false)
+  const [reportsData, setReportsData] = useState<any[]>([])
+  const [reportsLoading, setReportsLoading] = useState(false)
 
   // Filter and search functions
   const handlePortfolioSearch = (searchTerm: string) => {
@@ -161,70 +114,47 @@ export default function ScoutProfilePage() {
     setFilteredPortfolioPlayers(portfolioPlayers)
   }
 
-  // Initialize filtered players when component mounts
+  // Load portfolio and reports data
   useEffect(() => {
-    setFilteredPortfolioPlayers(portfolioPlayers)
-  }, [])
+    const loadPortfolioAndReports = async () => {
+      if (!scoutId) return
 
-  // Reports data - Using real player IDs from database
-  const reports = [
-    {
-      id_player: "cmfnrkrmq0000zwoo8yafzumb", // Lionel Messi (real ID)
-      scoutName: "Gines Mesas",
-      profileType: "Extremo Derecho",
-      playerName: "Lionel Messi",
-      age: "36 Años",
-      nationality: "Argentina",
-      description: "Exceptional technical ability and vision. One of the greatest players of all time with incredible dribbling skills and playmaking ability.",
-      rating: 5,
-      date: "15/12/2023",
-      hasVideo: true,
-      playerImage: `/placeholder.svg?height=48&width=48&query=messi`,
-      mainImage: `/placeholder.svg?height=200&width=300&query=messi action`,
-    },
-    {
-      id_player: "cmfnrks3n0003zwooeq01yf4u", // Erling Haaland (real ID)
-      scoutName: "Gines Mesas",
-      profileType: "Delantero Centro",
-      playerName: "Erling Haaland",
-      age: "23 Años",
-      nationality: "Norway",
-      description: "Clinical finisher with exceptional pace and physical presence. Perfect striker for modern football with great positioning.",
-      rating: 5,
-      date: "10/12/2023",
-      hasVideo: false,
-      playerImage: `/placeholder.svg?height=48&width=48&query=haaland`,
-      mainImage: `/placeholder.svg?height=200&width=300&query=haaland action`,
-    },
-    {
-      id_player: "cmfnrw2nc0002zw6k058yeyr5", // Luka Modric (real ID)
-      scoutName: "Gines Mesas",
-      profileType: "Mediocentro",
-      playerName: "Luka Modric",
-      age: "38 Años",
-      nationality: "Croatia",
-      description: "Master of midfield with incredible passing range and game intelligence. Still performing at the highest level despite his age.",
-      rating: 4,
-      date: "05/12/2023",
-      hasVideo: true,
-      playerImage: `/placeholder.svg?height=48&width=48&query=modric`,
-      mainImage: `/placeholder.svg?height=200&width=300&query=modric action`,
-    },
-    {
-      id_player: "cmfnrks080002zwoore7ta0q9", // Kevin De Bruyne (real ID)
-      scoutName: "Gines Mesas",
-      profileType: "Mediapunta",
-      playerName: "Kevin De Bruyne",
-      age: "32 Años",
-      nationality: "Belgium",
-      description: "Outstanding playmaker with exceptional crossing and long-range shooting ability. Key player for both club and country.",
-      rating: 5,
-      date: "01/12/2023",
-      hasVideo: false,
-      playerImage: `/placeholder.svg?height=48&width=48&query=debruyne`,
-      mainImage: `/placeholder.svg?height=200&width=300&query=debruyne action`,
+      // Load portfolio
+      setPortfolioLoading(true)
+      try {
+        const portfolioResponse = await fetch(`/api/scout/${scoutId}/portfolio`)
+        if (portfolioResponse.ok) {
+          const portfolioResult = await portfolioResponse.json()
+          if (portfolioResult.success) {
+            setPortfolioPlayers(portfolioResult.data)
+            setFilteredPortfolioPlayers(portfolioResult.data)
+          }
+        }
+      } catch (error) {
+        console.error('Error loading portfolio:', error)
+      } finally {
+        setPortfolioLoading(false)
+      }
+
+      // Load reports
+      setReportsLoading(true)
+      try {
+        const reportsResponse = await fetch(`/api/scout/${scoutId}/reports-detail`)
+        if (reportsResponse.ok) {
+          const reportsResult = await reportsResponse.json()
+          if (reportsResult.success) {
+            setReportsData(reportsResult.data)
+          }
+        }
+      } catch (error) {
+        console.error('Error loading reports:', error)
+      } finally {
+        setReportsLoading(false)
+      }
     }
-  ]  
+
+    loadPortfolioAndReports()
+  }, [scoutId])  
 
   // Mostrar loading mientras se cargan los datos
   if (loading) {
@@ -339,12 +269,12 @@ export default function ScoutProfilePage() {
                 Scout rating
               </p>
               <p className="text-2xl font-bold text-[#8c1a10] mb-2">
-                {scout.rating}
+                {scout.scout_elo || 'N/A'}
               </p>
               <p className="text-sm text-[#6d6d6d]">Rank</p>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-[#3cc500] rounded-full"></div>
-                <span className="text-sm font-medium">{scout.rank}</span>
+                <span className="text-sm font-medium">#{scout.scout_ranking || 'N/A'}</span>
               </div>
             </div>
           </div>
@@ -401,6 +331,15 @@ export default function ScoutProfilePage() {
 
             {activeTab === 'portfolio' && (
               <div className="bg-white p-6">
+                {portfolioLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8c1a10] mx-auto mb-4"></div>
+                      <p className="text-[#6d6d6d]">Loading portfolio...</p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
                 {/* Search and Filters */}
                 <div className="flex items-center justify-between mb-6">
                   <div className="relative">
@@ -453,64 +392,76 @@ export default function ScoutProfilePage() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Nationality</label>
-                        <select
-                          value={portfolioFilters.nationality}
-                          onChange={(e) => handlePortfolioFilter('nationality', e.target.value)}
-                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-[#8c1a10] focus:border-transparent"
+                        <Select
+                          value={portfolioFilters.nationality || ''}
+                          onValueChange={(value) => handlePortfolioFilter('nationality', value)}
                         >
-                          <option value="">All Nationalities</option>
-                          <option value="Argentina">Argentina</option>
-                          <option value="Norway">Norway</option>
-                          <option value="Croatia">Croatia</option>
-                          <option value="Belgium">Belgium</option>
-                          <option value="France">France</option>
-                          <option value="Netherlands">Netherlands</option>
-                        </select>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="All Nationalities" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Argentina">Argentina</SelectItem>
+                            <SelectItem value="Norway">Norway</SelectItem>
+                            <SelectItem value="Croatia">Croatia</SelectItem>
+                            <SelectItem value="Belgium">Belgium</SelectItem>
+                            <SelectItem value="France">France</SelectItem>
+                            <SelectItem value="Netherlands">Netherlands</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Competition</label>
-                        <select
-                          value={portfolioFilters.competition}
-                          onChange={(e) => handlePortfolioFilter('competition', e.target.value)}
-                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-[#8c1a10] focus:border-transparent"
+                        <Select
+                          value={portfolioFilters.competition || ''}
+                          onValueChange={(value) => handlePortfolioFilter('competition', value)}
                         >
-                          <option value="">All Competitions</option>
-                          <option value="Premier League">Premier League</option>
-                          <option value="La Liga">La Liga</option>
-                          <option value="MLS">MLS</option>
-                        </select>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="All Competitions" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Premier League">Premier League</SelectItem>
+                            <SelectItem value="La Liga">La Liga</SelectItem>
+                            <SelectItem value="MLS">MLS</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>
-                        <select
-                          value={portfolioFilters.position}
-                          onChange={(e) => handlePortfolioFilter('position', e.target.value)}
-                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-[#8c1a10] focus:border-transparent"
+                        <Select
+                          value={portfolioFilters.position || ''}
+                          onValueChange={(value) => handlePortfolioFilter('position', value)}
                         >
-                          <option value="">All Positions</option>
-                          <option value="ST">Striker</option>
-                          <option value="LW">Left Wing</option>
-                          <option value="RW">Right Wing</option>
-                          <option value="CAM">Attacking Mid</option>
-                          <option value="CM">Central Mid</option>
-                          <option value="CB">Center Back</option>
-                        </select>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="All Positions" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ST">Striker</SelectItem>
+                            <SelectItem value="LW">Left Wing</SelectItem>
+                            <SelectItem value="RW">Right Wing</SelectItem>
+                            <SelectItem value="CAM">Attacking Mid</SelectItem>
+                            <SelectItem value="CM">Central Mid</SelectItem>
+                            <SelectItem value="CB">Center Back</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
-                        <select
-                          value={portfolioFilters.rating}
-                          onChange={(e) => handlePortfolioFilter('rating', e.target.value)}
-                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-[#8c1a10] focus:border-transparent"
+                        <Select
+                          value={portfolioFilters.rating || ''}
+                          onValueChange={(value) => handlePortfolioFilter('rating', value)}
                         >
-                          <option value="">All Ratings</option>
-                          <option value="9+">9.0+</option>
-                          <option value="8+">8.0+</option>
-                          <option value="7+">7.0+</option>
-                        </select>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="All Ratings" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="9+">9.0+</SelectItem>
+                            <SelectItem value="8+">8.0+</SelectItem>
+                            <SelectItem value="7+">7.0+</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </div>
@@ -583,13 +534,111 @@ export default function ScoutProfilePage() {
                     </div>
                   )}
                 </div>
+                  </>
+                )}
               </div>
             )}
 
-            {/* Other tabs content would go here */}
+            {/* Reports Tab */}
             {activeTab === 'reports' && (
               <div className="bg-white p-6">
-                <p className="text-[#6d6d6d]">Reports content coming soon...</p>
+                {reportsLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8c1a10] mx-auto mb-4"></div>
+                      <p className="text-[#6d6d6d]">Loading reports...</p>
+                    </div>
+                  </div>
+                ) : reportsData.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-[#6d6d6d]">No reports available yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {reportsData.map((report) => (
+                      <div
+                        key={report.id_report}
+                        className="bg-[#ffffff] rounded-lg p-6 border border-[#e7e7e7] hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => _router.push(`/member/player/${report.id_player}`)}
+                      >
+                        <div className="flex items-start gap-4">
+                          {/* Player Image */}
+                          <div className="w-12 h-12 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden">
+                            <Image
+                              src="/player-detail-placeholder.svg"
+                              alt={report.playerName}
+                              width={48}
+                              height={48}
+                              className="object-cover w-full h-full"
+                            />
+                          </div>
+
+                          {/* Report Content */}
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <h3 className="font-semibold text-[#000000] text-lg">{report.playerName}</h3>
+                                <p className="text-[#6d6d6d] text-sm">
+                                  {report.position} • {report.age} • {report.nationality} • {report.team}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {report.hasVideo && (
+                                  <div className="bg-red-100 p-2 rounded">
+                                    <Play className="w-4 h-4 text-red-600" />
+                                  </div>
+                                )}
+                                <div className="text-right">
+                                  <p className="text-[#6d6d6d] text-xs">Rating</p>
+                                  <p className="text-[#8c1a10] font-bold">{report.rating}/5</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="mb-3">
+                              <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                                {report.profileType}
+                              </span>
+                            </div>
+
+                            <p className="text-[#6d6d6d] text-sm mb-3 line-clamp-2">
+                              {report.description}
+                            </p>
+
+                            <div className="flex items-center justify-between text-xs text-[#6d6d6d]">
+                              <p>Report by {report.scoutName}</p>
+                              <p>{report.date}</p>
+                            </div>
+
+                            {/* Métricas adicionales */}
+                            {(report.roi || report.profit || report.potential) && (
+                              <div className="mt-3 pt-3 border-t border-gray-100 flex gap-4">
+                                {report.roi && (
+                                  <div>
+                                    <p className="text-[#6d6d6d] text-xs">ROI</p>
+                                    <p className="text-sm font-medium">{report.roi.toFixed(1)}%</p>
+                                  </div>
+                                )}
+                                {report.profit && (
+                                  <div>
+                                    <p className="text-[#6d6d6d] text-xs">Profit</p>
+                                    <p className="text-sm font-medium">€{report.profit.toFixed(2)}M</p>
+                                  </div>
+                                )}
+                                {report.potential && (
+                                  <div>
+                                    <p className="text-[#6d6d6d] text-xs">Potential</p>
+                                    <p className="text-sm font-medium">{report.potential.toFixed(1)}%</p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

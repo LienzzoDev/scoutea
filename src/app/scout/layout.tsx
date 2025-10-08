@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { canAccessScoutArea, isAdmin, getUserRole } from '@/lib/auth/user-role'
+import { ErrorBoundary } from '@/components/error/ErrorBoundary'
 
 interface ScoutGuardProps {
   children: React.ReactNode
@@ -63,8 +64,10 @@ function ScoutGuard({ children }: ScoutGuardProps) {
 
 export default function ScoutLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ScoutGuard>
-      {children}
-    </ScoutGuard>
+    <ErrorBoundary>
+      <ScoutGuard>
+        {children}
+      </ScoutGuard>
+    </ErrorBoundary>
   )
 }

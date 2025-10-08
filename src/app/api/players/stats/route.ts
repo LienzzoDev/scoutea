@@ -19,14 +19,14 @@ import type { PlayerStats } from '@/types/player'
  * @param request - Request HTTP (puede incluir parámetros de filtro opcionales)
  * @returns Estadísticas completas del sistema de jugadores
  */
-export async function GET(__request: NextRequest): Promise<NextResponse<PlayerStats | { _error: string }>> {
+export async function GET(_request: NextRequest): Promise<NextResponse<PlayerStats | { error: string }>> {
   try {
     // 🔐 VERIFICAR AUTENTICACIÓN
     const { userId, sessionClaims } = await auth()
-    
+
     if (!userId) {
       return NextResponse.json(
-        { __error: 'No autorizado. Debes iniciar sesión para ver estadísticas.' }, 
+        { error: 'No autorizado. Debes iniciar sesión para ver estadísticas.' },
         { status: 401 }
       )
     }
@@ -85,7 +85,7 @@ export async function GET(__request: NextRequest): Promise<NextResponse<PlayerSt
   } catch (error) {
     // 🚨 MANEJO DE ERRORES
     console.error('❌ Error generating player statistics:', {
-      __error: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
       userId: (await auth()).userId,
       timestamp: new Date().toISOString()
@@ -96,7 +96,7 @@ export async function GET(__request: NextRequest): Promise<NextResponse<PlayerSt
       // 🗄️ ERROR DE BASE DE DATOS
       if (error.message.includes('database') || error.message.includes('connection')) {
         return NextResponse.json(
-          { __error: 'Error de conexión con la base de datos. Las estadísticas no están disponibles temporalmente.' },
+          { error: 'Error de conexión con la base de datos. Las estadísticas no están disponibles temporalmente.' },
           { status: 503 } // Service Unavailable
         )
       }
@@ -104,7 +104,7 @@ export async function GET(__request: NextRequest): Promise<NextResponse<PlayerSt
       // ⏱️ ERROR DE TIMEOUT
       if (error.message.includes('timeout')) {
         return NextResponse.json(
-          { __error: 'La consulta de estadísticas está tardando demasiado. Por favor, inténtalo de nuevo.' },
+          { error: 'La consulta de estadísticas está tardando demasiado. Por favor, inténtalo de nuevo.' },
           { status: 408 } // Request Timeout
         )
       }
@@ -112,7 +112,7 @@ export async function GET(__request: NextRequest): Promise<NextResponse<PlayerSt
 
     // 📤 ERROR GENÉRICO
     return NextResponse.json(
-      { __error: 'Error interno del servidor. No se pudieron generar las estadísticas.' },
+      { error: 'Error interno del servidor. No se pudieron generar las estadísticas.' },
       { status: 500 }
     )
   }
@@ -128,14 +128,14 @@ export async function GET(__request: NextRequest): Promise<NextResponse<PlayerSt
  * @param request - Request HTTP
  * @returns Estadísticas recién calculadas
  */
-export async function POST(_request: NextRequest): Promise<NextResponse<PlayerStats | { _error: string }>> {
+export async function POST(_request: NextRequest): Promise<NextResponse<PlayerStats | { error: string }>> {
   try {
     // 🔐 VERIFICAR AUTENTICACIÓN Y PERMISOS DE ADMIN
     const { userId, sessionClaims } = await auth()
-    
+
     if (!userId) {
       return NextResponse.json(
-        { __error: 'No autorizado. Debes iniciar sesión.' }, 
+        { error: 'No autorizado. Debes iniciar sesión.' },
         { status: 401 }
       )
     }
@@ -144,7 +144,7 @@ export async function POST(_request: NextRequest): Promise<NextResponse<PlayerSt
     const userRole = sessionClaims?.public_metadata?.role
     if (userRole !== 'admin') {
       return NextResponse.json(
-        { __error: 'Acceso denegado. Solo los administradores pueden refrescar estadísticas.' },
+        { error: 'Acceso denegado. Solo los administradores pueden refrescar estadísticas.' },
         { status: 403 }
       )
     }
@@ -183,16 +183,16 @@ export async function POST(_request: NextRequest): Promise<NextResponse<PlayerSt
 
     return response
 
-  } catch (_error) {
+  } catch (error) {
     // 🚨 MANEJO DE ERRORES
     console.error('❌ Error refreshing player statistics:', {
-      __error: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error.message : 'Unknown error',
       adminId: (await auth()).userId,
       timestamp: new Date().toISOString()
     })
 
     return NextResponse.json(
-      { __error: 'Error interno del servidor. No se pudieron refrescar las estadísticas.' },
+      { error: 'Error interno del servidor. No se pudieron refrescar las estadísticas.' },
       { status: 500 }
     )
   }

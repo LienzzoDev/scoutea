@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 import { useTournaments } from "@/hooks/tournament/useTournaments"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 export default function NuevoTorneoPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
@@ -287,20 +288,24 @@ export default function NuevoTorneoPage() {
                 <label className="block text-sm font-medium text-gray-300 mb-1">
                   Competición Asociada
                 </label>
-                <select
-                  value={formData.id_competition}
-                  onChange={(e) =>handleInputChange('id_competition', e.target.value)}
-                  className="w-full p-2 bg-[#1F2937] border border-slate-600 rounded-md text-white" disabled={loadingCompeticiones}
+                <Select
+                  value={formData.id_competition || undefined}
+                  onValueChange={(value) => handleInputChange('id_competition', value)}
+                  disabled={loadingCompeticiones}
                 >
-                  <option value="">Seleccionar competición (opcional)</option>
-                  {competiciones.map((comp) => (
-                    <option key={comp.id_competition} value={comp.id_competition}>
-                      {comp.competition_name}
-                      {comp.competition_country && ` - ${comp.competition_country}`}
-                      {comp.competition_tier && ` (${comp.competition_tier})`}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccionar competición (opcional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {competiciones.map((comp) => (
+                      <SelectItem key={comp.id_competition} value={comp.id_competition}>
+                        {comp.competition_name}
+                        {comp.competition_country && ` - ${comp.competition_country}`}
+                        {comp.competition_tier && ` (${comp.competition_tier})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {loadingCompeticiones && (
                   <p className="text-gray-400 text-sm mt-1">Cargando competiciones...</p>
                 )}

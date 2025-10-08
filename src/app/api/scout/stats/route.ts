@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-
-import { ScoutPlayerService } from '@/lib/services/scout-player-service'
+import { prisma } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth()
-    
+
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
@@ -18,7 +17,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Scout ID requerido' }, { status: 400 })
     }
 
-    const stats = await ScoutPlayerService.getScoutPlayerStats(scoutId)
+    // Get scout stats
+    const [totalReports, totalPlayers] = await Promise.all([
+      prisma.reporte.count({
+        where: { scout_id: scoutId }
+      }),
+      prisma.player.count({
+        where: {
+          reporte: {
+            some: {
+              scout_id: scoutId
+            }
+          }
+        }
+      })
+    ])
+
+    const stats = {
+      totalReports,
+      totalPlayers
+    }
 
     return NextResponse.json({
       success: true,
@@ -30,5 +48,7 @@ export async function GET(request: NextRequest) {
       { error: 'Error interno del servidor' },
       { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 }

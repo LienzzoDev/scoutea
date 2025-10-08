@@ -59,9 +59,54 @@ export default function ScoutPlayersDashboard() {
         // Luego obtener los jugadores del scout
         const playersResponse = await fetch(`/api/scout/players?scoutId=${profileResult.scout.id_scout}`)
         const playersResult = await playersResponse.json()
-        
-        if (playersResult.success) {
-          setPlayers(playersResult.data)
+
+        if (playersResult.success && playersResult.data) {
+          // Transformar los datos del API al formato esperado por el componente
+          const transformedPlayers: PlayerData[] = playersResult.data.map((item: any) => {
+            const latestReport = item.reportes?.[0]
+
+            // Calcular edad si hay fecha de nacimiento
+            let age = null
+            if (item.date_of_birth) {
+              const today = new Date()
+              const birthDate = new Date(item.date_of_birth)
+              age = today.getFullYear() - birthDate.getFullYear()
+              const monthDiff = today.getMonth() - birthDate.getMonth()
+              if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--
+              }
+            }
+
+            return {
+              player: {
+                id_player: item.id_player,
+                player_name: item.player_name,
+                position_player: item.position_player,
+                nationality_1: item.nationality_1,
+                team_name: item.team_name,
+                player_rating: item.player_rating,
+                age: age
+              },
+              latestReport: latestReport ? {
+                id_report: latestReport.id_report,
+                report_date: latestReport.report_date,
+                report_type: latestReport.report_type,
+                roi: latestReport.roi,
+                profit: latestReport.profit,
+                potential: latestReport.potential
+              } : {
+                id_report: '',
+                report_date: null,
+                report_type: null,
+                roi: null,
+                profit: null,
+                potential: null
+              },
+              totalReports: item.reportes?.length || 0
+            }
+          })
+
+          setPlayers(transformedPlayers)
         } else {
           // Si no hay jugadores, no es un error crítico
           console.log('No players found for scout:', playersResult.error)
@@ -121,7 +166,7 @@ export default function ScoutPlayersDashboard() {
 
         {/* Page Title */}
         <h1 className="text-4xl font-bold text-[#000000] mb-8">
-          {scoutProfile?.scout_name ? `${scoutProfile.scout_name}'s Players` : 'Your Players'}
+          Mis Jugadores Reportados
         </h1>
 
         {/* Players Section */}

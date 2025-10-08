@@ -1,10 +1,8 @@
 import { auth } from '@clerk/nextjs/server'
-import { PrismaClient } from '@prisma/client'
 import axios from 'axios'
 import * as cheerio from 'cheerio'
 import { NextRequest, NextResponse } from 'next/server'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/db'
 
 const BASE_URL = "https://www.transfermarkt.es"
 

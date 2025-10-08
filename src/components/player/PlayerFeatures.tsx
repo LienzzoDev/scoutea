@@ -2,6 +2,7 @@
 
 import { usePlayerPositioning } from "@/hooks/player/usePlayerPositioning";
 import type { Player } from "@/types/player";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface PlayerFeaturesProps {
   player: Player;
@@ -73,7 +74,6 @@ export default function PlayerFeatures({
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <h3 className="text-xl font-bold text-[#8c1a10]">ON THE PITCH</h3>
-                <div className="w-5 h-5 text-[#8c1a10] text-xl">▼</div>
               </div>
               <div className="text-sm text-[#6d6d6d]">
                 <span className="font-medium">Posición:</span> {player.position_player || player.correct_position_player || 'N/A'} | 
@@ -186,7 +186,6 @@ export default function PlayerFeatures({
           <div className="border border-gray-200 rounded-lg p-6">
             <div className="flex items-center gap-2 mb-6">
               <h3 className="text-xl font-bold text-[#8c1a10]">PHYSICAL</h3>
-              <div className="w-5 h-5 text-[#8c1a10] text-xl">▼</div>
             </div>
             <div className="grid grid-cols-2 gap-8">
               {/* Physical Attributes */}
@@ -308,21 +307,46 @@ export default function PlayerFeatures({
 
             {/* Filters */}
             <div className="mt-6 flex gap-4">
-              <select className="p-2 border border-gray-300 rounded-md bg-white">
-                <option>Position</option>
-              </select>
-              <select className="p-2 border border-gray-300 rounded-md bg-white">
-                <option>Age</option>
-              </select>
-              <select className="p-2 border border-gray-300 rounded-md bg-white">
-                <option>Nationality</option>
-              </select>
-              <select className="p-2 border border-gray-300 rounded-md bg-white">
-                <option>Competition</option>
-              </select>
-              <select className="p-2 border border-gray-300 rounded-md bg-white">
-                <option>TRFM Value</option>
-              </select>
+              <Select defaultValue="position">
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Seleccionar..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="position">Position</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select defaultValue="age">
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Seleccionar..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="age">Age</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select defaultValue="nationality">
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Seleccionar..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="nationality">Nationality</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select defaultValue="competition">
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Seleccionar..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="competition">Competition</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select defaultValue="trfm">
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Seleccionar..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="trfm">TRFM Value</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -330,7 +354,6 @@ export default function PlayerFeatures({
           <div className="border border-gray-200 rounded-lg p-6">
             <div className="flex items-center gap-2 mb-6">
               <h3 className="text-xl font-bold text-[#8c1a10]">FOOT</h3>
-              <div className="w-5 h-5 text-[#8c1a10] text-xl">▼</div>
             </div>
             <div className="grid grid-cols-2 gap-12">
               {/* Left Foot */}
@@ -489,7 +512,6 @@ export default function PlayerFeatures({
           <div className="border border-gray-200 rounded-lg p-6">
             <div className="flex items-center gap-2 mb-6">
               <h3 className="text-xl font-bold text-[#8c1a10]">PLAYER ROLE</h3>
-              <div className="w-5 h-5 text-[#8c1a10] text-xl">▼</div>
             </div>
             <p className="text-[#6d6d6d]">Player role content coming soon...</p>
           </div>
@@ -500,7 +522,6 @@ export default function PlayerFeatures({
           <div className="border border-gray-200 rounded-lg p-6">
             <div className="flex items-center gap-2 mb-6">
               <h3 className="text-xl font-bold text-[#8c1a10]">PERFORMANCE</h3>
-              <div className="w-5 h-5 text-[#8c1a10] text-xl">▼</div>
             </div>
             <p className="text-[#6d6d6d]">Performance content coming soon...</p>
           </div>
@@ -511,7 +532,6 @@ export default function PlayerFeatures({
           <div className="border border-gray-200 rounded-lg p-6">
             <div className="flex items-center gap-2 mb-6">
               <h3 className="text-xl font-bold text-[#8c1a10]">MODE</h3>
-              <div className="w-5 h-5 text-[#8c1a10] text-xl">▼</div>
             </div>
             <p className="text-[#6d6d6d]">Mode content coming soon...</p>
           </div>

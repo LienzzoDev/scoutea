@@ -1,7 +1,65 @@
 import { prisma } from '@/lib/db';
 import type { Player, PlayerStats } from '@/types/player';
+import type { jugador } from '@prisma/client';
 
 export class PlayerService {
+  /**
+   * Mapea un jugador de Prisma al tipo Player de la aplicación
+   * Centraliza la transformación de datos para evitar duplicación
+   */
+  private static mapPrismaToPlayer(player: jugador): Player {
+    return {
+      id: player.id_player,
+      id_player: player.id_player,
+      player_name: player.player_name,
+      complete_player_name: player.complete_player_name,
+      date_of_birth: player.date_of_birth,
+      correct_date_of_birth: player.correct_date_of_birth,
+      age: player.age,
+      position_player: player.position_player,
+      correct_position_player: player.correct_position_player,
+      foot: player.foot,
+      correct_foot: player.correct_foot,
+      height: player.height,
+      correct_height: player.correct_height,
+      nationality_1: player.nationality_1,
+      correct_nationality_1: player.correct_nationality_1,
+      nationality_2: player.nationality_2,
+      correct_nationality_2: player.correct_nationality_2,
+      national_tier: player.national_tier,
+      correct_national_tier: player.correct_national_tier,
+      team_name: player.team_name,
+      correct_team_name: player.correct_team_name,
+      team_country: player.team_country,
+      team_level: player.team_level,
+      team_elo: player.team_elo,
+      team_competition: player.team_competition,
+      competition_country: player.competition_country,
+      competition_tier: player.competition_tier,
+      competition_level: player.competition_level,
+      on_loan: player.on_loan,
+      owner_club: player.owner_club,
+      owner_club_country: player.owner_club_country,
+      agency: player.agency,
+      correct_agency: player.correct_agency,
+      contract_end: player.contract_end,
+      correct_contract_end: player.correct_contract_end,
+      player_rating: player.player_rating,
+      player_trfm_value: player.player_trfm_value,
+      previous_trfm_value: player.previous_trfm_value,
+      previous_trfm_value_date: player.previous_trfm_value_date,
+      trfm_value_change_percent: player.trfm_value_change_percent,
+      trfm_value_last_updated: player.trfm_value_last_updated,
+      facebook_profile: player.url_instagram,
+      twitter_profile: player.url_secondary,
+      linkedin_profile: null,
+      telegram_profile: null,
+      instagram_profile: player.url_instagram,
+      createdAt: player.createdAt,
+      updatedAt: player.updatedAt
+    };
+  }
+
   static async getAllPlayers(): Promise<Player[]> {
     try {
       const players = await prisma.jugador.findMany({
@@ -11,57 +69,8 @@ export class PlayerService {
         }
       });
 
-      // Transform Prisma result to Player type
-      return players.map(player => ({
-        id: player.id_player,
-        id_player: player.id_player,
-        player_name: player.player_name,
-        complete_player_name: player.complete_player_name,
-        date_of_birth: player.date_of_birth,
-        correct_date_of_birth: player.correct_date_of_birth,
-        age: player.age,
-        position_player: player.position_player,
-        correct_position_player: player.correct_position_player,
-        foot: player.foot,
-        correct_foot: player.correct_foot,
-        height: player.height,
-        correct_height: player.correct_height,
-        nationality_1: player.nationality_1,
-        correct_nationality_1: player.correct_nationality_1,
-        nationality_2: player.nationality_2,
-        correct_nationality_2: player.correct_nationality_2,
-        national_tier: player.national_tier,
-        correct_national_tier: player.correct_national_tier,
-        team_name: player.team_name,
-        correct_team_name: player.correct_team_name,
-        team_country: player.team_country,
-        team_level: player.team_level,
-        team_elo: player.team_elo,
-        team_competition: player.team_competition,
-        competition_country: player.competition_country,
-        competition_tier: player.competition_tier,
-        competition_level: player.competition_level,
-        on_loan: player.on_loan,
-        owner_club: player.owner_club,
-        owner_club_country: player.owner_club_country,
-        agency: player.agency,
-        correct_agency: player.correct_agency,
-        contract_end: player.contract_end,
-        correct_contract_end: player.correct_contract_end,
-        player_rating: player.player_rating,
-        player_trfm_value: player.player_trfm_value,
-        previous_trfm_value: player.previous_trfm_value,
-        previous_trfm_value_date: player.previous_trfm_value_date,
-        trfm_value_change_percent: player.trfm_value_change_percent,
-        trfm_value_last_updated: player.trfm_value_last_updated,
-        facebook_profile: player.url_instagram,
-        twitter_profile: player.url_secondary,
-        linkedin_profile: null,
-        telegram_profile: null,
-        instagram_profile: player.url_instagram,
-        createdAt: player.createdAt,
-        updatedAt: player.updatedAt
-      }));
+      // Transform Prisma result to Player type using mapper
+      return players.map(this.mapPrismaToPlayer);
     } catch (error) {
       console.error('Error fetching players:', error);
       // Fallback to mock data if database is not available
@@ -81,57 +90,8 @@ export class PlayerService {
         return null;
       }
 
-      // Transform Prisma result to Player type
-      return {
-        id: player.id_player,
-        id_player: player.id_player,
-        player_name: player.player_name,
-        complete_player_name: player.complete_player_name,
-        date_of_birth: player.date_of_birth,
-        correct_date_of_birth: player.correct_date_of_birth,
-        age: player.age,
-        position_player: player.position_player,
-        correct_position_player: player.correct_position_player,
-        foot: player.foot,
-        correct_foot: player.correct_foot,
-        height: player.height,
-        correct_height: player.correct_height,
-        nationality_1: player.nationality_1,
-        correct_nationality_1: player.correct_nationality_1,
-        nationality_2: player.nationality_2,
-        correct_nationality_2: player.correct_nationality_2,
-        national_tier: player.national_tier,
-        correct_national_tier: player.correct_national_tier,
-        team_name: player.team_name,
-        correct_team_name: player.correct_team_name,
-        team_country: player.team_country,
-        team_level: player.team_level,
-        team_elo: player.team_elo,
-        team_competition: player.team_competition,
-        competition_country: player.competition_country,
-        competition_tier: player.competition_tier,
-        competition_level: player.competition_level,
-        on_loan: player.on_loan,
-        owner_club: player.owner_club,
-        owner_club_country: player.owner_club_country,
-        agency: player.agency,
-        correct_agency: player.correct_agency,
-        contract_end: player.contract_end,
-        correct_contract_end: player.correct_contract_end,
-        player_rating: player.player_rating,
-        player_trfm_value: player.player_trfm_value,
-        previous_trfm_value: player.previous_trfm_value,
-        previous_trfm_value_date: player.previous_trfm_value_date,
-        trfm_value_change_percent: player.trfm_value_change_percent,
-        trfm_value_last_updated: player.trfm_value_last_updated,
-        facebook_profile: player.url_instagram, // Mapear campos de redes sociales
-        twitter_profile: player.url_secondary,
-        linkedin_profile: null, // No disponible en el esquema actual
-        telegram_profile: null, // No disponible en el esquema actual
-        instagram_profile: player.url_instagram,
-        createdAt: player.createdAt,
-        updatedAt: player.updatedAt
-      };
+      // Transform Prisma result to Player type using mapper
+      return this.mapPrismaToPlayer(player);
     } catch (error) {
       console.error('Error fetching player by ID:', error);
       // Fallback to mock data if database is not available
@@ -317,56 +277,7 @@ export class PlayerService {
         take: limit
       });
 
-      const transformedPlayers = players.map(player => ({
-        id: player.id_player,
-        id_player: player.id_player,
-        player_name: player.player_name,
-        complete_player_name: player.complete_player_name,
-        date_of_birth: player.date_of_birth,
-        correct_date_of_birth: player.correct_date_of_birth,
-        age: player.age,
-        position_player: player.position_player,
-        correct_position_player: player.correct_position_player,
-        foot: player.foot,
-        correct_foot: player.correct_foot,
-        height: player.height,
-        correct_height: player.correct_height,
-        nationality_1: player.nationality_1,
-        correct_nationality_1: player.correct_nationality_1,
-        nationality_2: player.nationality_2,
-        correct_nationality_2: player.correct_nationality_2,
-        national_tier: player.national_tier,
-        correct_national_tier: player.correct_national_tier,
-        team_name: player.team_name,
-        correct_team_name: player.correct_team_name,
-        team_country: player.team_country,
-        team_level: player.team_level,
-        team_elo: player.team_elo,
-        team_competition: player.team_competition,
-        competition_country: player.competition_country,
-        competition_tier: player.competition_tier,
-        competition_level: player.competition_level,
-        on_loan: player.on_loan,
-        owner_club: player.owner_club,
-        owner_club_country: player.owner_club_country,
-        agency: player.agency,
-        correct_agency: player.correct_agency,
-        contract_end: player.contract_end,
-        correct_contract_end: player.correct_contract_end,
-        player_rating: player.player_rating,
-        player_trfm_value: player.player_trfm_value,
-        previous_trfm_value: player.previous_trfm_value,
-        previous_trfm_value_date: player.previous_trfm_value_date,
-        trfm_value_change_percent: player.trfm_value_change_percent,
-        trfm_value_last_updated: player.trfm_value_last_updated,
-        facebook_profile: player.url_instagram,
-        twitter_profile: player.url_secondary,
-        linkedin_profile: null,
-        telegram_profile: null,
-        instagram_profile: player.url_instagram,
-        createdAt: player.createdAt,
-        updatedAt: player.updatedAt
-      }));
+      const transformedPlayers = players.map(this.mapPrismaToPlayer);
 
       return {
         players: transformedPlayers,
