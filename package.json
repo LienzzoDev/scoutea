@@ -38,6 +38,7 @@
     "test:performance": "vitest run tests/performance/radar-performance-simple.test.ts",
     "test:performance:e2e": "playwright test tests/e2e/radar-performance-e2e.spec.ts",
     "test:edge-cases": "vitest run tests/integration/radar-edge-cases-simple.test.ts",
+    "consolidate-scout": "tsx scripts/consolidate-scout.ts",
     "test:edge-cases:e2e": "playwright test tests/e2e/radar-edge-cases-e2e.spec.ts",
     "test:radar:unit": "npm run test:performance && npm run test:edge-cases",
     "test:radar:e2e": "npm run test:performance:e2e && npm run test:edge-cases:e2e && npm run test:visual",

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
 export async function GET(
-  __request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -15,31 +15,31 @@ export async function GET(
     })
 
     if (!torneo) {
-      return NextResponse.json({ __error: 'Torneo no encontrado' }, { status: 404 })
+      return NextResponse.json({ error: 'Torneo no encontrado' }, { status: 404 })
     }
 
     return NextResponse.json(torneo)
-  } catch (_error) {
+  } catch (error) {
     console.error('Error fetching torneo:', error)
     return NextResponse.json(
-      { __error: 'Error interno del servidor' },
+      { error: 'Error interno del servidor' },
       { status: 500 }
     )
   }
 }
 
 export async function PUT(
-  __request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params
-    const _body = await request.json()
-    
+    const body = await request.json()
+
     console.log('🔍 Debug API - Actualizando torneo:', id)
     console.log('🔍 Debug API - Datos recibidos:', body)
     console.log('🔍 Debug API - PDF URL:', body.pdf_url)
-    
+
     const torneo = await prisma.torneo.update({
       where: {
         id_torneo: id
@@ -76,22 +76,22 @@ export async function PUT(
     })
 
     return NextResponse.json(torneo)
-  } catch (_error) {
+  } catch (error) {
     console.error('Error updating torneo:', error)
     return NextResponse.json(
-      { __error: 'Error interno del servidor' },
+      { error: 'Error interno del servidor' },
       { status: 500 }
     )
   }
 }
 
 export async function DELETE(
-  __request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params
-    
+
     // Verificar que el torneo existe antes de eliminarlo
     const existingTorneo = await prisma.torneo.findUnique({
       where: {
@@ -100,7 +100,7 @@ export async function DELETE(
     })
 
     if (!existingTorneo) {
-      return NextResponse.json({ __error: 'Torneo no encontrado' }, { status: 404 })
+      return NextResponse.json({ error: 'Torneo no encontrado' }, { status: 404 })
     }
 
     await prisma.torneo.delete({
@@ -110,10 +110,10 @@ export async function DELETE(
     })
 
     return NextResponse.json({ success: true })
-  } catch (_error) {
+  } catch (error) {
     console.error('Error deleting torneo:', error)
     return NextResponse.json(
-      { __error: 'Error interno del servidor' },
+      { error: 'Error interno del servidor' },
       { status: 500 }
     )
   }

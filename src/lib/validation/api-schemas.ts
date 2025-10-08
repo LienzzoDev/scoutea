@@ -17,7 +17,7 @@ const url = z.string().url()
 // Pagination schemas (defined early because used by many other schemas)
 export const PaginationSchema = z.object({
   page: z.number().int().min(1).default(1),
-  limit: z.number().int().min(1).max(100).default(20),
+  limit: z.number().int().min(1).max(2000).default(20),
   sortBy: z.string().max(50).optional(),
   sortOrder: z.enum(['asc', 'desc']).default('asc')
 })
@@ -25,7 +25,7 @@ export const PaginationSchema = z.object({
 // Paginated query schema (for URL search params - string inputs)
 export const PaginatedQuerySchema = z.object({
   page: z.string().nullable().optional().transform(val => val ? parseInt(val) : 1).pipe(z.number().int().min(1)),
-  limit: z.string().nullable().optional().transform(val => val ? parseInt(val) : 20).pipe(z.number().int().min(1).max(100)),
+  limit: z.string().nullable().optional().transform(val => val ? parseInt(val) : 20).pipe(z.number().int().min(1).max(2000)),
   sortBy: z.string().nullable().optional(),
   sortOrder: z.enum(['asc', 'desc']).nullable().optional().transform(val => val || 'asc')
 })

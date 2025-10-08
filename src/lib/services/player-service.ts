@@ -1,13 +1,13 @@
 import { prisma } from '@/lib/db';
 import type { Player, PlayerStats } from '@/types/player';
-import type { jugador } from '@prisma/client';
+import type { Jugador } from '@prisma/client';
 
 export class PlayerService {
   /**
    * Mapea un jugador de Prisma al tipo Player de la aplicación
    * Centraliza la transformación de datos para evitar duplicación
    */
-  private static mapPrismaToPlayer(player: jugador): Player {
+  private static mapPrismaToPlayer(player: Jugador): Player {
     return {
       id: player.id_player,
       id_player: player.id_player,

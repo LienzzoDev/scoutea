@@ -422,7 +422,10 @@ export default function MemberNavbar() {
             </div>
           )}
           
-          <div className="w-8 h-8 bg-[#8c1a10] rounded-full flex items-center justify-center">
+          <div
+            className="w-8 h-8 bg-[#8c1a10] rounded-full flex items-center justify-center cursor-pointer hover:bg-[#6d1410] transition-colors"
+            onClick={() => _router.push('/member/profile')}
+          >
             <User className="w-4 h-4 text-white" />
           </div>
         </div>

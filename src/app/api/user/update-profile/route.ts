@@ -16,13 +16,10 @@ export async function POST(request: NextRequest) {
     const {
       firstName,
       lastName,
-      nationality,
       dateOfBirth,
-      location,
-      bio,
-      experience,
-      specialization,
-      languages,
+      address,
+      city,
+      country,
       email
     } = body
 
@@ -40,13 +37,10 @@ export async function POST(request: NextRequest) {
     const result = await TransactionService.completeUserProfile(userId, {
       firstName,
       lastName,
-      nationality,
       dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
-      location,
-      bio,
-      experience: experience ? parseInt(experience) : undefined,
-      specialization,
-      languages
+      address,
+      city,
+      country
     })
 
     if (!result.success) {

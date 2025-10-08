@@ -4,12 +4,6 @@ import { prisma } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth()
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
-
     const { searchParams } = new URL(request.url)
     const scoutId = searchParams.get('scoutId')
 
@@ -17,7 +11,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Scout ID requerido' }, { status: 400 })
     }
 
-    console.log('Fetching reports for scoutId:', scoutId)
+    // Optional: verify authentication for additional security
+    // But allow public access when scoutId is provided (for member area)
+    const { userId } = await auth()
+    console.log('📋 Fetching reports for scoutId:', scoutId, 'by user:', userId || 'public')
 
     // Obtener todos los reportes del scout con información del jugador
     const reports = await prisma.reporte.findMany({

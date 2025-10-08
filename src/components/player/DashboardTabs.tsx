@@ -3,7 +3,7 @@
 interface TabCounts {
   all: number;
   news: number;
-  list: number;
+  favourites: number;
 }
 
 interface DashboardTabsProps {
@@ -59,21 +59,21 @@ export default function DashboardTabs({
       </button>
       <button
         className={`pb-2 flex items-center gap-2 ${
-          activeTab === "list"
+          activeTab === "favourites"
             ? "text-[#000000] font-medium border-b-2 border-[#000000]"
             : "text-[#6d6d6d]"
         }`}
-        onClick={() =>onTabChange("list")}
+        onClick={() =>onTabChange("favourites")}
       >
-        Your list
+        Your favourites
         <span
           className={`px-2 py-1 text-xs rounded-full ${
-            activeTab === "list"
+            activeTab === "favourites"
               ? "bg-[#000000] text-white"
               : "bg-gray-200 text-gray-600"
           }`}
         >
-          {tabCounts.list}
+          {tabCounts.favourites}
         </span>
       </button>
     </div>

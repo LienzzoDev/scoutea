@@ -3,14 +3,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { TournamentService, TorneoFilters } from '@/lib/services/tournament-service'
 
 // GET /api/torneos - Obtener torneos con filtros
-export async function GET(__request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    
-    const _filters: TorneoFilters = {}
-    const _page = parseInt(searchParams.get('page') || '1')
+
+    const filters: TorneoFilters = {}
+    const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
-    
+
     // Aplicar filtros
     if (searchParams.get('search')) {
       filters.search = searchParams.get('search')!
@@ -42,97 +42,95 @@ export async function GET(__request: NextRequest) {
     if (searchParams.get('fecha_inicio_hasta')) {
       filters.fecha_inicio_hasta = new Date(searchParams.get('fecha_inicio_hasta')!)
     }
-    
+
     const result = await TournamentService.getTorneos(filters, page, limit)
-    
+
     return NextResponse.json(result)
-  } catch (_error) {
+  } catch (error) {
     console.error('Error fetching tournaments:', error)
     return NextResponse.json(
-      { __error: 'Error interno del servidor' },
+      { error: 'Error interno del servidor' },
       { status: 500 }
     )
   }
 }
 
 // POST /api/torneos - Crear nuevo torneo
-export async function POST(__request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const _body = await request.json()
-    
+    const body = await request.json()
+
     // Validaciones básicas
     if (!body.nombre) {
       return NextResponse.json(
-        { __error: 'El nombre del torneo es requerido' },
+        { error: 'El nombre del torneo es requerido' },
         { status: 400 }
       )
     }
-    
+
     if (!body.fecha_inicio || !body.fecha_fin) {
       return NextResponse.json(
-        { __error: 'Las fechas de inicio y fin son requeridas' },
+        { error: 'Las fechas de inicio y fin son requeridas' },
         { status: 400 }
       )
     }
-    
+
     if (new Date(body.fecha_inicio) >= new Date(body.fecha_fin)) {
       return NextResponse.json(
-        { __error: 'La fecha de inicio debe ser anterior a la fecha de fin' },
+        { error: 'La fecha de inicio debe ser anterior a la fecha de fin' },
         { status: 400 }
       )
     }
-    
+
     if (!body.tipo_torneo) {
       return NextResponse.json(
-        { __error: 'El tipo de torneo es requerido' },
+        { error: 'El tipo de torneo es requerido' },
         { status: 400 }
       )
     }
-    
+
     if (!body.genero) {
       return NextResponse.json(
-        { __error: 'El género es requerido' },
+        { error: 'El género es requerido' },
         { status: 400 }
       )
     }
-    
+
     // Convertir fechas a objetos Date
     const fechaInicio = new Date(body.fecha_inicio)
     const fechaFin = new Date(body.fecha_fin)
-    
+
     // Validar que las fechas son válidas
     if (isNaN(fechaInicio.getTime())) {
       return NextResponse.json(
-        { __error: 'La fecha de inicio no es válida' },
+        { error: 'La fecha de inicio no es válida' },
         { status: 400 }
       )
     }
-    
+
     if (isNaN(fechaFin.getTime())) {
       return NextResponse.json(
-        { __error: 'La fecha de fin no es válida' },
+        { error: 'La fecha de fin no es válida' },
         { status: 400 }
       )
     }
-    
+
     const torneo = await TournamentService.createTorneo({
       ...body,
       fecha_inicio: fechaInicio,
       fecha_fin: fechaFin,
-      fecha_limite_inscripcion: body.fecha_limite_inscripcion ? new Date(body.fecha_limite_inscripcion) : undefined,
-      id_competition: body.id_competition && body.id_competition.trim() !== '' ? body.id_competition : undefined
     })
-    
+
     return NextResponse.json(torneo, { status: 201 })
-  } catch (_error) {
+  } catch (error) {
     console.error('Error creating tournament:', error)
-    
+
     // Proporcionar más detalles del error en desarrollo
     const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor'
-    console.error('Detailed __error: ', errorMessage)
-    
+    console.error('Detailed error: ', errorMessage)
+
     return NextResponse.json(
-      { __error: process.env.NODE_ENV === 'development' ? errorMessage : 'Error interno del servidor' },
+      { error: process.env.NODE_ENV === 'development' ? errorMessage : 'Error interno del servidor' },
       { status: 500 }
     )
   }

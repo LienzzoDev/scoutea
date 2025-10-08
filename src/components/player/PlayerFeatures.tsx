@@ -3,6 +3,7 @@
 import { usePlayerPositioning } from "@/hooks/player/usePlayerPositioning";
 import type { Player } from "@/types/player";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useState, useEffect } from 'react';
 
 interface PlayerFeaturesProps {
   player: Player;
@@ -10,18 +11,48 @@ interface PlayerFeaturesProps {
   onFeaturesTabChange: (tab: string) => void;
 }
 
+interface PlayerRole {
+  role_name: string;
+  percentage: number;
+}
+
 export default function PlayerFeatures({
   player,
   activeFeaturesTab,
   onFeaturesTabChange,
 }: PlayerFeaturesProps) {
-  const { 
-    positions, 
-    physicalAttributes, 
-    leftFoot, 
-    rightFoot, 
-    isLoading 
+  const {
+    positions,
+    physicalAttributes,
+    leftFoot,
+    rightFoot,
+    isLoading
   } = usePlayerPositioning(player);
+
+  const [playerRoles, setPlayerRoles] = useState<PlayerRole[]>([]);
+  const [rolesLoading, setRolesLoading] = useState(false);
+
+  // Fetch player roles when tab changes to player-role
+  useEffect(() => {
+    if (activeFeaturesTab === 'player-role') {
+      fetchPlayerRoles();
+    }
+  }, [activeFeaturesTab, player.id_player]);
+
+  const fetchPlayerRoles = async () => {
+    setRolesLoading(true);
+    try {
+      const response = await fetch(`/api/player/${player.id_player}/roles`);
+      if (response.ok) {
+        const data = await response.json();
+        setPlayerRoles(data.roles || []);
+      }
+    } catch (error) {
+      console.error('Error fetching player roles:', error);
+    } finally {
+      setRolesLoading(false);
+    }
+  };
   return (
     <div className="bg-white p-6">
       {/* Features Sub-tabs */}
@@ -45,26 +76,6 @@ export default function PlayerFeatures({
           onClick={() =>onFeaturesTabChange("player-role")}
         >
           Player Role
-        </button>
-        <button
-          className={`pb-3 font-medium ${
-            activeFeaturesTab === "performance"
-              ? "border-b-2 border-[#8c1a10] text-[#2e3138]"
-              : "text-[#6d6d6d]"
-          }`}
-          onClick={() =>onFeaturesTabChange("performance")}
-        >
-          Performance
-        </button>
-        <button
-          className={`pb-3 font-medium ${
-            activeFeaturesTab === "mode"
-              ? "border-b-2 border-[#8c1a10] text-[#2e3138]"
-              : "text-[#6d6d6d]"
-          }`}
-          onClick={() =>onFeaturesTabChange("mode")}
-        >
-          Mode
         </button>
       </div>{/* Features Content */}
       {activeFeaturesTab === "on-the-pitch" && (
@@ -513,30 +524,47 @@ export default function PlayerFeatures({
             <div className="flex items-center gap-2 mb-6">
               <h3 className="text-xl font-bold text-[#8c1a10]">PLAYER ROLE</h3>
             </div>
-            <p className="text-[#6d6d6d]">Player role content coming soon...</p>
+
+            {/* Player Roles with horizontal bars */}
+            {rolesLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <span className="text-[#6d6d6d]">Cargando roles del jugador...</span>
+              </div>
+            ) : playerRoles.length === 0 ? (
+              <div className="flex items-center justify-center py-12">
+                <span className="text-[#6d6d6d]">No hay datos de roles disponibles para este jugador</span>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {playerRoles.map((item, index) => (
+                <div key={index} className="flex items-center gap-3">
+                  {/* Role name */}
+                  <div className="w-48 text-sm text-[#2e3138] font-medium">
+                    {item.role_name}
+                  </div>
+
+                  {/* Bar container */}
+                  <div className="flex-1 relative h-5 bg-gray-100 rounded">
+                    {/* Filled bar */}
+                    <div
+                      className="absolute left-0 top-0 h-full rounded transition-all duration-500"
+                      style={{
+                        width: `${item.percentage}%`,
+                        backgroundColor: item.percentage > 0 ? '#a85a52' : '#d1d5db'
+                      }}
+                    />
+                  </div>
+
+                  {/* Percentage label */}
+                  <div className="w-12 text-sm text-[#2e3138] font-medium text-right">
+                    {Math.round(item.percentage)}%
+                  </div>
+                </div>
+              ))}
+              </div>
+            )}
           </div>
         </div>)}
-
-      {activeFeaturesTab === "performance" && (
-        <div className="space-y-8">
-          <div className="border border-gray-200 rounded-lg p-6">
-            <div className="flex items-center gap-2 mb-6">
-              <h3 className="text-xl font-bold text-[#8c1a10]">PERFORMANCE</h3>
-            </div>
-            <p className="text-[#6d6d6d]">Performance content coming soon...</p>
-          </div>
-        </div>)}
-
-      {activeFeaturesTab === "mode" && (
-        <div className="space-y-8">
-          <div className="border border-gray-200 rounded-lg p-6">
-            <div className="flex items-center gap-2 mb-6">
-              <h3 className="text-xl font-bold text-[#8c1a10]">MODE</h3>
-            </div>
-            <p className="text-[#6d6d6d]">Mode content coming soon...</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

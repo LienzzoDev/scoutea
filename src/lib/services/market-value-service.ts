@@ -188,46 +188,113 @@ export class MarketValueService {
    */
   static formatValue(value?: number | null): string {
     if (!value) return "Por determinar";
-    // El valor está en millones, convertir a euros completos
-    const valueInEuros = value * 1_000_000;
-    return new Intl.NumberFormat('es-ES', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(valueInEuros);
+
+    // El valor está en euros completos, formatear en M o B según el tamaño
+    if (value >= 1_000_000_000) {
+      // Billones (B)
+      const billions = value / 1_000_000_000;
+      return `€${billions.toFixed(billions >= 10 ? 1 : 2)}B`;
+    } else if (value >= 1_000_000) {
+      // Millones (M)
+      const millions = value / 1_000_000;
+      return `€${millions.toFixed(millions >= 10 ? 1 : 2)}M`;
+    } else if (value >= 1_000) {
+      // Miles (K)
+      const thousands = value / 1_000;
+      return `€${thousands.toFixed(thousands >= 10 ? 1 : 2)}K`;
+    } else {
+      // Menor a 1000
+      return new Intl.NumberFormat('es-ES', {
+        style: 'currency',
+        currency: 'EUR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(value);
+    }
   }
 
   /**
    * Formatea el cambio porcentual
    */
-  static formatPercentageChange(changePercent?: number | null): { 
-    text: string; 
-    isPositive: boolean; 
+  static formatPercentageChange(changePercent?: number | null): {
+    text: string;
+    isPositive: boolean;
     isNeutral: boolean;
     color: string;
     arrow: string;
   } {
     if (changePercent === null || changePercent === undefined) {
-      return { 
-        text: "", 
-        isPositive: false, 
+      return {
+        text: "",
+        isPositive: false,
         isNeutral: true,
         color: "text-gray-500",
         arrow: ""
       };
     }
-    
+
     const isPositive = changePercent > 0;
     const isNeutral = changePercent === 0;
     const sign = isPositive ? "+" : "";
-    
+
     return {
       text: `${sign}${changePercent.toFixed(1)}%`,
       isPositive,
       isNeutral,
       color: isPositive ? "text-green-600" : isNeutral ? "text-gray-500" : "text-red-600",
       arrow: isPositive ? "↑" : isNeutral ? "→" : "↓"
+    };
+  }
+
+  /**
+   * Calcula y formatea el cambio absoluto en valor de mercado
+   */
+  static formatAbsoluteChange(currentValue?: number | null, previousValue?: number | null): {
+    text: string;
+    isPositive: boolean;
+    isNeutral: boolean;
+    color: string;
+  } {
+    if (!currentValue || !previousValue) {
+      return {
+        text: "",
+        isPositive: false,
+        isNeutral: true,
+        color: "text-gray-500"
+      };
+    }
+
+    const change = currentValue - previousValue;
+    const changeInEuros = Math.abs(change); // Ya está en euros
+    const isPositive = change > 0;
+    const isNeutral = change === 0;
+    const sign = isPositive ? "+" : "-";
+
+    let formattedChange: string;
+
+    // Formatear según el tamaño del número
+    if (changeInEuros >= 1_000_000_000) {
+      // Billones (B)
+      const billions = changeInEuros / 1_000_000_000;
+      formattedChange = `€${billions.toFixed(billions >= 10 ? 1 : 2)}B`;
+    } else if (changeInEuros >= 1_000_000) {
+      // Millones (M)
+      const millions = changeInEuros / 1_000_000;
+      formattedChange = `€${millions.toFixed(millions >= 10 ? 1 : 2)}M`;
+    } else if (changeInEuros >= 1_000) {
+      // Miles (K)
+      const thousands = changeInEuros / 1_000;
+      formattedChange = `€${thousands.toFixed(thousands >= 10 ? 1 : 2)}K`;
+    } else {
+      // Menor a 1000
+      formattedChange = `€${changeInEuros.toFixed(0)}`;
+    }
+
+    return {
+      text: isNeutral ? formattedChange : `${sign}${formattedChange}`,
+      isPositive,
+      isNeutral,
+      color: isPositive ? "text-green-600" : isNeutral ? "text-gray-500" : "text-red-600"
     };
   }
 }

@@ -28,12 +28,12 @@ export async function GET(request: NextRequest) {
         sortBy: searchParams.get('sortBy'),
         sortOrder: searchParams.get('sortOrder'),
       });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
+    } catch (validationError) {
+      if (validationError instanceof z.ZodError) {
         return NextResponse.json(
           {
             error: 'Invalid parameters',
-            details: error.errors.map((err) => ({
+            details: validationError.errors.map((err) => ({
               field: err.path.join('.'),
               message: err.message,
             })),
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
           { status: 400 }
         );
       }
-      throw error;
+      throw validationError;
     }
 
     const { page, limit, sortBy, sortOrder } = params;

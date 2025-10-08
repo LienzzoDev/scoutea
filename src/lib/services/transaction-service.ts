@@ -191,13 +191,10 @@ export class TransactionService {
     profileData: {
       firstName: string
       lastName: string
-      nationality?: string
       dateOfBirth?: Date
-      location?: string
-      bio?: string
-      experience?: number
-      specialization?: string
-      languages?: string[]
+      address?: string
+      city?: string
+      country?: string
     }
   ): Promise<TransactionResult> {
     let clerkUpdated = false
@@ -215,24 +212,36 @@ export class TransactionService {
 
       // 2. Actualizar/crear usuario en base de datos
       try {
-        await UserService.updateUser(userId, {
-          ...profileData,
-          profileCompleted: true
-        })
-        dbUpdated = true
-      } catch (dbError) {
-        // Si no existe, crearlo
-        if (dbError.code === 'P2025') {
-          await UserService.createUser({
-            clerkId: userId,
-            email: `temp-${userId}@scoutea.com`, // Email temporal
-            ...profileData,
+        const user = await UserService.getUserByClerkId(userId)
+
+        if (user) {
+          await UserService.updateUser(userId, {
+            firstName: profileData.firstName,
+            lastName: profileData.lastName,
+            dateOfBirth: profileData.dateOfBirth,
+            address: profileData.address,
+            city: profileData.city,
+            country: profileData.country,
             profileCompleted: true
           })
-          dbUpdated = true
         } else {
-          throw dbError
+          // Si no existe, crearlo con email temporal (debería existir por el registro)
+          await UserService.createUser({
+            clerkId: userId,
+            email: `temp-${userId}@scoutea.com`,
+            firstName: profileData.firstName,
+            lastName: profileData.lastName,
+            dateOfBirth: profileData.dateOfBirth,
+            address: profileData.address,
+            city: profileData.city,
+            country: profileData.country,
+            profileCompleted: true
+          })
         }
+        dbUpdated = true
+      } catch (dbError) {
+        logger.error('Error updating/creating user in database', dbError as Error, { userId })
+        throw dbError
       }
 
       return {

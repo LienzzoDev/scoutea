@@ -351,8 +351,8 @@ export default function MemberDashboard() {
           <div className="space-y-4">
             {filteredPlayers.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-[#6d6d6d] text-lg">{activeTab === "list"
-                    ? "No tienes jugadores en tu lista"
+                <p className="text-[#6d6d6d] text-lg">{activeTab === "favourites"
+                    ? "No tienes jugadores en tus favoritos"
                     : activeTab === "news"
                     ? "No hay jugadores nuevos en los últimos 7 días"
                     : searchTerm

@@ -1,48 +1,62 @@
 "use client";
 
-import { ArrowRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowRight, ArrowUpDown, ArrowUp, ArrowDown, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
 
-import BookmarkButton from "@/components/ui/bookmark-button";
-import PlayerAvatar from "@/components/ui/player-avatar";
-import FlagIcon from "@/components/ui/flag-icon";
 import TeamBadge from "@/components/ui/team-badge";
-import type { Player } from "@/types/player";
+import { Button } from "@/components/ui/button";
+
+interface Team {
+  id_team: string;
+  team_name: string;
+  correct_team_name?: string | null;
+  team_country?: string | null;
+  competition?: string | null;
+  competition_country?: string | null;
+  team_trfm_value?: number | null;
+  team_rating?: number | null;
+  team_rating_norm?: number | null;
+  team_elo?: number | null;
+  team_level?: string | null;
+  owner_club?: string | null;
+  owner_club_country?: string | null;
+  short_name?: string | null;
+  founded_year?: number | null;
+  stadium?: string | null;
+}
 
 interface Category {
   key: string;
   label: string;
-  getValue: (player: Player) => string | number | null | undefined;
+  getValue: (team: Team) => string | number | null | undefined;
   format?: (value: unknown) => string;
 }
 
-interface PlayerTableProps {
-  players: Player[];
+interface TeamTableProps {
+  teams: Team[];
   selectedCategories: Category[];
-  isInList: (_playerId: string) => boolean;
-  addToList: (_playerId: string) => Promise<boolean>;
-  removeFromList: (_playerId: string) => Promise<boolean>;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   onSort?: (categoryKey: string) => void;
   loading?: boolean;
   darkMode?: boolean;
+  onEdit?: (teamId: string) => void;
+  onDelete?: (teamId: string) => void;
 }
 
-export default function PlayerTable({
-  players,
+export default function TeamTable({
+  teams,
   selectedCategories,
-  isInList,
-  addToList,
-  removeFromList,
   sortBy,
   sortOrder,
   onSort,
   loading,
   darkMode = false,
-}: PlayerTableProps) {
-  const _router = useRouter();
+  onEdit,
+  onDelete,
+}: TeamTableProps) {
+  const router = useRouter();
   const headerScrollRef = useRef<HTMLDivElement>(null);
   const rowScrollRefs = useRef<HTMLDivElement[]>([]);
 
@@ -58,11 +72,11 @@ export default function PlayerTable({
     });
   };
 
-  if (players.length === 0) {
+  if (teams.length === 0) {
     return (
       <div className="text-center py-12">
         <p className={`text-lg ${darkMode ? 'text-slate-400' : 'text-[#6d6d6d]'}`}>
-          No se encontraron jugadores
+          No se encontraron equipos
         </p>
       </div>
     );
@@ -80,24 +94,24 @@ export default function PlayerTable({
           ? 'bg-[#1a2332] border-slate-700'
           : 'bg-[#f8f9fa] border-[#e7e7e7]'
       }`}>
-        {/* Columna fija - Player Info */}
+        {/* Columna fija - Team Info */}
         <div
           className={`w-80 p-4 border-r flex-shrink-0 cursor-pointer transition-colors ${
             darkMode
               ? 'border-slate-700 hover:bg-slate-700/50'
               : 'border-[#e7e7e7] hover:bg-gray-50'
           }`}
-          onClick={() => onSort?.('player_name')}
+          onClick={() => onSort?.('team_name')}
         >
           <div className="flex items-center gap-1">
             <h4 className={`font-semibold text-sm ${
-              sortBy === 'player_name'
+              sortBy === 'team_name'
                 ? (darkMode ? 'text-[#FF5733]' : 'text-[#8c1a10]')
                 : (darkMode ? 'text-slate-300' : 'text-[#6d6d6d]')
             }`}>
-              Player Info
+              Equipo
             </h4>
-            {sortBy === 'player_name' ? (
+            {sortBy === 'team_name' ? (
               sortOrder === 'asc' ? (
                 <ArrowUp className={`w-3 h-3 ${darkMode ? 'text-[#FF5733]' : 'text-[#8c1a10]'}`} />
               ) : (
@@ -169,46 +183,43 @@ export default function PlayerTable({
         </div>
 
         {/* Columna fija - Actions */}
-        <div className={`w-20 p-4 text-center border-l flex-shrink-0 ${
+        <div className={`w-24 p-4 text-center border-l flex-shrink-0 ${
           darkMode ? 'border-slate-700' : 'border-[#e7e7e7]'
         }`}>
           <h4 className={`font-semibold text-sm ${darkMode ? 'text-slate-300' : 'text-[#6d6d6d]'}`}>
-            Actions
+            Acciones
           </h4>
         </div>
       </div>
 
-      {/* FILAS DE JUGADORES */}
+      {/* FILAS DE EQUIPOS */}
       <div className={`divide-y ${darkMode ? 'divide-slate-700' : 'divide-[#e7e7e7]'}`}>
-        {players.map((player, index) => (
+        {teams.map((team, index) => (
           <div
-            key={player.id_player}
+            key={team.id_team}
             className={`flex items-stretch cursor-pointer transition-colors ${
               darkMode ? 'hover:bg-slate-700/30' : 'hover:bg-gray-50'
             }`}
-            onClick={() =>
-              _router.push(`/member/player/${player.id_player}`)
-            }
+            onClick={() => router.push(`/admin/equipos/${team.id_team}`)}
           >
-            {/* Columna fija - Player Info */}
+            {/* Columna fija - Team Info */}
             <div className={`w-80 p-4 border-r flex-shrink-0 ${
               darkMode ? 'border-slate-700' : 'border-[#e7e7e7]'
             }`}>
               <div className="flex items-center gap-4">
-                <PlayerAvatar player={player} size="md" showFlag={false} showBadge={false} />
+                <TeamBadge teamName={team.team_name} size="lg" />
                 <div>
                   <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-[#000000]'}`}>
-                    {player.player_name}
+                    {team.team_name}
                   </h3>
                   <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-[#6d6d6d]'}`}>
-                    {player.age ? `${player.age} años` : "Edad N/A"} • {" "}
-                    {player.nationality_1 || "Nacionalidad N/A"}
+                    {team.correct_team_name || team.team_name}
                   </p>
-                  {player.position_player && (
+                  {team.short_name && (
                     <p className={`text-xs font-medium mt-1 ${
                       darkMode ? 'text-[#FF5733]' : 'text-[#8c1a10]'
                     }`}>
-                      {player.position_player}
+                      {team.short_name}
                     </p>
                   )}
                 </div>
@@ -217,12 +228,11 @@ export default function PlayerTable({
 
             {/* Valores scrolleables */}
             <div
-              ref={(el) =>{
+              ref={(el) => {
                 if (el) rowScrollRefs.current[index] = el;
               }}
-              className="flex-1 overflow-x-auto scrollbar-hide" onScroll={(e) =>
-                handleScroll(e.currentTarget.scrollLeft)
-              }
+              className="flex-1 overflow-x-auto scrollbar-hide"
+              onScroll={(e) => handleScroll(e.currentTarget.scrollLeft)}
               style={{
                 scrollbarWidth: "none",
                 msOverflowStyle: "none",
@@ -236,8 +246,9 @@ export default function PlayerTable({
                     100
                   )}px`,
                 }}
-              >{selectedCategories.map((category, catIndex, array) => {
-                  const value = category.getValue(player);
+              >
+                {selectedCategories.map((category, catIndex, array) => {
+                  const value = category.getValue(team);
                   let formattedValue = category.format
                     ? category.format(value)
                     : value || "N/A";
@@ -253,13 +264,9 @@ export default function PlayerTable({
 
                   return (
                     <div
-                      key={`${player.id_player}-${category.key}`}
-                      className={`text-center border-r last:border-r-0 flex-shrink-0 self-stretch ${
+                      key={`${team.id_team}-${category.key}`}
+                      className={`text-center border-r last:border-r-0 flex-shrink-0 self-stretch p-4 ${
                         darkMode ? 'border-slate-700' : 'border-[#e7e7e7]'
-                      } ${
-                        category.key === "nationality" || category.key === "team"
-                          ? "p-3"
-                          : "p-4"
                       }`}
                       style={{
                         minWidth: "140px",
@@ -269,47 +276,11 @@ export default function PlayerTable({
                             : "140px",
                       }}
                     >
-                      {/* Columna de Nacionalidad - mostrar bandera */}
-                      {category.key === "nationality" ? (
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <FlagIcon
-                            nationality={player.nationality_1}
-                            size="lg"
-                          />
-                          <p className={`font-medium text-xs text-center ${
-                            darkMode ? 'text-white' : 'text-[#000000]'
-                          }`}>
-                            {formattedValue}
-                          </p>
-                        </div>
-                      ) : category.key === "team" ? (
-                        /* Columna de Equipo - mostrar escudo */
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <TeamBadge
-                            teamName={player.team_name}
-                            size="lg"
-                          />
-                          <p className={`font-medium text-xs text-center ${
-                            darkMode ? 'text-white' : 'text-[#000000]'
-                          }`}>
-                            {formattedValue}
-                          </p>
-                        </div>
-                      ) : (
-                        /* Otras columnas - mostrar solo texto */
-                        <p className={`font-medium break-words ${
-                          darkMode ? 'text-white' : 'text-[#000000]'
-                        }`}>
-                          {formattedValue}
-                        </p>
-                      )}
-                      {category.key === "competition" && player.team_name && (
-                          <p className={`text-xs mt-1 truncate ${
-                            darkMode ? 'text-slate-400' : 'text-[#6d6d6d]'
-                          }`}>
-                            {player.team_name}
-                          </p>
-                        )}
+                      <p className={`font-medium break-words ${
+                        darkMode ? 'text-white' : 'text-[#000000]'
+                      }`}>
+                        {formattedValue}
+                      </p>
                     </div>
                   );
                 })}
@@ -317,30 +288,37 @@ export default function PlayerTable({
             </div>
 
             {/* Columna fija - Actions */}
-            <div className={`w-20 p-4 text-center border-l flex-shrink-0 ${
+            <div className={`w-24 p-4 text-center border-l flex-shrink-0 ${
               darkMode ? 'border-slate-700' : 'border-[#e7e7e7]'
-            }`}>
+            }`}
+            onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-center gap-2">
-                <BookmarkButton
-                  entityId={player.id_player}
-                  isBookmarked={isInList(player.id_player)}
-                  onToggle={async (playerId) => {
-                    if (isInList(playerId)) {
-                      await removeFromList(playerId);
-                      return false;
-                    } else {
-                      await addToList(playerId);
-                      return true;
-                    }
-                  }}
-                />
-                <ArrowRight
-                  className="w-4 h-4 text-[#8c1a10] cursor-pointer hover:text-[#8c1a10]/80"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    _router.push(`/member/player/${player.id_player}`);
-                  }}
-                />
+                {onEdit && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-8 w-8 ${darkMode ? 'text-slate-400 hover:text-[#FF5733] hover:bg-slate-700' : 'text-slate-600 hover:text-[#8c1a10]'}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(team.id_team);
+                    }}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                )}
+                {onDelete && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(team.id_team);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </div>
           </div>

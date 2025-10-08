@@ -1,8 +1,7 @@
 'use client'
 
-import { Facebook, Twitter, Linkedin, Globe, Search, Filter, Bookmark, ArrowRight, X, Play } from "lucide-react"
+import { Facebook, Twitter, Linkedin, Globe } from "lucide-react"
 import Image from 'next/image'
-import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
@@ -12,21 +11,10 @@ import ScoutEconomicInfo from "@/components/scout/ScoutEconomicInfo"
 import { QualitativeDashboard } from "@/components/scout/qualitative-dashboard"
 import { QuantitativeDashboard } from "@/components/scout/quantitative-dashboard"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { useScoutProfile } from "@/hooks/scout/useScoutProfile"
 import ScoutContactForm from "@/components/scout/ScoutContactForm"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-
-interface PortfolioPlayer {
-  id_player: string
-  name: string
-  age: string
-  nationality: string
-  competition: string
-  position: string
-  rating: number
-  image: string
-}
+import ScoutPlayersSection from "@/components/scout/scout-players-section"
+import ScoutReportsSection from "@/components/scout/scout-reports-section"
 
 export default function ScoutProfilePage() {
   const _router = useRouter()
@@ -45,105 +33,115 @@ export default function ScoutProfilePage() {
   } = useScoutProfile(scoutId)
   
   const [activeTab, setActiveTab] = useState('info')
-  const [showFilters, setShowFilters] = useState(false)
   const [_activeReportsTab, _setActiveReportsTab] = useState('qualitative')
   const [activeStatsTab, setActiveStatsTab] = useState('qualitative')
-  const [message, setMessage] = useState('')
-  
-  // Portfolio filters state
-  const [portfolioSearchTerm, setPortfolioSearchTerm] = useState('')
-  const [portfolioFilters, setPortfolioFilters] = useState({
-    nationality: '',
-    competition: '',
-    position: '',
-    ageRange: '',
-    rating: ''
-  })
-  const [filteredPortfolioPlayers, setFilteredPortfolioPlayers] = useState<PortfolioPlayer[]>([])
-  const [portfolioPlayers, setPortfolioPlayers] = useState<PortfolioPlayer[]>([])
+
+  // Portfolio state - new format
+  const [portfolioPlayers, setPortfolioPlayers] = useState<any[]>([])
   const [portfolioLoading, setPortfolioLoading] = useState(false)
+  const [portfolioError, setPortfolioError] = useState<string | null>(null)
   const [reportsData, setReportsData] = useState<any[]>([])
   const [reportsLoading, setReportsLoading] = useState(false)
 
-  // Filter and search functions
-  const handlePortfolioSearch = (searchTerm: string) => {
-    setPortfolioSearchTerm(searchTerm)
-    filterPortfolioPlayers(searchTerm, portfolioFilters)
-  }
-
-  const handlePortfolioFilter = (filterType: string, value: string) => {
-    const newFilters = { ...portfolioFilters, [filterType]: value }
-    setPortfolioFilters(newFilters)
-    filterPortfolioPlayers(portfolioSearchTerm, newFilters)
-  }
-
-  const filterPortfolioPlayers = (searchTerm: string, filters: typeof portfolioFilters) => {
-    let filtered = portfolioPlayers
-
-    // Apply search filter
-    if (searchTerm) {
-      filtered = filtered.filter(player => 
-        player.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        player.id_player.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    }
-
-    // Apply other filters
-    if (filters.nationality) {
-      filtered = filtered.filter(player => player.nationality === filters.nationality)
-    }
-    if (filters.competition) {
-      filtered = filtered.filter(player => player.competition === filters.competition)
-    }
-    if (filters.position) {
-      filtered = filtered.filter(player => player.position === filters.position)
-    }
-
-    setFilteredPortfolioPlayers(filtered)
-  }
-
-  const clearPortfolioFilters = () => {
-    setPortfolioSearchTerm('')
-    setPortfolioFilters({
-      nationality: '',
-      competition: '',
-      position: '',
-      ageRange: '',
-      rating: ''
-    })
-    setFilteredPortfolioPlayers(portfolioPlayers)
-  }
 
   // Load portfolio and reports data
   useEffect(() => {
     const loadPortfolioAndReports = async () => {
       if (!scoutId) return
 
-      // Load portfolio
+      // Load portfolio - need to fetch both basic data and reports details
       setPortfolioLoading(true)
+      setPortfolioError(null)
       try {
+        // First get the basic portfolio data (players reported by this scout)
         const portfolioResponse = await fetch(`/api/scout/${scoutId}/portfolio`)
-        if (portfolioResponse.ok) {
-          const portfolioResult = await portfolioResponse.json()
-          if (portfolioResult.success) {
-            setPortfolioPlayers(portfolioResult.data)
-            setFilteredPortfolioPlayers(portfolioResult.data)
+
+        if (!portfolioResponse.ok) {
+          throw new Error('Failed to fetch portfolio data')
+        }
+
+        const portfolioResult = await portfolioResponse.json()
+
+        if (!portfolioResult.success) {
+          throw new Error(portfolioResult.error || 'Error loading portfolio')
+        }
+
+        // Now fetch detailed report data for each player
+        const reportsDetailResponse = await fetch(`/api/scout/${scoutId}/reports-detail`)
+        let reportsDetailData: any[] = []
+
+        if (reportsDetailResponse.ok) {
+          const reportsDetailResult = await reportsDetailResponse.json()
+          if (reportsDetailResult.success) {
+            reportsDetailData = reportsDetailResult.data
           }
         }
+
+        // Transform to the format expected by ScoutPlayersSection
+        const transformedPlayers = portfolioResult.data.map((player: any) => {
+          // Find the latest report for this player
+          const playerReports = reportsDetailData.filter(
+            (report: any) => report.id_player === player.id_player
+          )
+          const latestReport = playerReports[0] || null
+
+          // Parse age from the portfolio data (format: "X Años" or "N/A")
+          let age = null
+          if (player.age && player.age !== 'N/A') {
+            const ageMatch = player.age.match(/(\d+)/)
+            if (ageMatch) {
+              age = parseInt(ageMatch[1], 10)
+            }
+          }
+
+          return {
+            player: {
+              id_player: player.id_player,
+              player_name: player.name || player.player_name,
+              position_player: player.position,
+              nationality_1: player.nationality,
+              team_name: player.team,
+              player_rating: player.rating,
+              age: age
+            },
+            latestReport: latestReport ? {
+              id_report: latestReport.id_report,
+              report_date: latestReport.date ? new Date(latestReport.date) : null,
+              report_type: latestReport.profileType || latestReport.report_type,
+              roi: latestReport.roi,
+              profit: latestReport.profit,
+              potential: latestReport.potential
+            } : {
+              id_report: '',
+              report_date: null,
+              report_type: null,
+              roi: null,
+              profit: null,
+              potential: null
+            },
+            totalReports: player.totalReports || playerReports.length || 0
+          }
+        })
+
+        setPortfolioPlayers(transformedPlayers)
+        console.log('✅ Portfolio loaded:', transformedPlayers.length, 'players')
       } catch (error) {
         console.error('Error loading portfolio:', error)
+        setPortfolioError(error instanceof Error ? error.message : 'Error loading portfolio')
       } finally {
         setPortfolioLoading(false)
       }
 
-      // Load reports
+      // Load reports using the same endpoint as the scout area
       setReportsLoading(true)
       try {
-        const reportsResponse = await fetch(`/api/scout/${scoutId}/reports-detail`)
+        const reportsResponse = await fetch(`/api/scout/reports?scoutId=${scoutId}`)
         if (reportsResponse.ok) {
           const reportsResult = await reportsResponse.json()
-          if (reportsResult.success) {
+          if (reportsResult.success && reportsResult.data) {
+            // No transformation needed - use the same format as scout area
             setReportsData(reportsResult.data)
+            console.log('✅ Reports loaded from unified endpoint:', reportsResult.data.length)
           }
         }
       } catch (error) {
@@ -249,19 +247,36 @@ export default function ScoutProfilePage() {
               </div>
             </div>
 
-            {/* Social Media */}
-            <div>
-              <p className="text-[#6d6d6d] text-sm mb-3">On social media</p>
-              <div className="flex gap-3">
-                <Facebook className="w-5 h-5 text-[#6d6d6d]" />
-                <Twitter className="w-5 h-5 text-[#6d6d6d]" />
-                <Linkedin className="w-5 h-5 text-[#6d6d6d]" />
-                <Globe className="w-5 h-5 text-[#6d6d6d]" />
-                <div className="w-5 h-5 bg-[#6d6d6d] rounded-sm flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">P</span>
+            {/* Social Media - Only show if there are social links */}
+            {(scout.twitter_profile || scout.instagram_profile || scout.linkedin_profile || scout.url_profile) && (
+              <div>
+                <p className="text-[#6d6d6d] text-sm mb-3">On social media</p>
+                <div className="flex gap-3">
+                  {scout.twitter_profile && (
+                    <a href={scout.twitter_profile} target="_blank" rel="noopener noreferrer">
+                      <Twitter className="w-5 h-5 text-[#6d6d6d] hover:text-[#1DA1F2] transition-colors cursor-pointer" />
+                    </a>
+                  )}
+                  {scout.instagram_profile && (
+                    <a href={scout.instagram_profile} target="_blank" rel="noopener noreferrer">
+                      <div className="w-5 h-5 bg-[#6d6d6d] hover:bg-[#E4405F] rounded-sm flex items-center justify-center transition-colors cursor-pointer">
+                        <span className="text-white text-xs font-bold">I</span>
+                      </div>
+                    </a>
+                  )}
+                  {scout.linkedin_profile && (
+                    <a href={scout.linkedin_profile} target="_blank" rel="noopener noreferrer">
+                      <Linkedin className="w-5 h-5 text-[#6d6d6d] hover:text-[#0A66C2] transition-colors cursor-pointer" />
+                    </a>
+                  )}
+                  {scout.url_profile && (
+                    <a href={scout.url_profile} target="_blank" rel="noopener noreferrer">
+                      <Globe className="w-5 h-5 text-[#6d6d6d] hover:text-[#8c1a10] transition-colors cursor-pointer" />
+                    </a>
+                  )}
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Rating */}
             <div>
@@ -331,314 +346,23 @@ export default function ScoutProfilePage() {
 
             {activeTab === 'portfolio' && (
               <div className="bg-white p-6">
-                {portfolioLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8c1a10] mx-auto mb-4"></div>
-                      <p className="text-[#6d6d6d]">Loading portfolio...</p>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                {/* Search and Filters */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#6d6d6d] w-4 h-4" />
-                    <Input 
-                      placeholder="Search by name or ID..." 
-                      className="pl-10 w-80 bg-[#ffffff] border-[#e7e7e7]"
-                      value={portfolioSearchTerm}
-                      onChange={(e) => handlePortfolioSearch(e.target.value)}
-                    />
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="flex items-center gap-2 border-[#e7e7e7] text-[#6d6d6d] bg-transparent"
-                    onClick={() => setShowFilters(!showFilters)}
-                  >
-                    <Filter className="w-4 h-4 text-[#8c1a10]" />
-                    Filters
-                    {(portfolioFilters.nationality || portfolioFilters.competition || portfolioFilters.position) && (
-                      <span className="ml-1 bg-[#8c1a10] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                        {Object.values(portfolioFilters).filter(Boolean).length}
-                      </span>
-                    )}
-                  </Button>
-                </div>
-
-                {/* Filters Panel */}
-                {showFilters && (
-                  <div className="bg-white rounded-lg p-6 border border-[#e7e7e7] mb-6">
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-3">
-                        <h3 className="font-semibold text-[#000000]">Filters</h3>
-                        <button 
-                          onClick={clearPortfolioFilters}
-                          className="flex items-center gap-1 px-2 py-1 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors"
-                        >
-                          <span className="text-red-600 text-sm">Clean Filters</span>
-                          <X className="w-3 h-3 text-red-600" />
-                        </button>
-                      </div>
-                      <button 
-                        onClick={() => setShowFilters(false)}
-                        className="text-gray-400 hover:text-gray-600">
-                        <X className="w-5 h-5" />
-                      </button>
-                    </div>
-
-                    {/* Filter Options */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Nationality</label>
-                        <Select
-                          value={portfolioFilters.nationality || ''}
-                          onValueChange={(value) => handlePortfolioFilter('nationality', value)}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="All Nationalities" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Argentina">Argentina</SelectItem>
-                            <SelectItem value="Norway">Norway</SelectItem>
-                            <SelectItem value="Croatia">Croatia</SelectItem>
-                            <SelectItem value="Belgium">Belgium</SelectItem>
-                            <SelectItem value="France">France</SelectItem>
-                            <SelectItem value="Netherlands">Netherlands</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Competition</label>
-                        <Select
-                          value={portfolioFilters.competition || ''}
-                          onValueChange={(value) => handlePortfolioFilter('competition', value)}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="All Competitions" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Premier League">Premier League</SelectItem>
-                            <SelectItem value="La Liga">La Liga</SelectItem>
-                            <SelectItem value="MLS">MLS</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>
-                        <Select
-                          value={portfolioFilters.position || ''}
-                          onValueChange={(value) => handlePortfolioFilter('position', value)}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="All Positions" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="ST">Striker</SelectItem>
-                            <SelectItem value="LW">Left Wing</SelectItem>
-                            <SelectItem value="RW">Right Wing</SelectItem>
-                            <SelectItem value="CAM">Attacking Mid</SelectItem>
-                            <SelectItem value="CM">Central Mid</SelectItem>
-                            <SelectItem value="CB">Center Back</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
-                        <Select
-                          value={portfolioFilters.rating || ''}
-                          onValueChange={(value) => handlePortfolioFilter('rating', value)}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="All Ratings" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="9+">9.0+</SelectItem>
-                            <SelectItem value="8+">8.0+</SelectItem>
-                            <SelectItem value="7+">7.0+</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Results Count */}
-                <div className="mb-4">
-                  <p className="text-sm text-[#6d6d6d]">
-                    Showing {filteredPortfolioPlayers.length} of {portfolioPlayers.length} players
-                  </p>
-                </div>
-
-                {/* Portfolio Players List */}
-                <div className="space-y-4">
-                  {filteredPortfolioPlayers.length > 0 ? (
-                    filteredPortfolioPlayers.map((player) => (
-                      <div
-                        key={player.id_player}
-                        className="bg-[#ffffff] rounded-lg p-6 flex items-center justify-between border border-[#e7e7e7] cursor-pointer hover:bg-gray-50 transition-colors"
-                        onClick={() => _router.push(`/member/player/${player.id_player}`)}
-                      >
-                        <div className="flex items-center gap-4">
-                          <img
-                            src={player.image || "/placeholder.svg"}
-                            alt={player.name}
-                            className="w-12 h-12 rounded-full object-cover"
-                          />
-                          <div>
-                            <h3 className="font-semibold text-[#000000]">{player.name}</h3>
-                            <p className="text-[#6d6d6d] text-sm">
-                              {player.position} • {player.age} • {player.nationality}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-16">
-                          <div>
-                            <p className="text-[#6d6d6d] text-sm mb-1">Competition</p>
-                            <p className="font-medium text-[#000000]">{player.competition}</p>
-                          </div>
-
-                          <div>
-                            <p className="text-[#6d6d6d] text-sm mb-1">Rating</p>
-                            <p className="font-medium text-[#8c1a10]">{player.rating}</p>
-                          </div>
-
-                          <div className="flex items-center gap-3">
-                            <Bookmark className="w-5 h-5 text-[#8c1a10] fill-current" />
-                            <ArrowRight 
-                              className="w-5 h-5 text-[#6d6d6d] cursor-pointer hover:text-[#8c1a10] transition-colors" 
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                _router.push(`/member/player/${player.id_player}`)
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-12">
-                      <p className="text-[#6d6d6d] mb-4">No players found matching your criteria</p>
-                      <Button 
-                        onClick={clearPortfolioFilters}
-                        variant="outline"
-                        className="border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white"
-                      >
-                        Clear Filters
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                  </>
-                )}
+                <ScoutPlayersSection
+                  players={portfolioPlayers}
+                  isLoading={portfolioLoading}
+                  error={portfolioError}
+                />
               </div>
             )}
 
             {/* Reports Tab */}
             {activeTab === 'reports' && (
               <div className="bg-white p-6">
-                {reportsLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8c1a10] mx-auto mb-4"></div>
-                      <p className="text-[#6d6d6d]">Loading reports...</p>
-                    </div>
-                  </div>
-                ) : reportsData.length === 0 ? (
-                  <div className="text-center py-12">
-                    <p className="text-[#6d6d6d]">No reports available yet</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {reportsData.map((report) => (
-                      <div
-                        key={report.id_report}
-                        className="bg-[#ffffff] rounded-lg p-6 border border-[#e7e7e7] hover:shadow-md transition-shadow cursor-pointer"
-                        onClick={() => _router.push(`/member/player/${report.id_player}`)}
-                      >
-                        <div className="flex items-start gap-4">
-                          {/* Player Image */}
-                          <div className="w-12 h-12 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden">
-                            <Image
-                              src="/player-detail-placeholder.svg"
-                              alt={report.playerName}
-                              width={48}
-                              height={48}
-                              className="object-cover w-full h-full"
-                            />
-                          </div>
-
-                          {/* Report Content */}
-                          <div className="flex-1">
-                            <div className="flex items-start justify-between mb-2">
-                              <div>
-                                <h3 className="font-semibold text-[#000000] text-lg">{report.playerName}</h3>
-                                <p className="text-[#6d6d6d] text-sm">
-                                  {report.position} • {report.age} • {report.nationality} • {report.team}
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                {report.hasVideo && (
-                                  <div className="bg-red-100 p-2 rounded">
-                                    <Play className="w-4 h-4 text-red-600" />
-                                  </div>
-                                )}
-                                <div className="text-right">
-                                  <p className="text-[#6d6d6d] text-xs">Rating</p>
-                                  <p className="text-[#8c1a10] font-bold">{report.rating}/5</p>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="mb-3">
-                              <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                                {report.profileType}
-                              </span>
-                            </div>
-
-                            <p className="text-[#6d6d6d] text-sm mb-3 line-clamp-2">
-                              {report.description}
-                            </p>
-
-                            <div className="flex items-center justify-between text-xs text-[#6d6d6d]">
-                              <p>Report by {report.scoutName}</p>
-                              <p>{report.date}</p>
-                            </div>
-
-                            {/* Métricas adicionales */}
-                            {(report.roi || report.profit || report.potential) && (
-                              <div className="mt-3 pt-3 border-t border-gray-100 flex gap-4">
-                                {report.roi && (
-                                  <div>
-                                    <p className="text-[#6d6d6d] text-xs">ROI</p>
-                                    <p className="text-sm font-medium">{report.roi.toFixed(1)}%</p>
-                                  </div>
-                                )}
-                                {report.profit && (
-                                  <div>
-                                    <p className="text-[#6d6d6d] text-xs">Profit</p>
-                                    <p className="text-sm font-medium">€{report.profit.toFixed(2)}M</p>
-                                  </div>
-                                )}
-                                {report.potential && (
-                                  <div>
-                                    <p className="text-[#6d6d6d] text-xs">Potential</p>
-                                    <p className="text-sm font-medium">{report.potential.toFixed(1)}%</p>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <ScoutReportsSection
+                  reports={reportsData}
+                  isLoading={reportsLoading}
+                  error={null}
+                  readOnly={true}
+                />
               </div>
             )}
 

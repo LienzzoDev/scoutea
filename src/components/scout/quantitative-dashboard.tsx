@@ -1,10 +1,12 @@
 'use client'
 
-import { ChevronDown, Loader2 } from 'lucide-react'
+import { Filter, X, Loader2 } from 'lucide-react'
+import { useState } from 'react'
 import { BarChart } from '../bar-chart'
 import { QuantitativeData, QuantitativeFilters } from '@/lib/services/scout-quantitative-service'
 import { useScoutQuantitative } from '@/hooks/scout/useScoutQuantitative'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
 
 interface QuantitativeDashboardProps {
   scoutId: string
@@ -62,6 +64,8 @@ const chartConfigs = [
 ]
 
 export function QuantitativeDashboard({ scoutId }: QuantitativeDashboardProps) {
+  const [showFilters, setShowFilters] = useState(false)
+
   const {
     data: quantitativeData,
     filterOptions,
@@ -148,6 +152,7 @@ export function QuantitativeDashboard({ scoutId }: QuantitativeDashboardProps) {
   }
 
   const hasActiveFilters = Object.values(selectedFilters).some(value => value !== undefined && value !== '')
+  const totalActiveFilters = Object.values(selectedFilters).filter(v => v !== undefined && v !== '').length
 
   if (error) {
     return (
@@ -161,51 +166,50 @@ export function QuantitativeDashboard({ scoutId }: QuantitativeDashboardProps) {
   }
 
   return (
-    <div className='min-h-screen bg-background'>
-      <div className='flex'>
-        {/* Sidebar */}
-        <aside className='w-64 border-r border-border p-6 space-y-4'>
-          <div className='flex items-center gap-2 mb-6'>
-            <h1 className='text-xl font-bold text-[#8B4513] tracking-wide'>FILTROS</h1>
-            {hasActiveFilters && (
-              <span className='bg-[#8B4513] text-white text-xs px-2 py-1 rounded-full'>
-                {Object.values(selectedFilters).filter(v => v !== undefined && v !== '').length}
-              </span>
-            )}
-            <ChevronDown className='w-5 h-5 text-[#8B4513]' />
+    <div className='bg-background'>
+      {/* Filter Button */}
+      <div className='mb-6 flex justify-between items-center'>
+        <h2 className='text-xl font-bold text-[#8B4513]'>Dashboard Cuantitativo</h2>
+        <Button
+          variant="outline"
+          className={`flex items-center gap-2 border-[#e7e7e7] transition-all duration-200 ${
+            showFilters
+              ? "bg-[#8c1a10]/10 text-[#8c1a10] border-[#8c1a10]/30"
+              : "text-[#6d6d6d] bg-transparent"
+          }`}
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          <Filter className="w-4 h-4 text-[#8c1a10]" />
+          {totalActiveFilters > 0 ? `Filtros (${totalActiveFilters})` : 'Filtros'}
+        </Button>
+      </div>
+
+      {/* Collapsible Filters Panel */}
+      {showFilters && (
+        <div className='bg-white rounded-lg p-6 border border-[#e7e7e7] mb-6'>
+          {/* Header */}
+          <div className='flex items-center justify-between mb-6'>
+            <div className='flex items-center gap-3'>
+              <h3 className='font-semibold text-[#000000]'>Filtros</h3>
+              {hasActiveFilters && (
+                <button
+                  onClick={clearAllFilters}
+                  className='flex items-center gap-1 px-2 py-1 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors cursor-pointer'
+                >
+                  <span className='text-red-600 text-sm'>Limpiar Filtros</span>
+                  <X className='w-3 h-3 text-red-600' />
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Active Filters Summary */}
-          {hasActiveFilters && (
-            <div className='mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md'>
-              <div className='text-xs font-medium text-blue-800 mb-2'>Filtros Activos:</div>
-              <div className='space-y-1'>
-                {Object.entries(selectedFilters).map(([key, value], index) => {
-                  if (value && value !== '') {
-                    return (
-                      <div key={`filter-${key}-${index}`} className='text-xs text-blue-700'>
-                        <span className='font-medium'>{key}:</span> {value}
-                      </div>
-                    )
-                  }
-                  return null
-                })}
-              </div>
-              <button
-                onClick={clearAllFilters}
-                className='w-full mt-2 px-2 py-1 text-xs bg-red-50 text-red-600 border border-red-200 rounded hover:bg-red-100 transition-colors'
-              >
-                Limpiar Todos
-              </button>
-            </div>
-          )}
-          
+          {/* Filter Options */}
           {loading && !filterOptions ? (
             <div className='flex items-center justify-center py-8'>
               <Loader2 className='w-6 h-6 animate-spin text-[#8B4513]' />
             </div>
           ) : (
-            <div className='space-y-4'>
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
               {[
                 { id: 'reportType', label: 'Tipo de Reporte' },
                 { id: 'position', label: 'Posición' },
@@ -217,7 +221,7 @@ export function QuantitativeDashboard({ scoutId }: QuantitativeDashboardProps) {
                 { id: 'initialTRFMValue', label: 'Valor Inicial' },
               ].map(filter => (
                 <div key={filter.id}>
-                  <label className='block text-sm font-medium text-[#8B4513] mb-2'>
+                  <label className='block text-sm font-medium text-gray-700 mb-2'>
                     {filter.label}
                   </label>
                   <Select
@@ -239,10 +243,11 @@ export function QuantitativeDashboard({ scoutId }: QuantitativeDashboardProps) {
               ))}
             </div>
           )}
-        </aside>
+        </div>
+      )}
 
-        {/* Main Content */}
-        <main className='flex-1 p-8 bg-gray-50'>
+      {/* Main Content */}
+      <main className='bg-gray-50 p-6 rounded-lg'>
           {loading ? (
             <div className='flex items-center justify-center h-64'>
               <Loader2 className='w-8 h-8 animate-spin text-[#8B4513]' />
@@ -270,7 +275,6 @@ export function QuantitativeDashboard({ scoutId }: QuantitativeDashboardProps) {
             </div>
           )}
         </main>
-      </div>
     </div>
   )
 }

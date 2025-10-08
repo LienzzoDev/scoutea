@@ -468,11 +468,21 @@ export default function ScoutsPage() {
 
     // Aplicar ordenamiento
     const sortedFiltered = [...filtered].sort((a: Scout, b: Scout) => {
-      const categoryConfig = AVAILABLE_CATEGORIES.find(cat => cat.key === sortBy)
-      if (!categoryConfig) return 0
+      let aValue: any
+      let bValue: any
 
-      const aValue = categoryConfig.getValue(a)
-      const bValue = categoryConfig.getValue(b)
+      // Si es scout_name, obtener directamente
+      if (sortBy === 'scout_name') {
+        aValue = a.scout_name || a.name
+        bValue = b.scout_name || b.name
+      } else {
+        // Si no, buscar en las categorías
+        const categoryConfig = AVAILABLE_CATEGORIES.find(cat => cat.key === sortBy)
+        if (!categoryConfig) return 0
+
+        aValue = categoryConfig.getValue(a)
+        bValue = categoryConfig.getValue(b)
+      }
 
       // Manejar valores nulos/undefined
       if (aValue == null && bValue == null) return 0
@@ -481,7 +491,7 @@ export default function ScoutsPage() {
 
       // Determinar tipo de ordenamiento
       const isNumeric = typeof aValue === 'number' && typeof bValue === 'number'
-      
+
       let comparison = 0
       if (isNumeric) {
         comparison = (aValue as number) - (bValue as number)
@@ -566,7 +576,7 @@ export default function ScoutsPage() {
             tabs={[
               { key: 'all', label: 'All' },
               { key: 'news', label: 'New scouts' },
-              { key: 'your-list', label: 'Your list', count: scoutList.length }
+              { key: 'your-list', label: 'Your favourites', count: scoutList.length }
             ]}
             activeTab={activeTab}
             onTabChange={setActiveTab}
@@ -817,8 +827,26 @@ export default function ScoutsPage() {
                 {/* HEADER */}
                 <div className="bg-[#f8f9fa] border-b border-[#e7e7e7] flex items-stretch">
                   {/* Columna fija - Scout Info */}
-                  <div className="w-80 p-4 border-r border-[#e7e7e7] flex-shrink-0">
-                    <h4 className="font-semibold text-[#6d6d6d] text-sm">Scout Info</h4>
+                  <div
+                    className="w-80 p-4 border-r border-[#e7e7e7] flex-shrink-0 cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => handleSort('scout_name')}
+                  >
+                    <div className="flex items-center gap-1">
+                      <h4 className={`font-semibold text-sm ${
+                        sortBy === 'scout_name' ? 'text-[#8c1a10]' : 'text-[#6d6d6d]'
+                      }`}>
+                        Scout Info
+                      </h4>
+                      {sortBy === 'scout_name' ? (
+                        sortOrder === 'asc' ? (
+                          <ArrowUp className="w-3 h-3 text-[#8c1a10]" />
+                        ) : (
+                          <ArrowDown className="w-3 h-3 text-[#8c1a10]" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="w-3 h-3 text-gray-400" />
+                      )}
+                    </div>
                   </div>
                   
                   {/* Headers scrolleables */}
@@ -828,7 +856,7 @@ export default function ScoutsPage() {
                     onScroll={(e) => handleScroll(e.currentTarget.scrollLeft)}
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                   >
-                    <div className="flex items-stretch" style={{ minWidth: `${Math.max(getSelectedCategoriesData().length * 140, 100)}px` }}>
+                    <div className="flex items-stretch w-full">
                       {getSelectedCategoriesData().map((category, index, array) => {
                         const isActive = sortBy === category.key
                         const getSortIcon = () => {
@@ -846,7 +874,8 @@ export default function ScoutsPage() {
                             }`}
                             style={{
                               minWidth: '140px',
-                              width: array.length <= 4 ? `${100 / array.length}%` : '140px'
+                              width: `${100 / array.length}%`,
+                              flexShrink: 0
                             }}
                             onClick={() => handleSort(category.key)}
                           >
@@ -875,7 +904,7 @@ export default function ScoutsPage() {
                   {filteredScouts.map((scout, index) => (
                     <div
                       key={scout.id_scout}
-                      className="flex items-stretch cursor-pointer hover:bg-gray-50 transition-colors"
+                      className="flex items-stretch cursor-pointer hover:bg-gray-50 transition-colors min-h-[80px]"
                       onClick={() => _router.push(`/member/scout/${scout.id_scout}`)}
                     >
                       {/* Columna fija - Scout Info */}
@@ -906,7 +935,7 @@ export default function ScoutsPage() {
                         className="flex-1 overflow-x-auto scrollbar-hide" onScroll={(e) => handleScroll(e.currentTarget.scrollLeft)}
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                       >
-                        <div className="flex items-stretch" style={{ minWidth: `${Math.max(getSelectedCategoriesData().length * 140, 100)}px` }}>
+                        <div className="flex items-stretch w-full">
                           {getSelectedCategoriesData().map((category, catIndex, array) => {
                             try {
                               const value = category.getValue(scout)
@@ -929,14 +958,15 @@ export default function ScoutsPage() {
                               return (
                                 <div
                                   key={category.key}
-                                  className={`text-center border-r border-[#e7e7e7] last:border-r-0 flex items-center justify-center flex-shrink-0 self-stretch ${
+                                  className={`text-center border-r border-[#e7e7e7] last:border-r-0 flex-shrink-0 self-stretch ${
                                     category.key === "nationality"
                                       ? "p-3"
                                       : "p-4"
                                   }`}
                                   style={{
                                     minWidth: '140px',
-                                    width: array.length <= 4 ? `${100 / array.length}%` : '140px'
+                                    width: `${100 / array.length}%`,
+                                    flexShrink: 0
                                   }}
                                 >
                                   {/* Columna de Nacionalidad - mostrar bandera */}
@@ -951,26 +981,28 @@ export default function ScoutsPage() {
                                       </p>
                                     </div>
                                   ) : (
-                                    <span className="text-[#000000] font-medium text-sm">
+                                    /* Otras columnas - mostrar solo texto */
+                                    <p className="font-medium text-[#000000]">
                                       {formattedValue}
-                                    </span>
+                                    </p>
                                   )}
                                 </div>
                               )
                             } catch (error) {
                               console.error('Error rendering category:', category.key, error)
                               return (
-                                <div 
-                                  key={category.key} 
-                                  className="p-4 text-center border-r border-[#e7e7e7] last:border-r-0 flex items-center justify-center flex-shrink-0"
-                                  style={{ 
+                                <div
+                                  key={category.key}
+                                  className="p-4 text-center border-r border-[#e7e7e7] last:border-r-0 flex-shrink-0 self-stretch"
+                                  style={{
                                     minWidth: '140px',
-                                    width: array.length <= 4 ? `${100 / array.length}%` : '140px'
+                                    width: `${100 / array.length}%`,
+                                    flexShrink: 0
                                   }}
                                 >
-                                  <span className="text-[#000000] font-medium text-sm">
+                                  <p className="font-medium text-[#000000]">
                                     Error
-                                  </span>
+                                  </p>
                                 </div>
                               )
                             }

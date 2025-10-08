@@ -202,14 +202,7 @@ export class ScoutQualitativeService {
       }
     })
 
-    // Si no hay datos reales, devolver datos de ejemplo para demostración
-    if (reports.length === 0) {
-      return this.getMockQualitativeData()
-    }
-
-    // Si hay pocos datos, completar con datos de ejemplo para categorías vacías
-    this.fillEmptyCategories(data)
-
+    // Retornar solo datos reales de la base de datos, sin mocks
     return data
   }
 

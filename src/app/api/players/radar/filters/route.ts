@@ -87,10 +87,10 @@ export async function GET() {
       }
     });
 
-  } catch (_error) {
+  } catch (error) {
     console.error('Error fetching filter options:', error);
     return NextResponse.json(
-      { __error: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

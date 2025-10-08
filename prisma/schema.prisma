@@ -15,8 +15,12 @@ model Usuario {
   email            String            @unique
   firstName        String
   lastName         String
-  nationality      String?
   dateOfBirth      DateTime?
+  address          String?
+  city             String?
+  country          String?
+  // Campos legacy (mantener por compatibilidad)
+  nationality      String?
   location         String?
   bio              String?
   experience       Int?
@@ -145,12 +149,13 @@ model Jugador {
   scoutPlayerReports              ScoutPlayerReport[]
   
   // NUEVAS RELACIONES NORMALIZADAS
-  team                            Team?               @relation("PlayerTeam", fields: [team_id], references: [id])
+  team                            Equipo?             @relation("PlayerTeam", fields: [team_id], references: [id_team])
   position                        Position?           @relation("PlayerPosition", fields: [position_id], references: [id])
   nationality                     Country?            @relation("PlayerNationality", fields: [nationality_id], references: [id])
   agencyRelation                  Agency?             @relation("PlayerAgency", fields: [agency_id], references: [id])
   corrections                     PlayerCorrection[]  @relation("PlayerCorrections")
   metrics                         PlayerMetric[]      @relation("PlayerMetrics")
+  playerRoles                     PlayerRole[]        @relation("PlayerRoles")
 
   @@index([player_name])
   @@index([position_player])
@@ -170,7 +175,7 @@ model Jugador {
 }
 
 model Equipo {
-  id_team              String   @id @default(cuid())
+  id_team              String     @id @default(cuid())
   team_name            String
   correct_team_name    String?
   team_country         String?
@@ -188,8 +193,17 @@ model Equipo {
   team_rating_norm     Float?
   team_elo             Float?
   team_level           String?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  // Campos adicionales de Team
+  short_name           String?
+  founded_year         Int?
+  stadium              String?
+  website_url          String?
+  logo_url             String?
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+
+  // Relaciones
+  players              Jugador[]  @relation("PlayerTeam")
 
   @@index([team_name])
   @@index([team_country])
@@ -1109,7 +1123,6 @@ model Country {
   
   // Relaciones
   players           Jugador[]     @relation("PlayerNationality")
-  teams             Team[]
   competitions      Competition[]
   scouts            Scout[]       @relation("ScoutNationality")
   agencies          Agency[]
@@ -1147,37 +1160,17 @@ model Competition {
   
   // Relaciones
   country           Country       @relation(fields: [country_id], references: [id])
-  teams             Team[]
-  
+
   @@index([country_id])
   @@index([tier])
   @@index([confederation])
   @@map("competitions")
 }
 
-model Team {
-  id                String        @id @default(cuid())
-  name              String        @unique
-  short_name        String?       // "FCB", "RMA", etc.
-  country_id        String
-  competition_id    String?
-  founded_year      Int?
-  stadium           String?
-  website_url       String?
-  logo_url          String?
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
-  
-  // Relaciones
-  country           Country       @relation(fields: [country_id], references: [id])
-  competition       Competition?  @relation(fields: [competition_id], references: [id])
-  players           Jugador[]     @relation("PlayerTeam")
-  
-  @@index([country_id])
-  @@index([competition_id])
-  @@index([name])
-  @@map("teams")
-}
+// MODELO ELIMINADO - Consolidado en Equipo
+// model Team {
+//   Todas las funcionalidades ahora están en el modelo Equipo
+// }
 
 model Agency {
   id                String        @id @default(cuid())
@@ -1238,4 +1231,20 @@ model PlayerMetric {
   @@index([category, period])
   @@index([player_id, category])
   @@map("player_metrics")
+}
+
+model PlayerRole {
+  id          String   @id @default(cuid())
+  player_id   String
+  role_name   String   // "GK Dominator", "Central Att Finisher", etc.
+  percentage  Float    // 0-100
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  player      Jugador  @relation("PlayerRoles", fields: [player_id], references: [id_player], onDelete: Cascade)
+
+  @@unique([player_id, role_name])
+  @@index([player_id])
+  @@index([role_name])
+  @@map("player_roles")
 }

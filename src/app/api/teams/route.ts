@@ -100,6 +100,8 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit
 
+    console.log('📊 Teams API - Pagination:', { page, limit, skip, sortBy, sortOrder });
+
     // Construir filtros WHERE
     const where: unknown = {}
     
@@ -143,6 +145,8 @@ export async function GET(request: NextRequest) {
       if (filters.max_value) where.team_trfm_value.lte = filters.max_value
     }
 
+    console.log('🔍 Teams API - WHERE filters:', JSON.stringify(where, null, 2));
+
     // Obtener equipos
     const [teams, total] = await Promise.all([
       prisma.equipo.findMany({
@@ -155,6 +159,8 @@ export async function GET(request: NextRequest) {
       }),
       prisma.equipo.count({ where })
     ])
+
+    console.log('✅ Teams API - Results:', { teamsCount: teams.length, total, page, limit });
 
     const totalPages = Math.ceil(total / limit)
 

@@ -2,13 +2,14 @@
 
 import { UserButton, SignOutButton } from '@clerk/nextjs'
 import { useAuth, useUser } from '@clerk/nextjs'
-import { 
+import {
   Menu,
   X,
   Users,
   ChevronDown,
   Shield,
-  Search
+  Search,
+  User
 } from "lucide-react"
 import { useRouter } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
@@ -79,12 +80,6 @@ export default function DashboardHeader() {
               <a href="/admin/torneos" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
                 Torneos
               </a>
-              <a href="/admin/dashboard" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
-                Analytics
-              </a>
-              <a href="/admin/dashboard" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
-                Configuración
-              </a>
             </nav>
           </div>
 
@@ -107,14 +102,14 @@ export default function DashboardHeader() {
               <div className="relative" ref={dropdownRef}>
                 <Button
                   onClick={() => setShowAreaDropdown(!showAreaDropdown)}
-                  className="bg-[#8c1a10] hover:bg-[#6d1410] text-white text-sm px-3 py-1.5 flex items-center gap-2" 
+                  className="bg-[#8c1a10] hover:bg-[#6d1410] text-white text-sm px-3 py-1.5 flex items-center gap-2"
                   size="sm"
                 >
                   <Shield className="w-4 h-4" />
                   Cambiar Área
                   <ChevronDown className="w-4 h-4" />
                 </Button>
-                
+
                 {/* Dropdown Menu */}
                 {showAreaDropdown && (
                   <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-48">
@@ -144,18 +139,19 @@ export default function DashboardHeader() {
                 )}
               </div>
             )}
-            
-            <UserButton 
-              appearance={{
-                elements: {
-                  avatarBox: "h-8 w-8"
-                }
-              }}
-            />
+
+            {/* Botón de Perfil */}
+            <div
+              className="w-8 h-8 bg-[#8c1a10] rounded-full flex items-center justify-center cursor-pointer hover:bg-[#6d1410] transition-colors"
+              onClick={() => _router.push('/admin/profile')}
+            >
+              <User className="w-4 h-4 text-white" />
+            </div>
+
             <SignOutButton>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="text-gray-400"
                 onClick={handleSignOut}
               >
@@ -205,12 +201,6 @@ export default function DashboardHeader() {
             </a>
             <a href="/admin/torneos" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
               Torneos
-            </a>
-            <a href="/admin/dashboard" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
-              Analytics
-            </a>
-            <a href="/admin/dashboard" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
-              Configuración
             </a>
           </div>
         </div>

@@ -79,6 +79,7 @@ interface ScoutReportsSectionProps {
   isLoading: boolean
   error: string | null
   onReportDeleted?: (reportId: string) => void
+  readOnly?: boolean
 }
 
 const REPORT_TYPES = [
@@ -92,7 +93,8 @@ export default function ScoutReportsSection({
   reports,
   isLoading,
   error,
-  onReportDeleted
+  onReportDeleted,
+  readOnly = false
 }: ScoutReportsSectionProps) {
   const { toast } = useToast()
   const [selectedFilter, setSelectedFilter] = useState<string>('all')
@@ -321,13 +323,15 @@ export default function ScoutReportsSection({
     <div className="bg-white p-6 rounded-xl">
       {/* Header with New Report Button */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-[#000000]">Your Reports</h2>
-        <Link href="/scout/reports/new">
-          <Button className="bg-[#8B0000] hover:bg-[#660000] text-white">
-            <Plus className="w-4 h-4 mr-2" />
-            New Report
-          </Button>
-        </Link>
+        <h2 className="text-2xl font-bold text-[#000000]">{readOnly ? 'Reports' : 'Your Reports'}</h2>
+        {!readOnly && (
+          <Link href="/scout/reports/new">
+            <Button className="bg-[#8B0000] hover:bg-[#660000] text-white">
+              <Plus className="w-4 h-4 mr-2" />
+              New Report
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Search Bar and Filters */}
@@ -556,34 +560,36 @@ export default function ScoutReportsSection({
           {filteredReports.map((report) => (
             <div key={report.id} className="bg-white rounded-xl border border-[#e7e7e7] p-4 break-inside-avoid relative">
               {/* Action Buttons */}
-              <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
-                {/* Edit Button */}
-                <Link href={`/scout/reports/${report.id}/edit`}>
+              {!readOnly && (
+                <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+                  {/* Edit Button */}
+                  <Link href={`/scout/reports/${report.id}/edit`}>
+                    <button
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Editar reporte"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                  </Link>
+
+                  {/* Delete Button */}
                   <button
-                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    title="Editar reporte"
+                    onClick={() => handleDeleteReport(report.id, report.playerName)}
+                    disabled={deletingReportId === report.id}
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Eliminar reporte"
                   >
-                    <Edit className="w-4 h-4" />
+                    {deletingReportId === report.id ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
                   </button>
-                </Link>
-                
-                {/* Delete Button */}
-                <button
-                  onClick={() => handleDeleteReport(report.id, report.playerName)}
-                  disabled={deletingReportId === report.id}
-                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Eliminar reporte"
-                >
-                  {deletingReportId === report.id ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
-                  ) : (
-                    <Trash2 className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
+                </div>
+              )}
 
               {/* Header */}
-              <div className="flex items-center justify-between mb-3 pr-16">
+              <div className={`flex items-center justify-between mb-3 ${!readOnly ? 'pr-16' : ''}`}>
                 <div className="flex items-center gap-2">
                   <div>
                     <h3 className="font-semibold text-[#2e3138]">{report.playerName}</h3>

@@ -42,13 +42,10 @@ const completeProfileSchema = z.object({
   action: z.literal('complete_profile'),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  nationality: z.string().optional(),
   dateOfBirth: z.string().optional(),
-  location: z.string().optional(),
-  bio: z.string().optional(),
-  experience: z.number().optional(),
-  specialization: z.string().optional(),
-  languages: z.array(z.string()).optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  country: z.string().optional(),
   email: z.string().email().optional()
 })
 

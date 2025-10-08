@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { MediaUpload } from "@/components/scout/media-upload"
+import { TeamSearch } from "@/components/scout/team-search"
 
 export function PlayerDetailsForm() {
   const router = useRouter()
@@ -294,13 +295,16 @@ export function PlayerDetailsForm() {
             <Label htmlFor="team" className="text-sm font-medium text-foreground">
               *Team
             </Label>
-            <Input
-              id="team"
-              placeholder="Enter team name"
+            <TeamSearch
               value={formData.team}
-              onChange={(e) => handleInputChange('team', e.target.value)}
+              onChange={(teamName, teamCountry) => {
+                handleInputChange('team', teamName)
+                if (teamCountry) {
+                  handleInputChange('teamCountry', teamCountry)
+                }
+              }}
+              placeholder="Search team..."
               className="h-12 rounded-lg border-0 bg-muted/50 px-4 text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
-              required
             />
           </div>
 
@@ -309,21 +313,13 @@ export function PlayerDetailsForm() {
             <Label htmlFor="team-country" className="text-sm font-medium text-foreground">
               Team country
             </Label>
-            <Select value={formData.teamCountry} onValueChange={(value) => handleInputChange('teamCountry', value)}>
-              <SelectTrigger
-                id="team-country"
-                className="h-12 rounded-lg border-0 bg-muted/50 px-4 text-foreground focus:ring-2 focus:ring-ring"
-              >
-                <SelectValue placeholder="Select country" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="spain">Spain</SelectItem>
-                <SelectItem value="england">England</SelectItem>
-                <SelectItem value="germany">Germany</SelectItem>
-                <SelectItem value="italy">Italy</SelectItem>
-                <SelectItem value="france">France</SelectItem>
-              </SelectContent>
-            </Select>
+            <Input
+              id="team-country"
+              placeholder="Auto-filled from team"
+              value={formData.teamCountry}
+              onChange={(e) => handleInputChange('teamCountry', e.target.value)}
+              className="h-12 rounded-lg border-0 bg-muted/50 px-4 text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            />
           </div>
 
           {/* Nationality 1 */}

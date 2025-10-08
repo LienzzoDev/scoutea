@@ -517,11 +517,11 @@ function BeeswarmChart({
           <circle
             cx={d.x}
             cy={d.y}
-            r={d.isHighlighted ? 6 : 4}
-            fill={d.isHighlighted ? "#8c1a10" : "#60a5fa"}
+            r={d.isHighlighted ? 7 : 4}
+            fill={d.isHighlighted ? "#ef4444" : "#60a5fa"}
             opacity={d.isHighlighted ? 1 : 0.7}
             stroke={d.isHighlighted ? "#ffffff" : "none"}
-            strokeWidth={d.isHighlighted ? 2 : 0}
+            strokeWidth={d.isHighlighted ? 3 : 0}
             className="cursor-pointer hover:opacity-100"
           >
             <title>

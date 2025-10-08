@@ -42,26 +42,30 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">Valor de Mercado:</span>
             <div className="flex items-center gap-2">
-              <span className="font-medium text-[#2e3138]">
-                {MarketValueService.formatValue(player.player_trfm_value)}
+              <div className="text-right">
+                <div className="font-medium text-[#2e3138]">
+                  {MarketValueService.formatValue(player.player_trfm_value)}
+                </div>
                 {(() => {
-                  const change = MarketValueService.formatPercentageChange(player.trfm_value_change_percent);
-                  if (!change.isNeutral && change.text) {
+                  const percentChange = MarketValueService.formatPercentageChange(player.trfm_value_change_percent);
+                  const absoluteChange = MarketValueService.formatAbsoluteChange(player.player_trfm_value, player.previous_trfm_value);
+
+                  if (!percentChange.isNeutral && percentChange.text && absoluteChange.text) {
                     return (
-                      <span className={`ml-1 text-xs ${change.color}`}>
-                        ({change.text})
-                      </span>
+                      <div className={`text-xs ${absoluteChange.color}`}>
+                        {absoluteChange.text} ({percentChange.text})
+                      </div>
                     );
                   }
                   return null;
                 })()}
-              </span>
+              </div>
               {player.trfm_value_change_percent !== null && player.trfm_value_change_percent !== undefined && (
                 <Badge className={`text-white text-xs px-1 py-0 ${
-                  player.trfm_value_change_percent > 0 
-                    ? 'bg-[#3cc500]' 
-                    : player.trfm_value_change_percent < 0 
-                    ? 'bg-red-500' 
+                  player.trfm_value_change_percent > 0
+                    ? 'bg-[#3cc500]'
+                    : player.trfm_value_change_percent < 0
+                    ? 'bg-red-500'
                     : 'bg-gray-500'
                 }`}>
                   {MarketValueService.formatPercentageChange(player.trfm_value_change_percent).arrow}

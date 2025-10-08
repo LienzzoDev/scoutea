@@ -3,10 +3,10 @@ import { prisma } from '@/lib/db'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const scoutId = params.id
+    const { id: scoutId } = await params
 
     if (!scoutId) {
       return NextResponse.json({ error: 'Scout ID requerido' }, { status: 400 })

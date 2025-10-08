@@ -87,21 +87,15 @@ export const useDashboardState = () => {
   // Contadores de tabs (memoizado para evitar re-renders)
   const tabCounts = useMemo(() => ({
     all: filteredPlayers.length,
-    list: playerList.length,
+    favourites: playerList.length,
     news: 0
   }), [filteredPlayers.length, playerList.length]);
 
   // Categorías disponibles (memoizado para evitar re-creación)
   const AVAILABLE_CATEGORIES = useMemo(() => [
-    { 
-      key: 'name', 
-      label: 'Nombre', 
-      enabled: true,
-      getValue: (player: Record<string, unknown>) => player.player_name || player.name
-    },
-    { 
-      key: 'position', 
-      label: 'Posición', 
+    {
+      key: 'position',
+      label: 'Posición',
       enabled: true,
       getValue: (player: Record<string, unknown>) => player.position_player || player.position
     },
@@ -335,7 +329,7 @@ export const useDashboardState = () => {
     let filtered = [...allPlayers];
 
     // Aplicar filtro por tab
-    if (activeTab === 'list') {
+    if (activeTab === 'favourites') {
       // Solo mostrar jugadores que están en la lista del usuario
       filtered = filtered.filter((player: any) => 
         playerList.includes(player.id_player || player.id)
@@ -425,11 +419,21 @@ export const useDashboardState = () => {
 
     // Aplicar ordenamiento
     const sortedFiltered = [...filtered].sort((a: any, b: any) => {
-      const categoryConfig = AVAILABLE_CATEGORIES.find(cat => cat.key === sortBy);
-      if (!categoryConfig) return 0;
+      let aValue: any;
+      let bValue: any;
 
-      const aValue = categoryConfig.getValue(a);
-      const bValue = categoryConfig.getValue(b);
+      // Si es player_name, obtener directamente
+      if (sortBy === 'player_name') {
+        aValue = a.player_name || a.name;
+        bValue = b.player_name || b.name;
+      } else {
+        // Si no, buscar en las categorías
+        const categoryConfig = AVAILABLE_CATEGORIES.find(cat => cat.key === sortBy);
+        if (!categoryConfig) return 0;
+
+        aValue = categoryConfig.getValue(a);
+        bValue = categoryConfig.getValue(b);
+      }
 
       // Manejar valores nulos/undefined
       if (aValue == null && bValue == null) return 0;
@@ -438,7 +442,7 @@ export const useDashboardState = () => {
 
       // Determinar tipo de ordenamiento
       const isNumeric = typeof aValue === 'number' && typeof bValue === 'number';
-      
+
       let comparison = 0;
       if (isNumeric) {
         comparison = (aValue as number) - (bValue as number);

@@ -1,7 +1,7 @@
 'use client'
 
 import { useUser } from '@clerk/nextjs'
-import { ArrowRight, User, MapPin, Calendar, Globe, Briefcase, ChevronRight } from 'lucide-react'
+import { ArrowRight, User, MapPin, Calendar, Globe, ChevronRight } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
@@ -22,15 +22,10 @@ export default function CompleteProfilePage() {
     firstName: '',
     lastName: '',
     dateOfBirth: '',
-    nationality: '',
-    location: '',
-    bio: '',
-    experience: '',
-    specialization: '',
-    languages: '',
-    website: '',
-    linkedin: '',
-    twitter: ''
+    email: '',
+    address: '',
+    city: '',
+    country: ''
   })
 
   useEffect(() => {
@@ -44,6 +39,7 @@ export default function CompleteProfilePage() {
         ...prev,
         firstName: user.firstName || '',
         lastName: user.lastName || '',
+        email: user.primaryEmailAddress?.emailAddress || '',
       }))
     }
   }, [user, searchParams])
@@ -65,7 +61,7 @@ export default function CompleteProfilePage() {
 
   const handleContinue = async () => {
     setIsLoading(true)
-    
+
     try {
       // Actualizar metadatos del usuario en Clerk
       if (user) {
@@ -74,29 +70,41 @@ export default function CompleteProfilePage() {
           lastName: formData.lastName,
         })
 
-        // Guardar datos del perfil en localStorage temporalmente
+        // Guardar el perfil en la base de datos a través de la API
+        const response = await fetch('/api/user/update-profile', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            dateOfBirth: formData.dateOfBirth,
+            email: formData.email,
+            address: formData.address,
+            city: formData.city,
+            country: formData.country
+          })
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          console.error('Error saving profile to database:', errorData)
+          throw new Error(errorData.error || 'Failed to save profile')
+        }
+
+        const result = await response.json()
+        console.log('Profile saved successfully:', result)
+
+        // Guardar estado en localStorage como respaldo
         localStorage.setItem('profileStatus', 'completed')
-        localStorage.setItem('profileData', JSON.stringify({
-          dateOfBirth: formData.dateOfBirth,
-          nationality: formData.nationality,
-          location: formData.location,
-          bio: formData.bio,
-          experience: formData.experience,
-          specialization: formData.specialization,
-          languages: formData.languages.split(',').map(lang => lang.trim()),
-          website: formData.website,
-          linkedin: formData.linkedin,
-          twitter: formData.twitter,
-          completedAt: new Date().toISOString()
-        }))
       }
 
       // Ir al paso 3 (confirmar rol)
       router.push(`/member/welcome-plan?plan=${selectedPlan}&step=3&profile=completed`)
     } catch (error) {
       console.error('Error updating profile:', error)
-      // Continuar al siguiente paso aunque haya error
-      router.push(`/member/welcome-plan?plan=${selectedPlan}&step=3`)
+      alert('Hubo un error al guardar tu perfil. Por favor, inténtalo de nuevo.')
     } finally {
       setIsLoading(false)
     }
@@ -162,8 +170,8 @@ export default function CompleteProfilePage() {
               Información personal
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Basic Info */}
+          <CardContent className="space-y-4">
+            {/* Name and Surname */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="firstName" className="text-[#2e3138] font-medium">
@@ -191,160 +199,78 @@ export default function CompleteProfilePage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="dateOfBirth" className="text-[#2e3138] font-medium">
-                  <Calendar className="w-4 h-4 inline mr-1" />
-                  Fecha de nacimiento
-                </Label>
-                <Input
-                  id="dateOfBirth"
-                  type="date"
-                  value={formData.dateOfBirth}
-                  onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="nationality" className="text-[#2e3138] font-medium">
-                  <Globe className="w-4 h-4 inline mr-1" />
-                  Nacionalidad
-                </Label>
-                <Input
-                  id="nationality"
-                  value={formData.nationality}
-                  onChange={(e) => handleInputChange('nationality', e.target.value)}
-                  placeholder="Ej: España, México, Argentina"
-                  className="mt-1"
-                />
-              </div>
-            </div>
-
+            {/* Date of Birth */}
             <div>
-              <Label htmlFor="location" className="text-[#2e3138] font-medium">
-                <MapPin className="w-4 h-4 inline mr-1" />
-                Ubicación
+              <Label htmlFor="dateOfBirth" className="text-[#2e3138] font-medium">
+                <Calendar className="w-4 h-4 inline mr-1" />
+                Fecha de nacimiento
               </Label>
               <Input
-                id="location"
-                value={formData.location}
-                onChange={(e) => handleInputChange('location', e.target.value)}
-                placeholder="Ciudad, País"
+                id="dateOfBirth"
+                type="date"
+                value={formData.dateOfBirth}
+                onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
                 className="mt-1"
               />
             </div>
 
-            {/* Professional Info */}
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold text-[#000000] mb-4">
-                <Briefcase className="w-5 h-5 inline mr-2" />
-                Información profesional
-              </h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="experience" className="text-[#2e3138] font-medium">
-                    Años de experiencia
-                  </Label>
-                  <Input
-                    id="experience"
-                    type="number"
-                    value={formData.experience}
-                    onChange={(e) => handleInputChange('experience', e.target.value)}
-                    placeholder="Ej: 5"
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="specialization" className="text-[#2e3138] font-medium">
-                    Especialización
-                  </Label>
-                  <Input
-                    id="specialization"
-                    value={formData.specialization}
-                    onChange={(e) => handleInputChange('specialization', e.target.value)}
-                    placeholder="Ej: Análisis táctico, Scouting juvenil, Datos estadísticos"
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="languages" className="text-[#2e3138] font-medium">
-                    Idiomas (separados por comas)
-                  </Label>
-                  <Input
-                    id="languages"
-                    value={formData.languages}
-                    onChange={(e) => handleInputChange('languages', e.target.value)}
-                    placeholder="Ej: Español, Inglés, Francés"
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="bio" className="text-[#2e3138] font-medium">
-                    Biografía breve
-                  </Label>
-                  <textarea
-                    id="bio"
-                    value={formData.bio}
-                    onChange={(e) => handleInputChange('bio', e.target.value)}
-                    placeholder="Cuéntanos un poco sobre ti y tu experiencia en el fútbol..."
-                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#8c1a10] focus:border-transparent"
-                    rows={3}
-                  />
-                </div>
-              </div>
+            {/* Email */}
+            <div>
+              <Label htmlFor="email" className="text-[#2e3138] font-medium">
+                Correo electrónico
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                placeholder="tu@email.com"
+                className="mt-1"
+                disabled
+              />
             </div>
 
-            {/* Social Links */}
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold text-[#000000] mb-4">
-                Enlaces sociales (opcional)
-              </h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="website" className="text-[#2e3138] font-medium">
-                    Sitio web
-                  </Label>
-                  <Input
-                    id="website"
-                    type="url"
-                    value={formData.website}
-                    onChange={(e) => handleInputChange('website', e.target.value)}
-                    placeholder="https://tu-sitio-web.com"
-                    className="mt-1"
-                  />
-                </div>
+            {/* Address */}
+            <div>
+              <Label htmlFor="address" className="text-[#2e3138] font-medium">
+                <MapPin className="w-4 h-4 inline mr-1" />
+                Dirección
+              </Label>
+              <Input
+                id="address"
+                value={formData.address}
+                onChange={(e) => handleInputChange('address', e.target.value)}
+                placeholder="Calle, número, piso, etc."
+                className="mt-1"
+              />
+            </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="linkedin" className="text-[#2e3138] font-medium">
-                      LinkedIn
-                    </Label>
-                    <Input
-                      id="linkedin"
-                      value={formData.linkedin}
-                      onChange={(e) => handleInputChange('linkedin', e.target.value)}
-                      placeholder="tu-perfil-linkedin"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="twitter" className="text-[#2e3138] font-medium">
-                      Twitter
-                    </Label>
-                    <Input
-                      id="twitter"
-                      value={formData.twitter}
-                      onChange={(e) => handleInputChange('twitter', e.target.value)}
-                      placeholder="@tu_usuario"
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
+            {/* City and Country */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="city" className="text-[#2e3138] font-medium">
+                  Ciudad
+                </Label>
+                <Input
+                  id="city"
+                  value={formData.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
+                  placeholder="Tu ciudad"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="country" className="text-[#2e3138] font-medium">
+                  <Globe className="w-4 h-4 inline mr-1" />
+                  País
+                </Label>
+                <Input
+                  id="country"
+                  value={formData.country}
+                  onChange={(e) => handleInputChange('country', e.target.value)}
+                  placeholder="Tu país"
+                  className="mt-1"
+                />
               </div>
             </div>
           </CardContent>

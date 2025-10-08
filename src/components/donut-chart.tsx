@@ -17,9 +17,18 @@ interface DonutChartProps {
 }
 
 const defaultColors = [
-  "#8B4513", "#A0522D", "#CD853F", "#DEB887", 
-  "#F4A460", "#D2691E", "#B8860B", "#DAA520",
-  "#BC8F8F", "#F5DEB3", "#D2B48C", "#DDBF94"
+  "#8c1a10", // Rojo corporativo principal
+  "#3b82f6", // Azul vibrante
+  "#10b981", // Verde esmeralda
+  "#f59e0b", // Ámbar/naranja
+  "#8b5cf6", // Púrpura
+  "#ec4899", // Rosa fuerte
+  "#06b6d4", // Cyan
+  "#f97316", // Naranja brillante
+  "#14b8a6", // Teal
+  "#6366f1", // Índigo
+  "#84cc16", // Lima
+  "#f43f5e"  // Rosa rojo
 ]
 
 const defaultData = [
@@ -53,7 +62,7 @@ export function DonutChart({
   // Si no hay datos, mostrar un mensaje
   if (total === 0) {
     return (
-      <div className="relative w-full max-w-[200px] mx-auto">
+      <div className="relative w-full max-w-[320px] mx-auto p-4">
         <div className="aspect-square w-full mx-auto flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
           <div className="text-center text-gray-400 p-6">
             <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -78,24 +87,24 @@ export function DonutChart({
   }
 
   return (
-    <div className="relative w-full max-w-[200px] mx-auto" onMouseMove={handleMouseMove}>
+    <div className="relative w-full max-w-[320px] mx-auto" onMouseMove={handleMouseMove}>
       {/* Donut Chart - Responsive size */}
-      <div className="aspect-square w-full mx-auto relative">
-        <svg className="w-full h-full drop-shadow-sm" viewBox="0 0 120 120">
+      <div className="aspect-square w-full mx-auto relative p-4">
+        <svg className="w-full h-full drop-shadow-sm" viewBox="0 0 180 180">
           {/* Background circle */}
           <circle
-            cx="60"
-            cy="60"
-            r="35"
+            cx="90"
+            cy="90"
+            r="70"
             fill="none"
             stroke="#f1f5f9"
-            strokeWidth="12"
+            strokeWidth="35"
           />
-          
+
           {/* Data segments */}
           {chartData.map((segment, index) => {
             const percentage = (segment.value / total) * 100
-            const circumference = 2 * Math.PI * 35
+            const circumference = 2 * Math.PI * 70
             const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`
             const strokeDashoffset = -cumulativePercentage * (circumference / 100)
             cumulativePercentage += percentage
@@ -103,41 +112,41 @@ export function DonutChart({
             return (
               <circle
                 key={index}
-                cx="60"
-                cy="60"
-                r="35"
+                cx="90"
+                cy="90"
+                r="70"
                 fill="none"
                 stroke={segment.color}
-                strokeWidth="12"
+                strokeWidth="35"
                 strokeDasharray={strokeDasharray}
                 strokeDashoffset={strokeDashoffset}
-                transform="rotate(-90 60 60)"
+                transform="rotate(-90 90 90)"
                 className={`transition-all duration-300 cursor-pointer ${
                   hoveredSegment === index ? 'opacity-100 drop-shadow-lg' : 'opacity-90'
                 }`}
-                strokeLinecap="round"
+                strokeLinecap="butt"
                 onMouseEnter={() => setHoveredSegment(index)}
                 onMouseLeave={() => setHoveredSegment(null)}
               />
             )
           })}
           
-          {/* Center content - más pequeño para no tapar el donut */}
-          <text 
-            x="60" 
-            y="56" 
-            textAnchor="middle" 
-            dominantBaseline="middle" 
-            className="text-[9px] font-bold fill-[#8B4513] pointer-events-none"
+          {/* Center content - ajustado al nuevo tamaño */}
+          <text
+            x="90"
+            y="84"
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="text-[11px] font-bold fill-[#8B4513] pointer-events-none"
           >
             {title}
           </text>
-          <text 
-            x="60" 
-            y="66" 
-            textAnchor="middle" 
-            dominantBaseline="middle" 
-            className="text-[7px] fill-gray-500 font-medium pointer-events-none"
+          <text
+            x="90"
+            y="98"
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="text-[9px] fill-gray-500 font-medium pointer-events-none"
           >
             {subtitle}
           </text>

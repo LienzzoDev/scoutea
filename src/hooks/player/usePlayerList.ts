@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useAuth } from '@clerk/nextjs';
 import { handleApiResponse } from '@/lib/utils/api-response';
 
 interface PlayerListItem {
@@ -19,20 +20,28 @@ interface PlayerListItem {
 }
 
 export const usePlayerList = () => {
+  const { isSignedIn, isLoaded } = useAuth();
   const [playerList, setPlayerList] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Cargar la lista de jugadores del usuario
   const loadPlayerList = useCallback(async () => {
+    // No intentar cargar si no está autenticado o aún cargando
+    if (!isLoaded || !isSignedIn) {
+      console.log('⏸️ usePlayerList: User not authenticated, skipping load');
+      setPlayerList([]);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
       console.log('🔍 usePlayerList: Loading user player list...');
-      
+
       const response = await fetch('/api/player-list');
       const result = await handleApiResponse(response);
-      
+
       if (result.success) {
         const playerIds = result.data?.playerList?.map((item: PlayerListItem) => item.playerId) || [];
         console.log('✅ usePlayerList: Loaded player list:', playerIds.length);
@@ -49,7 +58,7 @@ export const usePlayerList = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isLoaded, isSignedIn]);
 
   // Añadir jugador a la lista
   const addToList = useCallback(async (playerId: string): Promise<boolean> => {

@@ -1,91 +1,142 @@
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: 'admin' | 'member' | 'scout';
-  profileComplete: boolean;
-  subscriptionStatus: 'active' | 'inactive' | 'trial';
-  createdAt: Date;
-  updatedAt: Date;
+import { prisma } from '@/lib/db'
+import { Usuario } from '@prisma/client'
+
+export interface CreateUserData {
+  clerkId: string
+  email: string
+  firstName: string
+  lastName: string
+  dateOfBirth?: Date
+  address?: string
+  city?: string
+  country?: string
+  profileCompleted?: boolean
 }
 
-export interface UserProfile {
-  userId: string;
-  firstName: string;
-  lastName: string;
-  phone?: string;
-  organization?: string;
-  preferences: Record<string, any>;
+export interface UpdateUserData {
+  firstName?: string
+  lastName?: string
+  dateOfBirth?: Date
+  address?: string
+  city?: string
+  country?: string
+  profileCompleted?: boolean
+  subscription?: any
 }
 
 export class UserService {
-  static async getUserById(id: string): Promise<User | null> {
-    // Mock implementation - replace with actual database query
-    return {
-      id,
-      email: 'user@example.com',
-      name: 'Sample User',
-      role: 'member',
-      profileComplete: true,
-      subscriptionStatus: 'active',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+  /**
+   * Obtener usuario por ID de Clerk
+   */
+  static async getUserByClerkId(clerkId: string): Promise<Usuario | null> {
+    try {
+      return await prisma.usuario.findUnique({
+        where: { clerkId }
+      })
+    } catch (error) {
+      console.error('Error getting user by Clerk ID:', error)
+      throw error
+    }
   }
 
-  static async getUserByEmail(email: string): Promise<User | null> {
-    // Mock implementation
-    return {
-      id: '1',
-      email,
-      name: 'Sample User',
-      role: 'member',
-      profileComplete: true,
-      subscriptionStatus: 'active',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+  /**
+   * Obtener usuario por email
+   */
+  static async getUserByEmail(email: string): Promise<Usuario | null> {
+    try {
+      return await prisma.usuario.findUnique({
+        where: { email }
+      })
+    } catch (error) {
+      console.error('Error getting user by email:', error)
+      throw error
+    }
   }
 
-  static async createUser(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
-    // Mock implementation
-    return {
-      ...userData,
-      id: Math.random().toString(36).substr(2, 9),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+  /**
+   * Crear nuevo usuario
+   */
+  static async createUser(userData: CreateUserData): Promise<Usuario> {
+    try {
+      return await prisma.usuario.create({
+        data: {
+          clerkId: userData.clerkId,
+          email: userData.email,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          dateOfBirth: userData.dateOfBirth,
+          address: userData.address,
+          city: userData.city,
+          country: userData.country,
+          profileCompleted: userData.profileCompleted || false
+        }
+      })
+    } catch (error) {
+      console.error('Error creating user:', error)
+      throw error
+    }
   }
 
-  static async updateUser(id: string, updates: Partial<User>): Promise<User | null> {
-    // Mock implementation
-    const user = await this.getUserById(id);
-    if (!user) return null;
-    
-    return {
-      ...user,
-      ...updates,
-      updatedAt: new Date()
-    };
+  /**
+   * Actualizar usuario por Clerk ID
+   */
+  static async updateUser(clerkId: string, updates: UpdateUserData): Promise<Usuario> {
+    try {
+      return await prisma.usuario.update({
+        where: { clerkId },
+        data: updates
+      })
+    } catch (error) {
+      console.error('Error updating user:', error)
+      throw error
+    }
   }
 
-  static async getUserProfileStatus(_userId: string): Promise<{ complete: boolean; missingFields: string[] }> {
-    // Mock implementation
-    return {
-      complete: true,
-      missingFields: []
-    };
+  /**
+   * Crear o actualizar usuario (upsert)
+   */
+  static async upsertUser(userData: CreateUserData): Promise<Usuario> {
+    try {
+      return await prisma.usuario.upsert({
+        where: { clerkId: userData.clerkId },
+        update: {
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          dateOfBirth: userData.dateOfBirth,
+          address: userData.address,
+          city: userData.city,
+          country: userData.country,
+          profileCompleted: userData.profileCompleted
+        },
+        create: {
+          clerkId: userData.clerkId,
+          email: userData.email,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          dateOfBirth: userData.dateOfBirth,
+          address: userData.address,
+          city: userData.city,
+          country: userData.country,
+          profileCompleted: userData.profileCompleted || false
+        }
+      })
+    } catch (error) {
+      console.error('Error upserting user:', error)
+      throw error
+    }
   }
 
-  static async updateUserProfile(userId: string, profile: Partial<UserProfile>): Promise<UserProfile> {
-    // Mock implementation
-    return {
-      userId,
-      firstName: profile.firstName || 'John',
-      lastName: profile.lastName || 'Doe',
-      ...(profile.phone !== undefined && { phone: profile.phone }),
-      ...(profile.organization !== undefined && { organization: profile.organization }),
-      preferences: profile.preferences || {}
-    };
+  /**
+   * Eliminar usuario
+   */
+  static async deleteUser(clerkId: string): Promise<Usuario> {
+    try {
+      return await prisma.usuario.delete({
+        where: { clerkId }
+      })
+    } catch (error) {
+      console.error('Error deleting user:', error)
+      throw error
+    }
   }
 }

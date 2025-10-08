@@ -130,15 +130,11 @@ export class ScoutQuantitativeService {
 
     // Calcular métricas del scout actual
     const scoutMetrics = this.calculateScoutMetrics(scoutReports)
-    
+
     // Calcular estadísticas comparativas
     const comparativeStats = this.calculateComparativeStats(allScoutsStats, scoutId)
 
-    // Si no hay datos reales, devolver datos de ejemplo
-    if (scoutReports.length === 0 || allScoutsStats.length <= 1) {
-      return this.getMockQuantitativeData()
-    }
-
+    // Retornar solo datos reales de la base de datos, sin mocks
     return {
       totalReports: {
         scoutValue: scoutMetrics.totalReports,

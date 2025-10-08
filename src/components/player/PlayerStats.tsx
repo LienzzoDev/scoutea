@@ -435,10 +435,10 @@ export default function PlayerStats({
       {activeStatsTab === "radar" && <PlayerRadar playerId={playerId} />}
 
       {/* Beeswarm Content */}
-      {activeStatsTab === "beeswarm" && <PlayerBeeswarm />}
+      {activeStatsTab === "beeswarm" && <PlayerBeeswarm playerId={playerId} />}
 
       {/* Lollipop Content */}
-      {activeStatsTab === "lollipop" && <PlayerLollipop />}
+      {activeStatsTab === "lollipop" && <PlayerLollipop playerId={playerId} />}
     </div>
   );
 }

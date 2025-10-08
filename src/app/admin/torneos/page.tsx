@@ -9,14 +9,14 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { LoadingPage, LoadingCard } from "@/components/ui/loading-spinner"
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
-import { useTournaments, TorneoFilters } from "@/hooks/tournament/useTournaments"
+import { useTournaments, TorneoFilters, Torneo } from "@/hooks/tournament/useTournaments"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 export default function TorneosPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
   const _router = useRouter()
   const searchParams = useSearchParams()
-  const [_selectedTorneo, _setSelectedTorneo] = useState<Tournament | null>(null)
+  const [_selectedTorneo, _setSelectedTorneo] = useState<Torneo | null>(null)
   const [_isModalOpen, _setIsModalOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
@@ -92,7 +92,7 @@ export default function TorneosPage() {
     setCurrentPage(1)
   }
 
-  const handleFilterChange = (___key: string, value: string) => {
+  const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({
       ...prev,
       [key]: value === '' ? undefined : value
@@ -305,7 +305,7 @@ export default function TorneosPage() {
                 <div>
                   <p className="text-sm font-medium text-gray-400">En Curso</p>
                   <p className="text-2xl font-bold text-[#D6DDE6]">
-                    {torneos.filter(t => t.estado === 'en_curso').length}
+                    {torneos?.filter(t => t.estado === 'en_curso').length || 0}
                   </p>
                 </div>
               </div>
@@ -327,7 +327,7 @@ export default function TorneosPage() {
                   Reintentar
                 </Button>
               </div>
-            ) : torneos.length === 0 ? (
+            ) : !torneos || torneos.length === 0 ? (
               <div className="p-6 text-center">
                 <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-400 mb-4">No se encontraron torneos</p>
