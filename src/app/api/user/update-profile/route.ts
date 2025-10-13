@@ -34,14 +34,26 @@ export async function POST(request: NextRequest) {
     logger.info('Updating user profile', { userId, firstName, lastName })
 
     // Usar el servicio de transacciones para completar el perfil
-    const result = await TransactionService.completeUserProfile(userId, {
+    const profileData: {
+      firstName: string;
+      lastName: string;
+      dateOfBirth?: Date;
+      address?: string;
+      city?: string;
+      country?: string;
+    } = {
       firstName,
       lastName,
-      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
-      address,
-      city,
-      country
-    })
+    };
+
+    if (dateOfBirth) {
+      profileData.dateOfBirth = new Date(dateOfBirth);
+    }
+    if (address) profileData.address = address;
+    if (city) profileData.city = city;
+    if (country) profileData.country = country;
+
+    const result = await TransactionService.completeUserProfile(userId, profileData)
 
     if (!result.success) {
       logger.error('Failed to complete user profile', {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { usePlayerList } from './player/usePlayerList';
 import type { PlayerData, PlayerFilters, FilterOptions, Category } from '@/types/dashboard';
+import { DASHBOARD_CATEGORY_GROUPS } from '@/constants/dashboard-categories';
 
 export const useDashboardState = () => {
   // Estados básicos
@@ -8,7 +9,7 @@ export const useDashboardState = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [_paymentSuccess, _setPaymentSuccess] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(['name', 'position', 'age', 'team']);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(['position', 'age', 'team']);
   const [activeFilters, setActiveFilters] = useState<PlayerFilters>({});
   const [selectedNationalities, setSelectedNationalities] = useState<string[]>([]);
   const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
@@ -92,132 +93,28 @@ export const useDashboardState = () => {
   }), [filteredPlayers.length, playerList.length]);
 
   // Categorías disponibles (memoizado para evitar re-creación)
-  const AVAILABLE_CATEGORIES = useMemo(() => [
-    {
-      key: 'position',
-      label: 'Posición',
-      enabled: true,
-      getValue: (player: Record<string, unknown>) => player.position_player || player.position
-    },
-    { 
-      key: 'age', 
-      label: 'Edad', 
-      enabled: true,
-      getValue: (player: Record<string, unknown>) => player.age
-    },
-    { 
-      key: 'team', 
-      label: 'Equipo', 
-      enabled: true,
-      getValue: (player: Record<string, unknown>) => player.team_name || player.team
-    },
-    { 
-      key: 'nationality', 
-      label: 'Nacionalidad', 
-      enabled: true,
-      getValue: (player: Record<string, unknown>) => player.nationality_1 || player.nationality
-    },
-    { 
-      key: 'rating', 
-      label: 'Rating', 
-      enabled: false,
-      getValue: (player: Record<string, unknown>) => player.player_rating || player.rating
-    },
-    { 
-      key: 'height', 
-      label: 'Altura', 
-      enabled: false,
-      getValue: (player: Record<string, unknown>) => player.height ? `${player.height} cm` : player.height
-    },
-    { 
-      key: 'foot', 
-      label: 'Pie Hábil', 
-      enabled: false,
-      getValue: (player: Record<string, unknown>) => player.correct_foot || player.foot
-    },
-    { 
-      key: 'market_value', 
-      label: 'Valor de Mercado', 
-      enabled: false,
-      getValue: (player: Record<string, unknown>) => {
-        const value = player.player_trfm_value || player.market_value;
-        if (!value) return value;
-        const numValue = typeof value === 'string' ? parseFloat(value) : value;
-        return `€${numValue.toFixed(2)}M`;
-      }
-    },
-    { 
-      key: 'birth_date', 
-      label: 'Fecha de Nacimiento', 
-      enabled: false,
-      getValue: (player: Record<string, unknown>) => {
-        const date = player.correct_date_of_birth || player.date_of_birth || player.birth_date;
-        return date ? new Date(date as string).toLocaleDateString('es-ES') : date;
-      }
-    },
-    { 
-      key: 'team_country', 
-      label: 'País del Equipo', 
-      enabled: false,
-      getValue: (player: Record<string, unknown>) => player.team_country || player.country
-    },
-    { 
-      key: 'competition', 
-      label: 'Competición', 
-      enabled: false,
-      getValue: (player: Record<string, unknown>) => player.team_competition || player.competition
-    },
-    { 
-      key: 'contract_expires', 
-      label: 'Fin de Contrato', 
-      enabled: false,
-      getValue: (player: Record<string, unknown>) => {
-        const date = player.contract_expires;
-        return date ? new Date(date as string).toLocaleDateString('es-ES') : 'N/A';
-      }
-    },
-    { 
-      key: 'on_loan', 
-      label: 'Cedido', 
-      enabled: false,
-      getValue: (player: Record<string, unknown>) => player.on_loan ? 'Sí' : 'No'
-    },
-    { 
-      key: 'goals', 
-      label: 'Goles', 
-      enabled: false,
-      getValue: (player: Record<string, unknown>) => player.goals || 0
-    },
-    { 
-      key: 'assists', 
-      label: 'Asistencias', 
-      enabled: false,
-      getValue: (player: Record<string, unknown>) => player.assists || 0
-    },
-    { 
-      key: 'matches_played', 
-      label: 'Partidos Jugados', 
-      enabled: false,
-      getValue: (player: Record<string, unknown>) => player.matches_played || player.games || 0
-    },
-    { 
-      key: 'minutes_played', 
-      label: 'Minutos Jugados', 
-      enabled: false,
-      getValue: (player: Record<string, unknown>) => {
-        const minutes = player.minutes_played || player.minutes;
-        return minutes ? `${minutes}'` : 0;
+  const AVAILABLE_CATEGORIES = useMemo(() => DASHBOARD_CATEGORY_GROUPS, []);
+
+  // Helper to flatten categories from groups
+  const flattenCategories = useCallback((groups: typeof DASHBOARD_CATEGORY_GROUPS): Category[] => {
+    const flattened: Category[] = []
+    const processGroup = (group: typeof DASHBOARD_CATEGORY_GROUPS[0]) => {
+      flattened.push(...group.categories)
+      if (group.subgroups) {
+        group.subgroups.forEach(processGroup)
       }
     }
-  ], []);
+    groups.forEach(processGroup)
+    return flattened
+  }, [])
 
   // Datos de categorías seleccionadas (memoizado) - ordenadas según selección
-  const selectedCategoriesData = useMemo(() => 
-    selectedCategories
-      .map(categoryKey => AVAILABLE_CATEGORIES.find(cat => cat.key === categoryKey))
-      .filter(Boolean) as typeof AVAILABLE_CATEGORIES,
-    [AVAILABLE_CATEGORIES, selectedCategories]
-  );
+  const selectedCategoriesData = useMemo(() => {
+    const allCategories = flattenCategories(AVAILABLE_CATEGORIES)
+    return selectedCategories
+      .map(categoryKey => allCategories.find(cat => cat.key === categoryKey))
+      .filter(Boolean) as Category[]
+  }, [AVAILABLE_CATEGORIES, selectedCategories, flattenCategories]);
 
   // Funciones (memoizadas con useCallback)
   const handleSearch = useCallback((term: string) => {
@@ -427,9 +324,10 @@ export const useDashboardState = () => {
         aValue = a.player_name || a.name;
         bValue = b.player_name || b.name;
       } else {
-        // Si no, buscar en las categorías
-        const categoryConfig = AVAILABLE_CATEGORIES.find(cat => cat.key === sortBy);
-        if (!categoryConfig) return 0;
+        // Si no, buscar en las categorías aplanadas
+        const allCategories = flattenCategories(AVAILABLE_CATEGORIES);
+        const categoryConfig = allCategories.find(cat => cat.key === sortBy);
+        if (!categoryConfig || !categoryConfig.getValue) return 0;
 
         aValue = categoryConfig.getValue(a);
         bValue = categoryConfig.getValue(b);

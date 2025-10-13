@@ -17,93 +17,7 @@ import { Input } from "@/components/ui/input"
 import ScoutAvatar from "@/components/ui/scout-avatar"
 import { useScoutList } from "@/hooks/scout/useScoutList"
 import { useScouts, Scout } from "@/hooks/scout/useScouts"
-
-
-// 📊 DEFINIR CATEGORÍAS DISPONIBLES PARA MOSTRAR
-interface DisplayCategory {
-  key: string
-  label: string
-  getValue: (scout: Scout) => string | number | null
-  format?: (value: unknown) => string
-}
-
-const AVAILABLE_CATEGORIES: DisplayCategory[] = [
-  {
-    key: 'scout_level',
-    label: 'Scout Level',
-    getValue: (scout) => scout?.scout_level || null,
-    format: (value) => String(value || 'N/A')
-  },
-  {
-    key: 'scout_elo',
-    label: 'Scout ELO',
-    getValue: (scout) => scout?.scout_elo || null,
-    format: (value) => value ? String(Number(value).toFixed(0)) : 'N/A'
-  },
-  {
-    key: 'total_reports',
-    label: 'Total Reports',
-    getValue: (scout) => scout?.total_reports || null,
-    format: (value) => value ? String(value) : '0'
-  },
-  {
-    key: 'roi',
-    label: 'ROI',
-    getValue: (scout) => scout?.roi || null,
-    format: (value) => value ? `${Number(value).toFixed(1)}%` : 'N/A'
-  },
-  {
-    key: 'max_profit',
-    label: 'Max Profit',
-    getValue: (scout) => scout?.max_profit_report || null,
-    format: (value) => {
-      if (!value || typeof value !== 'number') return 'N/A'
-      if (value >= 1000000) return `€${(value / 1000000).toFixed(1)}M`
-      if (value >= 1000) return `€${(value / 1000).toFixed(0)}K`
-      return `€${value}`
-    }
-  },
-  {
-    key: 'nationality',
-    label: 'Nationality',
-    getValue: (scout) => scout?.nationality || null,
-    format: (value) => String(value || 'N/A')
-  },
-  {
-    key: 'expertise',
-    label: 'Expertise',
-    getValue: (scout) => scout?.nationality_expertise || null,
-    format: (value) => String(value || 'N/A')
-  },
-  {
-    key: 'competition',
-    label: 'Competition',
-    getValue: (scout) => scout?.competition_expertise || null,
-    format: (value) => String(value || 'N/A')
-  },
-  {
-    key: 'age',
-    label: 'Age',
-    getValue: (scout) => scout?.age || null,
-    format: (value) => value ? `${value} años` : 'N/A'
-  },
-  {
-    key: 'ranking',
-    label: 'Ranking',
-    getValue: (scout) => scout?.scout_ranking || null,
-    format: (value) => value ? `#${value}` : 'N/A'
-  },
-  {
-    key: 'availability',
-    label: 'Availability',
-    getValue: (scout) => scout?.open_to_work,
-    format: (value) => {
-      if (value === true) return 'Available'
-      if (value === false) return 'Not Available'
-      return 'N/A'
-    }
-  }
-]
+import { SCOUT_CATEGORY_GROUPS, ScoutCategory } from "@/constants/scout-categories"
 
 export default function ScoutsPage() {
   const _router = useRouter()
@@ -173,6 +87,19 @@ export default function ScoutsPage() {
   
 
 
+  // Helper to flatten categories from groups
+  const flattenCategories = (groups: typeof SCOUT_CATEGORY_GROUPS): ScoutCategory[] => {
+    const flattened: ScoutCategory[] = []
+    const processGroup = (group: typeof SCOUT_CATEGORY_GROUPS[0]) => {
+      flattened.push(...group.categories)
+      if (group.subgroups) {
+        group.subgroups.forEach(processGroup)
+      }
+    }
+    groups.forEach(processGroup)
+    return flattened
+  }
+
   // 💾 CARGAR CATEGORÍAS GUARDADAS AL MONTAR EL COMPONENTE
   useEffect(() => {
     const savedCategories = localStorage.getItem('scouts-selected-categories')
@@ -233,13 +160,14 @@ export default function ScoutsPage() {
   // 🎯 OBTENER CATEGORÍAS SELECCIONADAS PARA MOSTRAR
   const getSelectedCategoriesData = () => {
     // Asegurar que siempre haya categorías seleccionadas
-    const categoriesToUse = selectedCategories.length > 0 
-      ? selectedCategories 
+    const categoriesToUse = selectedCategories.length > 0
+      ? selectedCategories
       : ['scout_level', 'scout_elo', 'total_reports']
-    
+
+    const allCategories = flattenCategories(SCOUT_CATEGORY_GROUPS)
     return categoriesToUse
-      .map(key => AVAILABLE_CATEGORIES.find(cat => cat.key === key))
-      .filter(Boolean) as DisplayCategory[]
+      .map(key => allCategories.find(cat => cat.key === key))
+      .filter(Boolean) as ScoutCategory[]
   }
 
 
@@ -286,17 +214,17 @@ export default function ScoutsPage() {
   }, [])
 
   // 🔍 APLICAR FILTROS (INTELIGENTE: LOCAL + API)
-  const applyFilters = useCallback((newFilters: unknown) => {
+  const applyFilters = useCallback((newFilters: Record<string, unknown>) => {
     setActiveFilters(newFilters)
     console.log('🔍 Applying scout __filters: ', newFilters)
-    
+
     // Si hay filtros activos y pocos scouts cargados, hacer llamada a API
-    const hasActiveFilters = Object.keys(newFilters).length > 0 || 
-                            selectedNationalities.length > 0 || 
-                            selectedLevels.length > 0 || 
-                            selectedCountries.length > 0 || 
+    const hasActiveFilters = Object.keys(newFilters as Record<string, unknown>).length > 0 ||
+                            selectedNationalities.length > 0 ||
+                            selectedLevels.length > 0 ||
+                            selectedCountries.length > 0 ||
                             selectedExpertise.length > 0
-    
+
     if (hasActiveFilters && (!scouts || scouts.length < 50)) {
       // Hacer llamada a API para obtener más datos
       const searchOptions = {
@@ -305,17 +233,17 @@ export default function ScoutsPage() {
         sortBy: 'scout_elo' as const,
         sortOrder: 'desc' as const,
         _filters: {
-          ...newFilters,
+          ...(newFilters as Record<string, unknown>),
           ...(searchTerm ? { search: searchTerm } : {})
         }
       }
-      
+
       console.log('🔍 Making API call with scout filters: ', searchOptions)
       searchScouts() // Use mock data for now
     }
-    
+
     // Los filtros se aplicarán en el useEffect que maneja getFilteredScouts
-  }, [searchTerm, selectedNationalities, selectedLevels, selectedCountries, selectedExpertise, scouts]) // Remove searchScouts from dependencies
+  }, [searchTerm, selectedNationalities, selectedLevels, selectedCountries, selectedExpertise, scouts, searchScouts])
 
   // 🧹 LIMPIAR FILTROS (LOCAL)
   const clearFilters = useCallback(() => {
@@ -407,13 +335,12 @@ export default function ScoutsPage() {
           // Nivel del scout
           scout.scout_level?.toLowerCase().includes(searchLower) ||
           // Área de expertise
-          scout.expertise?.toLowerCase().includes(searchLower) ||
-          // Agencia
-          scout.agency?.toLowerCase().includes(searchLower) ||
+          scout.nationality_expertise?.toLowerCase().includes(searchLower) ||
+          scout.competition_expertise?.toLowerCase().includes(searchLower) ||
           // Búsqueda por números (ELO, reportes, etc.)
           scout.scout_elo?.toString().includes(searchTerm.trim()) ||
           scout.total_reports?.toString().includes(searchTerm.trim()) ||
-          scout.roi?.toString().includes(searchTerm.trim())
+          scout.scout_ranking?.toString().includes(searchTerm.trim())
         )
       })
     }
@@ -442,18 +369,18 @@ export default function ScoutsPage() {
         }
         
         // Filtro por ELO
-        if (activeFilters.min_elo && (!scout.scout_elo || scout.scout_elo < activeFilters.min_elo)) {
+        if (activeFilters.min_elo && (!scout.scout_elo || scout.scout_elo < (activeFilters.min_elo as number))) {
           return false
         }
-        if (activeFilters.max_elo && (!scout.scout_elo || scout.scout_elo > activeFilters.max_elo)) {
+        if (activeFilters.max_elo && (!scout.scout_elo || scout.scout_elo > (activeFilters.max_elo as number))) {
           return false
         }
-        
+
         // Filtro por edad
-        if (activeFilters.min_age && (!scout.age || scout.age < activeFilters.min_age)) {
+        if (activeFilters.min_age && (!scout.age || scout.age < (activeFilters.min_age as number))) {
           return false
         }
-        if (activeFilters.max_age && (!scout.age || scout.age > activeFilters.max_age)) {
+        if (activeFilters.max_age && (!scout.age || scout.age > (activeFilters.max_age as number))) {
           return false
         }
         
@@ -476,9 +403,10 @@ export default function ScoutsPage() {
         aValue = a.scout_name || a.name
         bValue = b.scout_name || b.name
       } else {
-        // Si no, buscar en las categorías
-        const categoryConfig = AVAILABLE_CATEGORIES.find(cat => cat.key === sortBy)
-        if (!categoryConfig) return 0
+        // Si no, buscar en las categorías aplanadas
+        const allCategories = flattenCategories(SCOUT_CATEGORY_GROUPS)
+        const categoryConfig = allCategories.find(cat => cat.key === sortBy)
+        if (!categoryConfig || !categoryConfig.getValue) return 0
 
         aValue = categoryConfig.getValue(a)
         bValue = categoryConfig.getValue(b)
@@ -563,7 +491,7 @@ export default function ScoutsPage() {
         {/* 🎛️ SELECTOR DE CATEGORÍAS PARA MOSTRAR */}
         <CategorySelector
           title="Display Categories"
-          categories={AVAILABLE_CATEGORIES}
+          categories={SCOUT_CATEGORY_GROUPS}
           selectedCategories={selectedCategories}
           onCategoryToggle={handleCategoryToggle}
           minCategories={1}
@@ -706,7 +634,7 @@ export default function ScoutsPage() {
                     { value: true, label: 'Disponible' },
                     { value: false, label: 'No Disponible' }
                   ]}
-                  selectedValue={activeFilters.open_to_work}
+                  selectedValue={activeFilters.open_to_work as string | number | boolean | undefined}
                   onSelectionChange={(value) =>{
                     const newFilters = { ...activeFilters }
                     if (value === undefined) {
@@ -726,8 +654,8 @@ export default function ScoutsPage() {
                 </label>
                 <RangeFilter
                   label="ELO"
-                  minValue={activeFilters.min_elo}
-                  maxValue={activeFilters.max_elo}
+                  minValue={activeFilters.min_elo as number | undefined}
+                  maxValue={activeFilters.max_elo as number | undefined}
                   onRangeChange={(min, max) =>{
                     const newFilters = { ...activeFilters }
                     if (min === undefined) {
@@ -752,8 +680,8 @@ export default function ScoutsPage() {
                 </label>
                 <RangeFilter
                   label="Edad"
-                  minValue={activeFilters.min_age}
-                  maxValue={activeFilters.max_age}
+                  minValue={activeFilters.min_age as number | undefined}
+                  maxValue={activeFilters.max_age as number | undefined}
                   onRangeChange={(min, max) =>{
                     const newFilters = { ...activeFilters }
                     if (min === undefined) {
@@ -938,16 +866,8 @@ export default function ScoutsPage() {
                         <div className="flex items-stretch w-full">
                           {getSelectedCategoriesData().map((category, catIndex, array) => {
                             try {
-                              const value = category.getValue(scout)
-                              let formattedValue: string
-
-                              // Apply format function if exists
-                              if (category.format) {
-                                const formatted = category.format(value)
-                                formattedValue = String(formatted || 'N/A')
-                              } else {
-                                formattedValue = String(value || 'N/A')
-                              }
+                              const value = category.getValue ? category.getValue(scout) : 'N/A'
+                              let formattedValue: string = String(value || 'N/A')
 
                               // Final safety check - ensure it's a string
                               if (typeof formattedValue !== 'string') {

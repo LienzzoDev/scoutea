@@ -13,8 +13,7 @@ import { useTournaments } from "@/hooks/tournament/useTournaments";
 export default function TorneosPage() {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { tournaments: torneos = [], loading, error, searchTournaments: searchTorneos } =
-    useTournaments();
+  const { torneos = [], loading, error, searchTorneos } = useTournaments();
   
   // Mock values for missing properties
   const total = torneos.length;
@@ -23,7 +22,7 @@ export default function TorneosPage() {
   // Cargar torneos iniciales al montar el componente
   useEffect(() => {
     searchTorneos();
-  }, []); // Solo ejecutar una vez al montar
+  }, [searchTorneos]); // Solo ejecutar una vez al montar
 
   // Búsqueda automática cuando cambia el término de búsqueda
   useEffect(() => {
@@ -34,11 +33,11 @@ export default function TorneosPage() {
     }
 
     const timeoutId = setTimeout(() => {
-      searchTorneos(searchTerm.trim());
+      searchTorneos({ search: searchTerm.trim() });
     }, 300); // Debounce de 300ms
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm]); // Solo depender del término de búsqueda
+  }, [searchTerm, searchTorneos]); // Depender del término de búsqueda y la función
 
   // Formatear fecha
   const _formatDate = (dateString: string) => {
@@ -129,10 +128,10 @@ export default function TorneosPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {torneos.map((torneo) => (
               <Card
-                key={torneo.id}
+                key={torneo.id_torneo}
                 className="hover:shadow-lg transition-all duration-200 group cursor-pointer hover:scale-105 hover:border-purple-300"
                 onClick={() => {
-                  console.log('Tournament clicked:', torneo.name);
+                  console.log('Tournament clicked:', torneo.nombre);
                 }}
               >
                 <CardContent className="p-6 text-center">
@@ -140,7 +139,7 @@ export default function TorneosPage() {
                   <div className="w-48 h-32 mx-auto mb-4 relative">
                     <Image
                       src="/torneo placeholder.png"
-                      alt={`Logo placeholder para ${torneo.name}`}
+                      alt={`Logo placeholder para ${torneo.nombre}`}
                       width={192}
                       height={128}
                       className="rounded-lg object-contain w-full h-full"
@@ -153,10 +152,10 @@ export default function TorneosPage() {
 
                   {/* Solo título del torneo */}
                   <h3 className="text-lg font-bold text-purple-700">
-                    {torneo.name}
+                    {torneo.nombre}
                   </h3>
                   <p className="text-sm text-gray-600 mt-2">
-                    {torneo.location}
+                    {torneo.ciudad ? `${torneo.ciudad}, ` : ''}{torneo.pais || 'Ubicación no especificada'}
                   </p>
                 </CardContent>
               </Card>
