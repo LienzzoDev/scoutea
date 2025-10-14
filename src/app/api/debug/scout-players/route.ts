@@ -39,8 +39,14 @@ export async function GET(request: NextRequest) {
       select: {
         id_report: true,
         id_player: true,
-        player_name: true,
         report_date: true,
+      },
+      include: {
+        player: {
+          select: {
+            player_name: true,
+          },
+        },
       },
       take: 5
     })

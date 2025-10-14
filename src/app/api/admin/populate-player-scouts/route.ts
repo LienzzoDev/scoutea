@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/db'
+import { generateReportId } from '@/lib/utils/id-generator'
 
 export async function POST(request: NextRequest) {
   try {
@@ -67,21 +68,23 @@ export async function POST(request: NextRequest) {
       const roi = 8 + Math.random() * 12 // 8-20
       const profit = 2 + Math.random() * 8 // 2-10M
 
+      // Generar ID secuencial
+      const reportId = await generateReportId();
+
       const report = await prisma.reporte.create({
         data: {
+          id_report: reportId, // ✅ REP-YYYY-NNNNN formato
           scout_id: scout.id_scout,
           id_player: player.id_player,
-          player_name: player.player_name,
           report_date: new Date(Date.now() - Math.random() * 120 * 24 * 60 * 60 * 1000), // Random date in last 120 days
           report_type: reportType,
           report_status: 'completed',
           form_text_report: description,
 
-          // Player info
-          position_player: player.position_player,
-          nationality_1: player.nationality_1,
-          team_name: player.team_name,
-          date_of_birth: player.date_of_birth,
+          // Snapshot histórico (captura estado inicial del jugador)
+          initial_age: player.age,
+          initial_player_trfm_value: player.player_trfm_value,
+          initial_team: player.team_name,
 
           // Metrics
           potential: potential,

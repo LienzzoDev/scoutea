@@ -1,7 +1,7 @@
 'use client'
 
-import { Search, Filter, Plus, Edit, Trash2, Calendar, MapPin, Trophy, FileText } from "lucide-react"
-import { useRouter, useSearchParams } from 'next/navigation'
+import { Search, Filter, Plus, Edit, Trash2, Globe } from "lucide-react"
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 import { Button } from "@/components/ui/button"
@@ -9,83 +9,102 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { LoadingPage, LoadingCard } from "@/components/ui/loading-spinner"
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
-import { useTournaments, TorneoFilters, Torneo } from "@/hooks/tournament/useTournaments"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-export default function TorneosPage() {
+interface Competition {
+  id: string
+  name: string
+  short_name: string | null
+  country_id: string
+  tier: number
+  confederation: string | null
+  season_format: string | null
+  country: {
+    name: string
+    code: string
+  }
+}
+
+interface CompetitionFilters {
+  search?: string
+  country_id?: string
+  tier?: number
+  confederation?: string
+}
+
+export default function CompeticionesPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
-  const _router = useRouter()
-  const searchParams = useSearchParams()
-  const [_selectedTorneo, _setSelectedTorneo] = useState<Torneo | null>(null)
-  const [_isModalOpen, _setIsModalOpen] = useState(false)
+  const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
-  const [filters, setFilters] = useState<TorneoFilters>({})
+  const [filters, setFilters] = useState<CompetitionFilters>({})
   const [showFilters, setShowFilters] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const [filterOptions, setFilterOptions] = useState<Record<string, unknown> | null>(null)
 
-  const {
-    torneos,
-    loading,
-    error,
-    total,
-    page: _page,
-    totalPages,
-    searchTorneos,
-    deleteTorneo,
-    clearError: _clearError
-  } = useTournaments()
+  // Estados para datos
+  const [competitions, setCompetitions] = useState<Competition[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
 
-  // Cargar torneos al montar el componente
-  useEffect(() => {
-    if (isSignedIn) {
-      searchTorneos(filters, currentPage, 10)
-    }
-  }, [isSignedIn, searchTorneos, filters, currentPage])
-
-  // Recargar datos cuando se regresa de una edición o creación
-  useEffect(() => {
-    const updated = searchParams.get('updated')
-    const created = searchParams.get('created')
-    
-    if ((updated === 'true' || created === 'true') && isSignedIn) {
-      console.log(`🔄 Recargando torneos después de ${updated ? 'actualización' : 'creación'}`)
-      searchTorneos(filters, currentPage, 10)
-      // Limpiar el parámetro de la URL
-      _router.replace('/admin/torneos', { scroll: false })
-    }
-  }, [searchParams, isSignedIn, filters, currentPage, searchTorneos, _router])
-
-  // Recargar datos cuando se regresa de una edición (fallback)
-  useEffect(() => {
-    const handleFocus = () => {
-      // Recargar datos cuando la ventana recupera el foco
-      if (isSignedIn && !loading) {
-        console.log('🔄 Recargando torneos al recuperar foco de ventana')
-        searchTorneos(filters, currentPage, 10)
-      }
-    }
-
-    window.addEventListener('focus', handleFocus)
-    return () => window.removeEventListener('focus', handleFocus)
-  }, [isSignedIn, loading, filters, currentPage, searchTorneos])
+  // Estados para opciones de filtros
+  const [countries, setCountries] = useState<Array<{id: string, name: string}>>([])
+  const [confederations, setConfederations] = useState<string[]>([])
 
   // Cargar opciones de filtros
   useEffect(() => {
     const loadFilterOptions = async () => {
       try {
-        const response = await fetch('/api/torneos/filters')
+        const response = await fetch('/api/competitions/filters')
         if (response.ok) {
-          const options = await response.json()
-          setFilterOptions(options)
+          const data = await response.json()
+          setCountries(data.countries || [])
+          setConfederations(data.confederations || [])
         }
-      } catch (_error) {
-        console.error('Error loading filter options:', error)
+      } catch (err) {
+        console.error('Error loading filter options:', err)
       }
     }
     loadFilterOptions()
   }, [])
+
+  // Cargar competiciones
+  const loadCompetitions = async () => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const params = new URLSearchParams()
+      if (filters.search) params.append('search', filters.search)
+      if (filters.country_id) params.append('country_id', filters.country_id)
+      if (filters.tier) params.append('tier', filters.tier.toString())
+      if (filters.confederation) params.append('confederation', filters.confederation)
+      params.append('page', currentPage.toString())
+      params.append('limit', '10')
+
+      const response = await fetch(`/api/competitions?${params}`)
+
+      if (!response.ok) {
+        throw new Error('Error al cargar competiciones')
+      }
+
+      const data = await response.json()
+      setCompetitions(data.competitions || [])
+      setTotal(data.total || 0)
+      setTotalPages(data.totalPages || 1)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error desconocido')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (isSignedIn) {
+      loadCompetitions()
+    }
+  }, [isSignedIn, filters, currentPage])
 
   const handleSearch = () => {
     setFilters(prev => ({ ...prev, search: searchTerm }))
@@ -95,7 +114,7 @@ export default function TorneosPage() {
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({
       ...prev,
-      [key]: value === '' ? undefined : value
+      [key]: value === '' ? undefined : (key === 'tier' ? parseInt(value) : value)
     }))
     setCurrentPage(1)
   }
@@ -107,29 +126,28 @@ export default function TorneosPage() {
   }
 
   const handleDelete = async (id: string) => {
-    const success = await deleteTorneo(id)
-    if (success) {
+    try {
+      const response = await fetch(`/api/competitions/${id}`, {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) {
+        throw new Error('Error al eliminar competición')
+      }
+
       setShowDeleteConfirm(null)
-      // Recargar la lista
-      searchTorneos(filters, currentPage, 10)
+      loadCompetitions()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al eliminar')
     }
   }
-
-  const formatDate = (date: Date | string) => {
-    return new Date(date).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
-
 
   if (!isLoaded) {
     return <LoadingPage />
   }
 
   if (!isSignedIn) {
-    _router.replace('/login')
+    router.replace('/login')
     return null
   }
 
@@ -141,18 +159,18 @@ export default function TorneosPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-[#D6DDE6] mb-2">
-                Gestión de Torneos
+                Gestión de Competiciones
               </h1>
               <p className="text-gray-400">
-                Administra todos los torneos del sistema
+                Administra todas las competiciones de la base de datos
               </p>
             </div>
             <div className="flex space-x-3">
               <Button
-                onClick={() =>_router.push('/admin/torneos/nuevo-torneo')}
+                onClick={() => router.push('/admin/competiciones/nueva')}
                 className="bg-[#8C1A10] hover:bg-[#7A1610] text-white">
                 <Plus className="h-4 w-4 mr-2" />
-                Nuevo Torneo
+                Nueva Competición
               </Button>
             </div>
           </div>
@@ -166,7 +184,7 @@ export default function TorneosPage() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
-                    placeholder="Buscar torneos..."
+                    placeholder="Buscar competiciones..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -182,7 +200,7 @@ export default function TorneosPage() {
                   Buscar
                 </Button>
                 <Button
-                  onClick={() =>setShowFilters(!showFilters)}
+                  onClick={() => setShowFilters(!showFilters)}
                   variant="outline" className="border-slate-600 text-gray-300 hover:bg-slate-700">
                   <Filter className="h-4 w-4 mr-2" />
                   Filtros
@@ -198,23 +216,23 @@ export default function TorneosPage() {
             </div>
 
             {/* Filtros avanzados */}
-            {showFilters && filterOptions && (
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {showFilters && (
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Tipo de Torneo
+                    País
                   </label>
                   <Select
-                    value={filters.tipo_torneo || undefined}
-                    onValueChange={(value) => handleFilterChange('tipo_torneo', value)}
+                    value={filters.country_id || undefined}
+                    onValueChange={(value) => handleFilterChange('country_id', value)}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>
-                      {filterOptions.tiposTorneo.map((tipo: string) => (
-                        <SelectItem key={tipo} value={tipo}>
-                          {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
+                      {countries.map((country) => (
+                        <SelectItem key={country.id} value={country.id}>
+                          {country.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -222,59 +240,39 @@ export default function TorneosPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Categoría
+                    Tier
                   </label>
                   <Select
-                    value={filters.categoria || undefined}
-                    onValueChange={(value) => handleFilterChange('categoria', value)}
+                    value={filters.tier?.toString() || undefined}
+                    onValueChange={(value) => handleFilterChange('tier', value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5].map((tier) => (
+                        <SelectItem key={tier} value={tier.toString()}>
+                          Tier {tier}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Confederación
+                  </label>
+                  <Select
+                    value={filters.confederation || undefined}
+                    onValueChange={(value) => handleFilterChange('confederation', value)}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Todas" />
                     </SelectTrigger>
                     <SelectContent>
-                      {filterOptions.categorias.map((categoria: string) => (
-                        <SelectItem key={categoria} value={categoria}>
-                          {categoria}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Género
-                  </label>
-                  <Select
-                    value={filters.genero || undefined}
-                    onValueChange={(value) => handleFilterChange('genero', value)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Todos" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {filterOptions.generos.map((genero: string) => (
-                        <SelectItem key={genero} value={genero}>
-                          {genero.charAt(0).toUpperCase() + genero.slice(1)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Estado
-                  </label>
-                  <Select
-                    value={filters.estado || undefined}
-                    onValueChange={(value) => handleFilterChange('estado', value)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Todos" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {filterOptions.estados.map((estado: string) => (
-                        <SelectItem key={estado} value={estado}>
-                          {estado.charAt(0).toUpperCase() + estado.slice(1)}
+                      {confederations.map((conf) => (
+                        <SelectItem key={conf} value={conf}>
+                          {conf}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -290,30 +288,17 @@ export default function TorneosPage() {
           <Card className="bg-[#131921] border-slate-700">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <Trophy className="h-8 w-8 text-[#8C1A10] mr-3" />
+                <Globe className="h-8 w-8 text-[#8C1A10] mr-3" />
                 <div>
-                  <p className="text-sm font-medium text-gray-400">Total Torneos</p>
+                  <p className="text-sm font-medium text-gray-400">Total Competiciones</p>
                   <p className="text-2xl font-bold text-[#D6DDE6]">{total}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-[#131921] border-slate-700">
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Calendar className="h-8 w-8 text-green-500 mr-3" />
-                <div>
-                  <p className="text-sm font-medium text-gray-400">En Curso</p>
-                  <p className="text-2xl font-bold text-[#D6DDE6]">
-                    {torneos?.filter(t => t.estado === 'en_curso').length || 0}
-                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Lista de torneos */}
+        {/* Lista de competiciones */}
         <Card className="bg-[#131921] border-slate-700">
           <CardContent className="p-0">
             {loading ? (
@@ -322,19 +307,19 @@ export default function TorneosPage() {
               </div>
             ) : error ? (
               <div className="p-6 text-center">
-                <p className="text-red-400 mb-4">{typeof error === 'string' ? error : error?.message || 'Error desconocido'}</p>
-                <Button onClick={() => searchTorneos(filters, currentPage, 10)}>
+                <p className="text-red-400 mb-4">{error}</p>
+                <Button onClick={loadCompetitions}>
                   Reintentar
                 </Button>
               </div>
-            ) : !torneos || torneos.length === 0 ? (
+            ) : !competitions || competitions.length === 0 ? (
               <div className="p-6 text-center">
-                <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-400 mb-4">No se encontraron torneos</p>
+                <Globe className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-400 mb-4">No se encontraron competiciones</p>
                 <Button
-                  onClick={() =>_router.push('/admin/torneos/nuevo-torneo')}
+                  onClick={() => router.push('/admin/competiciones/nueva')}
                   className="bg-[#8C1A10] hover:bg-[#7A1610] text-white">
-                  Crear Primer Torneo
+                  Crear Primera Competición
                 </Button>
               </div>
             ) : (
@@ -343,16 +328,19 @@ export default function TorneosPage() {
                   <thead className="bg-[#1F2937] border-b border-slate-700">
                     <tr>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Torneo
+                        Nombre
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Competición
+                        País
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Fechas
+                        Tier
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        PDF
+                        Confederación
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Formato
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                         Acciones
@@ -360,85 +348,56 @@ export default function TorneosPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-700">
-                    {torneos.map((torneo) => (
-                      <tr key={torneo.id_torneo} className="hover:bg-[#1F2937]">
+                    {competitions.map((competition) => (
+                      <tr key={competition.id} className="hover:bg-[#1F2937]">
                         <td className="px-6 py-4">
                           <div>
                             <div className="text-sm font-medium text-[#D6DDE6]">
-                              {torneo.nombre}
+                              {competition.name}
                             </div>
-                            <div className="text-sm text-gray-400">
-                              {torneo.organizador && `por ${torneo.organizador}`}
-                            </div>
-                            {torneo.pais && (
-                              <div className="flex items-center text-xs text-gray-500 mt-1">
-                                <MapPin className="h-3 w-3 mr-1" />
-                                {torneo.ciudad && `${torneo.ciudad}, `}
-                                {torneo.pais}
+                            {competition.short_name && (
+                              <div className="text-sm text-gray-400">
+                                {competition.short_name}
                               </div>
                             )}
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          {torneo.competition ? (
-                            <div>
-                              <div className="text-sm font-medium text-[#D6DDE6]">
-                                {torneo.competition.competition_name}
-                              </div>
-                              {torneo.competition.competition_country && (
-                                <div className="text-xs text-gray-400">
-                                  {torneo.competition.competition_country}
-                                </div>
-                              )}
-                              {torneo.competition.competition_tier && (
-                                <div className="text-xs text-gray-500">
-                                  {torneo.competition.competition_tier}
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-gray-500 text-sm">Sin competición</span>
-                          )}
+                          <div className="text-sm text-[#D6DDE6]">
+                            {competition.country.name}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {competition.country.code}
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-[#D6DDE6]">
-                            {formatDate(torneo.fecha_inicio)}
-                          </div>
-                          <div className="text-sm text-gray-400">
-                            hasta {formatDate(torneo.fecha_fin)}
+                            Tier {competition.tier}
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          {(() => {
-                            console.log(`🔍 Debug UI - Torneo ${torneo.nombre}: pdf_url =`, torneo.pdf_url)
-                            return torneo.pdf_url ? (
-                              <a
-                                href={torneo.pdf_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center text-blue-400 hover:text-blue-300"
-                              >
-                                <FileText className="h-4 w-4 mr-1" />
-                                Ver PDF
-                              </a>
-                            ) : (
-                              <span className="text-gray-500 text-sm">Sin PDF</span>
-                            )
-                          })()}
+                          <div className="text-sm text-[#D6DDE6]">
+                            {competition.confederation || 'N/A'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-[#D6DDE6]">
+                            {competition.season_format || 'N/A'}
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex space-x-2">
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() =>_router.push(`/admin/torneos/${torneo.id_torneo}/editar`)}
+                              onClick={() => router.push(`/admin/competiciones/${competition.id}/editar`)}
                               className="border-slate-600 text-gray-300 hover:bg-slate-700">
                               <Edit className="h-3 w-3" />
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() =>setShowDeleteConfirm(torneo.id_torneo)}
+                              onClick={() => setShowDeleteConfirm(competition.id)}
                               className="border-red-600 text-red-400 hover:bg-red-900">
                               <Trash2 className="h-3 w-3" />
                             </Button>
@@ -458,7 +417,7 @@ export default function TorneosPage() {
           <div className="mt-6 flex justify-center">
             <div className="flex space-x-2">
               <Button
-                onClick={() =>setCurrentPage(prev => Math.max(1, prev - 1))}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
                 variant="outline" className="border-slate-600 text-gray-300 hover:bg-slate-700">
                 Anterior
@@ -467,7 +426,7 @@ export default function TorneosPage() {
                 Página {currentPage} de {totalPages}
               </span>
               <Button
-                onClick={() =>setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
                 variant="outline" className="border-slate-600 text-gray-300 hover:bg-slate-700">
                 Siguiente
@@ -485,16 +444,16 @@ export default function TorneosPage() {
                   Confirmar Eliminación
                 </h3>
                 <p className="text-gray-400 mb-6">
-                  ¿Estás seguro de que quieres eliminar este torneo? Esta acción no se puede deshacer.
+                  ¿Estás seguro de que quieres eliminar esta competición? Esta acción no se puede deshacer.
                 </p>
                 <div className="flex space-x-3">
                   <Button
-                    onClick={() =>setShowDeleteConfirm(null)}
+                    onClick={() => setShowDeleteConfirm(null)}
                     variant="outline" className="flex-1 border-slate-600 text-gray-300 hover:bg-slate-700">
                     Cancelar
                   </Button>
                   <Button
-                    onClick={() =>handleDelete(showDeleteConfirm)}
+                    onClick={() => handleDelete(showDeleteConfirm)}
                     className="flex-1 bg-red-600 hover:bg-red-700 text-white">
                     Eliminar
                   </Button>

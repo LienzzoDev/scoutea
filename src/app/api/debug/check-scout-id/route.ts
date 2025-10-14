@@ -31,9 +31,15 @@ export async function GET(request: NextRequest) {
         id_report: true,
         scout_id: true,
         id_player: true,
-        player_name: true,
         report_date: true,
         report_author: true,
+      },
+      include: {
+        player: {
+          select: {
+            player_name: true,
+          },
+        },
       },
       orderBy: {
         report_date: 'desc',
@@ -50,9 +56,15 @@ export async function GET(request: NextRequest) {
         id_report: true,
         scout_id: true,
         id_player: true,
-        player_name: true,
         report_date: true,
         report_author: true,
+      },
+      include: {
+        player: {
+          select: {
+            player_name: true,
+          },
+        },
       },
       orderBy: {
         report_date: 'desc',
@@ -93,7 +105,7 @@ export async function GET(request: NextRequest) {
           id: r.id_report,
           scoutId: r.scout_id,
           playerId: r.id_player,
-          playerName: r.player_name,
+          playerName: r.player?.player_name || 'Unknown',
           author: r.report_author,
           date: r.report_date,
         })),
@@ -110,7 +122,7 @@ export async function GET(request: NextRequest) {
         scoutInfo: allScouts.find(s => s.id_scout === scoutId),
         sampleReports: reports.slice(0, 3).map(r => ({
           id: r.id_report,
-          playerName: r.player_name,
+          playerName: r.player?.player_name || 'Unknown',
           author: r.report_author,
         })),
       })),

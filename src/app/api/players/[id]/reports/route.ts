@@ -8,44 +8,54 @@ export async function GET(
   try {
     const playerId = params.id;
 
-    // Obtener todos los reportes del jugador a través de la tabla de relación
-    const playerReports = await prisma.scoutPlayerReport.findMany({
+    // Buscar directamente en la tabla Reporte por id_player
+    const directReports = await prisma.reporte.findMany({
       where: {
-        playerId: playerId,
+        id_player: playerId,
       },
       include: {
-        report: true,
         scout: {
           select: {
             scout_name: true,
             scout_email: true,
           },
         },
+        player: {
+          select: {
+            player_name: true,
+            url_trfm: true,
+            url_trfm_advisor: true,
+            url_secondary: true,
+            url_instagram: true,
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc',
+        report_date: 'desc',
       },
     });
 
-    // Formatear los reportes para el frontend
-    const formattedReports = playerReports.map((pr) => ({
-      id: pr.id,
-      reportId: pr.reportId,
-      scoutName: pr.scout.scout_name || "Scout desconocido",
-      scoutEmail: pr.scout.scout_email,
-      profileType: pr.report.report_type || "Reporte general",
-      status: pr.report.report_status,
-      validation: pr.report.report_validation,
-      date: pr.report.report_date || pr.createdAt,
-      playerName: pr.report.player_name,
-      // URLs
-      urlReference: pr.report.form_url_reference,
-      urlTrfm: pr.report.url_trfm,
-      urlTrfmAdvisor: pr.report.url_trfm_advisor,
-      urlSecondary: pr.report.url_secondary,
-      urlInstagram: pr.report.url_instagram,
-      // Datos del reporte completo por si se necesitan
-      reportData: pr.report,
+    // Formatear reportes
+    const formattedReports = directReports.map((report) => ({
+      id: report.id_report,
+      reportId: report.id_report,
+      scoutName: report.scout?.scout_name || report.report_author || "Scout desconocido",
+      scoutEmail: report.scout?.scout_email,
+      profileType: report.report_type || "Reporte general",
+      status: report.report_status,
+      validation: report.report_validation,
+      date: report.report_date || report.createdAt,
+      playerName: report.player?.player_name || "Jugador desconocido",
+      // URLs - ahora desde player
+      urlReference: undefined, // Campo eliminado (form_url_reference era temporal)
+      urlTrfm: report.player?.url_trfm,
+      urlTrfmAdvisor: report.player?.url_trfm_advisor,
+      urlSecondary: report.player?.url_secondary,
+      urlInstagram: report.player?.url_instagram,
+      urlVideo: report.form_url_video,
+      textReport: report.form_text_report,
+      // Datos del reporte completo
+      reportData: report,
     }));
 
     return NextResponse.json({

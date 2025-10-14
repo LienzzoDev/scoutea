@@ -67,10 +67,10 @@ export async function GET(request: NextRequest) {
         potential: report.potential,
         player: {
           id_player: report.player?.id_player || report.id_player || '',
-          player_name: report.player?.player_name || report.player_name || 'Unknown',
-          position_player: report.player?.position_player || report.position_player,
-          nationality_1: report.player?.nationality_1 || report.nationality_1,
-          team_name: report.player?.team_name || report.team_name,
+          player_name: report.player?.player_name || 'Unknown',
+          position_player: report.player?.position_player,
+          nationality_1: report.player?.nationality_1,
+          team_name: report.player?.team_name,
           age
         }
       }

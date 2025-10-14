@@ -77,6 +77,9 @@ export default function DashboardHeader() {
               <a href="/admin/equipos" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
                 Equipos
               </a>
+              <a href="/admin/competiciones" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
+                Competiciones
+              </a>
               <a href="/admin/torneos" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
                 Torneos
               </a>
@@ -198,6 +201,9 @@ export default function DashboardHeader() {
             </a>
             <a href="/admin/equipos" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
               Equipos
+            </a>
+            <a href="/admin/competiciones" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
+              Competiciones
             </a>
             <a href="/admin/torneos" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
               Torneos

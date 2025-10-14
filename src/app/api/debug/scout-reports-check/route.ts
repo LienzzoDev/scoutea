@@ -33,9 +33,15 @@ export async function GET(request: NextRequest) {
         id_report: true,
         scout_id: true,
         id_player: true,
-        player_name: true,
         report_date: true,
         report_type: true,
+      },
+      include: {
+        player: {
+          select: {
+            player_name: true,
+          },
+        },
       },
       orderBy: {
         report_date: 'desc',
@@ -52,9 +58,15 @@ export async function GET(request: NextRequest) {
         id_report: true,
         scout_id: true,
         id_player: true,
-        player_name: true,
         report_date: true,
         report_type: true,
+      },
+      include: {
+        player: {
+          select: {
+            player_name: true,
+          },
+        },
       },
       orderBy: {
         report_date: 'desc',
@@ -96,13 +108,13 @@ export async function GET(request: NextRequest) {
         allReports: allReports.map(r => ({
           id: r.id_report,
           playerId: r.id_player,
-          playerName: r.player_name,
+          playerName: r.player?.player_name || 'Unknown',
           date: r.report_date,
         })),
         reportsWithPlayerData: reportsWithPlayer.map(r => ({
           id: r.id_report,
           playerId: r.id_player,
-          playerName: r.player_name,
+          playerName: r.player?.player_name || 'Unknown',
           date: r.report_date,
         })),
         playersInDb: playersInDb,

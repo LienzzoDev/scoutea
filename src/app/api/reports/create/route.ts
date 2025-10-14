@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/db'
 import { ScoutReportCreateSchema } from '@/lib/validation/api-schemas'
+import { generateReportId, generatePlayerId } from '@/lib/utils/id-generator'
 
 export async function POST(request: NextRequest) {
   try {
@@ -53,8 +54,11 @@ export async function POST(request: NextRequest) {
 
     // Si no existe, crear el jugador
     if (!player) {
+      const playerId = await generatePlayerId(); // Generar ID secuencial: PLY-00020
+
       player = await prisma.jugador.create({
         data: {
+          id_player: playerId, // ✅ Nuevo ID secuencial
           player_name: validatedData.playerName,
           date_of_birth: new Date(validatedData.dateOfBirth),
           position_player: validatedData.position || null,
@@ -70,20 +74,36 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    // Generar ID secuencial para el reporte
+    const reportId = await generateReportId();
+
     // Crear el reporte
     const report = await prisma.reporte.create({
       data: {
+        id_report: reportId, // ✅ Nuevo ID secuencial: REP-YYYY-NNNNN
         scout_id: scout.id_scout,
         id_player: player.id_player,
-        player_name: validatedData.playerName,
         report_date: new Date(),
         report_type: 'original',
+        report_status: 'completed',
+
+        // URLs y contenido del reporte
         form_url_reference: validatedData.urlReference,
         form_url_report: validatedData.urlReport || null,
         form_url_video: validatedData.urlVideo || null,
         form_text_report: validatedData.reportText || null,
-        form_potential: validatedData.potential.toString(),
         url_secondary: validatedData.imageUrl || null,
+
+        // Análisis del scout
+        form_potential: validatedData.potential.toString(),
+        potential: validatedData.potential,
+
+        // Snapshot histórico (estado inicial del jugador al momento del reporte)
+        initial_age: player.age,
+        initial_player_trfm_value: player.player_trfm_value,
+        initial_team: player.team_name,
+
+        // Datos del formulario original
         form_player_name: validatedData.playerName,
         form_date_of_birth: validatedData.dateOfBirth,
         form_team_name: validatedData.team,
@@ -94,17 +114,6 @@ export async function POST(request: NextRequest) {
         form_nationality_2: validatedData.nationality2 || null,
         form_national_tier: validatedData.nationalTier || null,
         form_agency: validatedData.agency || null,
-        // Copiar datos del jugador al reporte
-        date_of_birth: player.date_of_birth,
-        position_player: player.position_player,
-        height: player.height,
-        foot: player.foot,
-        team_name: player.team_name,
-        team_country: player.team_country,
-        nationality_1: player.nationality_1,
-        nationality_2: player.nationality_2,
-        national_tier: player.national_tier,
-        agency: player.agency,
       }
     })
 
@@ -121,9 +130,9 @@ export async function POST(request: NextRequest) {
       success: true,
       data: {
         report: {
-          id_report: report.id_report,
-          player_name: report.player_name,
-          report_date: report.report_date
+          id_report: report.id_report, // REP-2025-00056 formato
+          report_date: report.report_date,
+          report_type: report.report_type,
         },
         player: {
           id_player: player.id_player,

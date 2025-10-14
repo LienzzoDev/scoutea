@@ -146,8 +146,7 @@ model Jugador {
   playerStats3m                   PlayerStats3m?
   radarMetrics                    RadarMetrics[]
   reportes                        Reporte[]
-  scoutPlayerReports              ScoutPlayerReport[]
-  
+
   // NUEVAS RELACIONES NORMALIZADAS
   team                            Equipo?             @relation("PlayerTeam", fields: [team_id], references: [id_team])
   position                        Position?           @relation("PlayerPosition", fields: [position_id], references: [id])
@@ -156,6 +155,9 @@ model Jugador {
   corrections                     PlayerCorrection[]  @relation("PlayerCorrections")
   metrics                         PlayerMetric[]      @relation("PlayerMetrics")
   playerRoles                     PlayerRole[]        @relation("PlayerRoles")
+
+  // SISTEMA EAV PARA ATRIBUTOS
+  attributes                      PlayerAttribute[]   @relation("PlayerAttributes")
 
   @@index([player_name])
   @@index([position_player])
@@ -214,32 +216,9 @@ model Equipo {
   @@map("equipos")
 }
 
-model Competicion {
-  id_competition              String   @id @default(cuid())
-  competition_name            String
-  correct_competition_name    String?
-  competition_country         String?
-  url_trfm                    String?
-  competition_confederation   String?
-  competition_tier            String?
-  competition_trfm_value      Float?
-  competition_trfm_value_norm Float?
-  competition_rating          Float?
-  competition_rating_norm     Float?
-  competition_elo             Float?
-  competition_level           String?
-  createdAt                   DateTime @default(now())
-  updatedAt                   DateTime @updatedAt
-  torneos                     Torneo[]
-
-  @@index([competition_name])
-  @@index([competition_country])
-  @@index([competition_confederation])
-  @@index([competition_tier])
-  @@index([competition_rating])
-  @@index([createdAt])
-  @@map("competiciones")
-}
+// MODELO ELIMINADO - Consolidado en Competition (tabla normalizada)
+// Todos los torneos ahora usan el modelo Competition que tiene estructura normalizada
+// con foreign keys a Country y mejores índices
 
 model Torneo {
   id_torneo                String       @id @default(cuid())
@@ -275,8 +254,8 @@ model Torneo {
   createdAt                DateTime     @default(now())
   updatedAt                DateTime     @updatedAt
   pdf_url                  String?
-  id_competition           String?
-  competition              Competicion? @relation(fields: [id_competition], references: [id_competition])
+  competition_id           String?
+  competition              Competition? @relation(fields: [competition_id], references: [id])
 
   @@index([nombre])
   @@index([pais])
@@ -289,11 +268,12 @@ model Torneo {
   @@index([fecha_fin])
   @@index([es_publico])
   @@index([createdAt])
-  @@index([id_competition])
+  @@index([competition_id])
   @@map("torneos")
 }
 
 model Reporte {
+  // ===== CAMPOS ESENCIALES DEL REPORTE =====
   id_report                   String    @id @default(cuid())
   report_status               String?
   report_validation           String?
@@ -301,108 +281,64 @@ model Reporte {
   scout_id                    String?
   report_date                 DateTime?
   report_type                 String?
-  id_player                   String?
-  form_player_name            String?
-  player_name                 String?
-  form_url_reference          String?
-  url_trfm_advisor            String?
-  url_trfm                    String?
-  url_secondary               String?
-  url_instagram               String?
-  form_date_of_birth          String?
-  date_of_birth               DateTime?
-  correct_date_of_birth       DateTime?
-  age                         Int?
-  initial_age                 Int?
-  form_team_name              String?
-  pre_team                    String?
-  team_name                   String?
-  correct_team_name           String?
-  team_country                String?
-  team_elo                    Float?
-  team_level                  String?
-  initial_team                String?
-  correct_initial_team        String?
-  initial_team_elo            Float?
-  initial_team_level          String?
-  transfer_team_pts           Float?
-  form_team_competition       String?
-  team_competition            String?
-  competition_country         String?
-  competition_tier            String?
-  competition_confederation   String?
-  competition_elo             Float?
-  competition_level           String?
-  initial_competition         String?
-  initial_competition_country String?
-  initial_competition_elo     Float?
-  initial_competition_level   String?
-  transfer_competition_pts    Float?
-  owner_club                  String?
-  owner_club_country          String?
-  pre_team_loan_from          String?
-  team_loan_from              String?
-  correct_team_loan_from      String?
-  on_loan                     Boolean?
-  complete_player_name        String?
-  form_position_player        String?
-  position_player             String?
-  correct_position_player     String?
-  form_foot                   String?
-  foot                        String?
-  correct_foot                String?
-  form_height                 String?
-  height                      Float?
-  correct_height              Float?
-  form_nationality_1          String?
-  nationality_1               String?
-  correct_nationality_1       String?
-  form_nationality_2          String?
-  nationality_2               String?
-  correct_nationality_2       String?
-  form_national_tier          String?
-  national_tier               String?
-  rename_national_tier        String?
-  correct_national_tier       String?
-  form_agency                 String?
-  agency                      String?
-  correct_agency              String?
-  contract_end                DateTime?
-  correct_contract_end        DateTime?
-  player_trfm_value           Float?
-  initial_player_trfm_value   Float?
-  roi                         Float?
-  profit                      Float?
-  form_potential              String?
+  id_player                   String?   // Foreign key - toda la info del jugador viene de aquí
   report_format               String?
   form_url_report             String?
   form_url_video              String?
   form_text_report            String?
+
+  // ===== CAMPOS DE ANÁLISIS DEL SCOUT =====
+  // Estos son evaluaciones/snapshot del scout al momento del reporte
+  form_potential              String?   // Evaluación de potencial por el scout
+  roi                         Float?    // Return on investment estimado
+  profit                      Float?    // Beneficio estimado
+
+  // ===== SNAPSHOT HISTÓRICO (al momento del reporte) =====
+  // Estos campos capturan el estado del jugador CUANDO se hizo el reporte
+  initial_age                 Int?
+  initial_player_trfm_value   Float?
+  initial_team                String?
+  correct_initial_team        String?
+  initial_team_elo            Float?
+  initial_team_level          String?
+  initial_competition         String?
+  initial_competition_country String?
+  initial_competition_elo     Float?
+  initial_competition_level   String?
+  transfer_team_pts           Float?    // Puntos de análisis de transferencia
+  transfer_competition_pts    Float?
+
   createdAt                   DateTime  @default(now())
   updatedAt                   DateTime  @updatedAt
-  
-  // Relations
+
+  // ===== RELACIONES =====
   scout                       Scout?    @relation(fields: [scout_id], references: [id_scout])
   player                      Jugador?  @relation(fields: [id_player], references: [id_player])
-  scoutPlayerReports          ScoutPlayerReport[]
 
+  // ===== ÍNDICES OPTIMIZADOS =====
   @@index([report_status])
   @@index([report_validation])
   @@index([report_author])
   @@index([report_date])
   @@index([report_type])
-  @@index([id_player])
-  @@index([player_name])
-  @@index([team_name])
-  @@index([team_country])
-  @@index([competition_country])
-  @@index([position_player])
-  @@index([nationality_1])
-  @@index([agency])
-  @@index([scout_id])
+  @@index([id_player])        // Principal para joins con Jugador
+  @@index([scout_id])         // Principal para joins con Scout
   @@index([createdAt])
   @@map("reportes")
 }
+
+// NOTA FASE 3: Campos eliminados (57 campos redundantes)
+// Toda la información actual del jugador se accede vía relación player:
+// - Nombre: player.player_name, player.complete_player_name
+// - Fechas: player.date_of_birth, player.age
+// - Equipo: player.team.team_name, player.team.team_country
+// - Competición: player.team_competition, player.competition_country
+// - Préstamo: player.owner_club, player.on_loan
+// - Físicas: player.position.name, player.foot, player.height
+// - Nacionalidad: player.nationality.name, player.nationality.code
+// - Agencia: player.agencyRelation.name, player.contract_end
+// - URLs: player.url_trfm, player.url_instagram
+// - Valor actual: player.player_trfm_value
 
 model Scout {
   id_scout                           String      @id @default(cuid())
@@ -524,8 +460,7 @@ model Scout {
   updatedAt                          DateTime    @updatedAt
   scoutLists                         ScoutList[]
   reportes                           Reporte[]
-  scoutPlayerReports                 ScoutPlayerReport[]
-  
+
   // NUEVA RELACIÓN NORMALIZADA
   nationalityCountry                 Country?    @relation("ScoutNationality", fields: [nationality_id], references: [id])
 
@@ -1087,27 +1022,15 @@ model Atributos {
   @@map("atributos")
 }
 
-model ScoutPlayerReport {
-  id        String   @id @default(cuid())
-  scoutId   String
-  playerId  String
-  reportId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  scout     Scout    @relation(fields: [scoutId], references: [id_scout], onDelete: Cascade)
-  player    Jugador  @relation(fields: [playerId], references: [id_player], onDelete: Cascade)
-  report    Reporte  @relation(fields: [reportId], references: [id_report], onDelete: Cascade)
-  
-  @@unique([scoutId, playerId, reportId])
-  @@index([scoutId])
-  @@index([playerId])
-  @@index([reportId])
-  @@index([scoutId, playerId])
-  @@index([createdAt])
-  @@map("scout_player_reports")
-}
+// MODELO ELIMINADO - Tabla junction redundante (LIMPIEZA POST-FASE 3)
+// ScoutPlayerReport era una junction table prácticamente sin uso (1/76 registros)
+// Las relaciones directas en Reporte (scout_id, id_player) son suficientes
+// Eliminada para simplificar el schema sin pérdida de funcionalidad
+//
+// Relaciones existentes en Reporte:
+// - Reporte.scout_id → Scout (directo)
+// - Reporte.id_player → Jugador (directo)
+// Estas relaciones 1:N cubren todos los casos de uso actuales
 
 // ============================================================================
 // NUEVAS TABLAS NORMALIZADAS - FASE 1 DE OPTIMIZACIÓN
@@ -1160,6 +1083,7 @@ model Competition {
   
   // Relaciones
   country           Country       @relation(fields: [country_id], references: [id])
+  torneos           Torneo[]
 
   @@index([country_id])
   @@index([tier])
@@ -1197,11 +1121,13 @@ model PlayerCorrection {
   correction_date   DateTime      @default(now())
   corrected_by      String?       // Usuario que hizo la corrección
   is_verified       Boolean       @default(false)
-  
+
   // Relaciones
   player            Jugador       @relation("PlayerCorrections", fields: [player_id], references: [id_player], onDelete: Cascade)
-  
-  @@unique([player_id, field_name])
+
+  // FIXED: Permitir múltiples correcciones del mismo campo en diferentes fechas
+  @@unique([player_id, field_name, correction_date])
+  @@index([player_id])
   @@index([field_name])
   @@index([correction_date])
   @@map("player_corrections")
@@ -1247,4 +1173,83 @@ model PlayerRole {
   @@index([player_id])
   @@index([role_name])
   @@map("player_roles")
+}
+
+// ============================================================================
+// TABLA DE CONTADORES - Para IDs secuenciales
+// ============================================================================
+
+model SequenceCounter {
+  id           String   @id @default(cuid())
+  entity_type  String   // "reporte", "torneo", etc.
+  year         Int      // 2024, 2025, etc.
+  last_number  Int      @default(0) // Último número usado
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([entity_type, year])
+  @@index([entity_type, year])
+  @@map("sequence_counters")
+}
+
+// ============================================================================
+// SISTEMA EAV PARA ATRIBUTOS - Reemplazo flexible de tabla Atributos
+// ============================================================================
+
+model AttributeDefinition {
+  id                String             @id @default(cuid())
+  name              String             @unique // "passing_short", "dribbling_close", etc.
+  display_name      String             // "Short Passing", "Close Dribbling"
+  category          String             // "passing", "dribbling", "defending", "physical", etc.
+  subcategory       String?            // "technical", "mental", "goalkeeper", etc.
+  min_value         Int                @default(0)
+  max_value         Int                @default(100)
+  description       String?
+  is_active         Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  // Relaciones
+  playerAttributes  PlayerAttribute[]
+
+  @@index([category])
+  @@index([subcategory])
+  @@index([is_active])
+  @@map("attribute_definitions")
+}
+
+model PlayerAttribute {
+  id                  String              @id @default(cuid())
+  player_id           String
+  attribute_id        String
+  value               Int                 // Valor del atributo (ej: 85)
+
+  // Contexto temporal
+  period              String?             // "3m", "6m", "1y", "current"
+  measured_at         DateTime            @default(now())
+
+  // Metadatos
+  source              String?             // "wyscout", "fbref", "scout_manual", "fmi_system"
+  confidence          Float?              // 0-100 confianza en el dato
+  notes               String?
+
+  // Campos calculados
+  percentile          Float?              // Percentil vs otros jugadores
+  rank                Int?                // Ranking en este atributo
+
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  // Relaciones
+  player              Jugador             @relation("PlayerAttributes", fields: [player_id], references: [id_player], onDelete: Cascade)
+  attributeDefinition AttributeDefinition @relation(fields: [attribute_id], references: [id])
+
+  @@unique([player_id, attribute_id, period, measured_at])
+  @@index([player_id])
+  @@index([attribute_id])
+  @@index([period])
+  @@index([measured_at])
+  @@index([player_id, period])
+  @@index([attribute_id, period])
+  @@map("player_attributes")
 }

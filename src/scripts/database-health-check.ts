@@ -75,9 +75,9 @@ async function databaseHealthCheck() {
     stats.push({ name: 'Equipo', count: equipoCount, hasData: equipoCount > 0 })
     console.log(`🏟️  Equipos: ${equipoCount} registros`)
 
-    const competicionCount = await prisma.competicion.count()
-    stats.push({ name: 'Competicion', count: competicionCount, hasData: competicionCount > 0 })
-    console.log(`🏆 Competiciones: ${competicionCount} registros`)
+    const competitionCount = await prisma.competition.count()
+    stats.push({ name: 'Competition', count: competitionCount, hasData: competitionCount > 0 })
+    console.log(`🏆 Competitions: ${competitionCount} registros`)
 
     // 3. REPORTES Y ANÁLISIS
     console.log('\n📋 REPORTES Y ANÁLISIS')
