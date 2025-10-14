@@ -185,31 +185,32 @@ export class MarketValueService {
 
   /**
    * Formatea un valor monetario
+   * NOTA: Los valores en la BD están almacenados en millones (ej: 9 = €9M)
    */
   static formatValue(value?: number | null): string {
     if (!value) return "Por determinar";
 
-    // El valor está en euros completos, formatear en M o B según el tamaño
-    if (value >= 1_000_000_000) {
-      // Billones (B)
-      const billions = value / 1_000_000_000;
+    // Los valores están en millones, formatear directamente
+    if (value >= 1_000) {
+      // Billones (B) - si el valor es >= 1000M
+      const billions = value / 1_000;
       return `€${billions.toFixed(billions >= 10 ? 1 : 2)}B`;
-    } else if (value >= 1_000_000) {
+    } else if (value >= 1) {
       // Millones (M)
-      const millions = value / 1_000_000;
-      return `€${millions.toFixed(millions >= 10 ? 1 : 2)}M`;
-    } else if (value >= 1_000) {
-      // Miles (K)
-      const thousands = value / 1_000;
+      return `€${value.toFixed(value >= 10 ? 1 : 2)}M`;
+    } else if (value >= 0.001) {
+      // Miles (K) - si el valor es < 1M pero >= 1K
+      const thousands = value * 1_000;
       return `€${thousands.toFixed(thousands >= 10 ? 1 : 2)}K`;
     } else {
-      // Menor a 1000
+      // Menor a 1000 euros
+      const euros = value * 1_000_000;
       return new Intl.NumberFormat('es-ES', {
         style: 'currency',
         currency: 'EUR',
         minimumFractionDigits: 0,
         maximumFractionDigits: 0
-      }).format(value);
+      }).format(euros);
     }
   }
 
@@ -248,6 +249,7 @@ export class MarketValueService {
 
   /**
    * Calcula y formatea el cambio absoluto en valor de mercado
+   * NOTA: Los valores en la BD están almacenados en millones (ej: 9 = €9M)
    */
   static formatAbsoluteChange(currentValue?: number | null, previousValue?: number | null): {
     text: string;
@@ -265,7 +267,7 @@ export class MarketValueService {
     }
 
     const change = currentValue - previousValue;
-    const changeInEuros = Math.abs(change); // Ya está en euros
+    const changeInMillions = Math.abs(change); // Ya está en millones
     const isPositive = change > 0;
     const isNeutral = change === 0;
     const sign = isPositive ? "+" : "-";
@@ -273,28 +275,28 @@ export class MarketValueService {
     let formattedChange: string;
 
     // Formatear según el tamaño del número
-    if (changeInEuros >= 1_000_000_000) {
+    if (changeInMillions >= 1_000) {
       // Billones (B)
-      const billions = changeInEuros / 1_000_000_000;
+      const billions = changeInMillions / 1_000;
       formattedChange = `€${billions.toFixed(billions >= 10 ? 1 : 2)}B`;
-    } else if (changeInEuros >= 1_000_000) {
+    } else if (changeInMillions >= 1) {
       // Millones (M)
-      const millions = changeInEuros / 1_000_000;
-      formattedChange = `€${millions.toFixed(millions >= 10 ? 1 : 2)}M`;
-    } else if (changeInEuros >= 1_000) {
+      formattedChange = `€${changeInMillions.toFixed(changeInMillions >= 10 ? 1 : 2)}M`;
+    } else if (changeInMillions >= 0.001) {
       // Miles (K)
-      const thousands = changeInEuros / 1_000;
+      const thousands = changeInMillions * 1_000;
       formattedChange = `€${thousands.toFixed(thousands >= 10 ? 1 : 2)}K`;
     } else {
       // Menor a 1000
-      formattedChange = `€${changeInEuros.toFixed(0)}`;
+      const euros = changeInMillions * 1_000_000;
+      formattedChange = `€${euros.toFixed(0)}`;
     }
 
     return {
       text: isNeutral ? formattedChange : `${sign}${formattedChange}`,
       isPositive,
       isNeutral,
-      color: isPositive ? "text-green-600" : isNeutral ? "text-gray-500" : "text-red-600"
+      color: isPositive ? "text-[#3cc500]" : isNeutral ? "text-gray-500" : "text-red-500"
     };
   }
 }

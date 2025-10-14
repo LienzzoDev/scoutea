@@ -1,6 +1,9 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import { MarketValueService } from "@/lib/services/market-value-service";
 import type { Player } from "@/types/player";
+import { usePlayerAvgValues } from "@/hooks/player/usePlayerAvgValues";
 
 interface PlayerInfoProps {
   player: Player;
@@ -14,11 +17,13 @@ const getDisplayValue = (primary?: string | number | null, correct?: string | nu
 };
 
 export default function PlayerInfo({ player }: PlayerInfoProps) {
+  const { avgValues, loading: avgLoading } = usePlayerAvgValues(player);
   return (
     <div className="bg-white p-6">
       <div className="grid grid-cols-2 gap-x-16">
         {/* Left Column */}
         <div className="space-y-0">
+          {/* Sección: Información Personal */}
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">Nombre:</span>
             <span className="font-medium text-[#2e3138]">
@@ -73,11 +78,44 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
               )}
             </div>
           </div>
+
+          {/* Espacio entre secciones */}
+          <div className="h-4"></div>
+
+          {/* Sección: Características Físicas */}
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">Posición:</span>
             <span className="font-medium text-[#2e3138]">
               {getDisplayValue(player.correct_position_player, player.position_player)}
             </span>
+          </div>
+          <div className="flex justify-between items-center py-3 border-b border-gray-100">
+            <span className="text-[#6d6d6d] text-sm">Avg Value:</span>
+            <div className="flex items-center gap-2">
+              <div className="text-right">
+                <div className="font-medium text-[#2e3138]">
+                  {avgLoading ? "Calculando..." : avgValues.position_value ? `€${avgValues.position_value.toFixed(1)}M` : "Por calcular"}
+                </div>
+                {avgValues.position_value_percent !== null && avgValues.position_value_percent !== undefined && Math.abs(avgValues.position_value_percent) < 1000 && (
+                  <div className={`text-xs ${
+                    avgValues.position_value_percent > 0 ? 'text-[#3cc500]' : avgValues.position_value_percent < 0 ? 'text-red-500' : 'text-gray-500'
+                  }`}>
+                    ({avgValues.position_value_percent > 0 ? '+' : ''}{avgValues.position_value_percent.toFixed(1)}%)
+                  </div>
+                )}
+              </div>
+              {avgValues.position_value_percent !== null && avgValues.position_value_percent !== undefined && Math.abs(avgValues.position_value_percent) < 1000 && (
+                <Badge className={`text-white text-xs px-1 py-0 ${
+                  avgValues.position_value_percent > 0
+                    ? 'bg-[#3cc500]'
+                    : avgValues.position_value_percent < 0
+                    ? 'bg-red-500'
+                    : 'bg-gray-500'
+                }`}>
+                  {avgValues.position_value_percent > 0 ? '▲' : avgValues.position_value_percent < 0 ? '▼' : '●'}
+                </Badge>
+              )}
+            </div>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">Pie Preferido:</span>
@@ -88,29 +126,67 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">Altura:</span>
             <span className="font-medium text-[#2e3138]">
-              {(player.correct_height || player.height) 
-                ? `${player.correct_height || player.height} cm` 
+              {(player.correct_height || player.height)
+                ? `${player.correct_height || player.height} cm`
                 : "Por completar"}
             </span>
           </div>
+
+          {/* Espacio entre secciones */}
+          <div className="h-4"></div>
+
+          {/* Sección: Nacionalidad */}
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
-            <span className="text-[#6d6d6d] text-sm">Nacionalidad:</span>
+            <span className="text-[#6d6d6d] text-sm">Nacionalidad 1:</span>
             <span className="font-medium text-[#2e3138]">
               {getDisplayValue(player.correct_nationality_1, player.nationality_1)}
             </span>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
-            <span className="text-[#6d6d6d] text-sm">Segunda Nacionalidad:</span>
+            <span className="text-[#6d6d6d] text-sm">Avg Value:</span>
+            <div className="flex items-center gap-2">
+              <div className="text-right">
+                <div className="font-medium text-[#2e3138]">
+                  {avgLoading ? "Calculando..." : avgValues.nationality_value ? `€${avgValues.nationality_value.toFixed(1)}M` : "Por calcular"}
+                </div>
+                {avgValues.nationality_value_percent !== null && avgValues.nationality_value_percent !== undefined && Math.abs(avgValues.nationality_value_percent) < 1000 && (
+                  <div className={`text-xs ${
+                    avgValues.nationality_value_percent > 0 ? 'text-[#3cc500]' : avgValues.nationality_value_percent < 0 ? 'text-red-500' : 'text-gray-500'
+                  }`}>
+                    ({avgValues.nationality_value_percent > 0 ? '+' : ''}{avgValues.nationality_value_percent.toFixed(1)}%)
+                  </div>
+                )}
+              </div>
+              {avgValues.nationality_value_percent !== null && avgValues.nationality_value_percent !== undefined && Math.abs(avgValues.nationality_value_percent) < 1000 && (
+                <Badge className={`text-white text-xs px-1 py-0 ${
+                  avgValues.nationality_value_percent > 0
+                    ? 'bg-[#3cc500]'
+                    : avgValues.nationality_value_percent < 0
+                    ? 'bg-red-500'
+                    : 'bg-gray-500'
+                }`}>
+                  {avgValues.nationality_value_percent > 0 ? '▲' : avgValues.nationality_value_percent < 0 ? '▼' : '●'}
+                </Badge>
+              )}
+            </div>
+          </div>
+          <div className="flex justify-between items-center py-3 border-b border-gray-100">
+            <span className="text-[#6d6d6d] text-sm">Nacionalidad 2:</span>
             <span className="font-medium text-[#2e3138]">
               {getDisplayValue(player.correct_nationality_2, player.nationality_2, "No aplica")}
             </span>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
-            <span className="text-[#6d6d6d] text-sm">Nivel Nacional:</span>
+            <span className="text-[#6d6d6d] text-sm">Internacional:</span>
             <span className="font-medium text-[#2e3138]">
               {getDisplayValue(player.correct_national_tier, player.national_tier)}
             </span>
           </div>
+
+          {/* Espacio entre secciones */}
+          <div className="h-4"></div>
+
+          {/* Sección: Agente */}
           <div className="flex justify-between items-center py-3">
             <span className="text-[#6d6d6d] text-sm">Agente:</span>
             <span className="font-medium text-[#2e3138]">
@@ -121,6 +197,7 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
 
         {/* Right Column */}
         <div className="space-y-0">
+          {/* Sección: Equipo */}
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">Equipo:</span>
             <span className="font-medium text-[#2e3138]">
@@ -140,18 +217,44 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
             </span>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
-            <span className="text-[#6d6d6d] text-sm">ELO del Equipo:</span>
-            <span className="font-medium text-[#2e3138]">
-              {player.team_elo ? Math.round(player.team_elo).toString() : "Por calcular"}
-            </span>
+            <span className="text-[#6d6d6d] text-sm">Avg Value:</span>
+            <div className="flex items-center gap-2">
+              <div className="text-right">
+                <div className="font-medium text-[#2e3138]">
+                  {avgLoading ? "Calculando..." : avgValues.team_competition_value ? `€${avgValues.team_competition_value.toFixed(1)}M` : "Por calcular"}
+                </div>
+                {avgValues.team_competition_value_percent !== null && avgValues.team_competition_value_percent !== undefined && Math.abs(avgValues.team_competition_value_percent) < 1000 && (
+                  <div className={`text-xs ${
+                    avgValues.team_competition_value_percent > 0 ? 'text-[#3cc500]' : avgValues.team_competition_value_percent < 0 ? 'text-red-500' : 'text-gray-500'
+                  }`}>
+                    ({avgValues.team_competition_value_percent > 0 ? '+' : ''}{avgValues.team_competition_value_percent.toFixed(1)}%)
+                  </div>
+                )}
+              </div>
+              {avgValues.team_competition_value_percent !== null && avgValues.team_competition_value_percent !== undefined && Math.abs(avgValues.team_competition_value_percent) < 1000 && (
+                <Badge className={`text-white text-xs px-1 py-0 ${
+                  avgValues.team_competition_value_percent > 0
+                    ? 'bg-[#3cc500]'
+                    : avgValues.team_competition_value_percent < 0
+                    ? 'bg-red-500'
+                    : 'bg-gray-500'
+                }`}>
+                  {avgValues.team_competition_value_percent > 0 ? '▲' : avgValues.team_competition_value_percent < 0 ? '▼' : '●'}
+                </Badge>
+              )}
+            </div>
           </div>
+
+          {/* Espacio entre secciones */}
+          <div className="h-4"></div>
+
+          {/* Sección: Préstamo y Club Propietario */}
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">En Préstamo:</span>
             <span className="font-medium text-[#2e3138]">
               {player.on_loan === true ? "Sí" : player.on_loan === false ? "No" : "Por confirmar"}
             </span>
           </div>
-          {/* Solo mostrar Club Propietario y País Propietario si está en préstamo */}
           {player.on_loan && (
             <>
               <div className="flex justify-between items-center py-3 border-b border-gray-100">
@@ -159,6 +262,34 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
                 <span className="font-medium text-[#2e3138]">
                   {getDisplayValue(player.owner_club, null)}
                 </span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                <span className="text-[#6d6d6d] text-sm">Avg Value:</span>
+                <div className="flex items-center gap-2">
+                  <div className="text-right">
+                    <div className="font-medium text-[#2e3138]">
+                      {avgLoading ? "Calculando..." : avgValues.owner_club_value ? `€${avgValues.owner_club_value.toFixed(1)}M` : "Por calcular"}
+                    </div>
+                    {avgValues.owner_club_value_percent !== null && avgValues.owner_club_value_percent !== undefined && Math.abs(avgValues.owner_club_value_percent) < 1000 && (
+                      <div className={`text-xs ${
+                        avgValues.owner_club_value_percent > 0 ? 'text-[#3cc500]' : avgValues.owner_club_value_percent < 0 ? 'text-red-500' : 'text-gray-500'
+                      }`}>
+                        ({avgValues.owner_club_value_percent > 0 ? '+' : ''}{avgValues.owner_club_value_percent.toFixed(1)}%)
+                      </div>
+                    )}
+                  </div>
+                  {avgValues.owner_club_value_percent !== null && avgValues.owner_club_value_percent !== undefined && Math.abs(avgValues.owner_club_value_percent) < 1000 && (
+                    <Badge className={`text-white text-xs px-1 py-0 ${
+                      avgValues.owner_club_value_percent > 0
+                        ? 'bg-[#3cc500]'
+                        : avgValues.owner_club_value_percent < 0
+                        ? 'bg-red-500'
+                        : 'bg-gray-500'
+                    }`}>
+                      {avgValues.owner_club_value_percent > 0 ? '▲' : avgValues.owner_club_value_percent < 0 ? '▼' : '●'}
+                    </Badge>
+                  )}
+                </div>
               </div>
               <div className="flex justify-between items-center py-3 border-b border-gray-100">
                 <span className="text-[#6d6d6d] text-sm">País Propietario:</span>
@@ -176,11 +307,44 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
                 : "Por completar"}
             </span>
           </div>
+
+          {/* Espacio entre secciones */}
+          <div className="h-4"></div>
+
+          {/* Sección: Competición */}
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">Competición:</span>
             <span className="font-medium text-[#2e3138]">
               {getDisplayValue(player.team_competition, null)}
             </span>
+          </div>
+          <div className="flex justify-between items-center py-3 border-b border-gray-100">
+            <span className="text-[#6d6d6d] text-sm">Avg Value:</span>
+            <div className="flex items-center gap-2">
+              <div className="text-right">
+                <div className="font-medium text-[#2e3138]">
+                  {avgLoading ? "Calculando..." : avgValues.team_competition_value ? `€${avgValues.team_competition_value.toFixed(1)}M` : "Por calcular"}
+                </div>
+                {avgValues.team_competition_value_percent !== null && avgValues.team_competition_value_percent !== undefined && Math.abs(avgValues.team_competition_value_percent) < 1000 && (
+                  <div className={`text-xs ${
+                    avgValues.team_competition_value_percent > 0 ? 'text-[#3cc500]' : avgValues.team_competition_value_percent < 0 ? 'text-red-500' : 'text-gray-500'
+                  }`}>
+                    ({avgValues.team_competition_value_percent > 0 ? '+' : ''}{avgValues.team_competition_value_percent.toFixed(1)}%)
+                  </div>
+                )}
+              </div>
+              {avgValues.team_competition_value_percent !== null && avgValues.team_competition_value_percent !== undefined && Math.abs(avgValues.team_competition_value_percent) < 1000 && (
+                <Badge className={`text-white text-xs px-1 py-0 ${
+                  avgValues.team_competition_value_percent > 0
+                    ? 'bg-[#3cc500]'
+                    : avgValues.team_competition_value_percent < 0
+                    ? 'bg-red-500'
+                    : 'bg-gray-500'
+                }`}>
+                  {avgValues.team_competition_value_percent > 0 ? '▲' : avgValues.team_competition_value_percent < 0 ? '▼' : '●'}
+                </Badge>
+              )}
+            </div>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100">
             <span className="text-[#6d6d6d] text-sm">País de Competición:</span>
@@ -200,6 +364,39 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
               {getDisplayValue(player.competition_level, null)}
             </span>
           </div>
+          <div className="flex justify-between items-center py-3 border-b border-gray-100">
+            <span className="text-[#6d6d6d] text-sm">Avg Value:</span>
+            <div className="flex items-center gap-2">
+              <div className="text-right">
+                <div className="font-medium text-[#2e3138]">
+                  {avgLoading ? "Calculando..." : avgValues.competition_level_value ? `€${avgValues.competition_level_value.toFixed(1)}M` : "Por calcular"}
+                </div>
+                {avgValues.competition_level_value_percent !== null && avgValues.competition_level_value_percent !== undefined && Math.abs(avgValues.competition_level_value_percent) < 1000 && (
+                  <div className={`text-xs ${
+                    avgValues.competition_level_value_percent > 0 ? 'text-[#3cc500]' : avgValues.competition_level_value_percent < 0 ? 'text-red-500' : 'text-gray-500'
+                  }`}>
+                    ({avgValues.competition_level_value_percent > 0 ? '+' : ''}{avgValues.competition_level_value_percent.toFixed(1)}%)
+                  </div>
+                )}
+              </div>
+              {avgValues.competition_level_value_percent !== null && avgValues.competition_level_value_percent !== undefined && Math.abs(avgValues.competition_level_value_percent) < 1000 && (
+                <Badge className={`text-white text-xs px-1 py-0 ${
+                  avgValues.competition_level_value_percent > 0
+                    ? 'bg-[#3cc500]'
+                    : avgValues.competition_level_value_percent < 0
+                    ? 'bg-red-500'
+                    : 'bg-gray-500'
+                }`}>
+                  {avgValues.competition_level_value_percent > 0 ? '▲' : avgValues.competition_level_value_percent < 0 ? '▼' : '●'}
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* Espacio entre secciones */}
+          <div className="h-4"></div>
+
+          {/* Sección: Rating */}
           <div className="flex justify-between items-center py-3">
             <span className="text-[#6d6d6d] text-sm">Rating del Jugador:</span>
             <div className="flex items-center gap-2">

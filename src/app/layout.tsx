@@ -21,8 +21,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang='es'>
-      <body className={`${plusJakartaSans.variable} antialiased`}>
+    <html lang='es' suppressHydrationWarning>
+      <body className={`${plusJakartaSans.variable} antialiased`} suppressHydrationWarning>
         <ClerkErrorBoundary>
           <ClerkProvider
             publishableKey={clerkConfig.publishableKey}

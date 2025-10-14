@@ -1,13 +1,22 @@
 'use client'
 
-import { useUser } from '@clerk/nextjs'
-import { User, Mail, Calendar, Shield } from "lucide-react"
+import { useUser, useClerk } from '@clerk/nextjs'
+import { User, Mail, Calendar, Shield, LogOut } from "lucide-react"
 import { MemberPageLayout } from '@/components/layout/member-page-layout'
 import { getUserRole } from '@/lib/auth/user-role'
+import { Button } from '@/components/ui/button'
+import { useRouter } from 'next/navigation'
 
 export default function ProfilePage() {
   const { user, isLoaded } = useUser()
+  const { signOut } = useClerk()
+  const router = useRouter()
   const userRole = getUserRole(user)
+
+  const handleSignOut = async () => {
+    await signOut()
+    router.push('/')
+  }
 
   if (!isLoaded) {
     return (
@@ -78,7 +87,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Account Details */}
-        <div className="bg-white rounded-lg border border-[#e7e7e7] p-8">
+        <div className="bg-white rounded-lg border border-[#e7e7e7] p-8 mb-6">
           <h2 className="text-xl font-semibold text-[#000000] mb-6">Detalles de la Cuenta</h2>
 
           <div className="space-y-4">
@@ -120,6 +129,19 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Sign Out Button */}
+        <div className="bg-white rounded-lg border border-[#e7e7e7] p-8">
+          <h2 className="text-xl font-semibold text-[#000000] mb-4">Sesión</h2>
+          <Button
+            onClick={handleSignOut}
+            variant="destructive"
+            className="bg-[#8c1a10] hover:bg-[#6d1410] text-white"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Cerrar Sesión
+          </Button>
         </div>
       </div>
     </MemberPageLayout>

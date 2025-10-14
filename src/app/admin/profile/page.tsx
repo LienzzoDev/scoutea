@@ -1,15 +1,21 @@
 'use client'
 
-import { useUser } from '@clerk/nextjs'
-import { User, Mail, Calendar, Shield, ArrowLeft } from "lucide-react"
+import { useUser, useClerk } from '@clerk/nextjs'
+import { User, Mail, Calendar, Shield, ArrowLeft, LogOut } from "lucide-react"
 import { useRouter } from 'next/navigation'
 import { getUserRole } from '@/lib/auth/user-role'
 import { Button } from '@/components/ui/button'
 
 export default function AdminProfilePage() {
   const { user, isLoaded } = useUser()
+  const { signOut } = useClerk()
   const userRole = getUserRole(user)
   const router = useRouter()
+
+  const handleSignOut = async () => {
+    await signOut()
+    router.push('/')
+  }
 
   if (!isLoaded) {
     return (
@@ -87,7 +93,7 @@ export default function AdminProfilePage() {
           </div>
 
           {/* Account Details */}
-          <div className="bg-[#131921] border border-slate-700 rounded-lg p-8">
+          <div className="bg-[#131921] border border-slate-700 rounded-lg p-8 mb-6">
             <h3 className="text-xl font-semibold text-[#D6DDE6] mb-6">Detalles de la Cuenta</h3>
 
             <div className="space-y-4">
@@ -129,6 +135,19 @@ export default function AdminProfilePage() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Sign Out Button */}
+          <div className="bg-[#131921] border border-slate-700 rounded-lg p-8">
+            <h3 className="text-xl font-semibold text-[#D6DDE6] mb-4">Sesión</h3>
+            <Button
+              onClick={handleSignOut}
+              variant="destructive"
+              className="bg-[#8c1a10] hover:bg-[#6d1410] text-white"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Cerrar Sesión
+            </Button>
           </div>
         </div>
       </main>

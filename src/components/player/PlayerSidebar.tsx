@@ -13,7 +13,7 @@ interface PlayerSidebarProps {
 
 export default function PlayerSidebar({ player }: PlayerSidebarProps) {
   return (
-    <div className="w-80 bg-white rounded-lg p-6 space-y-6 self-start">
+    <div className="w-80 bg-white rounded-lg p-6 space-y-4 self-start">
       {/* Player Card */}
       <div className="relative">
         <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -125,10 +125,7 @@ export default function PlayerSidebar({ player }: PlayerSidebarProps) {
       </Button>
 
       {/* Rating */}
-      <div>
-        <p className="text-[#6d6d6d] text-sm mb-2">
-          Soccer player rating
-        </p>
+      <div className="flex flex-col items-center">
         <p className="text-2xl font-bold text-[#8c1a10] mb-2">
           9.000.000 €
         </p>
