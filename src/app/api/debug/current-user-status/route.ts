@@ -1,5 +1,6 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
+
 import { getUserRole } from '@/lib/auth/user-role'
 
 export async function GET() {

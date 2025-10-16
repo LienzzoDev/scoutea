@@ -2,9 +2,9 @@ import { headers } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { Webhook } from 'svix'
 
+import { logger } from '@/lib/logging/production-logger'
 import { TransactionService } from '@/lib/services/transaction-service'
 import { UserService } from '@/lib/services/user-service'
-import { logger } from '@/lib/logging/production-logger'
 
 export async function POST(req: NextRequest) {
   // Get the headers

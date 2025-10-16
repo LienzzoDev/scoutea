@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod'
+
 import { logger } from '../logging/production-logger'
 
 // Define the schema for all environment variables

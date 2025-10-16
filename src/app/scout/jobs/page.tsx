@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
 import { Calendar, MapPin, Users, Tag } from 'lucide-react'
+import { useState } from 'react'
+
 import ScoutNavbar from '@/components/layout/scout-navbar'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'

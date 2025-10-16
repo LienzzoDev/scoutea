@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { useRef } from "react";
 
 import BookmarkButton from "@/components/ui/bookmark-button";
-import PlayerAvatar from "@/components/ui/player-avatar";
 import FlagIcon from "@/components/ui/flag-icon";
+import PlayerAvatar from "@/components/ui/player-avatar";
 import TeamBadge from "@/components/ui/team-badge";
 import type { Player } from "@/types/player";
 

@@ -8,6 +8,7 @@
 
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
+
 import { prisma } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
@@ -83,6 +84,29 @@ export async function GET(request: NextRequest) {
       where.team_name = team
     }
 
+    // 🎯 DETERMINAR SI SE NECESITAN TODOS LOS CAMPOS O SOLO LOS BÁSICOS
+    const fullFields = searchParams.get('full') === 'true'
+
+    // 📋 SELECT OPTIMIZADO PARA LISTA (solo 16 campos esenciales para mostrar)
+    const listSelect = {
+      id_player: true,
+      player_name: true,
+      wyscout_id_1: true,
+      wyscout_id_2: true,
+      age: true,
+      position_player: true,
+      nationality_1: true,
+      team_name: true,
+      team_competition: true,
+      player_rating: true,
+      player_trfm_value: true,
+      photo_coverage: true,
+      contract_end: true,
+      agency: true,
+      createdAt: true,
+      updatedAt: true
+    }
+
     // 📊 EJECUTAR QUERY CON CURSOR-BASED PAGINATION
     const players = await prisma.jugador.findMany({
       where,
@@ -97,88 +121,9 @@ export async function GET(request: NextRequest) {
         { player_rating: 'desc' },
         { id_player: 'asc' }
       ],
-      select: {
-        id_player: true,
-        player_name: true,
-        complete_player_name: true,
-        wyscout_id_1: true,
-        wyscout_id_2: true,
-        wyscout_name_1: true,
-        wyscout_name_2: true,
-        id_fmi: true,
-        date_of_birth: true,
-        correct_date_of_birth: true,
-        age: true,
-        age_value: true,
-        age_value_percent: true,
-        age_coeff: true,
-        height: true,
-        correct_height: true,
-        foot: true,
-        correct_foot: true,
-        position_player: true,
-        correct_position_player: true,
-        position_value: true,
-        position_value_percent: true,
-        nationality_1: true,
-        correct_nationality_1: true,
-        nationality_value: true,
-        nationality_value_percent: true,
-        nationality_2: true,
-        correct_nationality_2: true,
-        national_tier: true,
-        rename_national_tier: true,
-        correct_national_tier: true,
-        pre_team: true,
-        team_name: true,
-        correct_team_name: true,
-        team_country: true,
-        team_elo: true,
-        team_level: true,
-        team_level_value: true,
-        team_level_value_percent: true,
-        team_competition: true,
-        competition_country: true,
-        team_competition_value: true,
-        team_competition_value_percent: true,
-        competition_tier: true,
-        competition_confederation: true,
-        competition_elo: true,
-        competition_level: true,
-        competition_level_value: true,
-        competition_level_value_percent: true,
-        owner_club: true,
-        owner_club_country: true,
-        owner_club_value: true,
-        owner_club_value_percent: true,
-        pre_team_loan_from: true,
-        team_loan_from: true,
-        correct_team_loan_from: true,
-        on_loan: true,
-        existing_club: true,
-        agency: true,
-        correct_agency: true,
-        contract_end: true,
-        correct_contract_end: true,
-        player_rating: true,
-        player_rating_norm: true,
-        player_trfm_value: true,
-        player_trfm_value_norm: true,
-        player_elo: true,
-        player_level: true,
-        player_ranking: true,
-        stats_evo_3m: true,
-        total_fmi_pts_norm: true,
-        community_potential: true,
-        photo_coverage: true,
-        video: true,
-        url_trfm_advisor: true,
-        url_trfm: true,
-        url_secondary: true,
-        url_instagram: true,
-        createdAt: true,
-        updatedAt: true
-      }
+      // Usar select optimizado por defecto (16 campos vs 80 campos)
+      // Para obtener todos los campos, usar ?full=true
+      select: fullFields ? undefined : listSelect
     })
 
     // 🔄 DETERMINAR SI HAY MÁS PÁGINAS

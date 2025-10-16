@@ -1,6 +1,7 @@
+import type { Jugador } from '@prisma/client';
+
 import { prisma } from '@/lib/db';
 import type { Player, PlayerStats } from '@/types/player';
-import type { Jugador } from '@prisma/client';
 
 export class PlayerService {
   /**
@@ -102,13 +103,35 @@ export class PlayerService {
     };
   }
 
+  /**
+   * Select minimal para listas (optimizado para performance)
+   */
+  private static readonly LIST_SELECT = {
+    id_player: true,
+    player_name: true,
+    position_player: true,
+    team_name: true,
+    nationality_1: true,
+    age: true,
+    player_rating: true,
+    photo_coverage: true,
+    createdAt: true,
+    updatedAt: true,
+  }
+
   static async getAllPlayers(): Promise<Player[]> {
     try {
       const players = await prisma.jugador.findMany({
+        where: {
+          // Solo mostrar jugadores aprobados
+          approval_status: 'approved'
+        },
         take: 100, // Limit to 100 players for performance
         orderBy: {
           createdAt: 'desc'
-        }
+        },
+        // OPTIMIZACIÓN: Solo seleccionar campos necesarios
+        select: this.LIST_SELECT
       });
 
       // Transform Prisma result to Player type using mapper

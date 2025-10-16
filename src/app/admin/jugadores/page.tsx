@@ -1,20 +1,19 @@
 'use client'
 
-import { Search, Download, Upload, Globe, Plus, Filter, RefreshCw } from 'lucide-react'
+import { Search, Globe, Plus, Filter, RefreshCw } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-import AdminPlayerTable from '@/components/admin/AdminPlayerTable'
 import AdminColumnSelector from '@/components/admin/AdminColumnSelector'
+import AdminPlayerTable from '@/components/admin/AdminPlayerTable'
 import ImportFMIButton from '@/components/admin/ImportFMIButton'
 import ImportStatsButton from '@/components/admin/ImportStatsButton'
 import MultiSelectFilter from '@/components/filters/multi-select-filter'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { LoadingPage } from '@/components/ui/loading-spinner'
-import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 import { useInfinitePlayersScroll } from '@/hooks/admin/useInfinitePlayersScroll'
-import type { Player } from '@/types/player'
+import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 
 export default function JugadoresPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
@@ -382,8 +381,10 @@ export default function JugadoresPage() {
         <div className='flex items-center gap-4'>
           <Button
             variant='outline'
-            className={`flex items-center gap-2 border-slate-700 text-white hover:bg-slate-700 ${
-              showFilters ? 'bg-slate-700' : 'bg-[#131921]'
+            className={`flex items-center gap-2 border-slate-600 hover:bg-slate-700 transition-colors ${
+              showFilters
+                ? 'bg-slate-700 text-white border-slate-500'
+                : 'bg-[#1F2937] text-gray-300 hover:text-white'
             }`}
             onClick={() => setShowFilters(!showFilters)}
           >
@@ -419,10 +420,17 @@ export default function JugadoresPage() {
           </div>
 
           <div className='flex justify-end gap-4 mt-6'>
-            <Button variant='outline' onClick={clearFilters} className='border-slate-700 text-white hover:bg-slate-700'>
+            <Button
+              variant='outline'
+              onClick={clearFilters}
+              className='border-slate-600 bg-[#1F2937] text-gray-300 hover:bg-slate-700 hover:text-white transition-colors'
+            >
               Limpiar
             </Button>
-            <Button onClick={applyFilters} className='bg-[#FF5733] hover:bg-[#E64A2B] text-white'>
+            <Button
+              onClick={applyFilters}
+              className='bg-[#FF5733] hover:bg-[#E64A2B] text-white'
+            >
               Aplicar filtros
             </Button>
           </div>

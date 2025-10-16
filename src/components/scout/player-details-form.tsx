@@ -1,15 +1,16 @@
 "use client"
 
-import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
+
+import { MediaUpload } from "@/components/scout/media-upload"
+import { TeamSearch } from "@/components/scout/team-search"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { MediaUpload } from "@/components/scout/media-upload"
-import { TeamSearch } from "@/components/scout/team-search"
 
 export function PlayerDetailsForm() {
   const router = useRouter()
@@ -119,30 +120,34 @@ export function PlayerDetailsForm() {
       // Construir fecha de nacimiento
       const dateOfBirth = `${formData.dateOfBirth.year}-${formData.dateOfBirth.month.padStart(2, '0')}-${formData.dateOfBirth.day.padStart(2, '0')}`
 
+      const payload = {
+        playerName: formData.playerName,
+        dateOfBirth,
+        position: formData.position || null,
+        height: formData.height || null,
+        foot: formData.foot || null,
+        team: formData.team,
+        teamCountry: formData.teamCountry || null,
+        nationality1: formData.nationality1,
+        nationality2: formData.nationality2 || null,
+        nationalTier: formData.nationalTier || null,
+        agency: formData.agency || null,
+        urlReference: formData.urlReference,
+        reportText: formData.reportText || null,
+        urlReport: formData.urlReport || null,
+        urlVideo: formData.urlVideo || null,
+        imageUrl: formData.imageUrl || null,
+        potential
+      }
+
+      console.log('Sending payload:', payload)
+
       const response = await fetch('/api/reports/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          playerName: formData.playerName,
-          dateOfBirth,
-          position: formData.position || null,
-          height: formData.height || null,
-          foot: formData.foot || null,
-          team: formData.team,
-          teamCountry: formData.teamCountry || null,
-          nationality1: formData.nationality1,
-          nationality2: formData.nationality2 || null,
-          nationalTier: formData.nationalTier || null,
-          agency: formData.agency || null,
-          urlReference: formData.urlReference,
-          reportText: formData.reportText || null,
-          urlReport: formData.urlReport || null,
-          urlVideo: formData.urlVideo || null,
-          imageUrl: formData.imageUrl || null,
-          potential
-        })
+        body: JSON.stringify(payload)
       })
 
       const result = await response.json()
@@ -152,11 +157,12 @@ export function PlayerDetailsForm() {
           title: "¡Éxito!",
           description: "Reporte creado correctamente",
         })
-        
+
         // Redirigir a la página de jugadores
         router.push('/scout/players')
       } else {
-        throw new Error(result.error || 'Error al crear el reporte')
+        console.error('API Error:', result)
+        throw new Error(result.details || result.error || 'Error al crear el reporte')
       }
     } catch (error) {
       console.error('Error submitting form:', error)

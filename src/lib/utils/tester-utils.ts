@@ -2,8 +2,8 @@
  * Utilidades específicas para el rol "tester"
  */
 
-import { UserRole } from '@/lib/services/role-service'
 import { canAccessMemberArea, canAccessScoutArea } from '@/lib/auth/role-utils'
+import { UserRole } from '@/lib/services/role-service'
 
 export interface TesterPermissions {
   canAccessMembers: boolean

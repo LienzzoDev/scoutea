@@ -5,6 +5,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+
 import { logger } from '../logging/production-logger';
 
 export interface ConnectionPoolConfig {

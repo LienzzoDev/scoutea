@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+
 import { QuantitativeData, QuantitativeFilters } from '@/lib/services/scout-quantitative-service'
 
 interface UseScoutQuantitativeReturn {

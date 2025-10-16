@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@clerk/nextjs';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+
 import { handleApiResponse } from '@/lib/utils/api-response';
 
 interface PlayerListItem {

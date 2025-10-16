@@ -203,17 +203,29 @@ export const ScoutReportCreateSchema = z.object({
   nationality1: nonEmptyString.max(50),
   urlReference: url,
   potential: z.number().int().min(1).max(10),
-  position: z.string().max(50).optional(),
-  height: z.number().min(150).max(220).optional(),
-  foot: z.enum(['Left', 'Right', 'Both']).optional(),
-  teamCountry: z.string().max(50).optional(),
-  nationality2: z.string().max(50).optional(),
-  nationalTier: z.string().max(50).optional(),
-  agency: z.string().max(100).optional(),
-  urlReport: url.optional(),
-  urlVideo: url.optional(),
-  reportText: z.string().max(10000).optional(),
-  imageUrl: url.optional()
+  position: z.string().max(50).nullable().optional(),
+  height: z.union([z.number(), z.string(), z.null()]).nullable().optional().transform(val => {
+    if (!val || val === '') return null
+    if (typeof val === 'number') return val
+    const parsed = parseFloat(val as string)
+    return isNaN(parsed) ? null : parsed
+  }),
+  foot: z.string().nullable().optional().transform(val => {
+    if (!val || val === '') return null
+    const normalized = (val as string).toLowerCase()
+    if (normalized === 'left') return 'Left'
+    if (normalized === 'right') return 'Right'
+    if (normalized === 'both') return 'Both'
+    return null
+  }),
+  teamCountry: z.string().max(50).nullable().optional(),
+  nationality2: z.string().max(50).nullable().optional(),
+  nationalTier: z.string().max(50).nullable().optional(),
+  agency: z.string().max(100).nullable().optional(),
+  urlReport: z.string().nullable().optional().transform(val => (!val || val === '') ? null : val),
+  urlVideo: z.string().nullable().optional().transform(val => (!val || val === '') ? null : val),
+  reportText: z.string().max(10000).nullable().optional(),
+  imageUrl: z.string().nullable().optional().transform(val => (!val || val === '') ? null : val)
 })
 
 // Scout Report for Existing Player Schema

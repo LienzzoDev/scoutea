@@ -6,9 +6,11 @@
  */
 
 import { clerkClient } from '@clerk/nextjs/server'
-import { UserService } from './user-service'
-import { RoleService, UserMetadata } from './role-service'
+
 import { logger } from '../logging/production-logger'
+
+import { RoleService } from './role-service'
+import { UserService } from './user-service'
 
 export interface UserCreationData {
   clerkId: string

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+
 import { getTeamLogoData, generateTeamInitials } from "@/lib/utils/team-logos";
 
 interface EntityData {

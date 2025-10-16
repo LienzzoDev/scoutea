@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db'
+
 import { logger } from '../logging/production-logger'
 
 export interface UserSyncResult {

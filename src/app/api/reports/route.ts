@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 
+import { cachedQuery, MemoryCacheService } from '@/lib/cache/memory-cache'
 import { ReportService } from '@/lib/services/report-service'
 
-export async function GET(__request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth()
     
@@ -14,13 +15,13 @@ export async function GET(__request: NextRequest) {
     const { searchParams } = new URL(request.url)
     
     // Parámetros de búsqueda
-    const _page = parseInt(searchParams.get('page') || '1')
+    const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const sortBy = searchParams.get('sortBy') || 'createdAt'
     const sortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc'
-    
+
     // Filtros
-    const _filters: unknown = {}
+    const filters: any = {}
     if (searchParams.get('report_status')) {
       filters.report_status = searchParams.get('report_status')
     }
@@ -99,10 +100,18 @@ export async function GET(__request: NextRequest) {
       filters
     }
 
-    const result = await ReportService.searchReports(options)
-    
+    // Crear clave de caché basada en opciones
+    const cacheKey = `reports:search:${JSON.stringify(options)}`
+
+    // Obtener resultado con caché (5 minutos por defecto)
+    const result = await cachedQuery(
+      cacheKey,
+      () => ReportService.searchReports(options),
+      MemoryCacheService.TTL.PLAYERS_LIST
+    )
+
     return NextResponse.json(result)
-  } catch (_error) {
+  } catch (error) {
     console.error('Error getting reports:', error)
     return NextResponse.json(
       { __error: 'Internal server error' },
@@ -111,19 +120,19 @@ export async function GET(__request: NextRequest) {
   }
 }
 
-export async function POST(__request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth()
-    
+
     if (!userId) {
       return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
     }
 
-    const _body = await request.json()
+    const body = await request.json()
     const report = await ReportService.createReport(body)
-    
+
     return NextResponse.json(report, { status: 201 })
-  } catch (_error) {
+  } catch (error) {
     console.error('Error creating report:', error)
     return NextResponse.json(
       { __error: 'Internal server error' },

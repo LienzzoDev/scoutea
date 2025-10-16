@@ -2,11 +2,13 @@
 
 import { Filter, X, Loader2 } from 'lucide-react'
 import { useState } from 'react'
-import { BarChart } from '../bar-chart'
-import { QuantitativeData, QuantitativeFilters } from '@/lib/services/scout-quantitative-service'
-import { useScoutQuantitative } from '@/hooks/scout/useScoutQuantitative'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useScoutQuantitative } from '@/hooks/scout/useScoutQuantitative'
+import { QuantitativeData, QuantitativeFilters } from '@/lib/services/scout-quantitative-service'
+
+import { BarChart } from '../bar-chart'
 
 interface QuantitativeDashboardProps {
   scoutId: string

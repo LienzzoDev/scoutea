@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 
 import type { Player } from '@/types/player';
+
 import { usePlayerList } from './usePlayerList';
 
 export const usePlayerProfile = (playerId: string) => {

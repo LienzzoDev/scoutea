@@ -8,8 +8,8 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { DataPopulationService } from '@/lib/services/DataPopulationService';
 import { prisma } from '@/lib/db';
+import { DataPopulationService } from '@/lib/services/DataPopulationService';
 
 export async function POST(__request: NextRequest) {
   try {

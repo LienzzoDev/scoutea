@@ -1,7 +1,8 @@
 'use client'
 
+import { Upload, X, Link as LinkIcon } from 'lucide-react'
 import { useState } from 'react'
-import { Upload, X, Image as ImageIcon, Link as LinkIcon } from 'lucide-react'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'

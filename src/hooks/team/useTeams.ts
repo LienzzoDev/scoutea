@@ -1,11 +1,30 @@
 import { useState, useCallback } from 'react';
 
 export interface Team {
-  id: string;
-  name: string;
-  league: string;
-  country: string;
-  // Add other team properties as needed
+  id_team: string;
+  team_name: string;
+  correct_team_name?: string | null;
+  team_country?: string | null;
+  url_trfm_advisor?: string | null;
+  url_trfm?: string | null;
+  owner_club?: string | null;
+  owner_club_country?: string | null;
+  pre_competition?: string | null;
+  competition?: string | null;
+  correct_competition?: string | null;
+  competition_country?: string | null;
+  team_trfm_value?: number | null;
+  team_trfm_value_norm?: number | null;
+  team_rating?: number | null;
+  team_rating_norm?: number | null;
+  team_elo?: number | null;
+  team_level?: string | null;
+  // Additional fields
+  short_name?: string | null;
+  founded_year?: number | null;
+  stadium?: string | null;
+  website_url?: string | null;
+  logo_url?: string | null;
 }
 
 export const useTeams = () => {

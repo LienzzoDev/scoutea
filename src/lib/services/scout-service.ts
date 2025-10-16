@@ -25,6 +25,31 @@ export interface ScoutStats {
 }
 
 export class ScoutService {
+  /**
+   * 📋 SELECCIÓN MÍNIMA DE CAMPOS PARA LISTAS
+   * Solo los campos necesarios para mostrar scouts en listas/grids
+   */
+  private static readonly LIST_SELECT = {
+    id_scout: true,
+    scout_name: true,
+    name: true,
+    surname: true,
+    nationality: true,
+    country: true,
+    age: true,
+    scout_level: true,
+    scout_elo: true,
+    scout_ranking: true,
+    total_reports: true,
+    original_reports: true,
+    roi: true,
+    net_profits: true,
+    open_to_work: true,
+    profile_pic: true,
+    createdAt: true,
+    updatedAt: true,
+  }
+
   static async searchScouts(options: ScoutSearchOptions): Promise<ScoutSearchResult> {
     try {
       const {
@@ -93,13 +118,14 @@ export class ScoutService {
       // Calcular offset
       const offset = (page - 1) * limit;
 
-      // Ejecutar consultas
+      // Ejecutar consultas con select específico
       const [scouts, total] = await Promise.all([
         prisma.scout.findMany({
           where,
           orderBy,
           skip: offset,
           take: limit,
+          select: ScoutService.LIST_SELECT,
         }),
         prisma.scout.count({ where })
       ]);
@@ -125,7 +151,8 @@ export class ScoutService {
     try {
       const scouts = await prisma.scout.findMany({
         orderBy: { createdAt: 'desc' },
-        take: 100 // Limitar para evitar cargar demasiados datos
+        take: 100, // Limitar para evitar cargar demasiados datos
+        select: ScoutService.LIST_SELECT,
       });
       return scouts;
     } catch (error) {

@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { usePlayerList } from './player/usePlayerList';
-import type { PlayerData, PlayerFilters, FilterOptions, Category } from '@/types/dashboard';
+
 import { DASHBOARD_CATEGORY_GROUPS } from '@/constants/dashboard-categories';
+import type { PlayerFilters, Category } from '@/types/dashboard';
+
+import { usePlayerList } from './player/usePlayerList';
 
 export const useDashboardState = () => {
   // Estados básicos

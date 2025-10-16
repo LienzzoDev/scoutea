@@ -1,20 +1,20 @@
 'use client'
 
-import { Facebook, Twitter, Linkedin, Globe } from "lucide-react"
+import { Twitter, Linkedin, Globe } from "lucide-react"
 import Image from 'next/image'
 import { useRouter, useParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
 import MemberNavbar from "@/components/layout/member-navbar"
-import ScoutHeader from "@/components/scout/ScoutHeader"
-import ScoutEconomicInfo from "@/components/scout/ScoutEconomicInfo"
 import { QualitativeDashboard } from "@/components/scout/qualitative-dashboard"
 import { QuantitativeDashboard } from "@/components/scout/quantitative-dashboard"
-import { Button } from "@/components/ui/button"
-import { useScoutProfile } from "@/hooks/scout/useScoutProfile"
-import ScoutContactForm from "@/components/scout/ScoutContactForm"
 import ScoutPlayersSection from "@/components/scout/scout-players-section"
 import ScoutReportsSection from "@/components/scout/scout-reports-section"
+import ScoutContactForm from "@/components/scout/ScoutContactForm"
+import ScoutEconomicInfo from "@/components/scout/ScoutEconomicInfo"
+import ScoutHeader from "@/components/scout/ScoutHeader"
+import { Button } from "@/components/ui/button"
+import { useScoutProfile } from "@/hooks/scout/useScoutProfile"
 
 export default function ScoutProfilePage() {
   const _router = useRouter()

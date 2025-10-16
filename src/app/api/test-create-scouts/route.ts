@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+
 import { createSampleScouts } from '@/scripts/create-sample-scouts'
 
 export async function GET() {

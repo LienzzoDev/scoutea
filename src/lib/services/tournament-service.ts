@@ -47,6 +47,31 @@ export interface TorneoResponse {
 }
 
 export class TournamentService {
+  /**
+   * 📋 SELECCIÓN MÍNIMA DE CAMPOS PARA LISTAS
+   * Solo los campos necesarios para mostrar torneos en listas
+   */
+  private static readonly LIST_SELECT = {
+    id_torneo: true,
+    nombre: true,
+    descripcion: true,
+    pais: true,
+    ciudad: true,
+    fecha_inicio: true,
+    fecha_fin: true,
+    tipo_torneo: true,
+    categoria: true,
+    genero: true,
+    estado: true,
+    max_equipos: true,
+    equipos_inscritos: true,
+    premio_primero: true,
+    organizador: true,
+    sitio_web: true,
+    createdAt: true,
+    updatedAt: true,
+  }
+
   static async getTorneos(filters: TorneoFilters = {}, page = 1, limit = 10): Promise<TorneoResponse> {
     const skip = (page - 1) * limit;
 
@@ -97,6 +122,7 @@ export class TournamentService {
         skip,
         take: limit,
         orderBy: { fecha_inicio: 'desc' },
+        select: TournamentService.LIST_SELECT,
       }),
       prisma.torneo.count({ where }),
     ]);
@@ -137,5 +163,38 @@ export class TournamentService {
     return await prisma.torneo.delete({
       where: { id_torneo: id },
     });
+  }
+
+  /**
+   * 🔍 OBTENER OPCIONES DE FILTROS
+   * Obtiene valores únicos para los filtros desde la base de datos
+   */
+  static async getFilterOptions() {
+    const [torneos] = await Promise.all([
+      prisma.torneo.findMany({
+        select: {
+          tipo_torneo: true,
+          categoria: true,
+          genero: true,
+          estado: true,
+          pais: true,
+        },
+      }),
+    ]);
+
+    // Extraer valores únicos
+    const tiposTorneo = [...new Set(torneos.map(t => t.tipo_torneo).filter(Boolean))];
+    const categorias = [...new Set(torneos.map(t => t.categoria).filter(Boolean))];
+    const generos = [...new Set(torneos.map(t => t.genero).filter(Boolean))];
+    const estados = [...new Set(torneos.map(t => t.estado).filter(Boolean))];
+    const paises = [...new Set(torneos.map(t => t.pais).filter(Boolean))];
+
+    return {
+      tiposTorneo,
+      categorias,
+      generos,
+      estados,
+      paises,
+    };
   }
 }

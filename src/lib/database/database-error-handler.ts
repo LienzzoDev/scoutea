@@ -15,6 +15,7 @@
  */
 
 import { PrismaClient, Prisma } from '@prisma/client'
+
 import { logger } from '../logging/production-logger'
 
 export interface DatabaseErrorContext {
@@ -151,7 +152,7 @@ export class DatabaseErrorHandler {
     _context: DatabaseErrorContext,
     initialRetryCount: number
   ): Promise<{ data: T; retryCount: number }> {
-    let _retryCount = initialRetryCount
+    const _retryCount = initialRetryCount
     let lastError: unknown = null
 
     for (let attempt = 0; attempt <= this.config.maxRetries; attempt++) {

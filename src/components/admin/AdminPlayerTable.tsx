@@ -3,9 +3,10 @@
 import { ArrowUpDown, ArrowUp, ArrowDown, Edit, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useMemo, memo } from "react";
-import type { Player } from "@/types/player";
-import { Button } from "@/components/ui/button";
+
 import EditableCell from "@/components/admin/EditableCell";
+import { Button } from "@/components/ui/button";
+import type { Player } from "@/types/player";
 
 interface AdminPlayerTableProps {
   players: Player[];

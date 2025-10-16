@@ -1,29 +1,36 @@
 "use client";
 
-import { ArrowRight, ArrowUpDown, ArrowUp, ArrowDown, Edit, Trash2 } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
 
-import TeamBadge from "@/components/ui/team-badge";
 import { Button } from "@/components/ui/button";
+import TeamBadge from "@/components/ui/team-badge";
 
 interface Team {
   id_team: string;
   team_name: string;
   correct_team_name?: string | null;
   team_country?: string | null;
+  url_trfm_advisor?: string | null;
+  url_trfm?: string | null;
+  owner_club?: string | null;
+  owner_club_country?: string | null;
+  pre_competition?: string | null;
   competition?: string | null;
+  correct_competition?: string | null;
   competition_country?: string | null;
   team_trfm_value?: number | null;
+  team_trfm_value_norm?: number | null;
   team_rating?: number | null;
   team_rating_norm?: number | null;
   team_elo?: number | null;
   team_level?: string | null;
-  owner_club?: string | null;
-  owner_club_country?: string | null;
   short_name?: string | null;
   founded_year?: number | null;
   stadium?: string | null;
+  website_url?: string | null;
+  logo_url?: string | null;
 }
 
 interface Category {

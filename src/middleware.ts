@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
+
 import {
   getUserRoleInfo,
   getDashboardUrl,
@@ -7,7 +8,6 @@ import {
   requiresActiveSubscription,
 } from '@/lib/auth/role-utils'
 import { isDebugApiAllowed, createDebugBlockedResponse } from '@/lib/utils/cleanup-debug-apis'
-import { authLogger } from '@/lib/utils/logger'
 
 // Definir rutas con matchers
 const isAuthRoute = createRouteMatcher(['/login(.*)', '/register(.*)', '/admin-login(.*)'])

@@ -13,9 +13,9 @@ import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { RoleService, UserRole } from '@/lib/services/role-service'
-import { TransactionService } from '@/lib/services/transaction-service'
 import { logger } from '@/lib/logging/production-logger'
+import { RoleService } from '@/lib/services/role-service'
+import { TransactionService } from '@/lib/services/transaction-service'
 
 // Schemas de validación
 const updateMetadataSchema = z.object({

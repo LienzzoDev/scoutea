@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { useAuth } from '@clerk/nextjs'
+import { useEffect, useState } from 'react'
 
 interface ClerkInitializationState {
   isLoaded: boolean

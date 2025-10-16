@@ -22,8 +22,8 @@ export async function GET(request: NextRequest) {
     console.log('User ID:', userId)
 
     let sessionData = null
-    let subscriptionData = null
-    let customerData = null
+    const subscriptionData = null
+    const customerData = null
 
     // Si hay session_id, verificar la sesión específica
     if (sessionId) {

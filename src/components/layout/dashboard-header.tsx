@@ -1,6 +1,6 @@
 'use client'
 
-import { UserButton, SignOutButton } from '@clerk/nextjs'
+import { SignOutButton } from '@clerk/nextjs'
 import { useAuth, useUser } from '@clerk/nextjs'
 import {
   Menu,

@@ -1,6 +1,6 @@
 'use client'
 
-import { Settings, ChevronDown, ChevronRight, X, Check } from 'lucide-react'
+import { Settings, ChevronDown, X, Check } from 'lucide-react'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'

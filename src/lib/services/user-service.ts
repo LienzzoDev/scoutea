@@ -1,5 +1,6 @@
-import { prisma } from '@/lib/db'
 import { Usuario } from '@prisma/client'
+
+import { prisma } from '@/lib/db'
 
 export interface CreateUserData {
   clerkId: string

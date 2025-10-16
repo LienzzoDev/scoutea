@@ -17,6 +17,7 @@
 
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
+
 import { logger } from '../logging/production-logger'
 
 export interface SanitizationConfig {

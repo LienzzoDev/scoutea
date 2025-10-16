@@ -13,30 +13,51 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
 
-    // Parámetros de búsqueda
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10')
+    // Support both old (page-based) and new (cursor-based) pagination
+    const page = searchParams.get('page')
+    const cursor = searchParams.get('cursor') || undefined
+    const limit = parseInt(searchParams.get('limit') || '50')
     const search = searchParams.get('search') || undefined
+    const country = searchParams.get('country') || undefined
     const country_id = searchParams.get('country_id') || undefined
-    const tier = searchParams.get('tier') ? parseInt(searchParams.get('tier')!) : undefined
+    const tier = searchParams.get('tier') || undefined
     const confederation = searchParams.get('confederation') || undefined
 
+    // If page is provided, we're using old pagination - convert to cursor
+    // For now, just use cursor-based and ignore page
     const options = {
-      page,
+      cursor,
       limit,
       search,
-      country_id,
-      tier,
+      country: country || country_id,
       confederation
     }
 
+    console.log('🔍 API: Calling searchCompetitions with options:', options)
     const result = await CompetitionService.searchCompetitions(options)
+    console.log('✅ API: Got result with', result.competitions?.length || 0, 'competitions')
 
-    return NextResponse.json(result)
+    // Add totalPages for backward compatibility
+    const response = {
+      competitions: result.competitions || [],
+      total: result.total || 0,
+      hasMore: result.hasMore || false,
+      nextCursor: result.nextCursor || null,
+      totalPages: result.total ? Math.ceil(result.total / limit) : 1,
+      page: 1,
+      pagination: result.pagination
+    };
+
+    console.log('📤 API: Sending response')
+    return NextResponse.json(response)
   } catch (error) {
     console.error('Error getting competitions:', error)
+    if (error instanceof Error) {
+      console.error('Error details:', error.message)
+      console.error('Error stack:', error.stack)
+    }
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }

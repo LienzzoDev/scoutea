@@ -1,6 +1,7 @@
 'use client'
 
 import { useUser } from '@clerk/nextjs'
+
 import { Badge } from '@/components/ui/badge'
 import { isTester } from '@/lib/auth/user-role'
 

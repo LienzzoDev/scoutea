@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+
 import { prisma } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
@@ -12,11 +13,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ teams: [] })
     }
 
-    const teams = await prisma.team.findMany({
+    const equipos = await prisma.equipo.findMany({
       where: {
         OR: [
           {
-            name: {
+            team_name: {
+              contains: query.trim(),
+              mode: 'insensitive'
+            }
+          },
+          {
+            correct_team_name: {
               contains: query.trim(),
               mode: 'insensitive'
             }
@@ -30,29 +37,36 @@ export async function GET(request: NextRequest) {
         ]
       },
       select: {
-        id: true,
-        name: true,
+        id_team: true,
+        team_name: true,
+        correct_team_name: true,
         short_name: true,
-        country: {
-          select: {
-            name: true,
-            code: true
-          }
-        },
-        competition: {
-          select: {
-            name: true,
-            short_name: true
-          }
-        }
+        team_country: true,
+        competition: true,
+        correct_competition: true
       },
       take: limit,
       orderBy: [
         {
-          name: 'asc'
+          team_name: 'asc'
         }
       ]
     })
+
+    // Mapear los resultados al formato esperado por el frontend
+    const teams = equipos.map(equipo => ({
+      id: equipo.id_team,
+      name: equipo.correct_team_name || equipo.team_name,
+      short_name: equipo.short_name,
+      country: equipo.team_country ? {
+        name: equipo.team_country,
+        code: ''
+      } : null,
+      competition: equipo.correct_competition || equipo.competition ? {
+        name: equipo.correct_competition || equipo.competition || '',
+        short_name: null
+      } : null
+    }))
 
     return NextResponse.json({ teams })
   } catch (error) {

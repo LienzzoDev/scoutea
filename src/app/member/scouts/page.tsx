@@ -15,9 +15,9 @@ import EntityTabs from "@/components/ui/entity-tabs"
 import FlagIcon from "@/components/ui/flag-icon"
 import { Input } from "@/components/ui/input"
 import ScoutAvatar from "@/components/ui/scout-avatar"
+import { SCOUT_CATEGORY_GROUPS, ScoutCategory } from "@/constants/scout-categories"
 import { useScoutList } from "@/hooks/scout/useScoutList"
 import { useScouts, Scout } from "@/hooks/scout/useScouts"
-import { SCOUT_CATEGORY_GROUPS, ScoutCategory } from "@/constants/scout-categories"
 
 export default function ScoutsPage() {
   const _router = useRouter()

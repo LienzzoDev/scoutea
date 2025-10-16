@@ -1,9 +1,9 @@
-import type { Metadata } from 'next'
 import { 
   BarChart3, 
   Target, 
   TrendingUp
 } from 'lucide-react'
+import type { Metadata } from 'next'
 
 import PlanSelector from '@/components/homepage/PlanSelector'
 

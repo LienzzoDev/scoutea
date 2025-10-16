@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+
 import { prisma } from '@/lib/db'
 
 const reportTypes = ['Scouting Report', 'Performance Analysis', 'Potential Assessment', 'Transfer Recommendation']
@@ -26,7 +27,7 @@ export async function POST(
     }
     
     // Obtener algunos jugadores existentes o crear algunos básicos
-    let players = await prisma.jugador.findMany({ take: 10 })
+    const players = await prisma.jugador.findMany({ take: 10 })
     
     if (players.length === 0) {
       // Crear algunos jugadores básicos si no existen

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
+import { useState, useEffect } from 'react'
 
 import ScoutNavbar from '@/components/layout/scout-navbar'
 import ScoutReportsSection from '@/components/scout/scout-reports-section'

@@ -6,6 +6,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 
+import { cachedQuery, cache as memoryCache, MemoryCacheService } from '@/lib/cache/memory-cache'
 import { PlayerService } from '@/lib/services/player-service'
 import type { FilterOptions } from '@/types/player'
 
@@ -59,10 +60,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<FilterOpti
 
     // ⏱️ MEDIR TIEMPO DE RESPUESTA
     const startTime = Date.now()
-    
-    // 🚀 OBTENER OPCIONES DE FILTROS DEL SERVICIO
-    const filterOptions = await PlayerService.getAvailableFilters()
-    
+
+    // 🚀 OBTENER OPCIONES DE FILTROS DEL SERVICIO (CON CACHÉ)
+    const filterOptions = await cachedQuery(
+      'filters:all',
+      () => PlayerService.getAvailableFilters(),
+      MemoryCacheService.TTL.FILTERS
+    )
+
     const responseTime = Date.now() - startTime
 
     // 🔍 FILTRAR OPCIONES SEGÚN PARÁMETROS
@@ -201,12 +206,15 @@ export async function POST(_request: NextRequest): Promise<NextResponse<FilterOp
       timestamp: new Date().toISOString()
     })
 
+    // 🗑️ INVALIDAR CACHÉ DE FILTROS
+    memoryCache.delete('filters:all')
+
     // ⏱️ MEDIR TIEMPO DE REGENERACIÓN
     const startTime = Date.now()
-    
-    // 🚀 GENERAR FILTROS FRESCOS (sin caché)
+
+    // 🚀 GENERAR FILTROS FRESCOS (sin caché, se volverá a cachear en el próximo GET)
     const freshFilters = await PlayerService.getAvailableFilters()
-    
+
     const responseTime = Date.now() - startTime
 
     // 📊 CALCULAR ESTADÍSTICAS

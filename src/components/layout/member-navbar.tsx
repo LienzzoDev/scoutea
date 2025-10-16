@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import PlayerAvatar from "@/components/ui/player-avatar"
 import ScoutAvatar from "@/components/ui/scout-avatar"
-import { getUserRole, isTester } from '@/lib/auth/user-role'
 import { TesterBadge } from '@/components/ui/tester-badge'
+import { getUserRole, isTester } from '@/lib/auth/user-role'
 
 
 export default function MemberNavbar() {

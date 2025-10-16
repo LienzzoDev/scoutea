@@ -9,8 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { LoadingPage } from "@/components/ui/loading-spinner"
-import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 
 interface Country {
   id: string

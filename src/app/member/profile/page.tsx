@@ -2,10 +2,11 @@
 
 import { useUser, useClerk } from '@clerk/nextjs'
 import { User, Mail, Calendar, Shield, LogOut } from "lucide-react"
-import { MemberPageLayout } from '@/components/layout/member-page-layout'
-import { getUserRole } from '@/lib/auth/user-role'
-import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
+
+import { MemberPageLayout } from '@/components/layout/member-page-layout'
+import { Button } from '@/components/ui/button'
+import { getUserRole } from '@/lib/auth/user-role'
 
 export default function ProfilePage() {
   const { user, isLoaded } = useUser()

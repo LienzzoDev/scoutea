@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+
 import { ScoutQuantitativeService } from '@/lib/services/scout-quantitative-service'
 
 export async function GET(

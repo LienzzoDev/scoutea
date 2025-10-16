@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+
 import { usePlayers } from '@/hooks/player/usePlayers'
 
 export default function PlayersDiagnostic() {

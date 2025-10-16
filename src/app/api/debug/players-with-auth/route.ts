@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
+
 import { PlayerService } from '@/lib/services/player-service'
 
 export async function GET() {

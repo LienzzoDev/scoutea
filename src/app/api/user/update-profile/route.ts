@@ -1,8 +1,8 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 
-import { TransactionService } from '@/lib/services/transaction-service'
 import { logger } from '@/lib/logging/production-logger'
+import { TransactionService } from '@/lib/services/transaction-service'
 
 export async function POST(request: NextRequest) {
   try {

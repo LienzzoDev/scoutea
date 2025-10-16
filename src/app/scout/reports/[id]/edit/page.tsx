@@ -1,14 +1,15 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useState, useEffect, useRef } from 'react'
+
+import ScoutNavbar from '@/components/layout/scout-navbar'
+import { MediaUpload } from '@/components/scout/media-upload'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
-import ScoutNavbar from '@/components/layout/scout-navbar'
-import { MediaUpload } from '@/components/scout/media-upload'
 
 export default function EditReportPage() {
   const router = useRouter()

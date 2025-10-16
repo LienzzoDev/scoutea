@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { Check, Crown, ArrowRight } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 
 interface Plan {
   id: string

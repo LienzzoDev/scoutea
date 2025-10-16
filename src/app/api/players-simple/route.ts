@@ -1,8 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+
 import { PlayerService } from '@/lib/services/player-service'
 import { PaginatedQuerySchema } from '@/lib/validation/api-schemas'
-import { z } from 'zod'
+
 
 export async function GET(request: NextRequest) {
   try {

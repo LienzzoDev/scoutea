@@ -1,24 +1,46 @@
 'use client'
 
-import { Play, Pause, RotateCcw, CheckCircle, XCircle, Clock, Database } from "lucide-react"
-import { useState } from 'react'
+import { Play, Pause, RotateCcw, CheckCircle, XCircle, Clock, Database, AlertCircle } from "lucide-react"
+import { useEffect, useState, useCallback } from 'react'
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LoadingPage } from "@/components/ui/loading-spinner"
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 
+interface ScrapingJob {
+  id: string
+  status: string
+  totalPlayers: number
+  processedCount: number
+  successCount: number
+  errorCount: number
+  currentBatch: number
+  batchSize: number
+  progress: number
+  startedAt?: string
+  completedAt?: string
+  lastProcessedAt?: string
+  lastError?: string
+}
+
+interface BatchResult {
+  playerId: string
+  playerName: string
+  url: string
+  success: boolean
+  fieldsUpdated: string[]
+  error?: string
+}
 
 export default function ScrapingPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
+
   const [isRunning, setIsRunning] = useState(false)
+  const [isPaused, setIsPaused] = useState(false)
   const [logs, setLogs] = useState<string[]>([])
-  const [stats, setStats] = useState({
-    total: 0,
-    processed: 0,
-    success: 0,
-    errors: 0
-  })
+  const [job, setJob] = useState<ScrapingJob | null>(null)
+  const [autoProcess, setAutoProcess] = useState(false)
 
   // Si no está cargado, mostrar loading
   if (!isLoaded) {
@@ -30,120 +52,276 @@ export default function ScrapingPage() {
     return null
   }
 
-  const addLog = (message: string) => {
-    setLogs(prev => [...prev, message])
-  }
+  const addLog = useCallback((message: string) => {
+    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${message}`])
+  }, [])
 
-  const startScraping = async () => {
-    setIsRunning(true)
-    setLogs([])
-    setStats({ total: 0, processed: 0, success: 0, errors: 0 })
-
-    addLog('🚀 Iniciando scraping de datos de jugadores...')
-    addLog('📊 Configuración: 5 jugadores por lote')
-    addLog('⏱️ Pausa entre lotes: 30 segundos')
-    addLog('⏱️ Pausa entre jugadores: 5 segundos')
-    addLog('')
-
+  // 📊 OBTENER ESTADO DEL JOB
+  const fetchJobStatus = useCallback(async () => {
     try {
-      // 🌐 LLAMAR AL ENDPOINT DE SCRAPING
-      const response = await fetch('/api/admin/scraping-transfermarkt', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
+      const response = await fetch('/api/admin/scraping/status')
+      const data = await response.json()
+
+      if (data.exists && data.job) {
+        setJob(data.job)
+
+        const status = data.job.status
+        setIsRunning(status === 'running' || status === 'pending')
+        setIsPaused(status === 'paused')
+
+        // Si está completo, detener auto-procesamiento
+        if (status === 'completed' || status === 'failed') {
+          setAutoProcess(false)
         }
+      } else {
+        setJob(null)
+        setIsRunning(false)
+        setIsPaused(false)
+      }
+    } catch (error) {
+      console.error('Error fetching job status:', error)
+    }
+  }, [])
+
+  // 🔄 PROCESAR SIGUIENTE BATCH
+  const processBatch = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/scraping/process', {
+        method: 'POST'
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Error al ejecutar scraping')
+        throw new Error(data.error || 'Error al procesar batch')
       }
 
-      // 📊 MOSTRAR RESULTADOS
-      addLog('🎉 Scraping completado!')
-      addLog(`📊 Total procesados: ${data.results.total}`)
-      addLog(`✅ Total exitosos: ${data.results.success}`)
-      addLog(`❌ Total errores: ${data.results.errors}`)
+      // Actualizar estado del job
+      if (data.job) {
+        setJob(data.job)
+      }
 
-      // Actualizar estadísticas finales
-      setStats({
-        total: data.results.total,
-        processed: data.results.processed,
-        success: data.results.success,
-        errors: data.results.errors
-      })
+      // Agregar logs de resultados
+      if (data.results && data.results.length > 0) {
+        addLog(`📦 Batch ${data.job.currentBatch} completado`)
 
-      // Mostrar detalles de cada jugador procesado
-      if (data.results.details && data.results.details.length > 0) {
-        addLog('')
-        addLog('📋 Detalle de jugadores procesados:')
-        addLog('')
-
-        data.results.details.forEach((result: any, index: number) => {
-          addLog(`[${index + 1}/${data.results.total}] ${result.playerName}`)
-
+        data.results.forEach((result: BatchResult, index: number) => {
           if (result.success) {
             if (result.fieldsUpdated.length > 0) {
-              addLog(`✅ Actualizado: ${result.fieldsUpdated.join(', ')}`)
-            } else {
-              addLog('⚠️ Sin cambios (datos ya actualizados)')
+              addLog(`✅ ${result.playerName}: ${result.fieldsUpdated.length} campos actualizados`)
             }
           } else {
-            addLog(`❌ Error: ${result.error}`)
+            addLog(`❌ ${result.playerName}: ${result.error}`)
           }
-
-          addLog('')
         })
+
+        addLog(`📊 Progreso: ${data.job.processedCount}/${data.job.totalPlayers} (${data.job.progress}%)`)
+        addLog('')
       }
+
+      // Si está completo, detener
+      if (data.completed) {
+        addLog('🎉 Scraping completado!')
+        addLog(`✅ Total exitosos: ${data.job.successCount}`)
+        addLog(`❌ Total errores: ${data.job.errorCount}`)
+        setAutoProcess(false)
+        setIsRunning(false)
+      }
+
+      return data
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
+      addLog(`❌ ERROR: ${errorMsg}`)
+      setAutoProcess(false)
+      setIsRunning(false)
+      throw error
+    }
+  }, [addLog])
+
+  // 🚀 INICIAR NUEVO JOB
+  const startScraping = async () => {
+    setLogs([])
+    addLog('🚀 Iniciando nuevo trabajo de scraping...')
+
+    try {
+      const response = await fetch('/api/admin/scraping/start', {
+        method: 'POST'
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al iniciar scraping')
+      }
+
+      addLog(`✅ Job creado: ${data.job.id}`)
+      addLog(`📊 Total de jugadores: ${data.job.totalPlayers}`)
+      addLog(`📦 Tamaño de batch: ${data.job.batchSize}`)
+      addLog('')
+
+      setJob(data.job)
+      setIsRunning(true)
+      setAutoProcess(true)
 
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
       addLog(`❌ ERROR: ${errorMsg}`)
-
-      setStats(prev => ({
-        ...prev,
-        errors: prev.errors + 1
-      }))
+      setIsRunning(false)
     }
-
-    setIsRunning(false)
   }
 
-  const stopScraping = () => {
-    setIsRunning(false)
-    setLogs(prev => [...prev, '⏹️ Scraping detenido por el usuario'])
+  // ⏸️ PAUSAR JOB
+  const pauseScraping = async () => {
+    addLog('⏸️ Pausando scraping...')
+
+    try {
+      const response = await fetch('/api/admin/scraping/pause', {
+        method: 'POST'
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al pausar scraping')
+      }
+
+      addLog('✅ Scraping pausado')
+      setAutoProcess(false)
+      setIsRunning(false)
+      setIsPaused(true)
+      await fetchJobStatus()
+
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
+      addLog(`❌ ERROR: ${errorMsg}`)
+    }
   }
 
+  // ▶️ REANUDAR JOB
+  const resumeScraping = () => {
+    addLog('▶️ Reanudando scraping...')
+    setAutoProcess(true)
+    setIsRunning(true)
+    setIsPaused(false)
+  }
+
+  // ❌ CANCELAR JOB
+  const cancelScraping = async () => {
+    addLog('❌ Cancelando scraping...')
+
+    try {
+      const response = await fetch('/api/admin/scraping/cancel', {
+        method: 'POST'
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al cancelar scraping')
+      }
+
+      addLog('✅ Scraping cancelado')
+      setAutoProcess(false)
+      setIsRunning(false)
+      setIsPaused(false)
+      await fetchJobStatus()
+
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
+      addLog(`❌ ERROR: ${errorMsg}`)
+    }
+  }
+
+  // 🔄 RESET
   const resetStats = () => {
-    setStats({ total: 0, processed: 0, success: 0, errors: 0 })
     setLogs([])
+    setJob(null)
+    setIsRunning(false)
+    setIsPaused(false)
+    setAutoProcess(false)
+    addLog('🔄 Estado reiniciado')
   }
+
+  // 🔄 AUTO-PROCESAMIENTO
+  useEffect(() => {
+    if (!autoProcess || !isRunning) return
+
+    const interval = setInterval(async () => {
+      try {
+        const data = await processBatch()
+
+        // Si se completó, detener el intervalo
+        if (data.completed) {
+          setAutoProcess(false)
+          setIsRunning(false)
+        }
+      } catch (error) {
+        console.error('Error en auto-procesamiento:', error)
+        setAutoProcess(false)
+        setIsRunning(false)
+      }
+    }, 2000) // Cada 2 segundos
+
+    return () => clearInterval(interval)
+  }, [autoProcess, isRunning, processBatch])
+
+  // 📊 POLLING DE ESTADO CADA 5 SEGUNDOS
+  useEffect(() => {
+    fetchJobStatus()
+    const interval = setInterval(fetchJobStatus, 5000)
+    return () => clearInterval(interval)
+  }, [fetchJobStatus])
 
   return (
-    <main className="px-6 py-8 max-w-7xl mx-auto">
+    <main className="px-6 py-8 max-w-full mx-auto">
       {/* Page Header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-[#D6DDE6]">Scraping de Datos</h1>
         <div className="flex items-center space-x-3">
-          <Button 
-            onClick={startScraping}
-            disabled={isRunning}
-            className="bg-[#FF5733] hover:bg-[#E64A2B] text-white"
-          >
-            <Play className="h-4 w-4 mr-2" />
-            {isRunning ? 'Ejecutando...' : 'Iniciar Scraping'}
-          </Button>
-          <Button 
-            onClick={stopScraping}
-            disabled={!isRunning}
-            variant="outline"
-            className="border-red-700 text-red-400 hover:bg-red-900/20"
-          >
-            <Pause className="h-4 w-4 mr-2" />
-            Detener
-          </Button>
-          <Button 
+          {!isRunning && !isPaused && (
+            <Button
+              onClick={startScraping}
+              disabled={isRunning}
+              className="bg-[#FF5733] hover:bg-[#E64A2B] text-white"
+            >
+              <Play className="h-4 w-4 mr-2" />
+              Iniciar Scraping
+            </Button>
+          )}
+
+          {isRunning && !isPaused && (
+            <Button
+              onClick={pauseScraping}
+              variant="outline"
+              className="border-yellow-700 text-yellow-400 hover:bg-yellow-900/20"
+            >
+              <Pause className="h-4 w-4 mr-2" />
+              Pausar
+            </Button>
+          )}
+
+          {isPaused && (
+            <Button
+              onClick={resumeScraping}
+              className="bg-[#FF5733] hover:bg-[#E64A2B] text-white"
+            >
+              <Play className="h-4 w-4 mr-2" />
+              Reanudar
+            </Button>
+          )}
+
+          {(isRunning || isPaused) && (
+            <Button
+              onClick={cancelScraping}
+              variant="outline"
+              className="border-red-700 text-red-400 hover:bg-red-900/20"
+            >
+              <XCircle className="h-4 w-4 mr-2" />
+              Cancelar
+            </Button>
+          )}
+
+          <Button
             onClick={resetStats}
             variant="outline"
             className="border-slate-700 bg-[#131921] text-white hover:bg-slate-700"
@@ -154,15 +332,34 @@ export default function ScrapingPage() {
         </div>
       </div>
 
+      {/* Status Alert */}
+      {isRunning && (
+        <div className="mb-6 p-4 bg-blue-900/20 border border-blue-700 rounded-lg flex items-center">
+          <Clock className="h-5 w-5 text-blue-400 mr-3 animate-pulse" />
+          <p className="text-blue-300">
+            Procesamiento en curso... El sistema continuará automáticamente hasta completar todos los jugadores.
+          </p>
+        </div>
+      )}
+
+      {isPaused && (
+        <div className="mb-6 p-4 bg-yellow-900/20 border border-yellow-700 rounded-lg flex items-center">
+          <AlertCircle className="h-5 w-5 text-yellow-400 mr-3" />
+          <p className="text-yellow-300">
+            Scraping pausado. Haz clic en &quot;Reanudar&quot; para continuar desde donde se detuvo.
+          </p>
+        </div>
+      )}
+
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
         <Card className="bg-[#131921] border-slate-700">
           <CardContent className="p-6">
             <div className="flex items-center">
               <Database className="h-8 w-8 text-blue-400" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-slate-400">Total Jugadores</p>
-                <p className="text-2xl font-bold text-[#D6DDE6]">{stats.total}</p>
+                <p className="text-2xl font-bold text-[#D6DDE6]">{job?.totalPlayers || 0}</p>
               </div>
             </div>
           </CardContent>
@@ -174,7 +371,7 @@ export default function ScrapingPage() {
               <Clock className="h-8 w-8 text-yellow-400" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-slate-400">Procesados</p>
-                <p className="text-2xl font-bold text-[#D6DDE6]">{stats.processed}</p>
+                <p className="text-2xl font-bold text-[#D6DDE6]">{job?.processedCount || 0}</p>
               </div>
             </div>
           </CardContent>
@@ -186,7 +383,7 @@ export default function ScrapingPage() {
               <CheckCircle className="h-8 w-8 text-green-400" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-slate-400">Exitosos</p>
-                <p className="text-2xl font-bold text-[#D6DDE6]">{stats.success}</p>
+                <p className="text-2xl font-bold text-[#D6DDE6]">{job?.successCount || 0}</p>
               </div>
             </div>
           </CardContent>
@@ -198,7 +395,26 @@ export default function ScrapingPage() {
               <XCircle className="h-8 w-8 text-red-400" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-slate-400">Errores</p>
-                <p className="text-2xl font-bold text-[#D6DDE6]">{stats.errors}</p>
+                <p className="text-2xl font-bold text-[#D6DDE6]">{job?.errorCount || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[#131921] border-slate-700">
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <div className="ml-4 w-full">
+                <p className="text-sm font-medium text-slate-400 mb-2">Progreso</p>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 bg-slate-700 rounded-full h-2">
+                    <div
+                      className="bg-[#FF5733] h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${job?.progress || 0}%` }}
+                    />
+                  </div>
+                  <p className="text-xl font-bold text-[#D6DDE6]">{job?.progress || 0}%</p>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -206,7 +422,7 @@ export default function ScrapingPage() {
       </div>
 
       {/* Logs */}
-      <Card className="bg-[#131921] border-slate-700">
+      <Card className="bg-[#131921] border-slate-700 mb-6">
         <CardHeader>
           <CardTitle className="text-[#D6DDE6]">Logs de Scraping</CardTitle>
         </CardHeader>
@@ -226,34 +442,48 @@ export default function ScrapingPage() {
       </Card>
 
       {/* Instructions */}
-      <Card className="bg-[#131921] border-slate-700 mt-6">
+      <Card className="bg-[#131921] border-slate-700">
         <CardHeader>
           <CardTitle className="text-[#D6DDE6]">Instrucciones</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-slate-300 space-y-2">
-            <p>• El scraping extrae datos de jugadores desde Transfermarkt.es</p>
-            <p>• Solo procesa jugadores que tengan URL de Transfermarkt completada en la BD</p>
-            <p>• Se procesan 5 jugadores por lote con pausas de 5 segundos entre jugadores</p>
-            <p>• Pausa de 30 segundos entre lotes para evitar bloqueos</p>
-            <p>• Los datos se actualizan automáticamente en la base de datos</p>
-            <p className="font-semibold text-[#FF5733]">• 13 campos extraídos:</p>
+            <p className="font-semibold text-[#FF5733]">🚀 Nuevo sistema optimizado para miles de jugadores:</p>
+            <ul className="ml-6 space-y-1">
+              <li>✅ Procesamiento por lotes: 10 jugadores por batch</li>
+              <li>✅ Sin límites de timeout: cada batch se procesa en 5 minutos máximo</li>
+              <li>✅ Progreso persistente: si se detiene, puedes reanudar desde donde quedó</li>
+              <li>✅ Procesamiento automático: continúa hasta completar todos los jugadores</li>
+              <li>✅ Control total: pausar, reanudar o cancelar en cualquier momento</li>
+              <li>✅ Monitoreo en tiempo real: visualiza el progreso y logs en vivo</li>
+            </ul>
+
+            <p className="mt-4 font-semibold text-[#FF5733]">📊 Funcionamiento:</p>
+            <ul className="ml-6 space-y-1">
+              <li>1. Haz clic en &quot;Iniciar Scraping&quot; para crear un nuevo trabajo</li>
+              <li>2. El sistema procesará automáticamente todos los jugadores en lotes</li>
+              <li>3. Puedes pausar en cualquier momento y reanudar después</li>
+              <li>4. El progreso se guarda en la base de datos</li>
+              <li>5. Al completar, verás el resumen total de exitosos y errores</li>
+            </ul>
+
+            <p className="mt-4 font-semibold text-[#FF5733]">• 14 campos extraídos de Transfermarkt:</p>
             <ul className="ml-6 space-y-1 text-sm">
               <li>1. advisor - Nombre del agente/asesor</li>
-              <li>2. date_of_birth - Fecha de nacimiento</li>
-              <li>3. team_name - Equipo actual</li>
-              <li>4. team_loan_from - Equipo de cesión (si aplica)</li>
-              <li>5. position_player - Posición en el campo</li>
-              <li>6. foot - Pie dominante</li>
-              <li>7. height - Altura en cm</li>
-              <li>8. nationality_1 - Nacionalidad principal</li>
-              <li>9. nationality_2 - Segunda nacionalidad (si aplica)</li>
-              <li>10. national_tier - Nivel de selección nacional</li>
-              <li>11. agency - Agencia representante</li>
-              <li>12. contract_end - Fecha fin de contrato</li>
-              <li>13. player_trfm_value - Valor de mercado en €</li>
+              <li>2. url_trfm_advisor - URL del asesor</li>
+              <li>3. date_of_birth - Fecha de nacimiento</li>
+              <li>4. team_name - Equipo actual</li>
+              <li>5. team_loan_from - Equipo de cesión (si aplica)</li>
+              <li>6. position_player - Posición en el campo</li>
+              <li>7. foot - Pie dominante</li>
+              <li>8. height - Altura en cm</li>
+              <li>9. nationality_1 - Nacionalidad principal</li>
+              <li>10. nationality_2 - Segunda nacionalidad (si aplica)</li>
+              <li>11. national_tier - Nivel de selección nacional</li>
+              <li>12. agency - Agencia representante</li>
+              <li>13. contract_end - Fecha fin de contrato</li>
+              <li>14. player_trfm_value - Valor de mercado en €</li>
             </ul>
-            <p className="mt-4">• También se extrae url_trfm_advisor (URL del advisor)</p>
           </div>
         </CardContent>
       </Card>

@@ -4,6 +4,7 @@
  */
 
 import { User } from '@clerk/nextjs/server'
+
 import { UserMetadata, UserRole } from '@/lib/services/role-service'
 
 export interface UserRoleInfo {

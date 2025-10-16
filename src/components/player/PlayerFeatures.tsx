@@ -1,9 +1,10 @@
 "use client";
 
+import { useState, useEffect } from 'react';
+
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePlayerPositioning } from "@/hooks/player/usePlayerPositioning";
 import type { Player } from "@/types/player";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useState, useEffect } from 'react';
 
 interface PlayerFeaturesProps {
   player: Player;

@@ -1,6 +1,6 @@
 'use client'
 
-import { TrendingUp, TrendingDown, Users, Target, Award, Globe, BarChart3, Calendar } from 'lucide-react'
+import { TrendingUp, TrendingDown, Users, Target, Award, BarChart3, Calendar } from 'lucide-react'
 
 interface ScoutMetricsCardsProps {
   scout: {

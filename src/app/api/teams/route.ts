@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { prisma } from '@/lib/db'
-import { TeamSearchQuerySchema, TeamCreateSchema } from '@/lib/validation/api-schemas'
+import { TeamCreateSchema } from '@/lib/validation/api-schemas'
 
 export interface TeamFilters {
   team_name?: string
@@ -24,7 +24,7 @@ export interface TeamSearchOptions {
   filters?: TeamFilters
 }
 
-// GET /api/teams - Buscar equipos con filtros
+// GET /api/teams - Buscar equipos con filtros y cursor-based pagination
 export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth()
@@ -35,144 +35,82 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
 
-    // Validar parámetros con Zod
-    let params;
-    try {
-      params = TeamSearchQuerySchema.parse({
-        page: searchParams.get('page'),
-        limit: searchParams.get('limit'),
-        sortBy: searchParams.get('sortBy'),
-        sortOrder: searchParams.get('sortOrder'),
-        'filters[team_name]': searchParams.get('filters[team_name]'),
-        'filters[team_country]': searchParams.get('filters[team_country]'),
-        'filters[competition]': searchParams.get('filters[competition]'),
-        'filters[competition_country]': searchParams.get('filters[competition_country]'),
-        'filters[min_rating]': searchParams.get('filters[min_rating]'),
-        'filters[max_rating]': searchParams.get('filters[max_rating]'),
-        'filters[min_value]': searchParams.get('filters[min_value]'),
-        'filters[max_value]': searchParams.get('filters[max_value]')
-      });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return NextResponse.json({
-          error: 'Parámetros inválidos',
-          details: error.errors.map((err) => ({
-            field: err.path.join('.'),
-            message: err.message
-          }))
-        }, { status: 400 });
-      }
-      throw error;
-    }
+    // Parámetros de cursor-based pagination
+    const cursor = searchParams.get('cursor')
+    const limit = parseInt(searchParams.get('limit') || '50')
+    const search = searchParams.get('search') || ''
+    const country = searchParams.get('country') || ''
+    const competition = searchParams.get('competition') || ''
 
-    const page = params.page;
-    const limit = params.limit;
-    const sortBy = params.sortBy || 'team_name';
-    const sortOrder = params.sortOrder;
-
-    // Construir filtros desde parámetros validados
-    const filters: TeamFilters = {}
-
-    if (params['filters[team_name]']) {
-      filters.team_name = params['filters[team_name]']
-    }
-    if (params['filters[team_country]']) {
-      filters.team_country = params['filters[team_country]']
-    }
-    if (params['filters[competition]']) {
-      filters.competition = params['filters[competition]']
-    }
-    if (params['filters[competition_country]']) {
-      filters.competition_country = params['filters[competition_country]']
-    }
-    if (params['filters[min_rating]']) {
-      filters.min_rating = parseFloat(params['filters[min_rating]'])
-    }
-    if (params['filters[max_rating]']) {
-      filters.max_rating = parseFloat(params['filters[max_rating]'])
-    }
-    if (params['filters[min_value]']) {
-      filters.min_value = parseFloat(params['filters[min_value]'])
-    }
-    if (params['filters[max_value]']) {
-      filters.max_value = parseFloat(params['filters[max_value]'])
-    }
-
-    const skip = (page - 1) * limit
-
-    console.log('📊 Teams API - Pagination:', { page, limit, skip, sortBy, sortOrder });
+    console.log('📊 Teams API - Cursor pagination:', { cursor, limit, search, country, competition })
 
     // Construir filtros WHERE
-    const where: unknown = {}
-    
-    if (filters.team_name) {
-      where.team_name = {
-        contains: filters.team_name,
-        mode: 'insensitive'
-      }
-    }
-    
-    if (filters.team_country) {
-      where.team_country = {
-        contains: filters.team_country,
-        mode: 'insensitive'
-      }
-    }
-    
-    if (filters.competition) {
-      where.competition = {
-        contains: filters.competition,
-        mode: 'insensitive'
-      }
-    }
-    
-    if (filters.competition_country) {
-      where.competition_country = {
-        contains: filters.competition_country,
-        mode: 'insensitive'
-      }
-    }
-    
-    if (filters.min_rating || filters.max_rating) {
-      where.team_rating = {}
-      if (filters.min_rating) where.team_rating.gte = filters.min_rating
-      if (filters.max_rating) where.team_rating.lte = filters.max_rating
-    }
-    
-    if (filters.min_value || filters.max_value) {
-      where.team_trfm_value = {}
-      if (filters.min_value) where.team_trfm_value.gte = filters.min_value
-      if (filters.max_value) where.team_trfm_value.lte = filters.max_value
+    const where: any = {}
+
+    // Búsqueda general
+    if (search) {
+      where.OR = [
+        { team_name: { contains: search, mode: 'insensitive' } },
+        { correct_team_name: { contains: search, mode: 'insensitive' } },
+        { team_country: { contains: search, mode: 'insensitive' } },
+        { competition: { contains: search, mode: 'insensitive' } }
+      ]
     }
 
-    console.log('🔍 Teams API - WHERE filters:', JSON.stringify(where, null, 2));
+    // Filtros específicos
+    if (country) {
+      where.team_country = { contains: country, mode: 'insensitive' }
+    }
 
-    // Obtener equipos
-    const [teams, total] = await Promise.all([
-      prisma.equipo.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: {
-          [sortBy]: sortOrder
+    if (competition) {
+      where.competition = { contains: competition, mode: 'insensitive' }
+    }
+
+    console.log('🔍 Teams API - WHERE filters:', JSON.stringify(where, null, 2))
+
+    // Query con cursor
+    const teams = await prisma.equipo.findMany({
+      where,
+      take: limit + 1, // Tomar uno extra para saber si hay más
+      ...(cursor ? {
+        skip: 1, // Saltar el cursor
+        cursor: {
+          id_team: cursor
         }
-      }),
-      prisma.equipo.count({ where })
-    ])
+      } : {}),
+      orderBy: {
+        team_name: 'asc'
+      }
+    })
 
-    console.log('✅ Teams API - Results:', { teamsCount: teams.length, total, page, limit });
+    // Determinar si hay más resultados
+    const hasMore = teams.length > limit
+    const teamsToReturn = hasMore ? teams.slice(0, limit) : teams
+    const nextCursor = hasMore ? teams[limit - 1]?.id_team : null
 
-    const totalPages = Math.ceil(total / limit)
+    // Obtener total solo en la primera carga (sin cursor)
+    let total: number | undefined
+    if (!cursor) {
+      total = await prisma.equipo.count({ where })
+    }
+
+    console.log('✅ Teams API - Results:', {
+      teamsCount: teamsToReturn.length,
+      hasMore,
+      nextCursor,
+      total
+    })
 
     return NextResponse.json({
-      teams,
+      teams: teamsToReturn,
+      hasMore,
+      nextCursor,
+      total,
+      // Mantener compatibilidad con código anterior
       pagination: {
-        page,
         limit,
         total,
-        totalPages,
-        hasNext: page < totalPages,
-        hasPrev: page > 1
+        hasNext: hasMore
       }
     })
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+
 import { handleApiResponse } from '@/lib/utils/api-response';
 
 interface ScoutListItem {

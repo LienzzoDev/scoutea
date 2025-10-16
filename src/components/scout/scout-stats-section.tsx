@@ -1,6 +1,7 @@
 'use client'
 
-import { TrendingUp, Users, FileText, Target, Calendar, Award } from 'lucide-react'
+import { TrendingUp, Users, FileText, Target, Award } from 'lucide-react'
+
 import { Card } from '@/components/ui/card'
 
 interface ScoutStatsSectionProps {

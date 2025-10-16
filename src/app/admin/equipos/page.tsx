@@ -1,67 +1,94 @@
 'use client'
 
-import { Search, Download, Upload, Globe, Plus, Filter } from "lucide-react"
+import { Search, Globe, Plus, RefreshCw } from "lucide-react"
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useMemo } from 'react'
 
+import ImportTeamsButton from "@/components/admin/ImportTeamsButton"
 import TeamTable from "@/components/team/TeamTable"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingPage } from "@/components/ui/loading-spinner"
+import { useInfiniteTeamsScroll } from '@/hooks/admin/useInfiniteTeamsScroll'
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
-import { useTeams, Team } from "@/hooks/team/useTeams"
+import type { Team } from "@/hooks/team/useTeams"
 
 export default function EquiposPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState<string>('team_name')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
-  // Hook para manejar equipos
-  const { 
-    teams, 
-    loading, 
-    error, 
-    searchTeams
-  } = useTeams()
-
-  // Manejador global de errores no capturados
+  // Debounce del search term
   useEffect(() => {
-    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      console.error('Unhandled promise rejection:', event.reason)
-      event.preventDefault()
-    }
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm)
+    }, 300)
 
-    const handleError = (event: ErrorEvent) => {
-      console.error('Unhandled __error: ', event.error)
-      event.preventDefault()
-    }
+    return () => clearTimeout(timer)
+  }, [searchTerm])
 
-    window.addEventListener('unhandledrejection', handleUnhandledRejection)
-    window.addEventListener('error', handleError)
-
-    return () => {
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
-      window.removeEventListener('error', handleError)
-    }
-  }, [])
-
-  // Cargar equipos al montar el componente
-  useEffect(() => {
-    if (isSignedIn) {
-      searchTeams()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSignedIn])
+  // Hook de infinite scroll
+  const {
+    teams,
+    loading,
+    error,
+    hasMore,
+    totalCount,
+    observerTarget,
+    refresh
+  } = useInfiniteTeamsScroll({
+    search: debouncedSearch,
+    limit: 50
+  })
 
   // Categorías para mostrar en la tabla
   const categories = useMemo(() => [
     {
+      key: 'correct_team_name',
+      label: 'Nombre Corregido',
+      getValue: (team: Team) => team.correct_team_name,
+    },
+    {
       key: 'team_country',
-      label: 'País',
+      label: 'País del Equipo',
       getValue: (team: Team) => team.team_country,
+    },
+    {
+      key: 'url_trfm_advisor',
+      label: 'URL TM Advisor',
+      getValue: (team: Team) => team.url_trfm_advisor,
+      format: (value: unknown) => {
+        if (!value || typeof value !== 'string') return 'N/A';
+        return value.length > 30 ? value.substring(0, 30) + '...' : value;
+      },
+    },
+    {
+      key: 'url_trfm',
+      label: 'URL Transfermarkt',
+      getValue: (team: Team) => team.url_trfm,
+      format: (value: unknown) => {
+        if (!value || typeof value !== 'string') return 'N/A';
+        return value.length > 30 ? value.substring(0, 30) + '...' : value;
+      },
+    },
+    {
+      key: 'owner_club',
+      label: 'Club Propietario',
+      getValue: (team: Team) => team.owner_club,
+    },
+    {
+      key: 'owner_club_country',
+      label: 'País Club Propietario',
+      getValue: (team: Team) => team.owner_club_country,
+    },
+    {
+      key: 'pre_competition',
+      label: 'Pre Competición',
+      getValue: (team: Team) => team.pre_competition,
     },
     {
       key: 'competition',
@@ -69,12 +96,31 @@ export default function EquiposPage() {
       getValue: (team: Team) => team.competition,
     },
     {
+      key: 'correct_competition',
+      label: 'Competición Corregida',
+      getValue: (team: Team) => team.correct_competition,
+    },
+    {
+      key: 'competition_country',
+      label: 'País Competición',
+      getValue: (team: Team) => team.competition_country,
+    },
+    {
       key: 'team_trfm_value',
-      label: 'Valor',
+      label: 'Valor TM',
       getValue: (team: Team) => team.team_trfm_value,
       format: (value: unknown) => {
         if (!value || typeof value !== 'number') return 'N/A';
         return `€${(value / 1000000).toFixed(1)}M`;
+      },
+    },
+    {
+      key: 'team_trfm_value_norm',
+      label: 'Valor TM Norm',
+      getValue: (team: Team) => team.team_trfm_value_norm,
+      format: (value: unknown) => {
+        if (!value || typeof value !== 'number') return 'N/A';
+        return value.toFixed(2);
       },
     },
     {
@@ -84,6 +130,15 @@ export default function EquiposPage() {
       format: (value: unknown) => {
         if (!value || typeof value !== 'number') return 'N/A';
         return value.toFixed(1);
+      },
+    },
+    {
+      key: 'team_rating_norm',
+      label: 'Rating Norm',
+      getValue: (team: Team) => team.team_rating_norm,
+      format: (value: unknown) => {
+        if (!value || typeof value !== 'number') return 'N/A';
+        return value.toFixed(2);
       },
     },
     {
@@ -131,21 +186,13 @@ export default function EquiposPage() {
     }
   }
 
-  // Filtrar y ordenar equipos
-  const filteredTeams = useMemo(() => {
+  // Client-side sorting (los equipos ya están filtrados por el backend)
+  const sortedTeams = useMemo(() => {
     if (!Array.isArray(teams)) return [];
 
-    // Primero filtrar
-    let filtered = teams.filter(team =>
-      team.team_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (team.correct_team_name && team.correct_team_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (team.team_country && team.team_country.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (team.competition && team.competition.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-
-    // Luego ordenar
-    if (sortBy) {
-      filtered = [...filtered].sort((a, b) => {
+    // Ordenar en cliente
+    if (sortBy && sortBy !== 'team_name') { // team_name ya viene ordenado del backend
+      return [...teams].sort((a, b) => {
         let aValue: any = a[sortBy as keyof typeof a];
         let bValue: any = b[sortBy as keyof typeof b];
 
@@ -164,8 +211,8 @@ export default function EquiposPage() {
       });
     }
 
-    return filtered;
-  }, [teams, searchTerm, sortBy, sortOrder])
+    return teams;
+  }, [teams, sortBy, sortOrder])
 
   // Si no está cargado, mostrar loading
   if (!isLoaded) {
@@ -181,7 +228,14 @@ export default function EquiposPage() {
     <main className="px-6 py-8 max-w-full mx-auto">
       {/* Page Header */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-[#D6DDE6]">Equipos</h1>
+        <div>
+          <h1 className="text-3xl font-bold text-[#D6DDE6]">Equipos</h1>
+          {totalCount !== null && (
+            <p className='text-sm text-slate-400 mt-1'>
+              {teams.length} de {totalCount} equipos cargados
+            </p>
+          )}
+        </div>
         <div className="flex items-center space-x-3">
           <Button
             className="bg-[#FF5733] hover:bg-[#E64A2B] text-white"
@@ -198,15 +252,21 @@ export default function EquiposPage() {
             <Globe className="h-4 w-4 mr-2" />
             Scraping URL
           </Button>
-          <Button variant="outline" className="border-slate-700 bg-[#131921] text-white hover:bg-slate-700">
-            <Download className="h-4 w-4 mr-2" />
-            Importar
-          </Button>
-          <Button variant="outline" className="border-slate-700 bg-[#131921] text-white hover:bg-slate-700">
-            <Upload className="h-4 w-4 mr-2" />
-            Exportar
-          </Button>
         </div>
+      </div>
+
+      {/* Import Teams Section */}
+      <div className='mb-6 flex flex-wrap items-center gap-4'>
+        <ImportTeamsButton />
+        <Button
+          variant='outline'
+          className='border-slate-700 bg-[#131921] text-white hover:bg-slate-700'
+          onClick={refresh}
+          disabled={loading}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          Refrescar Lista
+        </Button>
       </div>
 
       {/* Search */}
@@ -221,7 +281,7 @@ export default function EquiposPage() {
           />
         </div>
         <div className="text-sm text-slate-400">
-          {filteredTeams.length} equipos encontrados
+          {teams.length} equipos {hasMore ? '(cargando más al hacer scroll)' : 'cargados'}
         </div>
       </div>
 
@@ -230,7 +290,7 @@ export default function EquiposPage() {
         <div className="mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg">
           <p className="text-red-400">Error: {typeof error === 'string' ? error : error?.message || 'Error desconocido'}</p>
           <Button
-            onClick={() => searchTeams()}
+            onClick={() => refresh()}
             variant="outline" className="mt-2 border-red-700 text-red-400 hover:bg-red-900/20">
             Reintentar
           </Button>
@@ -239,16 +299,55 @@ export default function EquiposPage() {
 
       {/* Team Table */}
       <TeamTable
-        teams={filteredTeams}
+        teams={sortedTeams}
         selectedCategories={categories}
         sortBy={sortBy}
         sortOrder={sortOrder}
         onSort={handleSort}
-        loading={loading}
+        loading={false}
         darkMode={true}
         onEdit={(teamId) => router.push(`/admin/equipos/${teamId}/editar`)}
         onDelete={(teamId) => setShowDeleteConfirm(teamId)}
       />
+
+      {/* Infinite Scroll Observer */}
+      {teams.length > 0 && (
+        <div
+          ref={observerTarget}
+          className='py-8 flex justify-center'
+          style={{ minHeight: '80px' }}
+        >
+          {loading && (
+            <div className='flex items-center gap-2 text-slate-400'>
+              <div className='animate-spin rounded-full h-5 w-5 border-b-2 border-[#FF5733]'></div>
+              <span>Cargando más equipos...</span>
+            </div>
+          )}
+          {!loading && hasMore && (
+            <p className='text-slate-500 text-sm'>Desplázate hacia abajo para cargar más</p>
+          )}
+          {!loading && !hasMore && (
+            <p className='text-slate-500 text-sm'>✓ Todos los equipos cargados</p>
+          )}
+        </div>
+      )}
+
+      {/* Loading inicial */}
+      {teams.length === 0 && loading && (
+        <div className='flex items-center justify-center py-12'>
+          <div className='flex items-center gap-2 text-slate-400'>
+            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF5733]'></div>
+            <span>Cargando equipos...</span>
+          </div>
+        </div>
+      )}
+
+      {/* No results */}
+      {teams.length === 0 && !loading && (
+        <div className='text-center py-12'>
+          <p className='text-lg text-slate-400'>No se encontraron equipos</p>
+        </div>
+      )}
 
       {/* Modal de confirmación de eliminación */}
       {showDeleteConfirm && (

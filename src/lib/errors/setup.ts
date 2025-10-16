@@ -2,9 +2,9 @@
 // 🎯 PROPÓSITO: Inicializar todos los sistemas de manejo de errores
 
 import { setupGlobalErrorHandling } from '../logging/logger'
+import { logger } from '../logging/production-logger'
 import { setupErrorMonitoring } from '../monitoring/error-monitor'
 
-import { logger } from '../logging/production-logger'
 
 // Función principal para configurar todo el sistema de errores
 export function setupErrorHandling(): void {

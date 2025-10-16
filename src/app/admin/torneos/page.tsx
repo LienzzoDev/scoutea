@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { LoadingPage, LoadingCard } from "@/components/ui/loading-spinner"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 import { useTournaments, TorneoFilters, Torneo } from "@/hooks/tournament/useTournaments"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 export default function TorneosPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
@@ -176,21 +176,26 @@ export default function TorneosPage() {
               <div className="flex gap-2">
                 <Button
                   onClick={handleSearch}
-                  variant="outline"
-                  className="border-slate-600 text-gray-300 hover:bg-slate-700"
+                  className="bg-[#8C1A10] hover:bg-[#7A1610] text-white border-0"
                 >
                   Buscar
                 </Button>
                 <Button
                   onClick={() =>setShowFilters(!showFilters)}
-                  variant="outline" className="border-slate-600 text-gray-300 hover:bg-slate-700">
+                  variant="outline"
+                  className={`border-slate-600 hover:bg-slate-700 transition-colors ${
+                    showFilters
+                      ? 'bg-slate-700 text-white border-slate-500'
+                      : 'bg-[#1F2937] text-gray-300 hover:text-white'
+                  }`}
+                >
                   <Filter className="h-4 w-4 mr-2" />
                   Filtros
                 </Button>
                 <Button
                   onClick={clearFilters}
                   variant="outline"
-                  className="border-slate-600 text-gray-300 hover:bg-slate-700"
+                  className="border-slate-600 bg-[#1F2937] text-gray-300 hover:bg-slate-700 hover:text-white transition-colors"
                 >
                   Limpiar
                 </Button>
@@ -199,21 +204,21 @@ export default function TorneosPage() {
 
             {/* Filtros avanzados */}
             {showFilters && filterOptions && (
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="mt-4 pt-4 border-t border-slate-700 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Tipo de Torneo
                   </label>
                   <Select
                     value={filters.tipo_torneo || undefined}
                     onValueChange={(value) => handleFilterChange('tipo_torneo', value)}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white hover:bg-[#2D3748] focus:ring-[#8C1A10]">
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-[#1F2937] border-slate-600">
                       {filterOptions.tiposTorneo.map((tipo: string) => (
-                        <SelectItem key={tipo} value={tipo}>
+                        <SelectItem key={tipo} value={tipo} className="text-white hover:bg-slate-700 focus:bg-slate-700">
                           {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
                         </SelectItem>
                       ))}
@@ -221,19 +226,19 @@ export default function TorneosPage() {
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Categoría
                   </label>
                   <Select
                     value={filters.categoria || undefined}
                     onValueChange={(value) => handleFilterChange('categoria', value)}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white hover:bg-[#2D3748] focus:ring-[#8C1A10]">
                       <SelectValue placeholder="Todas" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-[#1F2937] border-slate-600">
                       {filterOptions.categorias.map((categoria: string) => (
-                        <SelectItem key={categoria} value={categoria}>
+                        <SelectItem key={categoria} value={categoria} className="text-white hover:bg-slate-700 focus:bg-slate-700">
                           {categoria}
                         </SelectItem>
                       ))}
@@ -241,19 +246,19 @@ export default function TorneosPage() {
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Género
                   </label>
                   <Select
                     value={filters.genero || undefined}
                     onValueChange={(value) => handleFilterChange('genero', value)}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white hover:bg-[#2D3748] focus:ring-[#8C1A10]">
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-[#1F2937] border-slate-600">
                       {filterOptions.generos.map((genero: string) => (
-                        <SelectItem key={genero} value={genero}>
+                        <SelectItem key={genero} value={genero} className="text-white hover:bg-slate-700 focus:bg-slate-700">
                           {genero.charAt(0).toUpperCase() + genero.slice(1)}
                         </SelectItem>
                       ))}
@@ -261,19 +266,19 @@ export default function TorneosPage() {
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Estado
                   </label>
                   <Select
                     value={filters.estado || undefined}
                     onValueChange={(value) => handleFilterChange('estado', value)}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white hover:bg-[#2D3748] focus:ring-[#8C1A10]">
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-[#1F2937] border-slate-600">
                       {filterOptions.estados.map((estado: string) => (
-                        <SelectItem key={estado} value={estado}>
+                        <SelectItem key={estado} value={estado} className="text-white hover:bg-slate-700 focus:bg-slate-700">
                           {estado.charAt(0).toUpperCase() + estado.slice(1)}
                         </SelectItem>
                       ))}

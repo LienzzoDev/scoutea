@@ -3,8 +3,9 @@
 import { useUser, useClerk } from '@clerk/nextjs'
 import { User, Mail, Calendar, Shield, ArrowLeft, LogOut } from "lucide-react"
 import { useRouter } from 'next/navigation'
-import { getUserRole } from '@/lib/auth/user-role'
+
 import { Button } from '@/components/ui/button'
+import { getUserRole } from '@/lib/auth/user-role'
 
 export default function AdminProfilePage() {
   const { user, isLoaded } = useUser()

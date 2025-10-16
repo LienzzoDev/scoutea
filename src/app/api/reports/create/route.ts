@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+
 import { prisma } from '@/lib/db'
-import { ScoutReportCreateSchema } from '@/lib/validation/api-schemas'
 import { generateReportId, generatePlayerId } from '@/lib/utils/id-generator'
+import { ScoutReportCreateSchema } from '@/lib/validation/api-schemas'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,13 +15,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
+    console.log('Received body:', JSON.stringify(body, null, 2))
 
     // Validar con Zod
     let validatedData;
     try {
       validatedData = ScoutReportCreateSchema.parse(body);
+      console.log('Validated data:', JSON.stringify(validatedData, null, 2))
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error('Validation errors:', error.errors)
         return NextResponse.json({
           error: 'Datos inválidos',
           details: error.errors.map((err) => ({
@@ -52,9 +56,12 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Si no existe, crear el jugador
+    // Si no existe, crear el jugador con estado pending (requiere aprobación admin)
     if (!player) {
       const playerId = await generatePlayerId(); // Generar ID secuencial: PLY-00020
+
+      // Preparar datos con conversión de tipos
+      const heightValue = validatedData.height ? Number(validatedData.height) : null
 
       player = await prisma.jugador.create({
         data: {
@@ -62,7 +69,7 @@ export async function POST(request: NextRequest) {
           player_name: validatedData.playerName,
           date_of_birth: new Date(validatedData.dateOfBirth),
           position_player: validatedData.position || null,
-          height: validatedData.height || null,
+          height: heightValue,
           foot: validatedData.foot || null,
           team_name: validatedData.team,
           team_country: validatedData.teamCountry || null,
@@ -88,32 +95,17 @@ export async function POST(request: NextRequest) {
         report_status: 'completed',
 
         // URLs y contenido del reporte
-        form_url_reference: validatedData.urlReference,
         form_url_report: validatedData.urlReport || null,
         form_url_video: validatedData.urlVideo || null,
         form_text_report: validatedData.reportText || null,
-        url_secondary: validatedData.imageUrl || null,
 
         // Análisis del scout
         form_potential: validatedData.potential.toString(),
-        potential: validatedData.potential,
 
         // Snapshot histórico (estado inicial del jugador al momento del reporte)
         initial_age: player.age,
         initial_player_trfm_value: player.player_trfm_value,
         initial_team: player.team_name,
-
-        // Datos del formulario original
-        form_player_name: validatedData.playerName,
-        form_date_of_birth: validatedData.dateOfBirth,
-        form_team_name: validatedData.team,
-        form_position_player: validatedData.position || null,
-        form_foot: validatedData.foot || null,
-        form_height: validatedData.height?.toString() || null,
-        form_nationality_1: validatedData.nationality1,
-        form_nationality_2: validatedData.nationality2 || null,
-        form_national_tier: validatedData.nationalTier || null,
-        form_agency: validatedData.agency || null,
       }
     })
 
@@ -143,8 +135,13 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error creating report:', error)
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
     return NextResponse.json(
-      { error: 'Error interno del servidor', details: error.message },
+      {
+        error: 'Error interno del servidor',
+        details: error instanceof Error ? error.message : String(error),
+        stack: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined
+      },
       { status: 500 }
     )
   }

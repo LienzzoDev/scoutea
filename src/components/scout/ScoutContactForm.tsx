@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
 import { useAuth } from '@clerk/nextjs'
+import { useState } from 'react'
+
 import { Button } from "@/components/ui/button"
 
 interface ScoutContactFormProps {

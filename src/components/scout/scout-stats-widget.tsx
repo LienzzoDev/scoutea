@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { TrendingUp, Users, FileText, Target } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
 import { Card } from '@/components/ui/card'
 

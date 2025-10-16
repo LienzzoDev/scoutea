@@ -1,16 +1,17 @@
 'use client'
 
 import { Search, Plus, X } from 'lucide-react'
-import { useState, useMemo, useCallback } from 'react'
 import Link from 'next/link'
+import { useState, useMemo, useCallback } from 'react'
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import CategorySelector from '@/components/filters/category-selector'
 import MultiSelectFilter from '@/components/filters/multi-select-filter'
 import RangeFilter from '@/components/filters/range-filter'
-import ScoutPlayerFilters from './ScoutPlayerFilters'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+
 import ScoutPlayersTable from './scout-players-table'
+import ScoutPlayerFilters from './ScoutPlayerFilters'
 
 interface PlayerData {
   player: {

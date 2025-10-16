@@ -4,8 +4,8 @@ import { ArrowRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
 
-import PlayerAvatar from "@/components/ui/player-avatar";
 import FlagIcon from "@/components/ui/flag-icon";
+import PlayerAvatar from "@/components/ui/player-avatar";
 import TeamBadge from "@/components/ui/team-badge";
 
 interface PlayerData {

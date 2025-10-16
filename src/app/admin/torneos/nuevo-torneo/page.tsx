@@ -7,10 +7,10 @@ import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from "@/components/ui/textarea"
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 import { useTournaments } from "@/hooks/tournament/useTournaments"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 export default function NuevoTorneoPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()

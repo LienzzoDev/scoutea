@@ -1,8 +1,8 @@
 "use client";
 
-import PlayerRadar from "./PlayerRadar";
 import PlayerBeeswarm from "./PlayerBeeswarm";
 import PlayerLollipop from "./PlayerLollipop";
+import PlayerRadar from "./PlayerRadar";
 
 interface PlayerStatsProps {
   playerId: string;

@@ -26,7 +26,7 @@ export async function GET() {
     }
     
     return NextResponse.json(combinedOptions)
-  } catch (_error) {
+  } catch (error) {
     console.error('Error fetching filter options:', error)
     
     // En caso de error, devolver opciones por defecto

@@ -4,9 +4,9 @@ import { useAuth, useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
+import { ErrorBoundary } from '@/components/error/ErrorBoundary'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { canAccessMemberArea, isAdmin } from '@/lib/auth/user-role'
-import { ErrorBoundary } from '@/components/error/ErrorBoundary'
 
 interface MemberGuardProps {
   children: React.ReactNode

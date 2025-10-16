@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+
 import { prisma } from '@/lib/db'
 
 // Datos de ejemplo para poblar

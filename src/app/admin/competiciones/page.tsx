@@ -1,56 +1,64 @@
 'use client'
 
-import { Search, Filter, Plus, Edit, Trash2, Globe } from "lucide-react"
+import { Search, Filter, Plus, RefreshCw, Globe } from "lucide-react"
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 
+import ImportCompetitionsButton from "@/components/admin/ImportCompetitionsButton"
+import CompetitionTable from "@/components/competition/CompetitionTable"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { LoadingPage, LoadingCard } from "@/components/ui/loading-spinner"
-import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
+import { LoadingPage } from "@/components/ui/loading-spinner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-
-interface Competition {
-  id: string
-  name: string
-  short_name: string | null
-  country_id: string
-  tier: number
-  confederation: string | null
-  season_format: string | null
-  country: {
-    name: string
-    code: string
-  }
-}
-
-interface CompetitionFilters {
-  search?: string
-  country_id?: string
-  tier?: number
-  confederation?: string
-}
+import { useInfiniteCompetitionsScroll } from '@/hooks/admin/useInfiniteCompetitionsScroll'
+import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
+import type { Competition } from '@/lib/services/competition-service'
 
 export default function CompeticionesPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
-  const [filters, setFilters] = useState<CompetitionFilters>({})
   const [showFilters, setShowFilters] = useState(false)
-  const [currentPage, setCurrentPage] = useState(1)
+  const [sortBy, setSortBy] = useState<string>('competition_name')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
-  // Estados para datos
-  const [competitions, setCompetitions] = useState<Competition[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [total, setTotal] = useState(0)
-  const [totalPages, setTotalPages] = useState(1)
+  // Filtros
+  const [countryFilter, setCountryFilter] = useState('')
+  const [tierFilter, setTierFilter] = useState<number | undefined>(undefined)
+  const [confederationFilter, setConfederationFilter] = useState('')
 
   // Estados para opciones de filtros
-  const [countries, setCountries] = useState<Array<{id: string, name: string}>>([])
+  const [countries, setCountries] = useState<string[]>([])
   const [confederations, setConfederations] = useState<string[]>([])
+
+  // Debounce del search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm)
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  // Hook de infinite scroll
+  const {
+    competitions,
+    loading,
+    error: hookError,
+    hasMore,
+    totalCount,
+    observerTarget,
+    refresh
+  } = useInfiniteCompetitionsScroll({
+    search: debouncedSearch,
+    country: countryFilter,
+    confederation: confederationFilter,
+    tier: tierFilter,
+    limit: 50
+  })
 
   // Cargar opciones de filtros
   useEffect(() => {
@@ -69,60 +77,21 @@ export default function CompeticionesPage() {
     loadFilterOptions()
   }, [])
 
-  // Cargar competiciones
-  const loadCompetitions = async () => {
-    setLoading(true)
-    setError(null)
-
-    try {
-      const params = new URLSearchParams()
-      if (filters.search) params.append('search', filters.search)
-      if (filters.country_id) params.append('country_id', filters.country_id)
-      if (filters.tier) params.append('tier', filters.tier.toString())
-      if (filters.confederation) params.append('confederation', filters.confederation)
-      params.append('page', currentPage.toString())
-      params.append('limit', '10')
-
-      const response = await fetch(`/api/competitions?${params}`)
-
-      if (!response.ok) {
-        throw new Error('Error al cargar competiciones')
-      }
-
-      const data = await response.json()
-      setCompetitions(data.competitions || [])
-      setTotal(data.total || 0)
-      setTotalPages(data.totalPages || 1)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (isSignedIn) {
-      loadCompetitions()
-    }
-  }, [isSignedIn, filters, currentPage])
-
-  const handleSearch = () => {
-    setFilters(prev => ({ ...prev, search: searchTerm }))
-    setCurrentPage(1)
-  }
-
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value === '' ? undefined : (key === 'tier' ? parseInt(value) : value)
-    }))
-    setCurrentPage(1)
+    if (key === 'country') {
+      setCountryFilter(value === '' ? '' : value)
+    } else if (key === 'tier') {
+      setTierFilter(value === '' ? undefined : parseInt(value))
+    } else if (key === 'confederation') {
+      setConfederationFilter(value === '' ? '' : value)
+    }
   }
 
   const clearFilters = () => {
-    setFilters({})
     setSearchTerm('')
-    setCurrentPage(1)
+    setCountryFilter('')
+    setTierFilter(undefined)
+    setConfederationFilter('')
   }
 
   const handleDelete = async (id: string) => {
@@ -136,11 +105,131 @@ export default function CompeticionesPage() {
       }
 
       setShowDeleteConfirm(null)
-      loadCompetitions()
+      refresh() // Refrescar la lista después de eliminar
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al eliminar')
+      console.error('Error al eliminar:', err)
     }
   }
+
+  // Categorías para mostrar en la tabla
+  const categories = useMemo(() => [
+    {
+      key: 'correct_competition_name',
+      label: 'Nombre Corregido',
+      getValue: (comp: Competition) => comp.correct_competition_name,
+    },
+    {
+      key: 'competition_country',
+      label: 'País',
+      getValue: (comp: Competition) => comp.competition_country,
+    },
+    {
+      key: 'url_trfm',
+      label: 'URL Transfermarkt',
+      getValue: (comp: Competition) => comp.url_trfm,
+      format: (value: unknown) => {
+        if (!value || typeof value !== 'string') return 'N/A';
+        return value.length > 30 ? value.substring(0, 30) + '...' : value;
+      },
+    },
+    {
+      key: 'competition_confederation',
+      label: 'Confederación',
+      getValue: (comp: Competition) => comp.competition_confederation || comp.confederation,
+    },
+    {
+      key: 'competition_tier',
+      label: 'Tier',
+      getValue: (comp: Competition) => comp.competition_tier || comp.tier,
+      format: (value: unknown) => {
+        if (!value || typeof value !== 'number') return 'N/A';
+        return `Tier ${value}`;
+      },
+    },
+    {
+      key: 'competition_trfm_value',
+      label: 'Valor TM',
+      getValue: (comp: Competition) => comp.competition_trfm_value,
+      format: (value: unknown) => {
+        if (!value || typeof value !== 'number') return 'N/A';
+        return `€${(value / 1000000).toFixed(1)}M`;
+      },
+    },
+    {
+      key: 'competition_trfm_value_norm',
+      label: 'Valor TM Norm',
+      getValue: (comp: Competition) => comp.competition_trfm_value_norm,
+      format: (value: unknown) => {
+        if (!value || typeof value !== 'number') return 'N/A';
+        return value.toFixed(2);
+      },
+    },
+    {
+      key: 'competition_rating',
+      label: 'Rating',
+      getValue: (comp: Competition) => comp.competition_rating,
+      format: (value: unknown) => {
+        if (!value || typeof value !== 'number') return 'N/A';
+        return value.toFixed(1);
+      },
+    },
+    {
+      key: 'competition_rating_norm',
+      label: 'Rating Norm',
+      getValue: (comp: Competition) => comp.competition_rating_norm,
+      format: (value: unknown) => {
+        if (!value || typeof value !== 'number') return 'N/A';
+        return value.toFixed(2);
+      },
+    },
+    {
+      key: 'competition_elo',
+      label: 'ELO',
+      getValue: (comp: Competition) => comp.competition_elo,
+      format: (value: unknown) => {
+        if (!value || typeof value !== 'number') return 'N/A';
+        return Math.round(value).toString();
+      },
+    },
+    {
+      key: 'competition_level',
+      label: 'Nivel',
+      getValue: (comp: Competition) => comp.competition_level,
+    },
+  ], [])
+
+  // Función de ordenamiento
+  const handleSort = (categoryKey: string) => {
+    if (sortBy === categoryKey) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortBy(categoryKey)
+      setSortOrder('asc')
+    }
+  }
+
+  // Client-side sorting
+  const sortedCompetitions = useMemo(() => {
+    if (!Array.isArray(competitions)) return [];
+
+    return [...competitions].sort((a, b) => {
+      let aValue: any = a[sortBy as keyof typeof a];
+      let bValue: any = b[sortBy as keyof typeof b];
+
+      // Manejar valores null/undefined
+      if (aValue === null || aValue === undefined) aValue = '';
+      if (bValue === null || bValue === undefined) bValue = '';
+
+      // Convertir a string para comparación si es necesario
+      if (typeof aValue === 'string') aValue = aValue.toLowerCase();
+      if (typeof bValue === 'string') bValue = bValue.toLowerCase();
+
+      // Comparar
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [competitions, sortBy, sortOrder])
 
   if (!isLoaded) {
     return <LoadingPage />
@@ -176,6 +265,16 @@ export default function CompeticionesPage() {
           </div>
         </div>
 
+        {/* Importación de Competiciones */}
+        <Card className="mb-6 bg-[#131921] border-slate-700">
+          <CardContent className="p-6">
+            <h3 className="text-lg font-semibold text-[#D6DDE6] mb-4">
+              Importar Competiciones desde Excel
+            </h3>
+            <ImportCompetitionsButton />
+          </CardContent>
+        </Card>
+
         {/* Filtros y búsqueda */}
         <Card className="mb-6 bg-[#131921] border-slate-700">
           <CardContent className="p-6">
@@ -193,65 +292,73 @@ export default function CompeticionesPage() {
               </div>
               <div className="flex gap-2">
                 <Button
-                  onClick={handleSearch}
-                  variant="outline"
-                  className="border-slate-600 text-gray-300 hover:bg-slate-700"
-                >
-                  Buscar
-                </Button>
-                <Button
                   onClick={() => setShowFilters(!showFilters)}
-                  variant="outline" className="border-slate-600 text-gray-300 hover:bg-slate-700">
+                  variant="outline"
+                  className={`border-slate-600 hover:bg-slate-700 transition-colors ${
+                    showFilters
+                      ? 'bg-slate-700 text-white border-slate-500'
+                      : 'bg-[#1F2937] text-gray-300 hover:text-white'
+                  }`}
+                >
                   <Filter className="h-4 w-4 mr-2" />
                   Filtros
                 </Button>
                 <Button
                   onClick={clearFilters}
                   variant="outline"
-                  className="border-slate-600 text-gray-300 hover:bg-slate-700"
+                  className="border-slate-600 bg-[#1F2937] text-gray-300 hover:bg-slate-700 hover:text-white transition-colors"
                 >
                   Limpiar
+                </Button>
+                <Button
+                  onClick={refresh}
+                  variant="outline"
+                  className="border-slate-600 bg-[#1F2937] text-gray-300 hover:bg-slate-700 hover:text-white transition-colors"
+                  disabled={loading}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  Refrescar
                 </Button>
               </div>
             </div>
 
             {/* Filtros avanzados */}
             {showFilters && (
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="mt-4 pt-4 border-t border-slate-700 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     País
                   </label>
                   <Select
-                    value={filters.country_id || undefined}
-                    onValueChange={(value) => handleFilterChange('country_id', value)}
+                    value={countryFilter || undefined}
+                    onValueChange={(value) => handleFilterChange('country', value)}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white hover:bg-[#2D3748] focus:ring-[#8C1A10]">
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-[#1F2937] border-slate-600">
                       {countries.map((country) => (
-                        <SelectItem key={country.id} value={country.id}>
-                          {country.name}
+                        <SelectItem key={country} value={country} className="text-white hover:bg-slate-700 focus:bg-slate-700">
+                          {country}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Tier
                   </label>
                   <Select
-                    value={filters.tier?.toString() || undefined}
+                    value={tierFilter?.toString() || undefined}
                     onValueChange={(value) => handleFilterChange('tier', value)}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white hover:bg-[#2D3748] focus:ring-[#8C1A10]">
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-[#1F2937] border-slate-600">
                       {[1, 2, 3, 4, 5].map((tier) => (
-                        <SelectItem key={tier} value={tier.toString()}>
+                        <SelectItem key={tier} value={tier.toString()} className="text-white hover:bg-slate-700 focus:bg-slate-700">
                           Tier {tier}
                         </SelectItem>
                       ))}
@@ -259,19 +366,19 @@ export default function CompeticionesPage() {
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Confederación
                   </label>
                   <Select
-                    value={filters.confederation || undefined}
+                    value={confederationFilter || undefined}
                     onValueChange={(value) => handleFilterChange('confederation', value)}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white hover:bg-[#2D3748] focus:ring-[#8C1A10]">
                       <SelectValue placeholder="Todas" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-[#1F2937] border-slate-600">
                       {confederations.map((conf) => (
-                        <SelectItem key={conf} value={conf}>
+                        <SelectItem key={conf} value={conf} className="text-white hover:bg-slate-700 focus:bg-slate-700">
                           {conf}
                         </SelectItem>
                       ))}
@@ -291,129 +398,62 @@ export default function CompeticionesPage() {
                 <Globe className="h-8 w-8 text-[#8C1A10] mr-3" />
                 <div>
                   <p className="text-sm font-medium text-gray-400">Total Competiciones</p>
-                  <p className="text-2xl font-bold text-[#D6DDE6]">{total}</p>
+                  <p className="text-2xl font-bold text-[#D6DDE6]">
+                    {totalCount ?? competitions.length}
+                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Lista de competiciones */}
-        <Card className="bg-[#131921] border-slate-700">
-          <CardContent className="p-0">
-            {loading ? (
-              <div className="p-6">
-                <LoadingCard />
-              </div>
-            ) : error ? (
-              <div className="p-6 text-center">
-                <p className="text-red-400 mb-4">{error}</p>
-                <Button onClick={loadCompetitions}>
-                  Reintentar
-                </Button>
-              </div>
-            ) : !competitions || competitions.length === 0 ? (
-              <div className="p-6 text-center">
-                <Globe className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-400 mb-4">No se encontraron competiciones</p>
-                <Button
-                  onClick={() => router.push('/admin/competiciones/nueva')}
-                  className="bg-[#8C1A10] hover:bg-[#7A1610] text-white">
-                  Crear Primera Competición
-                </Button>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-[#1F2937] border-b border-slate-700">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Nombre
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        País
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Tier
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Confederación
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Formato
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Acciones
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-700">
-                    {competitions.map((competition) => (
-                      <tr key={competition.id} className="hover:bg-[#1F2937]">
-                        <td className="px-6 py-4">
-                          <div>
-                            <div className="text-sm font-medium text-[#D6DDE6]">
-                              {competition.name}
-                            </div>
-                            {competition.short_name && (
-                              <div className="text-sm text-gray-400">
-                                {competition.short_name}
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-[#D6DDE6]">
-                            {competition.country.name}
-                          </div>
-                          <div className="text-xs text-gray-400">
-                            {competition.country.code}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-[#D6DDE6]">
-                            Tier {competition.tier}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-[#D6DDE6]">
-                            {competition.confederation || 'N/A'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-[#D6DDE6]">
-                            {competition.season_format || 'N/A'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex space-x-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => router.push(`/admin/competiciones/${competition.id}/editar`)}
-                              className="border-slate-600 text-gray-300 hover:bg-slate-700">
-                              <Edit className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setShowDeleteConfirm(competition.id)}
-                              className="border-red-600 text-red-400 hover:bg-red-900">
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Error State */}
+        {hookError && (
+          <div className="mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg">
+            <p className="text-red-400 mb-4">{hookError.message}</p>
+            <Button onClick={refresh}>
+              Reintentar
+            </Button>
+          </div>
+        )}
 
-        {/* Paginación */}
-        {totalPages > 1 && (
+        {/* Competition Table */}
+        <CompetitionTable
+          competitions={sortedCompetitions}
+          selectedCategories={categories}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSort={handleSort}
+          loading={false}
+          darkMode={true}
+          onEdit={(competitionId) => router.push(`/admin/competiciones/${competitionId}/editar`)}
+          onDelete={(competitionId) => setShowDeleteConfirm(competitionId)}
+        />
+
+        {/* Infinite Scroll Observer Target */}
+        {hasMore && (
+          <div
+            ref={observerTarget}
+            className="flex items-center justify-center py-8"
+          >
+            <div className="flex items-center gap-2 text-slate-400">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#8C1A10]"></div>
+              <span>Cargando más competiciones...</span>
+            </div>
+          </div>
+        )}
+
+        {/* Mostrar total cargadas */}
+        {!hasMore && competitions.length > 0 && (
+          <div className="text-center py-6 text-slate-400">
+            <p>
+              Mostrando {competitions.length} de {totalCount ?? competitions.length} competiciones
+            </p>
+          </div>
+        )}
+
+        {/* Note: Removed old pagination - now using infinite scroll */}
+        {false && (
           <div className="mt-6 flex justify-center">
             <div className="flex space-x-2">
               <Button

@@ -1,15 +1,15 @@
 'use client'
 
-import { useParams } from 'next/navigation'
-import { useState, useEffect } from 'react'
 import { ArrowLeft, Calendar, TrendingUp, FileText } from 'lucide-react'
 import Link from 'next/link'
+import { useParams } from 'next/navigation'
+import { useState, useEffect } from 'react'
 
 import ScoutNavbar from '@/components/layout/scout-navbar'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 
 interface PlayerReport {
   id_report: string

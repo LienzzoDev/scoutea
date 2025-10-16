@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import axios from 'axios'
 import * as cheerio from 'cheerio'
 import { NextRequest, NextResponse } from 'next/server'
+
 import { prisma } from '@/lib/db'
 
 const BASE_URL = "https://www.transfermarkt.es"

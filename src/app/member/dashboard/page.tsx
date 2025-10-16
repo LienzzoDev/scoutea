@@ -11,7 +11,7 @@ import MemberNavbar from "@/components/layout/member-navbar";
 import DashboardTabs from "@/components/player/DashboardTabs";
 import PlayerFilters from "@/components/player/PlayerFilters";
 import { Input } from "@/components/ui/input";
-import { useDashboardState } from "@/hooks/useDashboardState";
+import { useDashboardStateInfinite } from "@/hooks/useDashboardStateInfinite";
 
 export default function MemberDashboard() {
   const {
@@ -31,14 +31,18 @@ export default function MemberDashboard() {
     filterOptions,
     sortBy,
     sortOrder,
-    
+
     // Datos derivados
     loading,
     error,
     filteredPlayers,
     tabCounts,
     selectedCategoriesData,
-    
+
+    // Infinite scroll
+    hasMore,
+    observerTarget,
+
     // Funciones
     handleSearch,
     handleTabChange,
@@ -51,15 +55,15 @@ export default function MemberDashboard() {
     setSelectedTeams,
     setSelectedCompetitions,
     setSelectedAges,
-    
+
     // Player list functions
     addToList,
     removeFromList,
     isInList,
-    
+
     // Constants
     AVAILABLE_CATEGORIES,
-  } = useDashboardState();
+  } = useDashboardStateInfinite();
 
   return (
     <AuthGuard>
@@ -391,16 +395,35 @@ export default function MemberDashboard() {
                 )}
               </div>
             ) : (
-              <PlayerTable
-                players={filteredPlayers}
-                selectedCategories={selectedCategoriesData}
-                isInList={isInList}
-                addToList={addToList}
-                removeFromList={removeFromList}
-                sortBy={sortBy}
-                sortOrder={sortOrder}
-                onSort={handleSort}
-              />
+              <>
+                <PlayerTable
+                  players={filteredPlayers}
+                  selectedCategories={selectedCategoriesData}
+                  isInList={isInList}
+                  addToList={addToList}
+                  removeFromList={removeFromList}
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                  onSort={handleSort}
+                />
+
+                {/* Infinite Scroll Observer Target */}
+                <div
+                  ref={observerTarget}
+                  style={{ minHeight: '80px' }}
+                  className="flex items-center justify-center py-8"
+                >
+                  {loading && hasMore && (
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8c1a10]"></div>
+                      <span className="text-[#6d6d6d] text-sm">Cargando más jugadores...</span>
+                    </div>
+                  )}
+                  {!hasMore && filteredPlayers.length > 0 && (
+                    <p className="text-[#6d6d6d] text-sm">No hay más jugadores para cargar</p>
+                  )}
+                </div>
+              </>
             )}
           </div>
         )}

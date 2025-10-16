@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+
 import { QualitativeData, QualitativeFilters } from '@/lib/services/scout-qualitative-service'
 
 interface UseScoutQualitativeReturn {

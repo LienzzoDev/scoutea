@@ -2,11 +2,13 @@
 
 import { Filter, X, Loader2 } from 'lucide-react'
 import { useState } from 'react'
-import { DonutChart } from '../donut-chart'
-import { QualitativeData, QualitativeFilters } from '@/lib/services/scout-qualitative-service'
-import { useScoutQualitativeWithFilters } from '@/hooks/scout/useScoutQualitativeWithFilters'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useScoutQualitativeWithFilters } from '@/hooks/scout/useScoutQualitativeWithFilters'
+import { QualitativeData, QualitativeFilters } from '@/lib/services/scout-qualitative-service'
+
+import { DonutChart } from '../donut-chart'
 
 interface QualitativeDashboardProps {
   scoutId: string

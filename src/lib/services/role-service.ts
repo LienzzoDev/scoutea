@@ -6,6 +6,7 @@
  */
 
 import { clerkClient } from '@clerk/nextjs/server'
+
 import { logger } from '../logging/production-logger'
 
 export type UserRole = 'member' | 'scout' | 'admin' | 'tester'

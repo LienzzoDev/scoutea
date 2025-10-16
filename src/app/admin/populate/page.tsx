@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
 import { Loader2, Database, CheckCircle, XCircle } from 'lucide-react'
+import { useState } from 'react'
+
+import { Button } from '@/components/ui/button'
 
 export default function PopulatePage() {
   const [loading, setLoading] = useState(false)

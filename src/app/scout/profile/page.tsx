@@ -2,10 +2,11 @@
 
 import { useUser, useClerk } from '@clerk/nextjs'
 import { User, Mail, Calendar, Shield, LogOut } from "lucide-react"
-import ScoutNavbar from '@/components/layout/scout-navbar'
-import { getUserRole } from '@/lib/auth/user-role'
-import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
+
+import ScoutNavbar from '@/components/layout/scout-navbar'
+import { Button } from '@/components/ui/button'
+import { getUserRole } from '@/lib/auth/user-role'
 
 export default function ScoutProfilePage() {
   const { user, isLoaded } = useUser()

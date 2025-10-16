@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { RadarCalculationService } from '../../../../../../lib/services/RadarCalculationService';
 import { prisma } from '@/lib/db';
+
+import { RadarCalculationService } from '../../../../../../lib/services/RadarCalculationService';
 
 export async function GET(
   __request: NextRequest,

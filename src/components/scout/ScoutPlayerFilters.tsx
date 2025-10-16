@@ -46,17 +46,22 @@ const ScoutPlayerFilters = memo<ScoutPlayerFiltersProps>(function ScoutPlayerFil
 }) {
   // 📊 MEMOIZAR CÁLCULOS DE ESTADO DE FILTROS
   const filterState = useMemo(() => {
-    const hasActiveFilters = 
-      selectedNationalities.length > 0 ||
-      selectedTeams.length > 0 ||
-      selectedReportTypes.length > 0 ||
-      Object.keys(activeFilters).length > 0;
+    const nationalitiesCount = selectedNationalities?.length || 0;
+    const teamsCount = selectedTeams?.length || 0;
+    const reportTypesCount = selectedReportTypes?.length || 0;
+    const activeFiltersCount = activeFilters ? Object.keys(activeFilters).length : 0;
 
-    const totalActiveFilters = 
-      selectedNationalities.length +
-      selectedTeams.length +
-      selectedReportTypes.length +
-      Object.keys(activeFilters).length;
+    const hasActiveFilters =
+      nationalitiesCount > 0 ||
+      teamsCount > 0 ||
+      reportTypesCount > 0 ||
+      activeFiltersCount > 0;
+
+    const totalActiveFilters =
+      nationalitiesCount +
+      teamsCount +
+      reportTypesCount +
+      activeFiltersCount;
 
     return {
       hasActiveFilters,

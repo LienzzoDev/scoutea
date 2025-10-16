@@ -9,7 +9,9 @@ export default function AdminLayout({
   return (
     <ErrorBoundary>
       <AdminGuard>
-        {children}
+        <div className="min-h-screen bg-[#080F17]">
+          {children}
+        </div>
       </AdminGuard>
     </ErrorBoundary>
   )

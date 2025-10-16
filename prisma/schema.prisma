@@ -127,13 +127,20 @@ model Jugador {
   url_instagram                   String?
   video                           String?
   existing_club                   String?
-  
+
   // NUEVAS FOREIGN KEYS NORMALIZADAS
   team_id                         String?
   position_id                     String?
   nationality_id                  String?
   agency_id                       String?
-  
+
+  // CAMPOS DE APROBACIÓN (para jugadores creados por scouts)
+  approval_status                 String              @default("approved") // "pending", "approved", "rejected"
+  created_by_scout_id             String?             // ID del scout que creó el jugador
+  approved_by_admin_id            String?             // ID del admin que aprobó/rechazó
+  approval_date                   DateTime?           // Fecha de aprobación/rechazo
+  rejection_reason                String?             // Motivo de rechazo (opcional)
+
   createdAt                       DateTime            @default(now())
   updatedAt                       DateTime            @updatedAt
   
@@ -159,6 +166,7 @@ model Jugador {
   // SISTEMA EAV PARA ATRIBUTOS
   attributes                      PlayerAttribute[]   @relation("PlayerAttributes")
 
+  // Single column indexes
   @@index([player_name])
   @@index([position_player])
   @@index([team_name])
@@ -169,10 +177,26 @@ model Jugador {
   @@index([position_id])
   @@index([nationality_id])
   @@index([agency_id])
+  @@index([wyscout_id_1])
+  @@index([wyscout_id_2])
+  @@index([updatedAt(sort: Desc)])
+
+  // Composite indexes for common queries
   @@index([createdAt(sort: Desc), id_player], map: "idx_player_pagination")
   @@index([player_rating(sort: Desc), createdAt(sort: Desc)], map: "idx_player_rating_created")
   @@index([player_name, position_player, nationality_1], map: "idx_player_search_composite")
   @@index([team_name, position_player], map: "idx_player_team_position")
+
+  // NEW: Performance-critical composite indexes
+  @@index([wyscout_id_1, wyscout_id_2], map: "idx_wyscout_ids") // Import optimization
+  @@index([player_rating(sort: Desc), age, position_player], map: "idx_rating_age_position") // Filtered searches
+  @@index([team_name, player_rating(sort: Desc)], map: "idx_team_rating") // Team + rating
+  @@index([nationality_1, position_player, player_rating(sort: Desc)], map: "idx_nat_pos_rating") // Common filters
+  @@index([position_player, age, player_rating(sort: Desc)], map: "idx_pos_age_rating") // Position filtering
+  @@index([team_competition, player_rating(sort: Desc)], map: "idx_competition_rating") // Competition queries
+  @@index([approval_status, createdAt(sort: Desc)], map: "idx_approval_status_created") // Approval workflow
+  @@index([created_by_scout_id, approval_status], map: "idx_scout_approval") // Scout's pending players
+
   @@map("jugadores")
 }
 
@@ -255,7 +279,7 @@ model Torneo {
   updatedAt                DateTime     @updatedAt
   pdf_url                  String?
   competition_id           String?
-  competition              Competition? @relation(fields: [competition_id], references: [id])
+  competition              Competition? @relation(fields: [competition_id], references: [id_competition])
 
   @@index([nombre])
   @@index([pais])
@@ -308,6 +332,12 @@ model Reporte {
   transfer_team_pts           Float?    // Puntos de análisis de transferencia
   transfer_competition_pts    Float?
 
+  // ===== CAMPOS DE APROBACIÓN =====
+  approval_status             String    @default("pending") // "pending", "approved", "rejected"
+  approved_by_admin_id        String?   // ID del admin que aprobó/rechazó
+  approval_date               DateTime? // Fecha de aprobación/rechazo
+  rejection_reason            String?   // Motivo de rechazo (opcional)
+
   createdAt                   DateTime  @default(now())
   updatedAt                   DateTime  @updatedAt
 
@@ -324,6 +354,7 @@ model Reporte {
   @@index([id_player])        // Principal para joins con Jugador
   @@index([scout_id])         // Principal para joins con Scout
   @@index([createdAt])
+  @@index([approval_status])  // Para filtrar reportes pendientes
   @@map("reportes")
 }
 
@@ -504,6 +535,11 @@ model RadarMetrics {
   @@index([category, period])
   @@index([playerId])
   @@index([calculatedAt])
+
+  // NEW: Performance indexes for radar queries
+  @@index([playerId, category, period], map: "idx_radar_player_cat_period")
+  @@index([category, percentile(sort: Desc)], map: "idx_radar_category_percentile")
+
   @@map("radar_metrics")
 }
 
@@ -731,6 +767,7 @@ model PlayerStats3m {
   updated_at                        DateTime @updatedAt @map("updated_at")
   player                            Jugador  @relation(fields: [id_player], references: [id_player], onDelete: Cascade)
 
+  // Single indexes
   @@index([id_player])
   @@index([goals_p90_3m(sort: Desc)])
   @@index([assists_p90_3m(sort: Desc)])
@@ -742,6 +779,12 @@ model PlayerStats3m {
   @@index([created_at(sort: Desc)])
   @@index([updated_at(sort: Desc)])
   @@index([id_player], map: "idx_player_stats_3m_player_id")
+
+  // NEW: Composite indexes for performance
+  @@index([id_player, matches_played_tot_3m(sort: Desc)], map: "idx_stats_player_matches")
+  @@index([goals_p90_3m(sort: Desc), assists_p90_3m(sort: Desc)], map: "idx_stats_goals_assists")
+  @@index([id_player, goals_p90_3m(sort: Desc)], map: "idx_stats_player_goals")
+
   @@map("player_stats_3m")
 }
 
@@ -1071,20 +1114,41 @@ model Position {
 }
 
 model Competition {
-  id                String        @id @default(cuid())
-  name              String        @unique
-  short_name        String?       // "EPL", "LaLiga", etc.
-  country_id        String
-  tier              Int           // 1, 2, 3, etc.
-  confederation     String?       // UEFA, CONMEBOL, etc.
-  season_format     String?       // "League", "Cup", "Playoff"
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
-  
-  // Relaciones
-  country           Country       @relation(fields: [country_id], references: [id])
-  torneos           Torneo[]
+  id_competition                String        @id @default(cuid())
+  competition_name              String?
+  correct_competition_name      String?
+  competition_country           String?
+  url_trfm                      String?
+  competition_confederation     String?       // UEFA, CONMEBOL, etc.
+  competition_tier              Int?          // 1, 2, 3, etc.
+  competition_trfm_value        Float?
+  competition_trfm_value_norm   Float?
+  competition_rating            Float?
+  competition_rating_norm       Float?
+  competition_elo               Float?
+  competition_level             String?
 
+  // Campos legacy (mantener para compatibilidad)
+  name                          String?       // Legacy: will migrate to competition_name
+  short_name                    String?       // "EPL", "LaLiga", etc.
+  country_id                    String?
+  tier                          Int?          // 1, 2, 3, etc.
+  confederation                 String?       // UEFA, CONMEBOL, etc.
+  season_format                 String?       // "League", "Cup", "Playoff"
+
+  createdAt                     DateTime      @default(now())
+  updatedAt                     DateTime      @updatedAt
+
+  // Relaciones
+  country                       Country?      @relation(fields: [country_id], references: [id])
+  torneos                       Torneo[]
+
+  @@index([competition_name])
+  @@index([competition_country])
+  @@index([competition_confederation])
+  @@index([competition_tier])
+  @@index([competition_rating])
+  @@index([competition_elo])
   @@index([country_id])
   @@index([tier])
   @@index([confederation])
@@ -1252,4 +1316,40 @@ model PlayerAttribute {
   @@index([player_id, period])
   @@index([attribute_id, period])
   @@map("player_attributes")
+}
+
+// 🕷️ MODELO PARA RASTREAR TRABAJOS DE SCRAPING
+model ScrapingJob {
+  id              String   @id @default(cuid())
+
+  // Estado del trabajo
+  status          String   // "pending", "running", "paused", "completed", "failed"
+
+  // Progreso
+  totalPlayers    Int      @default(0)
+  processedCount  Int      @default(0)
+  successCount    Int      @default(0)
+  errorCount      Int      @default(0)
+
+  // Batch control
+  currentBatch    Int      @default(0)
+  batchSize       Int      @default(5)
+
+  // Timestamps
+  startedAt       DateTime?
+  completedAt     DateTime?
+  lastProcessedAt DateTime?
+
+  // Error tracking
+  lastError       String?
+
+  // Metadata
+  createdBy       String?  // clerkId del admin que inició el job
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("scraping_jobs")
 }

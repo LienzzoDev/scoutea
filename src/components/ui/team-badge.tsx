@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+
 import { getTeamApiId } from "@/lib/utils/team-logos";
 
 interface TeamBadgeProps {

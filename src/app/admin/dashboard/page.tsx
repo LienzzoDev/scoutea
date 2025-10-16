@@ -1,20 +1,29 @@
 'use client'
 
 import { useAuth } from '@clerk/nextjs'
-import { 
-  Users, 
-  TrendingUp, 
-  AlertTriangle, 
-  Clock, 
+import {
+  Users,
+  TrendingUp,
+  AlertTriangle,
+  Clock,
   RefreshCw,
   BarChart3,
-  Activity
+  Activity,
+  CheckCircle2
 } from "lucide-react"
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useCallback } from 'react'
 
+import { ApprovalDashboard } from "@/components/admin/ApprovalDashboard"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { usePlayers } from "@/hooks/player/usePlayers"
 
 export default function DashboardPage() {
@@ -22,6 +31,7 @@ export default function DashboardPage() {
   const _router = useRouter()
   const [hasRedirected, setHasRedirected] = useState(false)
   const [scrapingStatus, setScrapingStatus] = useState<'idle' | 'running' | 'completed' | 'error'>('idle')
+  const [showApprovalsDialog, setShowApprovalsDialog] = useState(false)
 
   // Hook para obtener datos reales de jugadores
   const { players, loading, error, searchPlayers } = usePlayers()
@@ -234,6 +244,29 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
+      {/* Pending Approvals Section */}
+      <Card className="mb-8 bg-[#131921] border-slate-700">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold mb-2 text-[#D6DDE6]">Aprobaciones Pendientes</h2>
+              <p className="text-gray-400">
+                Revisar y aprobar jugadores y reportes creados por scouts
+              </p>
+            </div>
+            <Button
+              onClick={() => setShowApprovalsDialog(true)}
+              className="bg-[#FF5733] hover:bg-[#E64A2B] text-white px-6"
+            >
+              <div className="flex items-center space-x-2">
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Ver Pendientes</span>
+              </div>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Key Indicators */}
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-4 text-[#D6DDE6]">Indicadores principales</h2>
@@ -406,7 +439,7 @@ export default function DashboardPage() {
       {error && (
         <div className="mt-8 p-4 bg-red-900/20 border border-red-700 rounded-lg">
           <p className="text-red-400">Error: {typeof error === 'string' ? error : error?.message || 'Error desconocido'}</p>
-          <Button 
+          <Button
             onClick={() =>searchPlayers({
               page: 1,
               limit: 100,
@@ -418,6 +451,19 @@ export default function DashboardPage() {
           </Button>
         </div>
       )}
+
+      {/* Approvals Dialog */}
+      <Dialog open={showApprovalsDialog} onOpenChange={setShowApprovalsDialog}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-[#080F17] border-slate-700">
+          <DialogHeader>
+            <DialogTitle className="text-2xl text-[#D6DDE6]">Aprobaciones Pendientes</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Revisa y aprueba jugadores y reportes creados por scouts
+            </DialogDescription>
+          </DialogHeader>
+          <ApprovalDashboard />
+        </DialogContent>
+      </Dialog>
       </main>
   )
 }

@@ -6,8 +6,8 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 
 import { Button } from "@/components/ui/button"
-import { getUserRole, isTester } from '@/lib/auth/user-role'
 import { TesterBadge } from '@/components/ui/tester-badge'
+import { getUserRole, isTester } from '@/lib/auth/user-role'
 
 export default function ScoutNavbar() {
   const _router = useRouter()

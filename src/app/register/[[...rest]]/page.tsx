@@ -1,7 +1,7 @@
 'use client'
 
 import { SignUp } from '@clerk/nextjs'
-import { ChevronRight, UserPlus, User, Target } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'

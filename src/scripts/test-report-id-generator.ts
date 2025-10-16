@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 
-import { generateReportId, isValidReportId, parseReportId, getNextReportNumber } from "@/lib/utils/id-generator";
 import { prisma } from "@/lib/db";
+import { isValidReportId, parseReportId, getNextReportNumber } from "@/lib/utils/id-generator";
 
 async function testReportIdGenerator() {
   console.log("🧪 Probando generador de IDs de reportes\n");

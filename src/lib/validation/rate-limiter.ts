@@ -14,6 +14,7 @@
  */
 
 import { NextRequest } from 'next/server'
+
 import { logger } from '../logging/production-logger'
 
 export interface RateLimitConfig {

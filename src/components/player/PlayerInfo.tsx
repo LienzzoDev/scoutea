@@ -1,9 +1,9 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { usePlayerAvgValues } from "@/hooks/player/usePlayerAvgValues";
 import { MarketValueService } from "@/lib/services/market-value-service";
 import type { Player } from "@/types/player";
-import { usePlayerAvgValues } from "@/hooks/player/usePlayerAvgValues";
 
 interface PlayerInfoProps {
   player: Player;

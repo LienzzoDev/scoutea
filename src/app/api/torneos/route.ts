@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+import { cachedQuery, MemoryCacheService } from '@/lib/cache/memory-cache'
 import { TournamentService, TorneoFilters } from '@/lib/services/tournament-service'
 
 // GET /api/torneos - Obtener torneos con filtros
@@ -43,7 +44,15 @@ export async function GET(request: NextRequest) {
       filters.fecha_inicio_hasta = new Date(searchParams.get('fecha_inicio_hasta')!)
     }
 
-    const result = await TournamentService.getTorneos(filters, page, limit)
+    // Crear clave de caché basada en filtros
+    const cacheKey = `torneos:${JSON.stringify({ filters, page, limit })}`
+
+    // Obtener resultado con caché (30 minutos por defecto)
+    const result = await cachedQuery(
+      cacheKey,
+      () => TournamentService.getTorneos(filters, page, limit),
+      MemoryCacheService.TTL.TEAMS_LIST
+    )
 
     return NextResponse.json(result)
   } catch (error) {

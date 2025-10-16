@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
 import { Search, X } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { useState, useEffect, useRef } from "react"
+
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 
 interface Team {
   id: string

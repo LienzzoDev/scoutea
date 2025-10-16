@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
 import { useAuth } from '@clerk/nextjs'
+import { useState } from 'react'
 
 import MemberNavbar from "@/components/layout/member-navbar"
 import { Button } from "@/components/ui/button"

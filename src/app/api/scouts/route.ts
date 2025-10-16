@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 
+import { cachedQuery, MemoryCacheService } from '@/lib/cache/memory-cache'
 import { ScoutService } from '@/lib/services/scout-service'
 
 export async function GET(request: NextRequest) {
@@ -118,8 +119,16 @@ export async function GET(request: NextRequest) {
       filters
     }
 
-    const result = await ScoutService.searchScouts(options)
-    
+    // Crear clave de caché basada en opciones
+    const cacheKey = `scouts:search:${JSON.stringify(options)}`
+
+    // Obtener resultado con caché
+    const result = await cachedQuery(
+      cacheKey,
+      () => ScoutService.searchScouts(options),
+      MemoryCacheService.TTL.SCOUTS_LIST
+    )
+
     return NextResponse.json(result)
   } catch (error) {
     console.error('Error getting scouts:', error)

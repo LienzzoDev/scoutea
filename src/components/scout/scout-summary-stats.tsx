@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { Loader2, Globe } from 'lucide-react'
+import { useState, useEffect } from 'react'
+
 import { ScoutMetricsCards } from './scout-metrics-cards'
 
 interface ScoutSummaryStatsProps {

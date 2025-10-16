@@ -1,7 +1,7 @@
 'use client'
 
 import { useUser } from '@clerk/nextjs'
-import { Check, Users, Target, BarChart3, Trophy, Zap, Shield, Headphones, ChevronRight, Crown } from 'lucide-react'
+import { Check, Users, Target, BarChart3, Headphones, ChevronRight, Crown } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
