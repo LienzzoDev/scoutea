@@ -1,0 +1,11 @@
+Player,id,Matches played,Minutes played,Defensive duels per 90,Defensive duels won %,Aerial duels per 90,Aerial duels won %,Sliding tackles per 90,Interceptions per 90,Fouls per 90,Yellow cards per 90,Red cards per 90,Goals per 90,Shots per 90,Assists per 90,Crosses per 90,Offensive duels per 90,Offensive duels won %,Passes per 90,Accurate passes %,Forward passes per 90,Conceded goals per 90,Shots against per 90,Clean sheets,Save rate %,Prevented goals per 90
+Test Player 1 - Delantero,509175,18,1620,3.2,58.5,4.1,62.3,0.5,0.8,1.2,0.15,0.01,0.85,3.8,0.25,1.2,8.5,55.2,28.4,78.5,8.2,,,,,
+Test Player 2 - Centrocampista,60883,20,1800,5.8,64.2,2.5,55.8,1.5,2.3,1.8,0.25,0.02,0.15,1.5,0.35,0.8,6.2,48.5,52.8,85.2,18.5,,,,,
+Test Player 3 - Defensa,423623,22,1980,8.5,72.5,5.8,68.5,2.8,3.5,1.5,0.35,0.01,0.05,0.5,0.08,0.2,3.2,45.8,45.2,82.5,15.8,,,,,
+Test Player 4 - Lateral,393793,19,1710,6.5,68.2,3.2,58.9,1.8,2.1,1.3,0.22,0,0.12,1.2,0.28,3.5,5.8,52.3,38.5,80.2,12.5,,,,,
+Test Player 5 - Portero,95877,21,1890,,,,,,,,,,,,,,,,,,1.25,4.8,8,68.5,0.45
+Test Player 6 - Extremo,335229,17,1530,4.2,55.8,2.1,48.5,0.8,0.9,1.1,0.18,0.01,0.42,2.8,0.52,4.5,9.5,58.5,32.5,75.8,10.2,,,,,
+Test Player 7 - Mediapunta,-209416,16,1440,3.8,58.2,1.8,52.3,0.6,1.2,1.5,0.2,0.02,0.38,3.2,0.48,1.5,7.2,54.8,42.5,82.8,14.5,,,,,
+Test Player 8 - Pivote,-357451,23,2070,7.2,70.5,4.2,65.8,2.2,3.8,2.1,0.32,0.01,0.08,0.8,0.15,0.5,4.5,48.2,58.5,88.5,22.5,,,,,
+Test Player 9 - Lateral Izquierdo,439042,20,1800,6.8,66.5,3.5,60.2,1.9,2.5,1.4,0.28,0.01,0.18,1.5,0.32,3.8,5.5,50.8,40.2,81.5,13.8,,,,,
+Test Player 10 - Delantero Centro,-355416,15,1350,3.5,56.8,4.8,64.5,0.6,0.7,1.3,0.18,0.02,0.92,4.2,0.22,0.8,9.2,56.5,26.5,76.2,7.8,,,,,

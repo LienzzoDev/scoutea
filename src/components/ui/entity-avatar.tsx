@@ -76,12 +76,25 @@ export default function EntityAvatar({
   showBadge = true,
   className = "",
 }: EntityAvatarProps) {
+  // Función para validar si una string es una URL válida
+  const isValidImageUrl = (url: string | null | undefined): boolean => {
+    if (!url || typeof url !== 'string') return false;
+
+    // Check if it's a valid URL (http/https) or a valid path starting with /
+    const isAbsoluteUrl = url.startsWith('http://') || url.startsWith('https://');
+    const isRelativePath = url.startsWith('/');
+
+    return isAbsoluteUrl || isRelativePath;
+  };
+
   // Función para obtener la imagen principal
-  const getEntityImage = () =>{
+  const getEntityImage = (): string =>{
     if (type === "player") {
-      return entity.photo_coverage || "/default-avatar.svg";
+      const photoUrl = entity.photo_coverage;
+      return isValidImageUrl(photoUrl) ? photoUrl! : "/default-avatar.svg";
     } else {
-      return entity.url_profile || "/default-avatar.svg";
+      const profileUrl = entity.url_profile;
+      return isValidImageUrl(profileUrl) ? profileUrl! : "/default-avatar.svg";
     }
   };
 

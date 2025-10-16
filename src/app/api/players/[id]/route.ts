@@ -360,3 +360,91 @@ export async function DELETE(
     )
   }
 }
+
+/**
+ * 🔧 PATCH /api/players/[id] - ACTUALIZACIÓN PARCIAL DE JUGADOR
+ *
+ * ✅ QUÉ HACE: Actualiza uno o más campos específicos de un jugador
+ * ✅ POR QUÉ: Para edición inline desde la tabla de admin
+ * ✅ EJEMPLO: PATCH /api/players/player_123 con { "player_rating": 85 }
+ *
+ * @param request - Request HTTP con los campos a actualizar
+ * @param params - Parámetros de la URL (contiene el ID)
+ * @returns El jugador actualizado
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+): Promise<NextResponse<Player | { error: string }>> {
+  try {
+    // 🔐 VERIFICAR AUTENTICACIÓN Y PERMISOS
+    const { userId, sessionClaims } = await auth()
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'No autorizado. Debes iniciar sesión para actualizar jugadores.' },
+        { status: 401 }
+      )
+    }
+
+    // 👮‍♂️ VERIFICAR PERMISOS DE ADMIN (solo admins pueden actualizar)
+    const userRole = sessionClaims?.public_metadata?.role
+    if (userRole !== 'admin') {
+      return NextResponse.json(
+        { error: 'Acceso denegado. Solo los administradores pueden actualizar jugadores.' },
+        { status: 403 }
+      )
+    }
+
+    // 🛡️ VALIDAR ID DEL JUGADOR
+    const playerId = params.id
+
+    // 📝 OBTENER DATOS DEL BODY
+    let requestBody
+    try {
+      requestBody = await request.json()
+    } catch {
+      return NextResponse.json(
+        { error: 'Datos inválidos. El body debe ser JSON válido.' },
+        { status: 400 }
+      )
+    }
+
+    // 🔍 VERIFICAR QUE EL JUGADOR EXISTE
+    const existingPlayer = await PlayerService.getPlayerById(playerId)
+    if (!existingPlayer) {
+      return NextResponse.json(
+        { error: `No se encontró ningún jugador con ID: ${playerId}` },
+        { status: 404 }
+      )
+    }
+
+    // ✏️ ACTUALIZAR JUGADOR (solo los campos proporcionados)
+    const updatedPlayer = await PlayerService.updatePlayer(playerId, requestBody)
+
+    // 📊 LOG DE AUDITORÍA
+    console.log('✅ Player field updated successfully:', {
+      playerId: updatedPlayer.id_player,
+      playerName: updatedPlayer.player_name,
+      updatedFields: Object.keys(requestBody),
+      updatedBy: userId,
+      timestamp: new Date().toISOString()
+    })
+
+    return NextResponse.json(updatedPlayer, { status: 200 })
+
+  } catch (error) {
+    // 📊 LOG DE ERROR
+    console.error('❌ Error updating player field:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      playerId: params.id,
+      userId: (await auth()).userId,
+      timestamp: new Date().toISOString()
+    })
+
+    return NextResponse.json(
+      { error: 'Error interno del servidor. Por favor, inténtalo de nuevo más tarde.' },
+      { status: 500 }
+    )
+  }
+}

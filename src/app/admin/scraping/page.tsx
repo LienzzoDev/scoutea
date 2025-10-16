@@ -30,92 +30,83 @@ export default function ScrapingPage() {
     return null
   }
 
+  const addLog = (message: string) => {
+    setLogs(prev => [...prev, message])
+  }
+
   const startScraping = async () => {
     setIsRunning(true)
     setLogs([])
     setStats({ total: 0, processed: 0, success: 0, errors: 0 })
-    
-    // Simular logs de scraping
-    const mockLogs = [
-      '🚀 Iniciando scraping de datos de jugadores...',
-      '📊 Configuración: 5 jugadores por lote',
-      '⏱️ Pausa entre lotes: 30 segundos',
-      '⏱️ Pausa entre jugadores: 5 segundos',
-      '',
-      '📦 LOTE 1',
-      '📊 Procesando 5 jugadores en este lote...',
-      '',
-      '[1/5] Lionel Messi',
-      '✅ Actualizado: url_trfm_advisor, date_of_birth, team_name, position_player, foot, height, nationality_1, agency, contract_end, player_trfm_value',
-      '',
-      '[2/5] Cristiano Ronaldo',
-      '✅ Actualizado: url_trfm_advisor, position_player, agency, contract_end, player_trfm_value',
-      '',
-      '[3/5] Kylian Mbappé',
-      '✅ Actualizado: url_trfm_advisor, date_of_birth, team_name, position_player, foot, height, nationality_1, contract_end, player_trfm_value',
-      '',
-      '[4/5] Erling Haaland',
-      '✅ Actualizado: url_trfm_advisor, date_of_birth, team_name, position_player, foot, height, nationality_1, contract_end, player_trfm_value',
-      '',
-      '[5/5] Luka Modrić',
-      '✅ Actualizado: url_trfm_advisor, position_player, nationality_1, contract_end, player_trfm_value',
-      '',
-      '📊 Resumen del lote 1:',
-      '✅ Exitosos: 5',
-      '❌ Errores: 0',
-      '',
-      '⏳ Pausa entre lotes: 30 segundos...',
-      '',
-      '📦 LOTE 2',
-      '📊 Procesando 5 jugadores en este lote...',
-      '',
-      '[1/5] Kevin De Bruyne',
-      '✅ Actualizado: url_trfm_advisor, position_player, nationality_1, contract_end, player_trfm_value',
-      '',
-      '[2/5] Virgil van Dijk',
-      '✅ Actualizado: url_trfm_advisor, position_player, nationality_1, contract_end, player_trfm_value',
-      '',
-      '[3/5] Mohamed Salah',
-      '✅ Actualizado: url_trfm_advisor, position_player, nationality_1, contract_end, player_trfm_value',
-      '',
-      '[4/5] Neymar',
-      '✅ Actualizado: url_trfm_advisor, position_player, nationality_1, contract_end, player_trfm_value',
-      '',
-      '[5/5] Robert Lewandowski',
-      '✅ Actualizado: url_trfm_advisor, position_player, nationality_1, contract_end, player_trfm_value',
-      '',
-      '📊 Resumen del lote 2:',
-      '✅ Exitosos: 5',
-      '❌ Errores: 0',
-      '',
-      '🎉 Scraping completado!',
-      '📊 Total procesados: 10',
-      '✅ Total exitosos: 10',
-      '❌ Total errores: 0'
-    ]
 
-    // Simular progreso
-    for (let i = 0; i < mockLogs.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 500))
-      setLogs(prev => [...prev, mockLogs[i]])
-      
-      // Actualizar estadísticas
-      if (mockLogs[i].includes('[1/5]') || mockLogs[i].includes('[2/5]') || mockLogs[i].includes('[3/5]') || mockLogs[i].includes('[4/5]') || mockLogs[i].includes('[5/5]')) {
-        setStats(prev => ({
-          ...prev,
-          total: prev.total + 1,
-          processed: prev.processed + 1
-        }))
+    addLog('🚀 Iniciando scraping de datos de jugadores...')
+    addLog('📊 Configuración: 5 jugadores por lote')
+    addLog('⏱️ Pausa entre lotes: 30 segundos')
+    addLog('⏱️ Pausa entre jugadores: 5 segundos')
+    addLog('')
+
+    try {
+      // 🌐 LLAMAR AL ENDPOINT DE SCRAPING
+      const response = await fetch('/api/admin/scraping-transfermarkt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al ejecutar scraping')
       }
-      
-      if (mockLogs[i].includes('✅ Actualizado:')) {
-        setStats(prev => ({
-          ...prev,
-          success: prev.success + 1
-        }))
+
+      // 📊 MOSTRAR RESULTADOS
+      addLog('🎉 Scraping completado!')
+      addLog(`📊 Total procesados: ${data.results.total}`)
+      addLog(`✅ Total exitosos: ${data.results.success}`)
+      addLog(`❌ Total errores: ${data.results.errors}`)
+
+      // Actualizar estadísticas finales
+      setStats({
+        total: data.results.total,
+        processed: data.results.processed,
+        success: data.results.success,
+        errors: data.results.errors
+      })
+
+      // Mostrar detalles de cada jugador procesado
+      if (data.results.details && data.results.details.length > 0) {
+        addLog('')
+        addLog('📋 Detalle de jugadores procesados:')
+        addLog('')
+
+        data.results.details.forEach((result: any, index: number) => {
+          addLog(`[${index + 1}/${data.results.total}] ${result.playerName}`)
+
+          if (result.success) {
+            if (result.fieldsUpdated.length > 0) {
+              addLog(`✅ Actualizado: ${result.fieldsUpdated.join(', ')}`)
+            } else {
+              addLog('⚠️ Sin cambios (datos ya actualizados)')
+            }
+          } else {
+            addLog(`❌ Error: ${result.error}`)
+          }
+
+          addLog('')
+        })
       }
+
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
+      addLog(`❌ ERROR: ${errorMsg}`)
+
+      setStats(prev => ({
+        ...prev,
+        errors: prev.errors + 1
+      }))
     }
-    
+
     setIsRunning(false)
   }
 
@@ -242,10 +233,27 @@ export default function ScrapingPage() {
         <CardContent>
           <div className="text-slate-300 space-y-2">
             <p>• El scraping extrae datos de jugadores desde Transfermarkt.es</p>
+            <p>• Solo procesa jugadores que tengan URL de Transfermarkt completada en la BD</p>
             <p>• Se procesan 5 jugadores por lote con pausas de 5 segundos entre jugadores</p>
             <p>• Pausa de 30 segundos entre lotes para evitar bloqueos</p>
             <p>• Los datos se actualizan automáticamente en la base de datos</p>
-            <p>• Campos extraídos: fecha de nacimiento, equipo, posición, pie, altura, nacionalidad, agencia, contrato, valor de mercado</p>
+            <p className="font-semibold text-[#FF5733]">• 13 campos extraídos:</p>
+            <ul className="ml-6 space-y-1 text-sm">
+              <li>1. advisor - Nombre del agente/asesor</li>
+              <li>2. date_of_birth - Fecha de nacimiento</li>
+              <li>3. team_name - Equipo actual</li>
+              <li>4. team_loan_from - Equipo de cesión (si aplica)</li>
+              <li>5. position_player - Posición en el campo</li>
+              <li>6. foot - Pie dominante</li>
+              <li>7. height - Altura en cm</li>
+              <li>8. nationality_1 - Nacionalidad principal</li>
+              <li>9. nationality_2 - Segunda nacionalidad (si aplica)</li>
+              <li>10. national_tier - Nivel de selección nacional</li>
+              <li>11. agency - Agencia representante</li>
+              <li>12. contract_end - Fecha fin de contrato</li>
+              <li>13. player_trfm_value - Valor de mercado en €</li>
+            </ul>
+            <p className="mt-4">• También se extrae url_trfm_advisor (URL del advisor)</p>
           </div>
         </CardContent>
       </Card>

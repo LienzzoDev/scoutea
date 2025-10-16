@@ -26,6 +26,11 @@ export const useDashboardState = () => {
   const [_error, _setError] = useState<string | null>(null);
   const [allPlayers, setAllPlayers] = useState<unknown[]>([]);
   const [filteredPlayers, setFilteredPlayers] = useState<unknown[]>([]);
+
+  // Estados de paginación para infinite scroll
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   
   // Hook para manejar la lista de jugadores
   const { 
@@ -160,25 +165,57 @@ export const useDashboardState = () => {
 
   // Las funciones de lista de jugadores ahora vienen del hook usePlayerList
 
+  // Función para cargar más jugadores
+  const loadMorePlayers = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    try {
+      console.log(`🔍 useDashboardState: Loading more players (page ${page + 1})...`);
+      const response = await fetch(`/api/players-simple?page=${page + 1}&limit=50`);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ useDashboardState: Loaded more players:', data.players?.length || 0);
+
+        if (data.players && data.players.length > 0) {
+          setAllPlayers(prev => [...prev, ...data.players]);
+          setPage(prev => prev + 1);
+          setHasMore(data.players.length === 50); // Si recibimos menos de 50, no hay más
+        } else {
+          setHasMore(false);
+        }
+      } else {
+        console.error('❌ useDashboardState: Failed to load more players');
+      }
+    } catch (error) {
+      console.error('❌ useDashboardState: Error loading more players:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [page, loadingMore, hasMore]);
+
   // Efecto para cargar datos iniciales
   useEffect(() => {
     let isMounted = true;
-    
+
     const loadRealPlayers = async () => {
       if (!isMounted) return;
-      
+
       setLoading(true);
       try {
         console.log('🔍 useDashboardState: Loading real players...');
-        const response = await fetch('/api/players-simple?page=1&limit=100');
-        
+        const response = await fetch('/api/players-simple?page=1&limit=50');
+
         if (!isMounted) return;
-        
+
         if (response.ok) {
           const data = await response.json();
           if (isMounted) {
             console.log('✅ useDashboardState: Loaded players:', data.players?.length || 0);
             setAllPlayers(data.players || []);
+            setPage(1);
+            setHasMore(data.players && data.players.length === 50);
           }
         } else {
           if (isMounted) {
@@ -395,14 +432,19 @@ export const useDashboardState = () => {
     filterOptions,
     sortBy,
     sortOrder,
-    
+
     // Datos derivados
     loading,
     error: _error || playerListError,
     filteredPlayers,
     tabCounts,
     selectedCategoriesData,
-    
+
+    // Infinite scroll
+    hasMore,
+    loadingMore,
+    loadMorePlayers,
+
     // Funciones
     handleSearch,
     handleTabChange,
@@ -415,12 +457,12 @@ export const useDashboardState = () => {
     setSelectedTeams,
     setSelectedCompetitions,
     setSelectedAges,
-    
+
     // Player list functions
     addToList,
     removeFromList,
     isInList,
-    
+
     // Constants
     AVAILABLE_CATEGORIES,
   };
