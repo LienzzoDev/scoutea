@@ -4,7 +4,8 @@
  * ✅ PROPÓSITO: Procesar batches automáticamente en el backend sin intervención del usuario
  * ✅ BENEFICIO: El scraping continúa aunque el usuario cierre la página
  * ✅ RUTA: GET /api/admin/scraping/cron
- * ✅ FRECUENCIA: Se ejecuta cada 5 minutos vía Vercel Cron
+ * ✅ FRECUENCIA: Se ejecuta DIARIAMENTE a las 2am vía Vercel Cron (Plan Hobby)
+ * ✅ BATCH SIZE: 100 jugadores por día (~10-20 minutos de procesamiento)
  */
 
 import { NextResponse } from 'next/server'

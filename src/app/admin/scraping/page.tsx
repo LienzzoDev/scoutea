@@ -348,7 +348,8 @@ export default function ScrapingPage() {
             </p>
           </div>
           <div className="ml-8 space-y-1 text-sm text-blue-200">
-            <p>✅ El sistema procesa automáticamente cada 5 minutos en el servidor</p>
+            <p>✅ El sistema procesa automáticamente CADA DÍA a las 2:00 AM en el servidor</p>
+            <p>✅ Procesa 100 jugadores por día (~10-20 minutos de ejecución)</p>
             <p>✅ Puedes cerrar esta página - el scraping continuará en segundo plano</p>
             <p>✅ Vuelve en cualquier momento para ver el progreso actualizado</p>
           </div>
@@ -541,17 +542,18 @@ export default function ScrapingPage() {
               <li>• Velocidad: Multiplicador actual (1.0x = normal, 2.0x = lento, 3.0x = muy lento)</li>
             </ul>
 
-            <p className="mt-4 font-semibold text-[#FF5733]">🎯 Funcionamiento (Procesamiento Automático en Segundo Plano):</p>
+            <p className="mt-4 font-semibold text-[#FF5733]">🎯 Funcionamiento (Procesamiento Automático Diario):</p>
             <ul className="ml-6 space-y-1">
               <li>1. Haz clic en &quot;Iniciar Scraping&quot; para crear un nuevo trabajo</li>
-              <li>2. 🤖 <strong>El sistema procesa automáticamente cada 5 minutos en el servidor</strong></li>
-              <li>3. ✅ <strong>Puedes cerrar esta página - el scraping continuará en segundo plano</strong></li>
-              <li>4. El sistema usa pausas aleatorias (5-15 segundos) entre jugadores</li>
-              <li>5. Si detecta problemas, reduce velocidad automáticamente (throttling adaptativo)</li>
-              <li>6. Cada request usa un User-Agent diferente para evitar detección</li>
-              <li>7. Los errores 429 activan retry con tiempos exponenciales (5s, 15s, 45s, 120s)</li>
-              <li>8. El progreso se guarda continuamente - vuelve en cualquier momento para ver el estado</li>
-              <li>9. Auto-pausa después de 5 errores 429 consecutivos para evitar bloqueos</li>
+              <li>2. 🤖 <strong>El sistema procesa automáticamente CADA DÍA a las 2:00 AM</strong></li>
+              <li>3. 📊 <strong>Procesa 100 jugadores por día (Vercel Plan Hobby)</strong></li>
+              <li>4. ✅ <strong>Puedes cerrar esta página - el scraping continuará en segundo plano</strong></li>
+              <li>5. El sistema usa pausas aleatorias (5-15 segundos) entre jugadores</li>
+              <li>6. Si detecta problemas, reduce velocidad automáticamente (throttling adaptativo)</li>
+              <li>7. Cada request usa un User-Agent diferente para evitar detección</li>
+              <li>8. Los errores 429 activan retry con tiempos exponenciales (5s, 15s, 45s, 120s)</li>
+              <li>9. El progreso se guarda continuamente - vuelve en cualquier momento para ver el estado</li>
+              <li>10. Auto-pausa después de 5 errores 429 consecutivos para evitar bloqueos</li>
             </ul>
 
             <p className="mt-4 font-semibold text-[#FF5733]">• 14 campos extraídos de Transfermarkt:</p>

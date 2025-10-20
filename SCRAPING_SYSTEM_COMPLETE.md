@@ -266,9 +266,9 @@ if (rateLimiter.getConsecutiveRateLimits() >= 5) {
 
 ## Procesamiento en Segundo Plano
 
-### ⚙️ Vercel Cron Job
+### ⚙️ Vercel Cron Job (Plan Hobby)
 
-El sistema usa **Vercel Cron** para procesar scraping automáticamente cada 5 minutos en el servidor, **sin necesidad de que el usuario tenga la página abierta**.
+El sistema usa **Vercel Cron** para procesar scraping automáticamente **cada día a las 2:00 AM** en el servidor, **sin necesidad de que el usuario tenga la página abierta**.
 
 #### Configuración (`vercel.json`)
 
@@ -277,18 +277,24 @@ El sistema usa **Vercel Cron** para procesar scraping automáticamente cada 5 mi
   "crons": [
     {
       "path": "/api/admin/scraping/cron",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 2 * * *"
     }
   ]
 }
 ```
 
 **Schedule syntax** (formato cron estándar):
-- `*/5` - Cada 5 minutos
-- `*` - Cada hora
+- `0` - A los 0 minutos
+- `2` - A las 2 AM
 - `*` - Cada día del mes
 - `*` - Cada mes
 - `*` - Cada día de la semana
+
+**⚠️ Limitaciones del Plan Hobby**:
+- Máximo 2 cron jobs por cuenta
+- Ejecuciones limitadas a 1 vez al día
+- Timing puede variar (2:00 AM - 2:59 AM)
+- Para ejecuciones más frecuentes, upgrade a Pro ($20/mes)
 
 #### Endpoint Cron (`/api/admin/scraping/cron/route.ts`)
 
@@ -342,20 +348,22 @@ CRON_SECRET=your_secure_random_string_here_233f2d7c2ea67f88ee5449b7890942bacc677
 Authorization: Bearer <CRON_SECRET>
 ```
 
-### 🔄 Flujo Completo de Procesamiento
+### 🔄 Flujo Completo de Procesamiento (Plan Hobby)
 
 ```
 1. Admin inicia scraping → POST /api/admin/scraping/start
    ↓
-2. Se crea ScrapingJob con status="pending"
+2. Se crea ScrapingJob con status="pending", batchSize=100
    ↓
 3. (Usuario cierra la página - no importa)
    ↓
-4. Vercel Cron ejecuta cada 5 min → GET /api/admin/scraping/cron
+4. Vercel Cron ejecuta CADA DÍA a las 2 AM → GET /api/admin/scraping/cron
    ↓
 5. Encuentra job con status="pending" o "running"
    ↓
-6. Procesa 1 batch (5 jugadores) con rate limiting
+6. Procesa 1 batch (100 jugadores) con rate limiting
+   • Delays: 5-15 segundos entre jugadores
+   • Duración total: ~10-20 minutos
    ↓
 7. Actualiza progreso en DB (processedCount, successCount, etc.)
    ↓
@@ -363,12 +371,19 @@ Authorization: Bearer <CRON_SECRET>
    Si termina → status = "completed"
    Si hay 5 errores 429 consecutivos → status = "paused"
    ↓
-9. Espera 5 minutos → vuelve al paso 4
+9. Espera 24 horas → vuelve al paso 4 (siguiente día a las 2 AM)
    ↓
 10. (Admin abre la página en cualquier momento)
     → Fetch GET /api/admin/scraping/status
     → Ve progreso actualizado en tiempo real
 ```
+
+**⏱️ Tiempo Estimado de Completado**:
+- 100 jugadores: 1 día
+- 1,000 jugadores: ~10 días
+- 10,000 jugadores: ~100 días
+
+**💡 Tip**: Si necesitas procesar más rápido, puedes ejecutar manualmente batches adicionales desde el dashboard haciendo clic en "Procesar Batch".
 
 ---
 
@@ -816,18 +831,20 @@ Abrir tabla `ScrapingJob` y verificar:
 
 ### 📈 Métricas de Éxito
 
-**Configuración Óptima**:
-- **Batch Size**: 5 jugadores
+**Configuración Óptima (Plan Hobby)**:
+- **Batch Size**: 100 jugadores/día
 - **Delay**: 5-15 segundos aleatorios
 - **Rate Limit Count**: < 10 por cada 100 jugadores
 - **Error Rate**: < 5%
 - **Speed Multiplier**: 1.0x (normal)
+- **Ejecución**: Diaria a las 2:00 AM
 
 **Rendimiento Esperado**:
-- **Velocidad Normal**: ~12-20 jugadores/minuto
-- **Velocidad Lenta**: ~6-10 jugadores/minuto
-- **1000 jugadores**: ~50-90 minutos
-- **10000 jugadores**: ~8-15 horas
+- **Por ejecución**: ~100 jugadores en 10-20 minutos
+- **1,000 jugadores**: ~10 días
+- **10,000 jugadores**: ~100 días
+
+**⚡ Procesamiento Manual**: Puedes acelerar haciendo clic en "Procesar Batch" manualmente desde el dashboard cuando quieras.
 
 ---
 
