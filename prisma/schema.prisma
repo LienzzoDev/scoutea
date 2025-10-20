@@ -1335,10 +1335,21 @@ model ScrapingJob {
   currentBatch    Int      @default(0)
   batchSize       Int      @default(5)
 
+  // Rate Limiting Metrics
+  rateLimitCount  Int      @default(0)  // Cuántas veces se detectó rate limiting (429)
+  retryCount      Int      @default(0)  // Total de reintentos realizados
+  errorRate       Float?                 // Tasa de errores (%)
+  avgDelay        Int?                   // Delay promedio entre requests (ms)
+
+  // Adaptive Throttling
+  slowModeActive  Boolean  @default(false) // Si está en modo lento
+  speedMultiplier Float    @default(1.0)   // Multiplicador de velocidad actual
+
   // Timestamps
   startedAt       DateTime?
   completedAt     DateTime?
   lastProcessedAt DateTime?
+  last429At       DateTime? // Última vez que se detectó un 429
 
   // Error tracking
   lastError       String?

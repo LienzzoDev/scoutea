@@ -1,6 +1,6 @@
 'use client'
 
-import { Play, Pause, RotateCcw, CheckCircle, XCircle, Clock, Database, AlertCircle } from "lucide-react"
+import { Play, Pause, RotateCcw, CheckCircle, XCircle, Clock, Database, AlertCircle, RefreshCw, BarChart3, Activity } from "lucide-react"
 import { useEffect, useState, useCallback } from 'react'
 
 import { Button } from "@/components/ui/button"
@@ -18,6 +18,12 @@ interface ScrapingJob {
   currentBatch: number
   batchSize: number
   progress: number
+  rateLimitCount?: number
+  retryCount?: number
+  errorRate?: number
+  slowModeActive?: boolean
+  speedMultiplier?: number
+  last429At?: string
   startedAt?: string
   completedAt?: string
   lastProcessedAt?: string
@@ -41,16 +47,6 @@ export default function ScrapingPage() {
   const [logs, setLogs] = useState<string[]>([])
   const [job, setJob] = useState<ScrapingJob | null>(null)
   const [autoProcess, setAutoProcess] = useState(false)
-
-  // Si no está cargado, mostrar loading
-  if (!isLoaded) {
-    return <LoadingPage />
-  }
-
-  // Si no está autenticado, mostrar nada (ya se está redirigiendo)
-  if (!isSignedIn) {
-    return null
-  }
 
   const addLog = useCallback((message: string) => {
     setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${message}`])
@@ -272,6 +268,16 @@ export default function ScrapingPage() {
     return () => clearInterval(interval)
   }, [fetchJobStatus])
 
+  // Si no está cargado, mostrar loading
+  if (!isLoaded) {
+    return <LoadingPage />
+  }
+
+  // Si no está autenticado, mostrar nada (ya se está redirigiendo)
+  if (!isSignedIn) {
+    return null
+  }
+
   return (
     <main className="px-6 py-8 max-w-full mx-auto">
       {/* Page Header */}
@@ -334,11 +340,18 @@ export default function ScrapingPage() {
 
       {/* Status Alert */}
       {isRunning && (
-        <div className="mb-6 p-4 bg-blue-900/20 border border-blue-700 rounded-lg flex items-center">
-          <Clock className="h-5 w-5 text-blue-400 mr-3 animate-pulse" />
-          <p className="text-blue-300">
-            Procesamiento en curso... El sistema continuará automáticamente hasta completar todos los jugadores.
-          </p>
+        <div className="mb-6 p-4 bg-blue-900/20 border border-blue-700 rounded-lg">
+          <div className="flex items-center mb-2">
+            <Clock className="h-5 w-5 text-blue-400 mr-3 animate-pulse" />
+            <p className="text-blue-300 font-semibold">
+              Scraping en proceso automático
+            </p>
+          </div>
+          <div className="ml-8 space-y-1 text-sm text-blue-200">
+            <p>✅ El sistema procesa automáticamente cada 5 minutos en el servidor</p>
+            <p>✅ Puedes cerrar esta página - el scraping continuará en segundo plano</p>
+            <p>✅ Vuelve en cualquier momento para ver el progreso actualizado</p>
+          </div>
         </div>
       )}
 
@@ -421,6 +434,66 @@ export default function ScrapingPage() {
         </Card>
       </div>
 
+      {/* Rate Limiting Metrics */}
+      {job && (job.rateLimitCount !== undefined || job.errorRate !== undefined) && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-[#131921] border-slate-700">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <AlertCircle className="h-8 w-8 text-orange-400" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-slate-400">Rate Limits (429)</p>
+                  <p className="text-2xl font-bold text-[#D6DDE6]">{job.rateLimitCount || 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-[#131921] border-slate-700">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <RefreshCw className="h-8 w-8 text-cyan-400" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-slate-400">Reintentos</p>
+                  <p className="text-2xl font-bold text-[#D6DDE6]">{job.retryCount || 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-[#131921] border-slate-700">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <BarChart3 className="h-8 w-8 text-purple-400" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-slate-400">Tasa de Error</p>
+                  <p className="text-2xl font-bold text-[#D6DDE6]">
+                    {job.errorRate !== undefined ? `${job.errorRate.toFixed(1)}%` : '0%'}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className={`border-slate-700 ${job.slowModeActive ? 'bg-yellow-900/20 border-yellow-700' : 'bg-[#131921]'}`}>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <Activity className="h-8 w-8 text-yellow-400" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-slate-400">Velocidad</p>
+                  <p className="text-2xl font-bold text-[#D6DDE6]">
+                    {job.speedMultiplier ? `${job.speedMultiplier.toFixed(2)}x` : '1.0x'}
+                  </p>
+                  {job.slowModeActive && (
+                    <p className="text-xs text-yellow-400 mt-1">Modo Lento Activo</p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Logs */}
       <Card className="bg-[#131921] border-slate-700 mb-6">
         <CardHeader>
@@ -448,23 +521,37 @@ export default function ScrapingPage() {
         </CardHeader>
         <CardContent>
           <div className="text-slate-300 space-y-2">
-            <p className="font-semibold text-[#FF5733]">🚀 Nuevo sistema optimizado para miles de jugadores:</p>
+            <p className="font-semibold text-[#FF5733]">🚀 Sistema optimizado Anti-DDoS para miles de jugadores:</p>
             <ul className="ml-6 space-y-1">
-              <li>✅ Procesamiento por lotes: 10 jugadores por batch</li>
-              <li>✅ Sin límites de timeout: cada batch se procesa en 5 minutos máximo</li>
-              <li>✅ Progreso persistente: si se detiene, puedes reanudar desde donde quedó</li>
-              <li>✅ Procesamiento automático: continúa hasta completar todos los jugadores</li>
-              <li>✅ Control total: pausar, reanudar o cancelar en cualquier momento</li>
-              <li>✅ Monitoreo en tiempo real: visualiza el progreso y logs en vivo</li>
+              <li>✅ Procesamiento por lotes: 5 jugadores por batch (configuración conservadora)</li>
+              <li>✅ Pausas aleatorias: 5-15 segundos entre jugadores (evita patrones)</li>
+              <li>✅ Rotación de User-Agents: 20+ navegadores diferentes</li>
+              <li>✅ Headers realistas: Simula navegador real con todos los headers</li>
+              <li>✅ Manejo de rate limits (429): Retry automático con exponential backoff</li>
+              <li>✅ Throttling adaptativo: Reduce velocidad automáticamente si detecta errores</li>
+              <li>✅ Máximo 3 reintentos por jugador con delays incrementales</li>
+              <li>✅ Protección anti-bloqueo: Pausa automática si hay 5 rate limits consecutivos</li>
             </ul>
 
-            <p className="mt-4 font-semibold text-[#FF5733]">📊 Funcionamiento:</p>
+            <p className="mt-4 font-semibold text-[#FF5733]">📊 Métricas en Tiempo Real:</p>
+            <ul className="ml-6 space-y-1">
+              <li>• Rate Limits (429): Cuántas veces Transfermarkt bloqueó temporalmente</li>
+              <li>• Reintentos: Total de intentos adicionales por errores</li>
+              <li>• Tasa de Error: Porcentaje de fallos (activa modo lento si &gt; 20%)</li>
+              <li>• Velocidad: Multiplicador actual (1.0x = normal, 2.0x = lento, 3.0x = muy lento)</li>
+            </ul>
+
+            <p className="mt-4 font-semibold text-[#FF5733]">🎯 Funcionamiento (Procesamiento Automático en Segundo Plano):</p>
             <ul className="ml-6 space-y-1">
               <li>1. Haz clic en &quot;Iniciar Scraping&quot; para crear un nuevo trabajo</li>
-              <li>2. El sistema procesará automáticamente todos los jugadores en lotes</li>
-              <li>3. Puedes pausar en cualquier momento y reanudar después</li>
-              <li>4. El progreso se guarda en la base de datos</li>
-              <li>5. Al completar, verás el resumen total de exitosos y errores</li>
+              <li>2. 🤖 <strong>El sistema procesa automáticamente cada 5 minutos en el servidor</strong></li>
+              <li>3. ✅ <strong>Puedes cerrar esta página - el scraping continuará en segundo plano</strong></li>
+              <li>4. El sistema usa pausas aleatorias (5-15 segundos) entre jugadores</li>
+              <li>5. Si detecta problemas, reduce velocidad automáticamente (throttling adaptativo)</li>
+              <li>6. Cada request usa un User-Agent diferente para evitar detección</li>
+              <li>7. Los errores 429 activan retry con tiempos exponenciales (5s, 15s, 45s, 120s)</li>
+              <li>8. El progreso se guarda continuamente - vuelve en cualquier momento para ver el estado</li>
+              <li>9. Auto-pausa después de 5 errores 429 consecutivos para evitar bloqueos</li>
             </ul>
 
             <p className="mt-4 font-semibold text-[#FF5733]">• 14 campos extraídos de Transfermarkt:</p>

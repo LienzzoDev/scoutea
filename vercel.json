@@ -11,6 +11,13 @@
     }
   },
 
+  "crons": [
+    {
+      "path": "/api/admin/scraping/cron",
+      "schedule": "*/5 * * * *"
+    }
+  ],
+
   "env": {
     "PRISMA_GENERATE_DATAPROXY": "true"
   }

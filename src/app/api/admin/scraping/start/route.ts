@@ -74,7 +74,7 @@ export async function POST() {
       }, { status: 200 })
     }
 
-    // 💾 CREAR NUEVO JOB
+    // 💾 CREAR NUEVO JOB (configuración conservadora anti-DDoS)
     const job = await prisma.scrapingJob.create({
       data: {
         status: 'pending',
@@ -83,7 +83,11 @@ export async function POST() {
         successCount: 0,
         errorCount: 0,
         currentBatch: 0,
-        batchSize: 10, // Aumentado a 10 jugadores por batch
+        batchSize: 5, // 5 jugadores por batch (conservador para evitar rate limits)
+        rateLimitCount: 0,
+        retryCount: 0,
+        slowModeActive: false,
+        speedMultiplier: 1.0,
         startedAt: new Date(),
         createdBy: userId
       }

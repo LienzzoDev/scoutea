@@ -1,12 +1,12 @@
 /**
- * ⚙️ ENDPOINT PARA PROCESAR UN BATCH DE SCRAPING (MEJORADO ANTI-DDOS)
+ * ⏰ ENDPOINT DE CRON PARA SCRAPING AUTOMÁTICO
  *
- * ✅ PROPÓSITO: Procesar un lote pequeño de jugadores con protección anti-DDoS
- * ✅ BENEFICIO: Evita detección como ataque mediante pausas aleatorias, rotación de UA y manejo de rate limits
- * ✅ RUTA: POST /api/admin/scraping/process
+ * ✅ PROPÓSITO: Procesar batches automáticamente en el backend sin intervención del usuario
+ * ✅ BENEFICIO: El scraping continúa aunque el usuario cierre la página
+ * ✅ RUTA: GET /api/admin/scraping/cron
+ * ✅ FRECUENCIA: Se ejecuta cada 5 minutos vía Vercel Cron
  */
 
-import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/db'
@@ -30,14 +30,14 @@ interface ScrapingResult {
 const SCRAPING_CONFIG = {
   MIN_DELAY_BETWEEN_PLAYERS: 5000,  // 5 segundos mínimo
   MAX_DELAY_BETWEEN_PLAYERS: 15000, // 15 segundos máximo
-  REQUEST_TIMEOUT: 30000,             // 30 segundos timeout
+  REQUEST_TIMEOUT: 30000,            // 30 segundos timeout
   MAX_RETRIES_PER_PLAYER: 3,
 }
 
 /**
- * POST /api/admin/scraping/process - Procesar un batch del job activo
+ * GET /api/admin/scraping/cron - Procesar batch automáticamente (ejecutado por Vercel Cron)
  */
-export async function POST() {
+export async function GET(request: Request) {
   const rateLimiter = new RateLimiter({
     maxRetriesPerRequest: SCRAPING_CONFIG.MAX_RETRIES_PER_PLAYER,
     baseRetryDelay: 5000,
@@ -51,24 +51,22 @@ export async function POST() {
   )
 
   try {
-    // 🔐 VERIFICAR AUTENTICACIÓN Y PERMISOS
-    const { userId, sessionClaims } = await auth()
+    // 🔐 VERIFICAR AUTENTICACIÓN DE CRON (Vercel pasa headers específicos)
+    const authHeader = request.headers.get('authorization')
+    const cronSecret = process.env.CRON_SECRET
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'No autorizado. Debes iniciar sesión.' },
-        { status: 401 }
-      )
+    // En producción, verificar el secret del cron
+    if (process.env.NODE_ENV === 'production') {
+      if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+        console.error('❌ Unauthorized cron request')
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 401 }
+        )
+      }
     }
 
-    // 👮‍♂️ VERIFICAR PERMISOS DE ADMIN
-    const userRole = sessionClaims?.public_metadata?.role
-    if (userRole !== 'admin') {
-      return NextResponse.json(
-        { error: 'Acceso denegado. Solo los administradores pueden ejecutar scraping.' },
-        { status: 403 }
-      )
-    }
+    console.log('\n⏰ CRON JOB EJECUTÁNDOSE:', new Date().toISOString())
 
     // 🔍 OBTENER JOB ACTIVO
     const job = await prisma.scrapingJob.findFirst({
@@ -82,12 +80,17 @@ export async function POST() {
       }
     })
 
+    // Si no hay job activo, terminar silenciosamente
     if (!job) {
-      return NextResponse.json(
-        { error: 'No hay ningún trabajo de scraping activo.' },
-        { status: 404 }
-      )
+      console.log('ℹ️ No hay jobs activos. Cron terminando...')
+      return NextResponse.json({
+        success: true,
+        message: 'No hay jobs activos para procesar'
+      })
     }
+
+    console.log(`📋 Job encontrado: ${job.id}`)
+    console.log(`📊 Progreso: ${job.processedCount}/${job.totalPlayers} (${Math.round((job.processedCount / job.totalPlayers) * 100)}%)`)
 
     // ✅ VERIFICAR SI YA SE COMPLETÓ
     if (job.processedCount >= job.totalPlayers) {
@@ -98,6 +101,8 @@ export async function POST() {
           completedAt: new Date()
         }
       })
+
+      console.log('✅ Job completado!')
 
       return NextResponse.json({
         success: true,
@@ -150,6 +155,8 @@ export async function POST() {
           completedAt: new Date()
         }
       })
+
+      console.log('✅ No hay más jugadores. Job completado!')
 
       return NextResponse.json({
         success: true,
@@ -237,9 +244,7 @@ export async function POST() {
       // ⏱️ PAUSA ADAPTATIVA ENTRE JUGADORES
       if (i < playersToProcess.length - 1) {
         const delays = throttler.getCurrentDelays()
-        const delayMs = Math.floor(Math.random() * (delays.max - delays.min + 1)) + delays.min
-
-        console.log(`  ⏳ Pausa: ${delayMs / 1000}s (multiplier: ${throttler.getMultiplier().toFixed(2)}x)`)
+        console.log(`  ⏳ Pausa: ${delays.min / 1000}-${delays.max / 1000}s (multiplier: ${throttler.getMultiplier().toFixed(2)}x)`)
         await randomSleep(delays.min, delays.max)
       }
 
@@ -314,6 +319,7 @@ export async function POST() {
           completedAt: new Date()
         }
       })
+      console.log('🎉 ¡JOB COMPLETADO!')
     }
 
     return NextResponse.json({
@@ -338,12 +344,11 @@ export async function POST() {
       metrics: {
         ...finalMetrics,
         throttlerMultiplier: throttler.getMultiplier()
-      },
-      results
+      }
     }, { status: 200 })
 
   } catch (error) {
-    console.error('❌ Error in scraping process:', error)
+    console.error('❌ Error in cron scraping process:', error)
 
     // Intentar marcar el job como failed
     try {
@@ -377,11 +382,8 @@ export async function POST() {
 
 /**
  * 🕷️ FUNCIÓN DE SCRAPING DE UN JUGADOR (MEJORADA)
- *
- * Esta función extrae los 14 campos de Transfermarkt con headers realistas
  */
 async function scrapePlayerData(url: string): Promise<Record<string, any>> {
-  // 🌐 HACER REQUEST CON HEADERS REALISTAS Y ROTACIÓN DE USER-AGENT
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), SCRAPING_CONFIG.REQUEST_TIMEOUT)
 
@@ -398,8 +400,6 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
     }
 
     const html = await response.text()
-
-    // 📊 EXTRAER DATOS USANDO REGEX Y PARSING
     const data: Record<string, any> = {}
 
     // 1. URL del advisor
@@ -512,9 +512,6 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
   }
 }
 
-/**
- * 📅 PARSEAR FECHA EN FORMATO ESPAÑOL
- */
 function parseDateString(dateStr: string): Date | null {
   try {
     const months: Record<string, number> = {
@@ -543,9 +540,6 @@ function parseDateString(dateStr: string): Date | null {
   }
 }
 
-/**
- * 📅 PARSEAR FECHA DE CONTRATO
- */
 function parseContractDate(dateStr: string): Date | null {
   try {
     if (dateStr.includes('/')) {
