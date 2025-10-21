@@ -21,15 +21,9 @@ export default function NuevoJugadorPage() {
   // Estado del formulario
   const [formData, setFormData] = useState<CrearJugadorData>({
     nombre: '',
-    nombreUsuario: '',
     posicion: '',
     edad: 18,
-    equipo: '',
-    numeroCamiseta: undefined,
-    biografia: '',
-    valoracion: '',
-    urlAvatar: '',
-    atributos: []
+    equipo: ''
   })
 
   // Estado de la UI
@@ -37,15 +31,17 @@ export default function NuevoJugadorPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [newAttribute, setNewAttribute] = useState({ nombre: '', valor: '' })
 
+  // Estado para scraping
+  const [urlTrfm, setUrlTrfm] = useState('')
+  const [scraping, setScraping] = useState(false)
+  const [scrapingResult, setScrapingResult] = useState<any>(null)
+
   // Validar formulario
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
 
     if (!formData.nombre.trim()) {
       newErrors.nombre = 'El nombre es requerido'
-    }
-    if (!formData.nombreUsuario.trim()) {
-      newErrors.nombreUsuario = 'El nombre de usuario es requerido'
     }
     if (!formData.posicion.trim()) {
       newErrors.posicion = 'La posición es requerida'
@@ -75,7 +71,7 @@ export default function NuevoJugadorPage() {
     if (newAttribute.nombre.trim() && newAttribute.valor.trim()) {
       setFormData(prev => ({
         ...prev,
-        atributos: [...(prev.atributos || []), { ...newAttribute }]
+        atributos: [...(prev.atributos ?? []), { ...newAttribute }]
       }))
       setNewAttribute({ nombre: '', valor: '' })
     }
@@ -85,14 +81,79 @@ export default function NuevoJugadorPage() {
   const removeAttribute = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      atributos: prev.atributos?.filter((_, i) => i !== index) || []
+      atributos: prev.atributos?.filter((_attr, i) => i !== index) ?? []
     }))
+  }
+
+  // Hacer scraping de URL individual
+  const handleScraping = async () => {
+    if (!urlTrfm.trim()) {
+      alert('Por favor ingresa una URL de Transfermarkt')
+      return
+    }
+
+    // Validar que sea una URL de Transfermarkt
+    if (!urlTrfm.includes('transfermarkt')) {
+      alert('La URL debe ser de Transfermarkt')
+      return
+    }
+
+    setScraping(true)
+    setScrapingResult(null)
+
+    try {
+      const response = await fetch('/api/admin/scraping/single', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ url: urlTrfm })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al hacer scraping')
+      }
+
+      setScrapingResult(data)
+
+      // Auto-rellenar formulario con datos scrapeados
+      if (data.data) {
+        const scraped = data.data
+
+        // Solo rellenar campos que estén vacíos
+        if (scraped.player_name && !formData.nombre) {
+          handleInputChange('nombre', scraped.player_name)
+        }
+        if (scraped.position_player && !formData.posicion) {
+          handleInputChange('posicion', scraped.position_player)
+        }
+        if (scraped.team_name && !formData.equipo) {
+          handleInputChange('equipo', scraped.team_name)
+        }
+        if (scraped.date_of_birth && !formData.edad) {
+          // Calcular edad desde fecha de nacimiento
+          const birthDate = new Date(scraped.date_of_birth)
+          const age = new Date().getFullYear() - birthDate.getFullYear()
+          handleInputChange('edad', age)
+        }
+      }
+
+      alert('Scraping completado exitosamente! Los datos han sido cargados en el formulario.')
+
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
+      alert(`Error al hacer scraping: ${errorMsg}`)
+    } finally {
+      setScraping(false)
+    }
   }
 
   // Enviar formulario
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
       return
     }
@@ -107,7 +168,7 @@ export default function NuevoJugadorPage() {
         console.error('❌ No se pudo crear el jugador - resultado null')
       }
     } catch (_error) {
-      console.error('❌ Error al crear jugador:', error)
+      console.error('❌ Error al crear jugador:', _error)
     } finally {
       setLoading(false)
     }
@@ -133,7 +194,7 @@ export default function NuevoJugadorPage() {
             </Button>
             <div className="relative">
               <Avatar className="w-16 h-16">
-                <AvatarImage src={formData.urlAvatar || "/dynamic-soccer-player.png"} />
+                <AvatarImage src={formData.urlAvatar ?? "/dynamic-soccer-player.png"} />
                 <AvatarFallback>JP</AvatarFallback>
               </Avatar>
               <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#FF5733] rounded-full flex items-center justify-center">
@@ -162,36 +223,62 @@ export default function NuevoJugadorPage() {
                 </>
               )}
             </Button>
-            <Button variant="outline" className="border-slate-700 bg-slate-800 text-white hover:bg-slate-700">
-              <Settings className="h-4 w-4 mr-2" />
-              Hacer Scraping
+            <Button
+              type="button"
+              onClick={handleScraping}
+              disabled={scraping || !urlTrfm}
+              variant="outline"
+              className="border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50"
+            >
+              {scraping ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Scrapeando...</span>
+                </div>
+              ) : (
+                <>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Hacer Scraping
+                </>
+              )}
             </Button>
           </div>
         </div>
 
         {/* Form */}
         <form id="jugador-form" onSubmit={handleSubmit} className="space-y-8">
+          {/* Scraping Section */}
+          <section className="bg-blue-900/20 border border-blue-700 rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4 text-[#D6DDE6] flex items-center">
+              <Settings className="h-5 w-5 mr-2 text-blue-400" />
+              Scraping de Transfermarkt
+            </h2>
+            <div className="space-y-2">
+              <Label htmlFor="urlTrfm" className="text-sm text-slate-300 block">
+                URL de Transfermarkt
+              </Label>
+              <Input
+                id="urlTrfm"
+                value={urlTrfm}
+                onChange={(e) => setUrlTrfm(e.target.value)}
+                placeholder="https://www.transfermarkt.es/jugador/profil/spieler/..."
+                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
+              />
+              <p className="text-xs text-slate-400">
+                Ingresa la URL del perfil del jugador en Transfermarkt y haz clic en "Hacer Scraping" para cargar automáticamente sus datos.
+              </p>
+              {scrapingResult && (
+                <div className="mt-3 p-3 bg-green-900/20 border border-green-700 rounded text-sm text-green-300">
+                  ✅ Datos cargados exitosamente desde Transfermarkt
+                </div>
+              )}
+            </div>
+          </section>
+
           {/* Información Personal */}
           <section>
             <h2 className="text-xl font-semibold mb-6 text-[#D6DDE6]">Información Personal</h2>
             <div className="space-y-4">
-              <div>
-                <Label htmlFor="nombreUsuario" className="text-sm text-slate-300 mb-2 block">
-                  Nombre de Usuario *
-                </Label>
-                <Input
-                  id="nombreUsuario"
-                  value={formData.nombreUsuario}
-                  onChange={(e) =>handleInputChange('nombreUsuario', e.target.value)}
-                  placeholder="Nombre de usuario único" className={`bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 ${
-                    errors.nombreUsuario ? 'border-red-500' : ''
-                  }`}
-                />
-                {errors.nombreUsuario && (
-                  <p className="text-red-400 text-sm mt-1">{errors.nombreUsuario}</p>
-                )}
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="nombre" className="text-sm text-slate-300 mb-2 block">
@@ -275,7 +362,7 @@ export default function NuevoJugadorPage() {
                     type="number"
                     min="1"
                     max="99"
-                    value={formData.numeroCamiseta || ''}
+                    value={formData.numeroCamiseta ?? ''}
                     onChange={(e) =>handleInputChange('numeroCamiseta', e.target.value ? parseInt(e.target.value) : undefined)}
                     placeholder="Número" className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400" />
                 </div>
@@ -285,7 +372,7 @@ export default function NuevoJugadorPage() {
                   </Label>
                   <Input
                     id="valoracion"
-                    value={formData.valoracion}
+                    value={formData.valoracion ?? ''}
                     onChange={(e) =>handleInputChange('valoracion', e.target.value)}
                     placeholder="Ej: 250k, 1.5M" className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400" />
                 </div>
@@ -297,7 +384,7 @@ export default function NuevoJugadorPage() {
                 </Label>
                 <Input
                   id="urlAvatar"
-                  value={formData.urlAvatar}
+                  value={formData.urlAvatar ?? ''}
                   onChange={(e) =>handleInputChange('urlAvatar', e.target.value)}
                   placeholder="URL de la imagen del jugador" className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400" />
               </div>
@@ -308,7 +395,7 @@ export default function NuevoJugadorPage() {
                 </Label>
                 <Textarea
                   id="biografia"
-                  value={formData.biografia}
+                  value={formData.biografia ?? ''}
                   onChange={(e) =>handleInputChange('biografia', e.target.value)}
                   placeholder="Escribe una breve biografía del jugador" className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 min-h-[100px]" />
               </div>
@@ -348,7 +435,7 @@ export default function NuevoJugadorPage() {
               {/* Lista de atributos */}
               {formData.atributos && formData.atributos.length > 0 && (
                 <div className="space-y-2">
-                  {formData.atributos.map((attr, index) => (
+                  {formData.atributos.map((attr: { nombre: string; valor: string }, index: number) => (
                     <div key={index} className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
                       <div className="flex-1">
                         <span className="text-[#D6DDE6] font-medium">{attr.nombre}:</span>

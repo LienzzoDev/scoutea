@@ -3,22 +3,19 @@
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
-import { MediaUpload } from "@/components/scout/media-upload"
 import { TeamSearch } from "@/components/scout/team-search"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 
 export function PlayerDetailsForm() {
   const router = useRouter()
   const { toast } = useToast()
-  
-  const [potential, setPotential] = useState(0)
+
   const [isSubmitting, setIsSubmitting] = useState(false)
-  
+
   // Form state
   const [formData, setFormData] = useState({
     playerName: '',
@@ -32,11 +29,7 @@ export function PlayerDetailsForm() {
     nationality2: '',
     nationalTier: '',
     agency: '',
-    urlReference: '',
-    reportText: '',
-    urlReport: '',
-    urlVideo: '',
-    imageUrl: ''
+    urlReference: ''
   })
 
   const handleInputChange = (field: string, value: string) => {
@@ -58,7 +51,7 @@ export function PlayerDetailsForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     // Validar campos requeridos
     if (!formData.playerName.trim()) {
       toast({
@@ -105,15 +98,6 @@ export function PlayerDetailsForm() {
       return
     }
 
-    if (potential === 0) {
-      toast({
-        title: "Error",
-        description: "El potencial es requerido",
-        variant: "destructive"
-      })
-      return
-    }
-
     setIsSubmitting(true)
 
     try {
@@ -132,17 +116,12 @@ export function PlayerDetailsForm() {
         nationality2: formData.nationality2 || null,
         nationalTier: formData.nationalTier || null,
         agency: formData.agency || null,
-        urlReference: formData.urlReference,
-        reportText: formData.reportText || null,
-        urlReport: formData.urlReport || null,
-        urlVideo: formData.urlVideo || null,
-        imageUrl: formData.imageUrl || null,
-        potential
+        urlReference: formData.urlReference
       }
 
       console.log('Sending payload:', payload)
 
-      const response = await fetch('/api/reports/create', {
+      const response = await fetch('/api/scout/players', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -155,20 +134,20 @@ export function PlayerDetailsForm() {
       if (result.success) {
         toast({
           title: "¡Éxito!",
-          description: "Reporte creado correctamente",
+          description: result.message || "Jugador añadido correctamente. Pendiente de aprobación del administrador.",
         })
 
-        // Redirigir a la página de jugadores
+        // Redirigir a la página de jugadores del scout
         router.push('/scout/players')
       } else {
         console.error('API Error:', result)
-        throw new Error(result.details || result.error || 'Error al crear el reporte')
+        throw new Error(result.details || result.error || 'Error al añadir el jugador')
       }
     } catch (error) {
       console.error('Error submitting form:', error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Error al crear el reporte",
+        description: error instanceof Error ? error.message : "Error al añadir el jugador",
         variant: "destructive"
       })
     } finally {
@@ -178,8 +157,8 @@ export function PlayerDetailsForm() {
 
   return (
     <form onSubmit={handleSubmit} className="mt-8 rounded-lg border border-border bg-card p-8">
-      <div className="grid gap-8 lg:grid-cols-[1fr_1.5fr]">
-        {/* Left Column - Player Information */}
+      <div className="max-w-2xl mx-auto">
+        {/* Player Information */}
         <div className="space-y-5">
           {/* Player Name */}
           <div className="space-y-2">
@@ -424,91 +403,19 @@ export function PlayerDetailsForm() {
           </div>
         </div>
 
-        {/* Right Column - Report Details */}
-        <div className="space-y-5">
-          {/* Report Text */}
-          <div className="space-y-2">
-            <Label htmlFor="report-text" className="text-sm font-medium text-foreground">
-              Report Text
-            </Label>
-            <Textarea
-              id="report-text"
-              placeholder="Enter your report details here..."
-              value={formData.reportText}
-              onChange={(e) => handleInputChange('reportText', e.target.value)}
-              className="min-h-[320px] resize-none rounded-lg border-0 bg-muted/50 p-4 text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
-            />
-          </div>
-
-          {/* URL Report */}
-          <div className="space-y-2">
-            <Label htmlFor="url-report" className="text-sm font-medium text-foreground">
-              URL report
-            </Label>
-            <Input
-              id="url-report"
-              type="url"
-              placeholder="https://example.com/report"
-              value={formData.urlReport}
-              onChange={(e) => handleInputChange('urlReport', e.target.value)}
-              className="h-12 rounded-lg border-0 bg-muted/50 px-4 text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
-            />
-          </div>
-
-          {/* Media Upload (Image or Video) */}
-          <MediaUpload
-            imageValue={formData.imageUrl}
-            videoValue={formData.urlVideo}
-            onImageChange={(url) => handleInputChange('imageUrl', url)}
-            onVideoChange={(url) => handleInputChange('urlVideo', url)}
-          />
-
-          {/* Potential Rating */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium text-foreground">*Potential</Label>
-            <div className="flex items-center gap-3">
-              {[1, 2, 3, 4, 5].map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setPotential(value)}
-                  className="group relative h-12 w-12 rounded-full transition-all hover:scale-110"
-                  aria-label={`Set potential to ${value}`}
-                >
-                  <div
-                    className={`h-full w-full rounded-full border-2 transition-all ${
-                      value <= potential
-                        ? "border-[#8B0000] bg-[#8B0000]"
-                        : "border-muted-foreground/30 bg-muted/30 group-hover:border-muted-foreground/50"
-                    }`}
-                  />
-                  {value <= potential && (
-                    <svg
-                      className="absolute inset-0 m-auto h-6 w-6 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={3}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <div className="pt-4">
-            <Button
-              type="submit"
-              size="lg"
-              disabled={isSubmitting}
-              className="h-14 w-full rounded-lg bg-[#8B0000] text-base font-semibold text-white hover:bg-[#660000] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? 'SENDING...' : 'SEND REPORT'}
-            </Button>
-          </div>
+        {/* Submit Button */}
+        <div className="pt-6">
+          <Button
+            type="submit"
+            size="lg"
+            disabled={isSubmitting}
+            className="h-14 w-full rounded-lg bg-[#8B0000] text-base font-semibold text-white hover:bg-[#660000] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? 'AÑADIENDO...' : 'AÑADIR JUGADOR'}
+          </Button>
+          <p className="mt-3 text-sm text-muted-foreground text-center">
+            El jugador será enviado para aprobación del administrador
+          </p>
         </div>
       </div>
     </form>

@@ -232,10 +232,49 @@ export const ScoutReportCreateSchema = z.object({
 export const ScoutReportForExistingSchema = z.object({
   playerId: nonEmptyString,
   potential: z.number().int().min(1).max(10),
-  urlReport: url.optional(),
-  urlVideo: url.optional(),
-  reportText: z.string().max(10000).optional(),
-  imageUrl: url.optional()
+  urlReport: url.nullable().optional(),
+  urlVideo: url.nullable().optional(),
+  reportText: z.string().max(10000).nullable().optional(),
+  imageUrl: url.nullable().optional()
+})
+
+// Admin Report For Scout Schema (admin creates report on behalf of scout)
+export const AdminReportForScoutSchema = z.object({
+  scoutId: nonEmptyString,
+  playerId: nonEmptyString,
+  potential: z.number().int().min(1).max(10),
+  urlReport: url.nullable().optional(),
+  urlVideo: url.nullable().optional(),
+  reportText: z.string().max(10000).nullable().optional(),
+  imageUrl: url.nullable().optional()
+})
+
+// Scout Player Add Schema (without report - requires admin approval)
+export const ScoutPlayerAddSchema = z.object({
+  playerName: nonEmptyString.min(2).max(100),
+  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  team: nonEmptyString.max(100),
+  nationality1: nonEmptyString.max(50),
+  urlReference: url,
+  position: z.string().max(50).nullable().optional(),
+  height: z.union([z.number(), z.string(), z.null()]).nullable().optional().transform(val => {
+    if (!val || val === '') return null
+    if (typeof val === 'number') return val
+    const parsed = parseFloat(val as string)
+    return isNaN(parsed) ? null : parsed
+  }),
+  foot: z.string().nullable().optional().transform(val => {
+    if (!val || val === '') return null
+    const normalized = (val as string).toLowerCase()
+    if (normalized === 'left') return 'Left'
+    if (normalized === 'right') return 'Right'
+    if (normalized === 'both') return 'Both'
+    return null
+  }),
+  teamCountry: z.string().max(50).nullable().optional(),
+  nationality2: z.string().max(50).nullable().optional(),
+  nationalTier: z.string().max(50).nullable().optional(),
+  agency: z.string().max(100).nullable().optional()
 })
 
 // Scout schemas
@@ -301,6 +340,8 @@ export type ReportCreateInput = z.infer<typeof ReportCreateSchema>
 export type ReportUpdateInput = z.infer<typeof ReportUpdateSchema>
 export type ScoutReportCreateInput = z.infer<typeof ScoutReportCreateSchema>
 export type ScoutReportForExistingInput = z.infer<typeof ScoutReportForExistingSchema>
+export type AdminReportForScoutInput = z.infer<typeof AdminReportForScoutSchema>
+export type ScoutPlayerAddInput = z.infer<typeof ScoutPlayerAddSchema>
 export type ScoutFiltersInput = z.infer<typeof ScoutFiltersSchema>
 export type ScoutSearchQueryInput = z.infer<typeof ScoutSearchQuerySchema>
 export type PaginationInput = z.infer<typeof PaginationSchema>

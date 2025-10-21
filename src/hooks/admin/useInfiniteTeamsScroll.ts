@@ -34,6 +34,7 @@ export function useInfiniteTeamsScroll(
   } = options
 
   const [teams, setTeams] = useState<Team[]>([])
+  const [loading, setLoading] = useState(true) // Iniciar con true para mostrar loading inicial
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(true)
   const [totalCount, setTotalCount] = useState<number | null>(null)
@@ -51,6 +52,7 @@ export function useInfiniteTeamsScroll(
     setHasMore(true)
     setTotalCount(null)
     setError(null)
+    setLoading(true) // Mostrar loading mientras se refresca
     hasLoadedInitial.current = false
     loadingRef.current = false
   }, [search, country, competition])
@@ -70,6 +72,7 @@ export function useInfiniteTeamsScroll(
     }
 
     loadingRef.current = true
+    setLoading(true)
     lastLoadTime.current = now
 
     try {
@@ -114,6 +117,7 @@ export function useInfiniteTeamsScroll(
       setError(err as Error)
       setHasMore(false)
     } finally {
+      setLoading(false)
       loadingRef.current = false
     }
   }, [nextCursor, hasMore, search, country, competition, limit])
@@ -161,6 +165,7 @@ export function useInfiniteTeamsScroll(
     setHasMore(true)
     setTotalCount(null)
     setError(null)
+    setLoading(true) // Mostrar loading mientras se refresca
     hasLoadedInitial.current = false
     loadingRef.current = false
   }, [])
@@ -176,7 +181,7 @@ export function useInfiniteTeamsScroll(
 
   return {
     teams,
-    loading: loadingRef.current,
+    loading,
     error,
     hasMore,
     totalCount,

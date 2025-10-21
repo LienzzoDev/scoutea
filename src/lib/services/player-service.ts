@@ -266,7 +266,11 @@ export class PlayerService {
 
       // Construir condiciones WHERE
       const whereConditions: any = {};
-      
+
+      // IMPORTANTE: Solo mostrar jugadores aprobados (para miembros)
+      // Los jugadores con approval_status 'pending' o 'rejected' no deben aparecer
+      whereConditions.approval_status = 'approved';
+
       if (filters.player_name) {
         whereConditions.player_name = {
           contains: filters.player_name,

@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { usePlayerAvgValues } from "@/hooks/player/usePlayerAvgValues";
-import { MarketValueService } from "@/lib/services/market-value-service";
+import { formatValue, formatPercentageChange, formatAbsoluteChange } from "@/lib/utils/market-value-formatter";
 import type { Player } from "@/types/player";
 
 interface PlayerInfoProps {
@@ -49,11 +49,11 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
             <div className="flex items-center gap-2">
               <div className="text-right">
                 <div className="font-medium text-[#2e3138]">
-                  {MarketValueService.formatValue(player.player_trfm_value)}
+                  {formatValue(player.player_trfm_value)}
                 </div>
                 {(() => {
-                  const percentChange = MarketValueService.formatPercentageChange(player.trfm_value_change_percent);
-                  const absoluteChange = MarketValueService.formatAbsoluteChange(player.player_trfm_value, player.previous_trfm_value);
+                  const percentChange = formatPercentageChange(player.trfm_value_change_percent);
+                  const absoluteChange = formatAbsoluteChange(player.player_trfm_value, player.previous_trfm_value);
 
                   if (!percentChange.isNeutral && percentChange.text && absoluteChange.text) {
                     return (
@@ -73,7 +73,7 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
                     ? 'bg-red-500'
                     : 'bg-gray-500'
                 }`}>
-                  {MarketValueService.formatPercentageChange(player.trfm_value_change_percent).arrow}
+                  {formatPercentageChange(player.trfm_value_change_percent).arrow}
                 </Badge>
               )}
             </div>

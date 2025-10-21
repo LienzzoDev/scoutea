@@ -230,6 +230,7 @@ model Equipo {
 
   // Relaciones
   players              Jugador[]  @relation("PlayerTeam")
+  jobOffers            JobOffer[] @relation("TeamJobOffers")
 
   @@index([team_name])
   @@index([team_country])
@@ -1363,4 +1364,133 @@ model ScrapingJob {
   @@index([status])
   @@index([createdAt])
   @@map("scraping_jobs")
+}
+
+// 🚨 MODELO PARA ALERTAS DE URLs NO FUNCIONANDO
+model ScrapingAlert {
+  id          String   @id @default(cuid())
+
+  // Tipo de entidad
+  entityType  String   // "player" o "team"
+  entityId    String   // id_player o id_equipo
+  entityName  String?  // Nombre del jugador o equipo
+
+  // URL problemática
+  url         String
+
+  // Error
+  errorType   String   // "404", "500", "timeout", "invalid_url", etc.
+  errorMessage String?
+  httpStatus  Int?
+
+  // Estado
+  status      String   @default("pending") // "pending", "resolved", "ignored"
+
+  // Resolución
+  resolvedAt  DateTime?
+  resolvedBy  String?  // clerkId del admin que lo resolvió
+  resolution  String?  // "url_updated", "entity_deleted", "false_positive"
+  newUrl      String?  // Nueva URL si se actualizó
+
+  // Timestamps
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+  seenCount   Int      @default(1) // Cuántas veces se ha visto este error
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([entityType, entityId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("scraping_alerts")
+}
+
+// 🔧 MODELO PARA CORRECCIONES DINÁMICAS DEL ADMIN
+model ScrapingCorrection {
+  id            String   @id @default(cuid())
+
+  // Tipo de corrección
+  correctionType String  // "country", "competition", "team_name", "nationality", "national_tier", "agency"
+
+  // Mapeo
+  originalValue  String  // Valor original que viene de Transfermarkt
+  correctedValue String  // Valor corregido que se guardará en BD
+
+  // Para correcciones que dependen de otro campo (ej: competiciones duplicadas)
+  contextField   String? // Ej: "country" para competiciones
+  contextValue   String? // Ej: "Germany" para Bundesliga
+
+  // Metadata
+  isActive       Boolean @default(true)
+  priority       Int     @default(0) // Para ordenar correcciones en conflicto
+
+  // Auditoría
+  createdBy      String  // clerkId del admin que creó la corrección
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([correctionType, originalValue, contextField, contextValue])
+  @@index([correctionType, isActive])
+  @@map("scraping_corrections")
+}
+
+// 💼 MODELO PARA OFERTAS DE TRABAJO
+model JobOffer {
+  id               String    @id @default(cuid())
+
+  // Información básica
+  title            String
+  description      String    @db.Text
+  short_description String?  @db.Text // Breve descripción para listados
+
+  // Ubicación y equipo
+  team_id          String?
+  team             Equipo?   @relation("TeamJobOffers", fields: [team_id], references: [id_team], onDelete: SetNull)
+  location         String?   // Ciudad o ubicación específica
+  remote_allowed   Boolean   @default(false)
+
+  // Detalles del trabajo
+  position_type    String    // "Scout", "Head Scout", "Analyst", "Director", etc.
+  contract_type    String    // "Full-time", "Part-time", "Contract", "Freelance"
+  experience_level String    // "Junior", "Mid", "Senior", "Lead"
+
+  // Compensación
+  salary_min       Float?
+  salary_max       Float?
+  salary_currency  String    @default("EUR")
+  salary_period    String?   // "monthly", "yearly"
+
+  // Requisitos
+  requirements     String?   @db.Text
+  responsibilities String?   @db.Text
+  benefits         String?   @db.Text
+
+  // Estado y visibilidad
+  status           String    @default("draft") // "draft", "published", "closed"
+  expires_at       DateTime?
+
+  // Información de contacto
+  contact_email    String?
+  contact_phone    String?
+  application_url  String?
+
+  // Auditoría
+  created_by       String    // clerkId del admin que creó la oferta
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Estadísticas
+  views_count      Int       @default(0)
+  applications_count Int     @default(0)
+
+  @@index([status])
+  @@index([team_id])
+  @@index([position_type])
+  @@index([contract_type])
+  @@index([experience_level])
+  @@index([expires_at])
+  @@index([createdAt])
+  @@index([status, expires_at])
+  @@map("job_offers")
 }

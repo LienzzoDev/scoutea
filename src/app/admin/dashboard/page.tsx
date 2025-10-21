@@ -417,24 +417,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Debug Info - Simple */}
-      <div className="mt-8 p-4 bg-gray-800 rounded-lg">
-        <h3 className="text-lg font-semibold text-white mb-2">🔍 Debug Info</h3>
-        <p className="text-gray-300">Players loaded: {players.length}</p>
-        <p className="text-gray-300">Loading: {loading ? 'Yes' : 'No'}</p>
-        <p className="text-gray-300">Error: {error ? String(error) : 'None'}</p>
-        {players.length > 0 && (
-          <div className="mt-2">
-            <p className="text-gray-300">Sample players:</p>
-            <ul className="text-sm text-gray-400">
-              {players.slice(0, 3).map(player => (
-                <li key={player.id}>{player.player_name} - {player.team_name}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-
       {/* Error State */}
       {error && (
         <div className="mt-8 p-4 bg-red-900/20 border border-red-700 rounded-lg">

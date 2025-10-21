@@ -76,9 +76,9 @@ export async function PATCH(
       where: { id_report: reportId },
       data: {
         approval_status: action === 'approve' ? 'approved' : 'rejected',
-        approved_by_admin_id: userId,
+        approved_by_admin_id: user.id_usuario,
         approval_date: new Date(),
-        rejection_reason: action === 'reject' ? rejectionReason : null,
+        rejection_reason: action === 'reject' ? rejectionReason || null : null,
       },
     })
 
@@ -92,8 +92,11 @@ export async function PATCH(
     })
   } catch (error) {
     console.error('Error updating report approval:', error)
+    if (error instanceof Error) {
+      console.error('Error details:', error.message, error.stack)
+    }
     return NextResponse.json(
-      { __error: 'Internal server error' },
+      { __error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }

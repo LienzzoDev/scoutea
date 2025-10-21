@@ -1,6 +1,6 @@
 'use client'
 
-import { Play, Pause, RotateCcw, CheckCircle, XCircle, Clock, Database, AlertCircle, RefreshCw, BarChart3, Activity } from "lucide-react"
+import { Play, Pause, RotateCcw, CheckCircle, XCircle, Clock, Database, AlertCircle, RefreshCw, BarChart3, Activity, FlaskRound } from "lucide-react"
 import { useEffect, useState, useCallback } from 'react'
 
 import { Button } from "@/components/ui/button"
@@ -39,6 +39,20 @@ interface BatchResult {
   error?: string
 }
 
+interface TestResult {
+  entityType: 'player' | 'team'
+  entityId: string
+  entityName: string
+  url: string
+  success: boolean
+  fieldsUpdated: Array<{
+    field: string
+    oldValue: string | null
+    newValue: string | null
+  }>
+  error?: string
+}
+
 export default function ScrapingPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
 
@@ -47,6 +61,11 @@ export default function ScrapingPage() {
   const [logs, setLogs] = useState<string[]>([])
   const [job, setJob] = useState<ScrapingJob | null>(null)
   const [autoProcess, setAutoProcess] = useState(false)
+
+  // 🧪 Estados para Test Scraping
+  const [isTesting, setIsTesting] = useState(false)
+  const [testResults, setTestResults] = useState<TestResult[] | null>(null)
+  const [showTestModal, setShowTestModal] = useState(false)
 
   const addLog = useCallback((message: string) => {
     setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${message}`])
@@ -138,6 +157,7 @@ export default function ScrapingPage() {
   const startScraping = async () => {
     setLogs([])
     addLog('🚀 Iniciando nuevo trabajo de scraping...')
+    addLog('')
 
     try {
       const response = await fetch('/api/admin/scraping/start', {
@@ -150,12 +170,25 @@ export default function ScrapingPage() {
         throw new Error(data.error || 'Error al iniciar scraping')
       }
 
-      addLog(`✅ Job creado: ${data.job.id}`)
-      addLog(`📊 Total de jugadores: ${data.job.totalPlayers}`)
-      addLog(`📦 Tamaño de batch: ${data.job.batchSize}`)
+      // Logs para jugadores
+      addLog('⚽ SCRAPING DE JUGADORES:')
+      addLog(`✅ Job creado: ${data.playersJob.id}`)
+      addLog(`📊 Total de jugadores: ${data.playersJob.totalPlayers}`)
+      addLog(`📦 Tamaño de batch: ${data.playersJob.batchSize}`)
       addLog('')
 
-      setJob(data.job)
+      // Logs para equipos
+      if (data.totalTeams > 0) {
+        addLog('🏟️ SCRAPING DE EQUIPOS:')
+        addLog(`📊 Total de equipos: ${data.totalTeams}`)
+        addLog(`✅ Equipos procesados: ${data.teamsScraped}`)
+        addLog('')
+      }
+
+      addLog('✅ Ambos procesos iniciados correctamente')
+      addLog('')
+
+      setJob(data.playersJob)
       setIsRunning(true)
       setAutoProcess(true)
 
@@ -238,6 +271,53 @@ export default function ScrapingPage() {
     addLog('🔄 Estado reiniciado')
   }
 
+  // 🧪 TEST SCRAPING (5 jugadores)
+  const runTestScraping = async () => {
+    addLog('🧪 Iniciando test de scraping (3 jugadores + 3 equipos)...')
+    addLog('⏳ Procesando... esto puede tardar 30-60 segundos')
+    addLog('')
+    setIsTesting(true)
+    setTestResults(null)
+
+    // Mostrar mensaje de progreso cada 5 segundos
+    const progressInterval = setInterval(() => {
+      addLog('⏳ Scraping en progreso...')
+    }, 5000)
+
+    try {
+      const response = await fetch('/api/admin/scraping/test', {
+        method: 'POST'
+      })
+
+      clearInterval(progressInterval)
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al ejecutar test')
+      }
+
+      addLog('')
+      addLog(`✅ Test completado exitosamente!`)
+      addLog(`📊 Jugadores procesados: ${data.summary.players}`)
+      addLog(`🏟️ Equipos procesados: ${data.summary.teams}`)
+      addLog(`✅ Éxitos: ${data.summary.success}`)
+      addLog(`❌ Errores: ${data.summary.errors}`)
+      addLog(`📈 Total: ${data.summary.total} entidades`)
+      addLog('')
+
+      setTestResults(data.results)
+      setShowTestModal(true)
+
+    } catch (error) {
+      clearInterval(progressInterval)
+      const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
+      addLog(`❌ ERROR en test: ${errorMsg}`)
+    } finally {
+      setIsTesting(false)
+    }
+  }
+
   // 🔄 AUTO-PROCESAMIENTO
   useEffect(() => {
     if (!autoProcess || !isRunning) return
@@ -284,10 +364,30 @@ export default function ScrapingPage() {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-[#D6DDE6]">Scraping de Datos</h1>
         <div className="flex items-center space-x-3">
+          {/* 🧪 Botón de Test Scraping */}
+          <Button
+            onClick={runTestScraping}
+            disabled={isTesting || isRunning}
+            variant="outline"
+            className="border-purple-700 text-purple-400 hover:bg-purple-900/20"
+          >
+            {isTesting ? (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                Testeando...
+              </>
+            ) : (
+              <>
+                <FlaskRound className="h-4 w-4 mr-2" />
+                Test Scraping
+              </>
+            )}
+          </Button>
+
           {!isRunning && !isPaused && (
             <Button
               onClick={startScraping}
-              disabled={isRunning}
+              disabled={isRunning || isTesting}
               className="bg-[#FF5733] hover:bg-[#E64A2B] text-white"
             >
               <Play className="h-4 w-4 mr-2" />
@@ -344,12 +444,12 @@ export default function ScrapingPage() {
           <div className="flex items-center mb-2">
             <Clock className="h-5 w-5 text-blue-400 mr-3 animate-pulse" />
             <p className="text-blue-300 font-semibold">
-              Scraping en proceso automático
+              Scraping en proceso
             </p>
           </div>
           <div className="ml-8 space-y-1 text-sm text-blue-200">
-            <p>✅ El sistema procesa automáticamente CADA DÍA a las 2:00 AM en el servidor</p>
-            <p>✅ Procesa 100 jugadores por día (~10-20 minutos de ejecución)</p>
+            <p>✅ El scraping se ejecuta bajo demanda cuando el administrador lo inicia</p>
+            <p>✅ Procesa 100 jugadores + 50 equipos por ejecución (~10-20 minutos)</p>
             <p>✅ Puedes cerrar esta página - el scraping continuará en segundo plano</p>
             <p>✅ Vuelve en cualquier momento para ver el progreso actualizado</p>
           </div>
@@ -542,21 +642,22 @@ export default function ScrapingPage() {
               <li>• Velocidad: Multiplicador actual (1.0x = normal, 2.0x = lento, 3.0x = muy lento)</li>
             </ul>
 
-            <p className="mt-4 font-semibold text-[#FF5733]">🎯 Funcionamiento (Procesamiento Automático Diario):</p>
+            <p className="mt-4 font-semibold text-[#FF5733]">🎯 Funcionamiento (Procesamiento Manual Bajo Demanda):</p>
             <ul className="ml-6 space-y-1">
               <li>1. Haz clic en &quot;Iniciar Scraping&quot; para crear un nuevo trabajo</li>
-              <li>2. 🤖 <strong>El sistema procesa automáticamente CADA DÍA a las 2:00 AM</strong></li>
-              <li>3. 📊 <strong>Procesa 100 jugadores por día (Vercel Plan Hobby)</strong></li>
-              <li>4. ✅ <strong>Puedes cerrar esta página - el scraping continuará en segundo plano</strong></li>
-              <li>5. El sistema usa pausas aleatorias (5-15 segundos) entre jugadores</li>
-              <li>6. Si detecta problemas, reduce velocidad automáticamente (throttling adaptativo)</li>
-              <li>7. Cada request usa un User-Agent diferente para evitar detección</li>
-              <li>8. Los errores 429 activan retry con tiempos exponenciales (5s, 15s, 45s, 120s)</li>
-              <li>9. El progreso se guarda continuamente - vuelve en cualquier momento para ver el estado</li>
-              <li>10. Auto-pausa después de 5 errores 429 consecutivos para evitar bloqueos</li>
+              <li>2. 🏟️ <strong>Se ejecutan DOS procesos en paralelo: JUGADORES + EQUIPOS</strong></li>
+              <li>3. 📊 <strong>Procesa 100 jugadores + 50 equipos por ejecución</strong></li>
+              <li>4. ✅ <strong>El scraping solo se ejecuta cuando el administrador lo solicita</strong></li>
+              <li>5. ✅ <strong>Puedes cerrar esta página - el scraping continuará en segundo plano</strong></li>
+              <li>6. El sistema usa pausas aleatorias (5-15s jugadores, 3-8s equipos)</li>
+              <li>7. Si detecta problemas, reduce velocidad automáticamente (throttling adaptativo)</li>
+              <li>8. Cada request usa un User-Agent diferente para evitar detección</li>
+              <li>9. Los errores 429 activan retry con tiempos exponenciales (5s, 15s, 45s, 120s)</li>
+              <li>10. El progreso se guarda continuamente - vuelve en cualquier momento para ver el estado</li>
+              <li>11. Auto-pausa después de 5 errores 429 consecutivos para evitar bloqueos</li>
             </ul>
 
-            <p className="mt-4 font-semibold text-[#FF5733]">• 14 campos extraídos de Transfermarkt:</p>
+            <p className="mt-4 font-semibold text-[#FF5733]">⚽ 14 campos de JUGADORES extraídos de Transfermarkt:</p>
             <ul className="ml-6 space-y-1 text-sm">
               <li>1. advisor - Nombre del agente/asesor</li>
               <li>2. url_trfm_advisor - URL del asesor</li>
@@ -573,9 +674,178 @@ export default function ScrapingPage() {
               <li>13. contract_end - Fecha fin de contrato</li>
               <li>14. player_trfm_value - Valor de mercado en €</li>
             </ul>
+
+            <p className="mt-4 font-semibold text-[#FF5733]">🏟️ 5 campos de EQUIPOS extraídos de Transfermarkt:</p>
+            <ul className="ml-6 space-y-1 text-sm">
+              <li>1. team_name - Nombre oficial del equipo</li>
+              <li>2. team_country - País del equipo</li>
+              <li>3. competition - Liga/Competición actual</li>
+              <li>4. team_trfm_value - Valor de mercado total del equipo en €</li>
+              <li>5. team_rating - Rating del equipo (si disponible)</li>
+            </ul>
           </div>
         </CardContent>
       </Card>
+
+      {/* 🧪 MODAL DE RESULTADOS DE TEST */}
+      {showTestModal && testResults && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#131921] rounded-lg border border-slate-700 max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="p-6 border-b border-slate-700 flex items-center justify-between">
+              <div className="flex items-center">
+                <FlaskRound className="h-6 w-6 text-purple-400 mr-3" />
+                <h2 className="text-2xl font-bold text-[#D6DDE6]">Resultados del Test de Scraping</h2>
+              </div>
+              <button
+                onClick={() => setShowTestModal(false)}
+                className="text-slate-400 hover:text-white transition-colors"
+              >
+                <XCircle className="h-6 w-6" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 overflow-y-auto flex-1">
+              {/* Summary */}
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <Card className="bg-[#1a2332] border-slate-600">
+                  <CardContent className="p-4">
+                    <div className="flex items-center">
+                      <Database className="h-8 w-8 text-blue-400 mr-3" />
+                      <div>
+                        <p className="text-sm text-slate-400">Total Procesados</p>
+                        <p className="text-2xl font-bold text-[#D6DDE6]">{testResults.length}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-[#1a2332] border-slate-600">
+                  <CardContent className="p-4">
+                    <div className="flex items-center">
+                      <CheckCircle className="h-8 w-8 text-green-400 mr-3" />
+                      <div>
+                        <p className="text-sm text-slate-400">Exitosos</p>
+                        <p className="text-2xl font-bold text-green-400">
+                          {testResults.filter(r => r.success).length}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-[#1a2332] border-slate-600">
+                  <CardContent className="p-4">
+                    <div className="flex items-center">
+                      <XCircle className="h-8 w-8 text-red-400 mr-3" />
+                      <div>
+                        <p className="text-sm text-slate-400">Errores</p>
+                        <p className="text-2xl font-bold text-red-400">
+                          {testResults.filter(r => !r.success).length}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Results List */}
+              <div className="space-y-4">
+                {testResults.map((result, index) => (
+                  <Card key={result.entityId} className="bg-[#1a2332] border-slate-600">
+                    <CardContent className="p-4">
+                      {/* Entity Header */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center">
+                          {result.success ? (
+                            <CheckCircle className="h-5 w-5 text-green-400 mr-2 flex-shrink-0" />
+                          ) : (
+                            <XCircle className="h-5 w-5 text-red-400 mr-2 flex-shrink-0" />
+                          )}
+                          <div>
+                            <h3 className="text-lg font-semibold text-[#D6DDE6]">
+                              {result.entityType === 'player' ? '⚽' : '🏟️'} {index + 1}. {result.entityName}
+                            </h3>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-slate-500 bg-slate-700 px-2 py-0.5 rounded">
+                                {result.entityType === 'player' ? 'Jugador' : 'Equipo'}
+                              </span>
+                              <a
+                                href={result.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-400 hover:underline"
+                              >
+                                {result.url}
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                        <span className="text-sm text-slate-400">
+                          {result.fieldsUpdated.length} campos actualizados
+                        </span>
+                      </div>
+
+                      {/* Error Message */}
+                      {result.error && (
+                        <div className="bg-red-900/20 border border-red-700 rounded p-3 mb-3">
+                          <p className="text-red-400 text-sm">❌ Error: {result.error}</p>
+                        </div>
+                      )}
+
+                      {/* Fields Updated */}
+                      {result.success && result.fieldsUpdated.length > 0 && (
+                        <div className="bg-[#0f1419] rounded p-3">
+                          <p className="text-sm font-semibold text-slate-300 mb-2">Campos actualizados:</p>
+                          <div className="space-y-2">
+                            {result.fieldsUpdated.map((field, fieldIndex) => (
+                              <div key={fieldIndex} className="text-sm">
+                                <span className="text-purple-400 font-mono">{field.field}</span>
+                                <div className="ml-4 mt-1">
+                                  <div className="flex items-center text-xs">
+                                    <span className="text-slate-500 w-24">Anterior:</span>
+                                    <span className="text-slate-400 font-mono">
+                                      {field.oldValue || <span className="text-slate-600 italic">null</span>}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center text-xs">
+                                    <span className="text-slate-500 w-24">Nuevo:</span>
+                                    <span className="text-green-400 font-mono font-semibold">
+                                      {field.newValue || <span className="text-slate-600 italic">null</span>}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* No Changes */}
+                      {result.success && result.fieldsUpdated.length === 0 && (
+                        <div className="bg-blue-900/20 border border-blue-700 rounded p-3">
+                          <p className="text-blue-400 text-sm">ℹ️ No se encontraron cambios (datos ya estaban actualizados)</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-slate-700 flex justify-end">
+              <Button
+                onClick={() => setShowTestModal(false)}
+                className="bg-[#FF5733] hover:bg-[#E64A2B] text-white"
+              >
+                Cerrar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

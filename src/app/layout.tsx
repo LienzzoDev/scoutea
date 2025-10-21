@@ -4,7 +4,6 @@ import type { Metadata } from 'next'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 
 import { ClerkErrorBoundary } from '@/components/auth/clerk-error-boundary'
-import { ClerkLoadingState } from '@/components/auth/clerk-loading-state'
 import { clerkConfig } from '@/lib/clerk-config'
 import './globals.css'
 
@@ -21,19 +20,19 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang='es' suppressHydrationWarning>
-      <body className={`${plusJakartaSans.variable} antialiased`} suppressHydrationWarning>
+    <html lang='es' className='h-full overscroll-none' suppressHydrationWarning>
+      <body className={`${plusJakartaSans.variable} h-full overscroll-none antialiased`} suppressHydrationWarning>
         <ClerkErrorBoundary>
           <ClerkProvider
             publishableKey={clerkConfig.publishableKey}
             localization={clerkConfig.localization}
             appearance={{
-              theme: shadcn,
+              baseTheme: shadcn,
               variables: clerkConfig.appearance.variables,
               elements: clerkConfig.appearance.elements,
             }}
           >
-            <ClerkLoadingState>{children}</ClerkLoadingState>
+            {children}
           </ClerkProvider>
         </ClerkErrorBoundary>
       </body>

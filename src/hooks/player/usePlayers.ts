@@ -1,14 +1,6 @@
 import { useState, useCallback } from 'react';
 
-import type { Player, PlayerSearchResult } from '@/types/player';
-
-export interface CrearJugadorData {
-  name: string;
-  position: string;
-  team: string;
-  age: number;
-  // Add other properties as needed
-}
+import type { Player, PlayerSearchResult, CrearJugadorData } from '@/types/player';
 
 export interface SearchPlayersOptions {
   page?: number;

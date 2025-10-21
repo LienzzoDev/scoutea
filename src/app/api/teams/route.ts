@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     // Parámetros de cursor-based pagination
     const cursor = searchParams.get('cursor')
-    const limit = parseInt(searchParams.get('limit') || '50')
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 1000)
     const search = searchParams.get('search') || ''
     const country = searchParams.get('country') || ''
     const competition = searchParams.get('competition') || ''
@@ -49,12 +49,7 @@ export async function GET(request: NextRequest) {
 
     // Búsqueda general
     if (search) {
-      where.OR = [
-        { team_name: { contains: search, mode: 'insensitive' } },
-        { correct_team_name: { contains: search, mode: 'insensitive' } },
-        { team_country: { contains: search, mode: 'insensitive' } },
-        { competition: { contains: search, mode: 'insensitive' } }
-      ]
+      where.team_name = { contains: search, mode: 'insensitive' }
     }
 
     // Filtros específicos
@@ -80,6 +75,12 @@ export async function GET(request: NextRequest) {
       } : {}),
       orderBy: {
         team_name: 'asc'
+      },
+      select: {
+        id_team: true,
+        team_name: true,
+        team_country: true,
+        competition: true
       }
     })
 
@@ -116,8 +117,12 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ Error searching teams:', error)
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace')
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      {
+        error: 'Error interno del servidor',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
   }

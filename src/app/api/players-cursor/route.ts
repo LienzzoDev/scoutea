@@ -42,6 +42,9 @@ export async function GET(request: NextRequest) {
     // Construir where clause
     const where: any = {}
 
+    // IMPORTANTE: Solo mostrar jugadores aprobados para miembros
+    where.approval_status = 'approved'
+
     if (search) {
       where.OR = [
         { player_name: { contains: search, mode: 'insensitive' } },

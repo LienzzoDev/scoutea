@@ -1,6 +1,5 @@
 'use client'
 
-import { SignOutButton } from '@clerk/nextjs'
 import { useAuth, useUser } from '@clerk/nextjs'
 import {
   Menu,
@@ -47,11 +46,6 @@ export default function DashboardHeader() {
     }
   }, [])
 
-  const handleSignOut = () => {
-    // Cerrar sesión y redirigir
-    _router.push('/login')
-  }
-
   if (!isSignedIn) {
     return null
   }
@@ -82,6 +76,12 @@ export default function DashboardHeader() {
               </a>
               <a href="/admin/torneos" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
                 Torneos
+              </a>
+              <a href="/admin/reportes" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
+                Reportes
+              </a>
+              <a href="/admin/jobs" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
+                Jobs
               </a>
             </nav>
           </div>
@@ -150,17 +150,6 @@ export default function DashboardHeader() {
             >
               <User className="w-4 h-4 text-white" />
             </div>
-
-            <SignOutButton>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-gray-400"
-                onClick={handleSignOut}
-              >
-                Cerrar Sesión
-              </Button>
-            </SignOutButton>
           </div>
         </div>
       </div>
@@ -207,6 +196,12 @@ export default function DashboardHeader() {
             </a>
             <a href="/admin/torneos" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
               Torneos
+            </a>
+            <a href="/admin/reportes" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
+              Reportes
+            </a>
+            <a href="/admin/jobs" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
+              Jobs
             </a>
           </div>
         </div>

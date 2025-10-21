@@ -1,6 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
 
 import { prisma } from '@/lib/db'
 import { ScoutReportForExistingSchema } from '@/lib/validation/api-schemas'
@@ -16,21 +15,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
 
     // Validar con Zod
-    let validatedData;
-    try {
-      validatedData = ScoutReportForExistingSchema.parse(body);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return NextResponse.json({
-          error: 'Datos inválidos',
-          details: error.errors.map((err) => ({
-            field: err.path.join('.'),
-            message: err.message
-          }))
-        }, { status: 400 });
-      }
-      throw error;
+    const validation = ScoutReportForExistingSchema.safeParse(body);
+
+    if (!validation.success) {
+      console.error('Validation errors:', validation.error.issues)
+      return NextResponse.json({
+        error: 'Datos inválidos',
+        details: validation.error.issues
+      }, { status: 400 });
     }
+
+    const validatedData = validation.data;
 
     // Obtener el scout del usuario actual
     const scout = await prisma.scout.findUnique({
@@ -54,27 +49,20 @@ export async function POST(request: NextRequest) {
     // Crear el reporte
     const report = await prisma.reporte.create({
       data: {
-        scout_id: scout.id_scout,
-        id_player: player.id_player,
-        player_name: player.player_name,
+        scout: {
+          connect: { id_scout: scout.id_scout }
+        },
+        player: {
+          connect: { id_player: player.id_player }
+        },
         report_date: new Date(),
         report_type: 'follow-up',
+        report_status: 'active',
         form_url_report: validatedData.urlReport || null,
         form_url_video: validatedData.urlVideo || null,
         form_text_report: validatedData.reportText || null,
-        url_secondary: validatedData.imageUrl || null,
         form_potential: validatedData.potential.toString(),
-        // Copiar datos del jugador al reporte
-        date_of_birth: player.date_of_birth,
-        position_player: player.position_player,
-        height: player.height,
-        foot: player.foot,
-        team_name: player.team_name,
-        team_country: player.team_country,
-        nationality_1: player.nationality_1,
-        nationality_2: player.nationality_2,
-        national_tier: player.national_tier,
-        agency: player.agency,
+        approval_status: 'approved', // Los reportes de jugadores existentes se aprueban automáticamente
       }
     })
 
@@ -91,8 +79,8 @@ export async function POST(request: NextRequest) {
       data: {
         report: {
           id_report: report.id_report,
-          player_name: report.player_name,
-          report_date: report.report_date
+          report_date: report.report_date,
+          report_status: report.report_status
         },
         player: {
           id_player: player.id_player,
@@ -107,7 +95,5 @@ export async function POST(request: NextRequest) {
       { error: 'Error interno del servidor', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }

@@ -173,16 +173,16 @@ export default function EquiposPage() {
       const response = await fetch(`/api/teams/${teamId}`, {
         method: 'DELETE'
       })
-      
+
       if (response.ok) {
         setShowDeleteConfirm(null)
         // Recargar la lista de equipos
-        searchTeams()
+        refresh()
       } else {
         console.error('Error al eliminar equipo')
       }
-    } catch (_error) {
-      console.error('Error al eliminar equipo:', error)
+    } catch (err) {
+      console.error('Error al eliminar equipo:', err)
     }
   }
 
@@ -288,7 +288,7 @@ export default function EquiposPage() {
       {/* Error State */}
       {error && (
         <div className="mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg">
-          <p className="text-red-400">Error: {typeof error === 'string' ? error : error?.message || 'Error desconocido'}</p>
+          <p className="text-red-400">Error: {error?.message || 'Error desconocido'}</p>
           <Button
             onClick={() => refresh()}
             variant="outline" className="mt-2 border-red-700 text-red-400 hover:bg-red-900/20">
@@ -297,56 +297,53 @@ export default function EquiposPage() {
         </div>
       )}
 
-      {/* Team Table */}
-      <TeamTable
-        teams={sortedTeams}
-        selectedCategories={categories}
-        sortBy={sortBy}
-        sortOrder={sortOrder}
-        onSort={handleSort}
-        loading={false}
-        darkMode={true}
-        onEdit={(teamId) => router.push(`/admin/equipos/${teamId}/editar`)}
-        onDelete={(teamId) => setShowDeleteConfirm(teamId)}
-      />
-
-      {/* Infinite Scroll Observer */}
-      {teams.length > 0 && (
-        <div
-          ref={observerTarget}
-          className='py-8 flex justify-center'
-          style={{ minHeight: '80px' }}
-        >
-          {loading && (
-            <div className='flex items-center gap-2 text-slate-400'>
-              <div className='animate-spin rounded-full h-5 w-5 border-b-2 border-[#FF5733]'></div>
-              <span>Cargando más equipos...</span>
-            </div>
-          )}
-          {!loading && hasMore && (
-            <p className='text-slate-500 text-sm'>Desplázate hacia abajo para cargar más</p>
-          )}
-          {!loading && !hasMore && (
-            <p className='text-slate-500 text-sm'>✓ Todos los equipos cargados</p>
-          )}
-        </div>
-      )}
-
-      {/* Loading inicial */}
-      {teams.length === 0 && loading && (
+      {/* Mostrar loading inicial o tabla */}
+      {teams.length === 0 && loading ? (
         <div className='flex items-center justify-center py-12'>
           <div className='flex items-center gap-2 text-slate-400'>
             <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF5733]'></div>
             <span>Cargando equipos...</span>
           </div>
         </div>
-      )}
-
-      {/* No results */}
-      {teams.length === 0 && !loading && (
+      ) : teams.length === 0 && !loading ? (
         <div className='text-center py-12'>
           <p className='text-lg text-slate-400'>No se encontraron equipos</p>
         </div>
+      ) : (
+        <>
+          {/* Team Table */}
+          <TeamTable
+            teams={sortedTeams}
+            selectedCategories={categories}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSort={handleSort}
+            loading={loading}
+            darkMode={true}
+            onEdit={(teamId) => router.push(`/admin/equipos/${teamId}/editar`)}
+            onDelete={(teamId) => setShowDeleteConfirm(teamId)}
+          />
+
+          {/* Infinite Scroll Observer */}
+          <div
+            ref={observerTarget}
+            className='py-8 flex justify-center'
+            style={{ minHeight: '80px' }}
+          >
+            {loading && (
+              <div className='flex items-center gap-2 text-slate-400'>
+                <div className='animate-spin rounded-full h-5 w-5 border-b-2 border-[#FF5733]'></div>
+                <span>Cargando más equipos...</span>
+              </div>
+            )}
+            {!loading && hasMore && (
+              <p className='text-slate-500 text-sm'>Desplázate hacia abajo para cargar más</p>
+            )}
+            {!loading && !hasMore && (
+              <p className='text-slate-500 text-sm'>✓ Todos los equipos cargados</p>
+            )}
+          </div>
+        </>
       )}
 
       {/* Modal de confirmación de eliminación */}

@@ -79,6 +79,17 @@ export default function TeamTable({
     });
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="flex items-center gap-2 text-slate-400">
+          <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${darkMode ? 'border-[#FF5733]' : 'border-[#8c1a10]'}`}></div>
+          <span>Cargando equipos...</span>
+        </div>
+      </div>
+    );
+  }
+
   if (teams.length === 0) {
     return (
       <div className="text-center py-12">

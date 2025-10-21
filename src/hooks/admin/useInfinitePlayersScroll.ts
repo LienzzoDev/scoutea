@@ -40,7 +40,7 @@ export function useInfinitePlayersScroll({
   limit = 50
 }: UseInfinitePlayersScrollParams = {}): UseInfinitePlayersScrollReturn {
   const [players, setPlayers] = useState<Player[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true) // Iniciar con true para mostrar loading inicial
   const [error, setError] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(true)
   const [nextCursor, setNextCursor] = useState<string | null>(null)
@@ -133,6 +133,7 @@ export function useInfinitePlayersScroll({
     setHasMore(true)
     setTotalCount(null)
     setError(null)
+    setLoading(true) // Mostrar loading mientras se refresca
     loadingRef.current = false
     hasLoadedInitial.current = false
   }, [])

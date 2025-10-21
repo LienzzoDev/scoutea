@@ -5,16 +5,7 @@ import { useEffect, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Textarea } from '@/components/ui/textarea'
 
 interface PendingPlayer {
   id_player: string
@@ -61,12 +52,6 @@ export function ApprovalDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
-  const [showRejectDialog, setShowRejectDialog] = useState(false)
-  const [rejectReason, setRejectReason] = useState('')
-  const [selectedItem, setSelectedItem] = useState<{
-    id: string
-    type: 'player' | 'report'
-  } | null>(null)
 
   const fetchPendingItems = async () => {
     try {
@@ -109,7 +94,34 @@ export function ApprovalDashboard() {
       })
 
       if (response.ok) {
-        await fetchPendingItems()
+        // Actualizar el estado local sin recargar toda la lista
+        setData(prevData => {
+          if (!prevData) return prevData
+
+          if (type === 'player') {
+            const updatedPlayers = prevData.players.filter(p => p.id_player !== id)
+            return {
+              ...prevData,
+              players: updatedPlayers,
+              counts: {
+                ...prevData.counts,
+                players: updatedPlayers.length,
+                total: prevData.counts.total - 1
+              }
+            }
+          } else {
+            const updatedReports = prevData.reports.filter(r => r.id_report !== id)
+            return {
+              ...prevData,
+              reports: updatedReports,
+              counts: {
+                ...prevData.counts,
+                reports: updatedReports.length,
+                total: prevData.counts.total - 1
+              }
+            }
+          }
+        })
       } else {
         const error = await response.json()
         alert(error.__error || 'Failed to approve')
@@ -122,34 +134,49 @@ export function ApprovalDashboard() {
     }
   }
 
-  const handleReject = (id: string, type: 'player' | 'report') => {
-    setSelectedItem({ id, type })
-    setShowRejectDialog(true)
-    setRejectReason('')
-  }
-
-  const confirmReject = async () => {
-    if (!selectedItem) return
-
+  const handleReject = async (id: string, type: 'player' | 'report') => {
     try {
-      setActionLoading(selectedItem.id)
+      setActionLoading(id)
       const endpoint =
-        selectedItem.type === 'player'
-          ? `/api/admin/approvals/players/${selectedItem.id}`
-          : `/api/admin/approvals/reports/${selectedItem.id}`
+        type === 'player'
+          ? `/api/admin/approvals/players/${id}`
+          : `/api/admin/approvals/reports/${id}`
 
       const response = await fetch(endpoint, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'reject',
-          rejectionReason: rejectReason,
-        }),
+        body: JSON.stringify({ action: 'reject' }),
       })
 
       if (response.ok) {
-        setShowRejectDialog(false)
-        await fetchPendingItems()
+        // Actualizar el estado local sin recargar toda la lista
+        setData(prevData => {
+          if (!prevData) return prevData
+
+          if (type === 'player') {
+            const updatedPlayers = prevData.players.filter(p => p.id_player !== id)
+            return {
+              ...prevData,
+              players: updatedPlayers,
+              counts: {
+                ...prevData.counts,
+                players: updatedPlayers.length,
+                total: prevData.counts.total - 1
+              }
+            }
+          } else {
+            const updatedReports = prevData.reports.filter(r => r.id_report !== id)
+            return {
+              ...prevData,
+              reports: updatedReports,
+              counts: {
+                ...prevData.counts,
+                reports: updatedReports.length,
+                total: prevData.counts.total - 1
+              }
+            }
+          }
+        })
       } else {
         const error = await response.json()
         alert(error.__error || 'Failed to reject')
@@ -159,7 +186,6 @@ export function ApprovalDashboard() {
       alert('Failed to reject')
     } finally {
       setActionLoading(null)
-      setSelectedItem(null)
     }
   }
 
@@ -375,46 +401,6 @@ export function ApprovalDashboard() {
           )}
         </TabsContent>
       </Tabs>
-
-      {/* Reject Dialog */}
-      <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reject Submission</DialogTitle>
-            <DialogDescription>
-              Please provide a reason for rejection (optional). This will be
-              visible to the scout.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label htmlFor="rejection-reason">Rejection Reason</Label>
-              <Textarea
-                id="rejection-reason"
-                placeholder="Enter reason for rejection..."
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                rows={4}
-              />
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowRejectDialog(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={confirmReject}
-              disabled={!!actionLoading}
-            >
-              Confirm Rejection
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

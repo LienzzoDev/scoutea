@@ -1,6 +1,6 @@
 'use client'
 
-import { Search, Globe, Plus, Filter, RefreshCw } from 'lucide-react'
+import { Search, Globe, Plus, RefreshCw } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -8,7 +8,6 @@ import AdminColumnSelector from '@/components/admin/AdminColumnSelector'
 import AdminPlayerTable from '@/components/admin/AdminPlayerTable'
 import ImportFMIButton from '@/components/admin/ImportFMIButton'
 import ImportStatsButton from '@/components/admin/ImportStatsButton'
-import MultiSelectFilter from '@/components/filters/multi-select-filter'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { LoadingPage } from '@/components/ui/loading-spinner'
@@ -215,22 +214,11 @@ export default function JugadoresPage() {
     setSelectedColumns([])
   }
 
-  // Estados para filtros y búsqueda
-  const [showFilters, setShowFilters] = useState(false)
+  // Estado para búsqueda
   const [searchTerm, setSearchTerm] = useState('')
-  const [appliedFilters, setAppliedFilters] = useState({
-    nationality: '',
-    position: '',
-    team: ''
-  })
-  const [selectedNationalities, setSelectedNationalities] = useState<string[]>([])
-  const [selectedPositions, setSelectedPositions] = useState<string[]>([])
-  const [selectedTeams, setSelectedTeams] = useState<string[]>([])
-
-  // Debounced search term
   const [debouncedSearch, setDebouncedSearch] = useState('')
 
-  // Hook de infinite scroll con filtros aplicados
+  // Hook de infinite scroll
   const {
     players: filteredPlayers,
     loading,
@@ -241,9 +229,6 @@ export default function JugadoresPage() {
     refresh
   } = useInfinitePlayersScroll({
     search: debouncedSearch,
-    nationality: appliedFilters.nationality,
-    position: appliedFilters.position,
-    team: appliedFilters.team,
     limit: 50
   })
 
@@ -256,62 +241,9 @@ export default function JugadoresPage() {
     return () => clearTimeout(timer)
   }, [searchTerm])
 
-  // Generar opciones de filtros desde jugadores cargados
-  const [filterOptions, setFilterOptions] = useState({
-    nationalities: [] as string[],
-    positions: [] as string[],
-    teams: [] as string[]
-  })
-
-  useEffect(() => {
-    if (filteredPlayers.length > 0) {
-      const nationalities = new Set<string>()
-      const positions = new Set<string>()
-      const teams = new Set<string>()
-
-      filteredPlayers.forEach((player: any) => {
-        if (player.nationality_1) nationalities.add(player.nationality_1)
-        if (player.position_player) positions.add(player.position_player)
-        if (player.team_name) teams.add(player.team_name)
-      })
-
-      setFilterOptions({
-        nationalities: Array.from(nationalities).sort(),
-        positions: Array.from(positions).sort(),
-        teams: Array.from(teams).sort()
-      })
-    }
-  }, [filteredPlayers])
-
   const handleSearch = (term: string) => {
     setSearchTerm(term)
   }
-
-  const applyFilters = () => {
-    setAppliedFilters({
-      nationality: selectedNationalities[0] || '',
-      position: selectedPositions[0] || '',
-      team: selectedTeams[0] || ''
-    })
-    setShowFilters(false)
-  }
-
-  const clearFilters = () => {
-    setSelectedNationalities([])
-    setSelectedPositions([])
-    setSelectedTeams([])
-    setAppliedFilters({
-      nationality: '',
-      position: '',
-      team: ''
-    })
-  }
-
-  // Contar filtros activos
-  const totalActiveFilters =
-    selectedNationalities.length +
-    selectedPositions.length +
-    selectedTeams.length
 
   // Si no está cargado, mostrar loading
   if (!isLoaded) {
@@ -367,8 +299,8 @@ export default function JugadoresPage() {
         </Button>
       </div>
 
-      <div className='flex items-center justify-between mb-6'>
-        <div className='relative flex-1 max-w-md'>
+      <div className='mb-6'>
+        <div className='relative max-w-md'>
           <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400' />
           <Input
             placeholder='Buscar jugadores...'
@@ -377,70 +309,12 @@ export default function JugadoresPage() {
             className='pl-10 bg-[#131921] border-slate-700 text-white placeholder:text-slate-400'
           />
         </div>
-
-        <div className='flex items-center gap-4'>
-          <Button
-            variant='outline'
-            className={`flex items-center gap-2 border-slate-600 hover:bg-slate-700 transition-colors ${
-              showFilters
-                ? 'bg-slate-700 text-white border-slate-500'
-                : 'bg-[#1F2937] text-gray-300 hover:text-white'
-            }`}
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className='w-4 h-4' />
-            {totalActiveFilters > 0 ? `Filtros (${totalActiveFilters})` : 'Filtros'}
-          </Button>
-        </div>
       </div>
-
-      {showFilters && (
-        <div className='mb-6 p-6 bg-[#131921] border border-slate-700 rounded-lg'>
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-            <MultiSelectFilter
-              label='Nacionalidad'
-              options={filterOptions.nationalities}
-              selectedValues={selectedNationalities}
-              onSelectionChange={setSelectedNationalities}
-            />
-
-            <MultiSelectFilter
-              label='Posición'
-              options={filterOptions.positions}
-              selectedValues={selectedPositions}
-              onSelectionChange={setSelectedPositions}
-            />
-
-            <MultiSelectFilter
-              label='Equipo'
-              options={filterOptions.teams}
-              selectedValues={selectedTeams}
-              onSelectionChange={setSelectedTeams}
-            />
-          </div>
-
-          <div className='flex justify-end gap-4 mt-6'>
-            <Button
-              variant='outline'
-              onClick={clearFilters}
-              className='border-slate-600 bg-[#1F2937] text-gray-300 hover:bg-slate-700 hover:text-white transition-colors'
-            >
-              Limpiar
-            </Button>
-            <Button
-              onClick={applyFilters}
-              className='bg-[#FF5733] hover:bg-[#E64A2B] text-white'
-            >
-              Aplicar filtros
-            </Button>
-          </div>
-        </div>
-      )}
 
       {error && (
         <div className='mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg'>
           <p className='text-red-400'>
-            Error: {typeof error === 'string' ? error : error?.message || 'Error desconocido'}
+            Error: {error || 'Error desconocido'}
           </p>
         </div>
       )}
@@ -453,51 +327,48 @@ export default function JugadoresPage() {
         minColumns={1}
       />
 
-      <div className='mb-4'>
-        <AdminPlayerTable
-          players={filteredPlayers}
-          selectedColumns={selectedColumns}
-          loading={false}
-        />
-      </div>
-
-      {/* Infinite Scroll Observer - Separado para evitar re-renders */}
-      {filteredPlayers.length > 0 && (
-        <div
-          ref={observerTarget}
-          className='py-8 flex justify-center'
-          style={{ minHeight: '80px' }}
-        >
-          {loading && (
-            <div className='flex items-center gap-2 text-slate-400'>
-              <div className='animate-spin rounded-full h-5 w-5 border-b-2 border-[#FF5733]'></div>
-              <span>Cargando más jugadores...</span>
-            </div>
-          )}
-          {!loading && hasMore && (
-            <p className='text-slate-500 text-sm'>Desplázate hacia abajo para cargar más</p>
-          )}
-          {!loading && !hasMore && (
-            <p className='text-slate-500 text-sm'>✓ Todos los jugadores cargados</p>
-          )}
-        </div>
-      )}
-
-      {/* Loading inicial */}
-      {filteredPlayers.length === 0 && loading && (
+      {/* Mostrar loading inicial o tabla */}
+      {filteredPlayers.length === 0 && loading ? (
         <div className='flex items-center justify-center py-12'>
           <div className='flex items-center gap-2 text-slate-400'>
             <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF5733]'></div>
             <span>Cargando jugadores...</span>
           </div>
         </div>
-      )}
-
-      {/* No results */}
-      {filteredPlayers.length === 0 && !loading && (
+      ) : filteredPlayers.length === 0 && !loading ? (
         <div className='text-center py-12'>
           <p className='text-lg text-slate-400'>No se encontraron jugadores</p>
         </div>
+      ) : (
+        <>
+          <div className='mb-4'>
+            <AdminPlayerTable
+              players={filteredPlayers as any}
+              selectedColumns={selectedColumns}
+              loading={loading}
+            />
+          </div>
+
+          {/* Infinite Scroll Observer - Separado para evitar re-renders */}
+          <div
+            ref={observerTarget}
+            className='py-8 flex justify-center'
+            style={{ minHeight: '80px' }}
+          >
+            {loading && (
+              <div className='flex items-center gap-2 text-slate-400'>
+                <div className='animate-spin rounded-full h-5 w-5 border-b-2 border-[#FF5733]'></div>
+                <span>Cargando más jugadores...</span>
+              </div>
+            )}
+            {!loading && hasMore && (
+              <p className='text-slate-500 text-sm'>Desplázate hacia abajo para cargar más</p>
+            )}
+            {!loading && !hasMore && (
+              <p className='text-slate-500 text-sm'>✓ Todos los jugadores cargados</p>
+            )}
+          </div>
+        </>
       )}
     </main>
   )

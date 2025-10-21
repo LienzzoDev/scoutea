@@ -170,17 +170,17 @@ export default function ScoutReportsSection({
       
       // Determinar el tipo de reporte basado en el contenido
       let reportType: 'video' | 'written' | 'social' | 'scouting' = 'written'
-      
+
       // Si tiene video, es Video Reporte
       if (form_url_video) {
         reportType = 'video'
       }
-      // Si tiene URL de reporte externo (redes sociales, etc.)
-      else if (form_url_report && !form_text_report) {
+      // Si tiene URL de reporte externo sin texto (redes sociales, etc.)
+      else if (form_url_report && !form_text_report && !url_secondary) {
         reportType = 'social'
       }
-      // Si tiene texto escrito
-      else if (form_text_report) {
+      // Si tiene texto escrito o no tiene imagen/video, es Scouteo (escrito)
+      else if (form_text_report || (!form_url_video && !url_secondary)) {
         reportType = 'written'
       }
       // Fallback basado en report_type de la BD
@@ -222,7 +222,7 @@ export default function ScoutReportsSection({
         hasVideo: !!form_url_video,
         videoUrl: form_url_video || undefined,
         urlReport: form_url_report || undefined,
-        image: url_secondary || `https://picsum.photos/400/200?random=${index + 1}`,
+        image: url_secondary || undefined, // No mostrar imagen placeholder si no hay url_secondary
         roi: roi || undefined,
         profit: profit || undefined,
       }

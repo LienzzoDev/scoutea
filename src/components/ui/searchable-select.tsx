@@ -10,6 +10,7 @@ interface SearchableOption {
   value: string
   label: string
   description?: string
+  [key: string]: any // Permitir propiedades adicionales
 }
 
 interface SearchableSelectProps {
@@ -22,6 +23,8 @@ interface SearchableSelectProps {
   disabled?: boolean
   className?: string
   renderOption?: (option: SearchableOption) => React.ReactNode
+  onSearchChange?: (search: string) => void
+  darkMode?: boolean
 }
 
 export function SearchableSelect({
@@ -33,14 +36,28 @@ export function SearchableSelect({
   emptyMessage = "No options found",
   disabled = false,
   className,
-  renderOption
+  renderOption,
+  onSearchChange,
+  darkMode = false
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = React.useState(false)
   const [searchTerm, setSearchTerm] = React.useState('')
   const dropdownRef = React.useRef<HTMLDivElement>(null)
 
-  // Filtrar opciones según búsqueda
+  // Notificar al padre cuando cambia el término de búsqueda
+  React.useEffect(() => {
+    if (onSearchChange) {
+      onSearchChange(searchTerm)
+    }
+  }, [searchTerm, onSearchChange])
+
+  // Filtrar opciones según búsqueda (solo si no hay callback externo)
   const filteredOptions = React.useMemo(() => {
+    // Si hay callback externo, no filtrar localmente
+    if (onSearchChange) {
+      return options
+    }
+
     if (!searchTerm.trim()) return options
 
     const searchLower = searchTerm.toLowerCase()
@@ -49,7 +66,7 @@ export function SearchableSelect({
       option.value.toLowerCase().includes(searchLower) ||
       option.description?.toLowerCase().includes(searchLower)
     )
-  }, [options, searchTerm])
+  }, [options, searchTerm, onSearchChange])
 
   // Cerrar dropdown al hacer clic fuera
   React.useEffect(() => {
@@ -78,9 +95,9 @@ export function SearchableSelect({
 
   const defaultRenderOption = (option: SearchableOption) => (
     <>
-      <div className="font-medium text-foreground">{option.label}</div>
+      <div className={darkMode ? "font-medium text-[#D6DDE6]" : "font-medium text-foreground"}>{option.label}</div>
       {option.description && (
-        <div className="text-sm text-muted-foreground">{option.description}</div>
+        <div className={darkMode ? "text-sm text-gray-400" : "text-sm text-muted-foreground"}>{option.description}</div>
       )}
     </>
   )
@@ -91,17 +108,19 @@ export function SearchableSelect({
       <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
         className={cn(
-          "flex h-12 w-full items-center justify-between rounded-lg border-0 bg-muted/50 px-4 text-foreground cursor-pointer transition-colors",
-          "focus-within:ring-2 focus-within:ring-ring",
+          "flex h-12 w-full items-center justify-between rounded-lg px-4 cursor-pointer transition-colors",
+          darkMode
+            ? "border border-slate-600 bg-[#1a2332] text-[#D6DDE6] focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500"
+            : "border-0 bg-muted/50 text-foreground focus-within:ring-2 focus-within:ring-ring",
           disabled && "opacity-50 cursor-not-allowed",
-          isOpen && "ring-2 ring-ring"
+          isOpen && (darkMode ? "ring-2 ring-blue-500" : "ring-2 ring-ring")
         )}
       >
         <div className="flex-1 min-w-0">
           {value ? (
             <span className="block truncate">{value.label}</span>
           ) : (
-            <span className="text-muted-foreground">{placeholder}</span>
+            <span className={darkMode ? "text-gray-400" : "text-muted-foreground"}>{placeholder}</span>
           )}
         </div>
 
@@ -121,16 +140,24 @@ export function SearchableSelect({
 
       {/* Dropdown de resultados */}
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-80 overflow-hidden">
+        <div className={cn(
+          "absolute z-50 w-full mt-1 rounded-lg shadow-lg max-h-80 overflow-hidden",
+          darkMode
+            ? "bg-[#131921] border border-slate-600"
+            : "bg-popover border border-border"
+        )}>
           {/* Campo de búsqueda */}
-          <div className="p-3 border-b border-border">
+          <div className={cn("p-3", darkMode ? "border-b border-slate-600" : "border-b border-border")}>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Search className={cn("absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4", darkMode ? "text-gray-400" : "text-muted-foreground")} />
               <Input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="pl-10 h-10"
+                className={cn(
+                  "pl-10 h-10",
+                  darkMode && "bg-[#1a2332] border-slate-600 text-[#D6DDE6] placeholder:text-gray-400"
+                )}
                 autoFocus
               />
             </div>
@@ -139,7 +166,7 @@ export function SearchableSelect({
           {/* Lista de opciones */}
           <div className="max-h-60 overflow-y-auto">
             {filteredOptions.length === 0 ? (
-              <div className="p-4 text-center text-sm text-muted-foreground">
+              <div className={cn("p-4 text-center text-sm", darkMode ? "text-gray-400" : "text-muted-foreground")}>
                 {emptyMessage}
               </div>
             ) : (
@@ -149,9 +176,11 @@ export function SearchableSelect({
                   type="button"
                   onClick={() => handleSelect(option)}
                   className={cn(
-                    "w-full px-4 py-3 text-left transition-colors border-b border-border last:border-b-0",
-                    "hover:bg-muted/50",
-                    value?.value === option.value && "bg-muted/50"
+                    "w-full px-4 py-3 text-left transition-colors last:border-b-0",
+                    darkMode
+                      ? "border-b border-slate-700 hover:bg-[#1a2332]"
+                      : "border-b border-border hover:bg-muted/50",
+                    value?.value === option.value && (darkMode ? "bg-[#1a2332]" : "bg-muted/50")
                   )}
                 >
                   {renderOption ? renderOption(option) : defaultRenderOption(option)}

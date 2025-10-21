@@ -93,14 +93,21 @@ export interface Player {
 }
 
 export interface CrearJugadorData {
-  name: string;
-  position: string;
-  team: string;
-  age: number;
+  nombre: string;
+  posicion: string;
+  equipo: string;
+  edad: number;
+  numeroCamiseta?: number;
+  valoracion?: string;
+  urlAvatar?: string;
+  biografia?: string;
+  atributos?: Array<{
+    nombre: string;
+    valor: string;
+  }>;
   nationality?: string;
   height?: number;
   weight?: number;
-  // Add other properties as needed
 }
 
 export interface PlayerStats {

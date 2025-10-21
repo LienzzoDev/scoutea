@@ -58,6 +58,17 @@ export default function PlayerTable({
     });
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="flex items-center gap-2 text-slate-400">
+          <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${darkMode ? 'border-[#FF5733]' : 'border-[#8c1a10]'}`}></div>
+          <span>Cargando jugadores...</span>
+        </div>
+      </div>
+    );
+  }
+
   if (players.length === 0) {
     return (
       <div className="text-center py-12">
@@ -257,7 +268,7 @@ export default function PlayerTable({
                       className={`text-center border-r last:border-r-0 flex-shrink-0 self-stretch ${
                         darkMode ? 'border-slate-700' : 'border-[#e7e7e7]'
                       } ${
-                        category.key === "nationality" || category.key === "team"
+                        category.key === "nationality" || category.key === "nationality_1" || category.key === "nationality_2" || category.key === "team"
                           ? "p-3"
                           : "p-4"
                       }`}
@@ -270,10 +281,14 @@ export default function PlayerTable({
                       }}
                     >
                       {/* Columna de Nacionalidad - mostrar bandera */}
-                      {category.key === "nationality" ? (
+                      {category.key === "nationality" || category.key === "nationality_1" || category.key === "nationality_2" ? (
                         <div className="flex flex-col items-center justify-center gap-2">
                           <FlagIcon
-                            nationality={player.nationality_1}
+                            nationality={
+                              category.key === "nationality_2"
+                                ? (player.nationality_2 ?? null)
+                                : (player.nationality_1 ?? null)
+                            }
                             size="lg"
                           />
                           <p className={`font-medium text-xs text-center ${
@@ -286,7 +301,7 @@ export default function PlayerTable({
                         /* Columna de Equipo - mostrar escudo */
                         <div className="flex flex-col items-center justify-center gap-2">
                           <TeamBadge
-                            teamName={player.team_name}
+                            teamName={player.team_name || undefined}
                             size="lg"
                           />
                           <p className={`font-medium text-xs text-center ${

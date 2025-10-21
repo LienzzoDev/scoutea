@@ -2,7 +2,6 @@ import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { getUserRoleInfo } from '@/lib/auth/role-utils'
 import { prisma } from '@/lib/db'
 
 const approvalSchema = z.object({
@@ -30,11 +29,15 @@ export async function PATCH(
       return NextResponse.json({ __error: 'User not found' }, { status: 404 })
     }
 
-    const roleInfo = getUserRoleInfo({ publicMetadata: { role: 'admin' } })
+    // Get user role from Clerk (using public_metadata with underscore)
+    const { sessionClaims } = await auth()
+    const userRole = (sessionClaims?.public_metadata as { role?: string })?.role
 
-    if (roleInfo.role !== 'admin') {
+    if (userRole !== 'admin') {
       return NextResponse.json(
-        { __error: 'Forbidden: Admin access required' },
+        {
+          __error: 'Forbidden: Admin access required'
+        },
         { status: 403 }
       )
     }
@@ -76,9 +79,9 @@ export async function PATCH(
       where: { id_player: playerId },
       data: {
         approval_status: action === 'approve' ? 'approved' : 'rejected',
-        approved_by_admin_id: userId,
+        approved_by_admin_id: user.id_usuario,
         approval_date: new Date(),
-        rejection_reason: action === 'reject' ? rejectionReason : null,
+        rejection_reason: action === 'reject' ? rejectionReason || null : null,
       },
     })
 
@@ -92,8 +95,14 @@ export async function PATCH(
     })
   } catch (error) {
     console.error('Error updating player approval:', error)
+    if (error instanceof Error) {
+      console.error('Error details:', error.message, error.stack)
+    }
     return NextResponse.json(
-      { __error: 'Internal server error' },
+      {
+        __error: 'Internal server error',
+        details: process.env.NODE_ENV === 'development' && error instanceof Error ? error.message : undefined
+      },
       { status: 500 }
     )
   }

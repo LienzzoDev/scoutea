@@ -13,9 +13,10 @@ interface MediaUploadProps {
   videoValue?: string
   onImageChange: (url: string) => void
   onVideoChange: (url: string) => void
+  darkMode?: boolean
 }
 
-export function MediaUpload({ imageValue, videoValue, onImageChange, onVideoChange }: MediaUploadProps) {
+export function MediaUpload({ imageValue, videoValue, onImageChange, onVideoChange, darkMode = false }: MediaUploadProps) {
   const { toast } = useToast()
   const [isUploading, setIsUploading] = useState(false)
   const [mediaType, setMediaType] = useState<'image' | 'video'>(imageValue ? 'image' : videoValue ? 'video' : 'image')
@@ -130,7 +131,7 @@ export function MediaUpload({ imageValue, videoValue, onImageChange, onVideoChan
 
   return (
     <div className="space-y-3">
-      <Label className="text-sm font-medium text-foreground">Media del Reporte</Label>
+      <Label className={darkMode ? 'text-sm font-medium text-[#D6DDE6]' : 'text-sm font-medium text-foreground'}>Media del Reporte</Label>
       
       {/* Media Type Selector */}
       <div className="flex gap-2">
@@ -140,7 +141,9 @@ export function MediaUpload({ imageValue, videoValue, onImageChange, onVideoChan
           className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
             mediaType === 'image'
               ? 'bg-[#8B0000] text-white'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              : darkMode
+                ? 'bg-[#1a2332] text-gray-300 hover:bg-[#1a2332]/80 border border-slate-600'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
           }`}
         >
           <ImageIcon className="w-4 h-4 inline mr-2" />
@@ -152,7 +155,9 @@ export function MediaUpload({ imageValue, videoValue, onImageChange, onVideoChan
           className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
             mediaType === 'video'
               ? 'bg-[#8B0000] text-white'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              : darkMode
+                ? 'bg-[#1a2332] text-gray-300 hover:bg-[#1a2332]/80 border border-slate-600'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
           }`}
         >
           <VideoIcon className="w-4 h-4 inline mr-2" />
@@ -168,7 +173,9 @@ export function MediaUpload({ imageValue, videoValue, onImageChange, onVideoChan
           className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
             uploadMode === 'url'
               ? 'bg-blue-600 text-white'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              : darkMode
+                ? 'bg-[#1a2332] text-gray-300 hover:bg-[#1a2332]/80 border border-slate-600'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
           }`}
         >
           <LinkIcon className="w-4 h-4 inline mr-2" />
@@ -180,7 +187,9 @@ export function MediaUpload({ imageValue, videoValue, onImageChange, onVideoChan
           className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
             uploadMode === 'file'
               ? 'bg-blue-600 text-white'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              : darkMode
+                ? 'bg-[#1a2332] text-gray-300 hover:bg-[#1a2332]/80 border border-slate-600'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
           }`}
         >
           <Upload className="w-4 h-4 inline mr-2" />
@@ -201,7 +210,11 @@ export function MediaUpload({ imageValue, videoValue, onImageChange, onVideoChan
               }
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
-              className="h-12 rounded-lg border-0 bg-muted/50 px-4 text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+              className={`h-12 rounded-lg px-4 ${
+                darkMode
+                  ? 'border border-slate-600 bg-[#1a2332] text-[#D6DDE6] placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500'
+                  : 'border-0 bg-muted/50 text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring'
+              }`}
             />
             <Button
               type="button"
@@ -218,24 +231,28 @@ export function MediaUpload({ imageValue, videoValue, onImageChange, onVideoChan
       {/* File Upload Mode */}
       {uploadMode === 'file' && (
         <div className="space-y-2">
-          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-muted-foreground/30 rounded-lg cursor-pointer hover:border-muted-foreground/50 transition-colors bg-muted/20">
+          <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+            darkMode
+              ? 'border-slate-600 hover:border-slate-500 bg-[#1a2332]/50'
+              : 'border-muted-foreground/30 hover:border-muted-foreground/50 bg-muted/20'
+          }`}>
             <div className="flex flex-col items-center justify-center pt-5 pb-6">
               {isUploading ? (
                 <>
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8B0000] mb-2"></div>
-                  <p className="text-sm text-muted-foreground">Subiendo {mediaType === 'image' ? 'imagen' : 'video'}...</p>
+                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-muted-foreground'}`}>Subiendo {mediaType === 'image' ? 'imagen' : 'video'}...</p>
                 </>
               ) : (
                 <>
                   {mediaType === 'image' ? (
-                    <ImageIcon className="w-8 h-8 mb-2 text-muted-foreground" />
+                    <ImageIcon className={`w-8 h-8 mb-2 ${darkMode ? 'text-gray-400' : 'text-muted-foreground'}`} />
                   ) : (
-                    <VideoIcon className="w-8 h-8 mb-2 text-muted-foreground" />
+                    <VideoIcon className={`w-8 h-8 mb-2 ${darkMode ? 'text-gray-400' : 'text-muted-foreground'}`} />
                   )}
-                  <p className="text-sm text-muted-foreground">
+                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-muted-foreground'}`}>
                     <span className="font-semibold">Click para subir</span> o arrastra aquí
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-muted-foreground'}`}>
                     {mediaType === 'image'
                       ? 'PNG, JPG, WebP, GIF (máx. 5MB)'
                       : 'MP4, WebM, MOV (máx. 50MB)'}
@@ -282,12 +299,12 @@ export function MediaUpload({ imageValue, videoValue, onImageChange, onVideoChan
               <X className="w-4 h-4" />
             </button>
           </div>
-          <p className="text-xs text-muted-foreground mt-2 break-all">{currentValue}</p>
+          <p className={`text-xs mt-2 break-all ${darkMode ? 'text-gray-400' : 'text-muted-foreground'}`}>{currentValue}</p>
         </div>
       )}
 
       {/* Info */}
-      <p className="text-xs text-muted-foreground">
+      <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-muted-foreground'}`}>
         💡 Solo puedes tener una imagen o un video por reporte. Al seleccionar uno, el otro se eliminará automáticamente.
       </p>
     </div>

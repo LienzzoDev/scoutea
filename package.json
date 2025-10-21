@@ -51,6 +51,7 @@
   "dependencies": {
     "@clerk/nextjs": "^6.32.2",
     "@clerk/themes": "^2.4.21",
+    "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "6.15.0",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -73,6 +74,7 @@
     "prisma": "^6.14.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-hook-form": "^7.65.0",
     "recharts": "^3.2.1",
     "resend": "^6.1.1",
     "stripe": "^18.5.0",

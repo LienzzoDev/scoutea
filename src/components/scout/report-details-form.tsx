@@ -17,6 +17,8 @@ interface Player {
   nationality_1: string | null
   team_name: string | null
   age: number | null
+  is_own_player?: boolean
+  approval_status?: string
 }
 
 export function ReportDetailsForm() {
@@ -28,6 +30,7 @@ export function ReportDetailsForm() {
   const [players, setPlayers] = useState<Player[]>([])
   const [isLoadingPlayers, setIsLoadingPlayers] = useState(true)
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
 
   // Form state
   const [formData, setFormData] = useState({
@@ -37,11 +40,13 @@ export function ReportDetailsForm() {
     imageUrl: ''
   })
 
-  // Cargar jugadores existentes
+  // Cargar jugadores con búsqueda dinámica
   useEffect(() => {
     const loadPlayers = async () => {
+      setIsLoadingPlayers(true)
       try {
-        const response = await fetch('/api/players/search-simple?limit=500')
+        const searchParam = searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : ''
+        const response = await fetch(`/api/players/search-simple?limit=100${searchParam}`)
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
@@ -68,16 +73,38 @@ export function ReportDetailsForm() {
       }
     }
 
-    loadPlayers()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    // Debounce: esperar 300ms después de que el usuario deje de escribir
+    const timeoutId = setTimeout(loadPlayers, 300)
 
-  // Convertir players a formato SearchableOption
+    return () => clearTimeout(timeoutId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm])
+
+  // Convertir players a formato SearchableOption con información adicional
   const playerOptions = players.map(player => ({
     value: player.id_player,
     label: player.player_name,
-    description: `${player.position_player || 'N/A'} • ${player.team_name || 'N/A'} • ${player.nationality_1 || 'N/A'}${player.age ? ` • ${player.age} años` : ''}`
+    description: `${player.position_player || 'N/A'} • ${player.team_name || 'N/A'} • ${player.nationality_1 || 'N/A'}${player.age ? ` • ${player.age} años` : ''}`,
+    isOwnPlayer: player.is_own_player,
+    approvalStatus: player.approval_status
   }))
+
+  // Renderizar opciones con etiqueta para jugadores propios
+  const renderPlayerOption = (option: typeof playerOptions[0]) => (
+    <div>
+      <div className="flex items-center gap-2">
+        <span className="font-medium text-foreground">{option.label}</span>
+        {option.isOwnPlayer && (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+            {option.approvalStatus === 'pending' ? 'Tu jugador (Pendiente)' : 'Tu jugador'}
+          </span>
+        )}
+      </div>
+      {option.description && (
+        <div className="text-sm text-muted-foreground">{option.description}</div>
+      )}
+    </div>
+  )
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -163,7 +190,9 @@ export function ReportDetailsForm() {
   const selectedOption = selectedPlayer ? {
     value: selectedPlayer.id_player,
     label: selectedPlayer.player_name,
-    description: `${selectedPlayer.position_player || 'N/A'} • ${selectedPlayer.team_name || 'N/A'} • ${selectedPlayer.nationality_1 || 'N/A'}${selectedPlayer.age ? ` • ${selectedPlayer.age} años` : ''}`
+    description: `${selectedPlayer.position_player || 'N/A'} • ${selectedPlayer.team_name || 'N/A'} • ${selectedPlayer.nationality_1 || 'N/A'}${selectedPlayer.age ? ` • ${selectedPlayer.age} años` : ''}`,
+    isOwnPlayer: selectedPlayer.is_own_player,
+    approvalStatus: selectedPlayer.approval_status
   } : null
 
   return (
@@ -180,10 +209,12 @@ export function ReportDetailsForm() {
               options={playerOptions}
               value={selectedOption}
               onValueChange={handlePlayerChange}
+              onSearchChange={setSearchTerm}
               placeholder="Buscar por nombre, equipo, nacionalidad..."
               searchPlaceholder="Buscar jugador..."
               emptyMessage="No se encontraron jugadores"
               disabled={isLoadingPlayers}
+              renderOption={renderPlayerOption}
             />
             {isLoadingPlayers && (
               <p className="text-xs text-muted-foreground">Cargando jugadores...</p>

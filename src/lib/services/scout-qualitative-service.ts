@@ -49,10 +49,16 @@ export class ScoutQualitativeService {
       whereClause.report_type = filters.reportType
     }
     if (filters.position && filters.position !== 'all' && filters.position !== 'todos') {
-      whereClause.position_player = filters.position
+      whereClause.player = {
+        ...whereClause.player,
+        position_player: filters.position
+      }
     }
     if (filters.nationality1 && filters.nationality1 !== 'all' && filters.nationality1 !== 'todos') {
-      whereClause.nationality_1 = filters.nationality1
+      whereClause.player = {
+        ...whereClause.player,
+        nationality_1: filters.nationality1
+      }
     }
     if (filters.potential && filters.potential !== 'all' && filters.potential !== 'todos') {
       // Para potencial, necesitamos filtrar por form_potential
@@ -98,8 +104,6 @@ export class ScoutQualitativeService {
       where: whereClause,
       select: {
         report_type: true,
-        position_player: true,
-        nationality_1: true,
         form_potential: true,
         initial_age: true,
         initial_team: true,
@@ -110,6 +114,12 @@ export class ScoutQualitativeService {
         transfer_team_pts: true,
         transfer_competition_pts: true,
         initial_player_trfm_value: true,
+        player: {
+          select: {
+            position_player: true,
+            nationality_1: true,
+          },
+        },
       },
     })
 
@@ -137,13 +147,13 @@ export class ScoutQualitativeService {
       }
 
       // Position
-      if (report.position_player) {
-        data.position[report.position_player] = (data.position[report.position_player] || 0) + 1
+      if (report.player?.position_player) {
+        data.position[report.player.position_player] = (data.position[report.player.position_player] || 0) + 1
       }
 
       // Nationality
-      if (report.nationality_1) {
-        data.nationality[report.nationality_1] = (data.nationality[report.nationality_1] || 0) + 1
+      if (report.player?.nationality_1) {
+        data.nationality[report.player.nationality_1] = (data.nationality[report.player.nationality_1] || 0) + 1
       }
 
       // Potential (categorizar)
@@ -342,31 +352,38 @@ export class ScoutQualitativeService {
   static async getFilterOptions(scoutId?: string) {
     const whereClause = scoutId ? { scout_id: scoutId } : {}
 
+    // Get unique report types
+    const reportTypes = await prisma.reporte.findMany({
+      where: whereClause,
+      select: { report_type: true },
+      distinct: ['report_type'],
+    })
+
+    // Get unique positions and nationalities from related players
+    const reportsWithPlayers = await prisma.reporte.findMany({
+      where: whereClause,
+      select: {
+        player: {
+          select: {
+            position_player: true,
+            nationality_1: true,
+          },
+        },
+      },
+    })
+
+    // Extract unique positions and nationalities
+    const positions = Array.from(new Set(reportsWithPlayers.map(r => r.player?.position_player).filter(Boolean)))
+    const nationalities = Array.from(new Set(reportsWithPlayers.map(r => r.player?.nationality_1).filter(Boolean)))
+
+    // Get other filter options
     const [
-      reportTypes,
-      positions,
-      nationalities,
       teams,
       teamLevels,
       competitions,
       competitionLevels,
       countries,
     ] = await Promise.all([
-      prisma.reporte.findMany({
-        where: whereClause,
-        select: { report_type: true },
-        distinct: ['report_type'],
-      }),
-      prisma.reporte.findMany({
-        where: whereClause,
-        select: { position_player: true },
-        distinct: ['position_player'],
-      }),
-      prisma.reporte.findMany({
-        where: whereClause,
-        select: { nationality_1: true },
-        distinct: ['nationality_1'],
-      }),
       prisma.reporte.findMany({
         where: whereClause,
         select: { initial_team: true },
@@ -396,8 +413,8 @@ export class ScoutQualitativeService {
 
     return {
       reportTypes: reportTypes.map(r => r.report_type).filter(Boolean).sort(),
-      positions: positions.map(p => p.position_player).filter(Boolean).sort(),
-      nationalities: nationalities.map(n => n.nationality_1).filter(Boolean).sort(),
+      positions: positions.sort(),
+      nationalities: nationalities.sort(),
       teams: teams.map(t => t.initial_team).filter(Boolean).sort(),
       teamLevels: teamLevels.map(tl => tl.initial_team_level).filter(Boolean).sort(),
       competitions: competitions.map(c => c.initial_competition).filter(Boolean).sort(),
@@ -437,11 +454,15 @@ export class ScoutQualitativeService {
         id_report: true,
         report_date: true,
         report_type: true,
-        player_name: true,
-        position_player: true,
-        nationality_1: true,
         roi: true,
         profit: true,
+        player: {
+          select: {
+            player_name: true,
+            position_player: true,
+            nationality_1: true,
+          },
+        },
       },
     })
 
