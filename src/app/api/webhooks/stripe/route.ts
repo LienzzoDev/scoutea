@@ -31,14 +31,13 @@ export async function POST(request: NextRequest) {
       console.log('✅ Webhook signature verified')
     } catch (err) {
       console.error('❌ Webhook signature verification failed:', err)
-      
-      // Log del error
-      await logWebhookEvent('signature_verification_failed', {
-        error: err instanceof Error ? err.message : 'Unknown error',
+
+      // Log usando logger directo
+      logger.error('Webhook signature verification failed', err as Error, {
         hasSignature: !!signature,
         bodyLength: body.length
-      }, false, err instanceof Error ? err.message : 'Unknown error')
-      
+      })
+
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
     }
 
@@ -79,45 +78,33 @@ export async function POST(request: NextRequest) {
       attempts: retryResult.attempts
     }
 
-    // Log del evento exitoso
-    await logWebhookEvent(event.type, {
+    // Log directo usando logger (más eficiente que HTTP)
+    logger.info('Stripe webhook processed', {
+      eventType: event.type,
       eventId: event.id,
       created: new Date(event.created * 1000).toISOString(),
-      data: event.data.object,
       handlerResult,
-      processingTime: Date.now() - startTime
-    }, true)
+      processingTime: Date.now() - startTime,
+      success: true
+    })
 
     console.log(`✅ Webhook processed successfully in ${Date.now() - startTime}ms`)
     return NextResponse.json({ received: true, eventType: event.type, eventId: event.id })
-    
+
   } catch (error) {
     console.error('❌ Error processing Stripe webhook:', error)
-    
-    // Log del error
-    await logWebhookEvent(event?.type || 'unknown', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
+
+    // Log directo usando logger
+    logger.error('Stripe webhook processing failed', error as Error, {
+      eventType: event?.type || 'unknown',
+      eventId: event?.id,
       processingTime: Date.now() - startTime
-    }, false, error instanceof Error ? error.message : 'Unknown error')
-    
-    return NextResponse.json({ 
+    })
+
+    return NextResponse.json({
       error: 'Webhook processing failed',
       eventType: event?.type || 'unknown'
     }, { status: 500 })
-  }
-}
-
-// Función helper para registrar eventos del webhook
-async function logWebhookEvent(event: string, data: any, success: boolean, error?: string) {
-  try {
-    await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/debug/webhook-logs`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ event, data, success, error })
-    })
-  } catch (logError) {
-    console.error('Failed to log webhook event:', logError)
   }
 }
 

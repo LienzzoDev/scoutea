@@ -1,21 +1,12 @@
 /**
- * Utilidad para limpiar APIs de debug en producción
- * 
- * Este archivo documenta qué APIs de debug deberían ser removidas
- * o protegidas en producción.
+ * Utilidad para proteger APIs de debug en producción
+ *
+ * NOTA: La mayoría de las rutas de debug fueron eliminadas.
+ * Solo se mantienen las esenciales protegidas con autenticación admin.
  */
 
-export const DEBUG_APIS_TO_REMOVE = [
-  '/api/debug/force-assign-role',
-  '/api/debug/simulate-payment-webhook', 
-  '/api/debug/assign-member-role',
-  '/api/debug/auth-status',
-  '/api/debug/payment-status',
-  '/api/debug/current-user-status'
-]
-
 export const DEBUG_APIS_TO_PROTECT = [
-  '/api/debug/webhook-logs' // Mantener pero proteger con auth admin
+  '/api/debug/webhook-logs' // Logs de webhooks Stripe - solo admins
 ]
 
 /**
@@ -27,14 +18,9 @@ export function isDebugApiAllowed(pathname: string, userRole?: string): boolean 
     return true
   }
 
-  // En producción, solo admins pueden acceder a APIs de debug protegidas
-  if (DEBUG_APIS_TO_PROTECT.some(api => pathname.startsWith(api))) {
+  // En producción, solo admins pueden acceder a APIs de debug
+  if (pathname.startsWith('/api/debug/')) {
     return userRole === 'admin'
-  }
-
-  // APIs que deben ser removidas completamente en producción
-  if (DEBUG_APIS_TO_REMOVE.some(api => pathname.startsWith(api))) {
-    return false
   }
 
   return true
@@ -47,7 +33,8 @@ export function createDebugBlockedResponse() {
   return new Response(
     JSON.stringify({
       error: 'Debug API not available in production',
-      code: 'DEBUG_API_BLOCKED'
+      code: 'DEBUG_API_BLOCKED',
+      message: 'This debug endpoint is only available to administrators in production'
     }),
     {
       status: 403,

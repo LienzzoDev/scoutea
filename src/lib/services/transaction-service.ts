@@ -1,16 +1,21 @@
 /**
  * Servicio de transacciones para operaciones atómicas
- * 
+ *
  * Maneja operaciones que requieren consistencia entre Clerk y la base de datos,
  * implementando rollback en caso de errores.
  */
 
-import { clerkClient } from '@clerk/nextjs/server'
+import { createClerkClient } from '@clerk/nextjs/server'
 
 import { logger } from '../logging/production-logger'
 
 import { RoleService } from './role-service'
 import { UserService } from './user-service'
+
+// Crear instancia de clerkClient con la clave secreta
+const clerkClient = createClerkClient({
+  secretKey: process.env.CLERK_SECRET_KEY,
+})
 
 export interface UserCreationData {
   clerkId: string

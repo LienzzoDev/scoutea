@@ -11,10 +11,10 @@ interface SubscriptionGuardProps {
   fallbackUrl?: string
 }
 
-export function SubscriptionGuard({ 
-  children, 
+export function SubscriptionGuard({
+  children,
   requiredPlan = 'basic',
-  fallbackUrl = '/member/subscription-plans'
+  fallbackUrl = '/member/complete-profile'
 }: SubscriptionGuardProps) {
   const { subscription: _subscription, loading, hasActiveSubscription, isPremium, isBasic } = useSubscription()
   const _router = useRouter()

@@ -1,7 +1,7 @@
 'use client'
 
 import { useUser } from '@clerk/nextjs'
-import { ArrowRight, User, MapPin, Calendar, Globe, ChevronRight } from 'lucide-react'
+import { ArrowRight, User, Calendar, Globe, ChevronRight } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
@@ -23,18 +23,50 @@ export default function CompleteProfilePage() {
     lastName: '',
     dateOfBirth: '',
     email: '',
-    address: '',
     city: '',
     country: ''
   })
 
+  // Timeout para detectar cuando Clerk se queda cargando indefinidamente
+  const [loadingTimeout, setLoadingTimeout] = useState(false)
+
   useEffect(() => {
+    // Debug: Log estado de carga
+    console.log('🔍 Complete Profile - isLoaded:', isLoaded, 'user:', user ? 'presente' : 'null')
+
+    // Si después de 8 segundos aún no carga, mostrar opción de recarga
+    const timeout = setTimeout(() => {
+      if (!isLoaded) {
+        console.error('❌ Clerk tardó más de 8 segundos en cargar')
+        setLoadingTimeout(true)
+      }
+    }, 8000)
+
+    return () => clearTimeout(timeout)
+  }, [isLoaded])
+
+  useEffect(() => {
+    // ✅ FALLBACK: Verificar si el usuario ya tiene suscripción activa
+    // Esto previene loops de redirección después del pago
+    if (user?.publicMetadata) {
+      const metadata = user.publicMetadata as any
+      if (metadata?.subscription?.status === 'active') {
+        console.log('✅ Usuario ya tiene suscripción activa, redirigiendo al dashboard')
+        const role = metadata.role || 'member'
+        const dashboardUrl = role === 'scout' ? '/scout/dashboard' : '/member/dashboard'
+        router.push(dashboardUrl)
+        return
+      }
+    }
+
     // Obtener el plan seleccionado desde la URL
     const plan = searchParams.get('plan') || localStorage.getItem('selectedPlan') || ''
+    console.log('🔍 Plan detectado:', plan || 'NINGUNO')
     setSelectedPlan(plan)
 
     // Pre-llenar con datos de Clerk si están disponibles
     if (user) {
+      console.log('✅ Usuario cargado:', user.id, user.primaryEmailAddress?.emailAddress)
       setFormData(prev => ({
         ...prev,
         firstName: user.firstName || '',
@@ -42,7 +74,7 @@ export default function CompleteProfilePage() {
         email: user.primaryEmailAddress?.emailAddress || '',
       }))
     }
-  }, [user, searchParams])
+  }, [user, searchParams, isLoaded, router])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -51,26 +83,63 @@ export default function CompleteProfilePage() {
     }))
   }
 
-  const handleSkip = () => {
-    // Guardar en localStorage que el perfil fue omitido
-    localStorage.setItem('profileStatus', 'incomplete')
-    
-    // Ir directamente al paso 3 (confirmar rol)
-    router.push(`/member/welcome-plan?plan=${selectedPlan}&step=3&profile=skipped`)
+  const handleSkip = async () => {
+    console.log('🔄 handleSkip - Plan seleccionado:', selectedPlan)
+
+    if (!selectedPlan) {
+      alert('Por favor, selecciona un plan primero.')
+      router.push('/')
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      // Guardar en localStorage que el perfil fue omitido
+      localStorage.setItem('profileStatus', 'incomplete')
+
+      console.log('📤 Enviando solicitud a create-checkout-session con plan:', selectedPlan)
+
+      // Crear sesión de checkout directamente
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          plan: selectedPlan,
+          billing: 'monthly'
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('Error creating checkout session:', errorData)
+        alert(`Error al crear la sesión de pago: ${errorData.details || errorData.error}`)
+        return
+      }
+
+      const responseData = await response.json()
+
+      if (responseData.url) {
+        window.location.href = responseData.url
+      } else {
+        alert('Error: No se pudo obtener la URL de pago')
+      }
+    } catch (error) {
+      console.error('Error in handleSkip:', error)
+      alert('Error al procesar la solicitud. Por favor, inténtalo de nuevo.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleContinue = async () => {
     setIsLoading(true)
 
     try {
-      // Actualizar metadatos del usuario en Clerk
+      // Guardar el perfil en la base de datos a través de la API
       if (user) {
-        await user.update({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-        })
-
-        // Guardar el perfil en la base de datos a través de la API
         const response = await fetch('/api/user/update-profile', {
           method: 'POST',
           headers: {
@@ -81,7 +150,6 @@ export default function CompleteProfilePage() {
             lastName: formData.lastName,
             dateOfBirth: formData.dateOfBirth,
             email: formData.email,
-            address: formData.address,
             city: formData.city,
             country: formData.country
           })
@@ -90,18 +158,43 @@ export default function CompleteProfilePage() {
         if (!response.ok) {
           const errorData = await response.json()
           console.error('Error saving profile to database:', errorData)
-          throw new Error(errorData.error || 'Failed to save profile')
+          // No lanzar error, continuar con el flujo de pago
+          console.warn('Continuando sin guardar perfil en base de datos')
+        } else {
+          const result = await response.json()
+          console.log('Profile saved successfully:', result)
         }
-
-        const result = await response.json()
-        console.log('Profile saved successfully:', result)
 
         // Guardar estado en localStorage como respaldo
         localStorage.setItem('profileStatus', 'completed')
       }
 
-      // Ir al paso 3 (confirmar rol)
-      router.push(`/member/welcome-plan?plan=${selectedPlan}&step=3&profile=completed`)
+      // Crear sesión de checkout directamente
+      const checkoutResponse = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          plan: selectedPlan,
+          billing: 'monthly'
+        })
+      })
+
+      if (!checkoutResponse.ok) {
+        const errorData = await checkoutResponse.json()
+        console.error('Error creating checkout session:', errorData)
+        alert(`Error al crear la sesión de pago: ${errorData.details || errorData.error}`)
+        return
+      }
+
+      const checkoutData = await checkoutResponse.json()
+
+      if (checkoutData.url) {
+        window.location.href = checkoutData.url
+      } else {
+        alert('Error: No se pudo obtener la URL de pago')
+      }
     } catch (error) {
       console.error('Error updating profile:', error)
       alert('Hubo un error al guardar tu perfil. Por favor, inténtalo de nuevo.')
@@ -111,11 +204,43 @@ export default function CompleteProfilePage() {
   }
 
   if (!isLoaded) {
+    console.log('⏳ Esperando a que Clerk cargue...')
+    return (
+      <div className="min-h-screen bg-[#f8f7f4] flex items-center justify-center">
+        <div className="text-center max-w-md px-6">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8c1a10] mx-auto mb-4"></div>
+          <p className="text-[#6d6d6d] mb-2">Cargando tu perfil...</p>
+          {loadingTimeout ? (
+            <div className="mt-4">
+              <p className="text-sm text-red-600 mb-2">
+                La carga está tomando más tiempo del esperado.
+              </p>
+              <Button
+                onClick={() => window.location.reload()}
+                className="bg-[#8c1a10] hover:bg-[#6d1410] text-white"
+              >
+                Recargar página
+              </Button>
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400">
+              Si esta pantalla permanece por más de 10 segundos, por favor recarga la página.
+            </p>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Si no hay usuario después de cargar, redirigir a registro
+  if (!user) {
+    console.log('❌ No hay usuario autenticado, redirigiendo a registro')
+    router.push('/register')
     return (
       <div className="min-h-screen bg-[#f8f7f4] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8c1a10] mx-auto mb-4"></div>
-          <p className="text-[#6d6d6d]">Cargando...</p>
+          <p className="text-[#6d6d6d]">Redirigiendo a registro...</p>
         </div>
       </div>
     )
@@ -145,7 +270,7 @@ export default function CompleteProfilePage() {
               <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
                 <span className="text-gray-600 text-sm font-medium">3</span>
               </div>
-              <span className="ml-2 text-sm text-gray-600">Confirmar rol</span>
+              <span className="ml-2 text-sm text-gray-600">Realizar Pago</span>
             </div>
           </div>
         </div>
@@ -227,21 +352,6 @@ export default function CompleteProfilePage() {
                 placeholder="tu@email.com"
                 className="mt-1"
                 disabled
-              />
-            </div>
-
-            {/* Address */}
-            <div>
-              <Label htmlFor="address" className="text-[#2e3138] font-medium">
-                <MapPin className="w-4 h-4 inline mr-1" />
-                Dirección
-              </Label>
-              <Input
-                id="address"
-                value={formData.address}
-                onChange={(e) => handleInputChange('address', e.target.value)}
-                placeholder="Calle, número, piso, etc."
-                className="mt-1"
               />
             </div>
 

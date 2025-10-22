@@ -1,7 +1,39 @@
-import { SignIn } from '@clerk/nextjs'
+'use client'
+
+import { SignIn, useUser } from '@clerk/nextjs'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+
+import { getUserRole } from '@/lib/auth/user-role'
+import { getUserRoleInfo, getOnboardingRedirectUrl } from '@/lib/auth/role-utils'
 
 export default function LoginPage() {
+  const { user, isLoaded } = useUser()
+  const router = useRouter()
+
+  useEffect(() => {
+    // Si el usuario ya está autenticado, redirigir según su estado
+    if (isLoaded && user) {
+      const role = getUserRole(user)
+      if (role) {
+        const roleInfo = getUserRoleInfo(user)
+        const redirectUrl = getOnboardingRedirectUrl(roleInfo)
+        console.log(`🔄 Usuario ${role} ya autenticado, redirigiendo a ${redirectUrl}`)
+        router.push(redirectUrl)
+      }
+    }
+  }, [isLoaded, user, router])
+
+  // Mostrar loading mientras verificamos autenticación
+  if (!isLoaded || user) {
+    return (
+      <div className='min-h-screen bg-[#f8f7f4] flex items-center justify-center p-4'>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8c1a10]"></div>
+      </div>
+    )
+  }
+
   return (
     <div className='min-h-screen bg-[#f8f7f4] flex items-center justify-center p-4'>
       <div className='w-full max-w-md flex flex-col items-center space-y-8'>

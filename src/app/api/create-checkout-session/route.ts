@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     // URLs de redirección - usar página de procesamiento para manejar la transición
     const baseUrl = request.nextUrl.origin
     const successUrl = `${baseUrl}/member/payment-processing?session_id={CHECKOUT_SESSION_ID}&plan=${plan}`
-    const cancelUrl = `${baseUrl}/member/welcome-plan?plan=${plan}&step=3&payment=cancelled`
+    const cancelUrl = `${baseUrl}/member/complete-profile?plan=${plan}&payment=cancelled`
 
     console.log('Creating Stripe session with:', {
       priceData,

@@ -1,7 +1,7 @@
 'use client'
 
 import { useUser } from '@clerk/nextjs'
-import { Search, ChevronDown, User, Shield, X, Users } from "lucide-react"
+import { Search, ChevronDown, User, Shield, X, Users, Lock } from "lucide-react"
 import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import PlayerAvatar from "@/components/ui/player-avatar"
 import ScoutAvatar from "@/components/ui/scout-avatar"
 import { TesterBadge } from '@/components/ui/tester-badge'
+import { useSubscriptionPlan } from '@/components/auth/feature-guard'
 import { getUserRole, isTester } from '@/lib/auth/user-role'
 
 
@@ -38,6 +39,10 @@ export default function MemberNavbar() {
   const userRole = getUserRole(user)
   const isAdmin = userRole === 'admin'
   const isUserTester = isTester(user)
+
+  // Obtener el plan de suscripción
+  const { plan: subscriptionPlan } = useSubscriptionPlan()
+  const isPremiumUser = subscriptionPlan === 'premium' || isAdmin || isUserTester
 
   // 🔍 FUNCIÓN DE BÚSQUEDA GLOBAL
   const performSearch = async (term: string) => {
@@ -282,9 +287,9 @@ export default function MemberNavbar() {
               <div className="absolute top-full left-0 mt-2 bg-white border border-[#e7e7e7] rounded-lg shadow-lg z-50 min-w-48">
                 <div className="py-2">
                   <button
-                    className={`w-full text-left px-4 py-2 transition-colors ${
-                      pathname === '/member/dashboard' 
-                        ? 'text-[#000000] bg-gray-50 font-medium' 
+                    className={`w-full text-left px-4 py-2 transition-colors flex items-center justify-between ${
+                      pathname === '/member/dashboard'
+                        ? 'text-[#000000] bg-gray-50 font-medium'
                         : 'text-[#6d6d6d] hover:bg-gray-50 hover:text-[#000000]'
                     }`}
                     onClick={() => {
@@ -292,20 +297,28 @@ export default function MemberNavbar() {
                       _router.push('/member/dashboard')
                     }}
                   >
-                    Players
+                    <span>Players</span>
                   </button>
                   <button
-                    className={`w-full text-left px-4 py-2 transition-colors ${
-                      pathname === '/member/comparison' 
-                        ? 'text-[#000000] bg-gray-50 font-medium' 
-                        : 'text-[#6d6d6d] hover:bg-gray-50 hover:text-[#000000]'
+                    className={`w-full text-left px-4 py-2 transition-colors flex items-center justify-between ${
+                      pathname === '/member/comparison'
+                        ? 'text-[#000000] bg-gray-50 font-medium'
+                        : isPremiumUser
+                        ? 'text-[#6d6d6d] hover:bg-gray-50 hover:text-[#000000]'
+                        : 'text-[#9ca3af] cursor-not-allowed'
                     }`}
                     onClick={() => {
-                      setShowWonderkidsDropdown(false)
-                      _router.push('/member/comparison')
+                      if (isPremiumUser) {
+                        setShowWonderkidsDropdown(false)
+                        _router.push('/member/comparison')
+                      } else {
+                        setShowWonderkidsDropdown(false)
+                        _router.push('/member/upgrade-required')
+                      }
                     }}
                   >
-                    Comparison
+                    <span>Comparison</span>
+                    {!isPremiumUser && <Lock className="w-3 h-3 text-orange-500" />}
                   </button>
                 </div>
               </div>
@@ -327,47 +340,76 @@ export default function MemberNavbar() {
               <div className="absolute top-full left-0 mt-2 bg-white border border-[#e7e7e7] rounded-lg shadow-lg z-50 min-w-48">
                 <div className="py-2">
                   <button
-                    className={`w-full text-left px-4 py-2 transition-colors ${
-                      pathname === '/member/scouts' 
-                        ? 'text-[#000000] bg-gray-50 font-medium' 
-                        : 'text-[#6d6d6d] hover:bg-gray-50 hover:text-[#000000]'
+                    className={`w-full text-left px-4 py-2 transition-colors flex items-center justify-between ${
+                      pathname === '/member/scouts'
+                        ? 'text-[#000000] bg-gray-50 font-medium'
+                        : isPremiumUser
+                        ? 'text-[#6d6d6d] hover:bg-gray-50 hover:text-[#000000]'
+                        : 'text-[#9ca3af] cursor-not-allowed'
                     }`}
                     onClick={() => {
-                      setShowWonderscoutsDropdown(false)
-                      _router.push('/member/scouts')
+                      if (isPremiumUser) {
+                        setShowWonderscoutsDropdown(false)
+                        _router.push('/member/scouts')
+                      } else {
+                        setShowWonderscoutsDropdown(false)
+                        _router.push('/member/upgrade-required')
+                      }
                     }}
                   >
-                    Scouts
+                    <span>Scouts</span>
+                    {!isPremiumUser && <Lock className="w-3 h-3 text-orange-500" />}
                   </button>
                   <button
-                    className={`w-full text-left px-4 py-2 transition-colors ${
-                      pathname === '/member/scout-comparison' 
-                        ? 'text-[#000000] bg-gray-50 font-medium' 
-                        : 'text-[#6d6d6d] hover:bg-gray-50 hover:text-[#000000]'
+                    className={`w-full text-left px-4 py-2 transition-colors flex items-center justify-between ${
+                      pathname === '/member/scout-comparison'
+                        ? 'text-[#000000] bg-gray-50 font-medium'
+                        : isPremiumUser
+                        ? 'text-[#6d6d6d] hover:bg-gray-50 hover:text-[#000000]'
+                        : 'text-[#9ca3af] cursor-not-allowed'
                     }`}
                     onClick={() => {
-                      setShowWonderscoutsDropdown(false)
-                      _router.push('/member/scout-comparison')
+                      if (isPremiumUser) {
+                        setShowWonderscoutsDropdown(false)
+                        _router.push('/member/scout-comparison')
+                      } else {
+                        setShowWonderscoutsDropdown(false)
+                        _router.push('/member/upgrade-required')
+                      }
                     }}
                   >
-                    Comparison
+                    <span>Comparison</span>
+                    {!isPremiumUser && <Lock className="w-3 h-3 text-orange-500" />}
                   </button>
                 </div>
               </div>
             )}
           </div>
 
-          <span 
+          <span
             className={`cursor-pointer ${isTournamentsPage ? 'text-[#000000] font-medium' : 'text-[#6d6d6d]'}`}
             onClick={() => _router.push('/member/torneos')}
           >
             Torneos
           </span>
-          <span 
-            className={`cursor-pointer ${isOnDemandPage ? 'text-[#000000] font-medium' : 'text-[#6d6d6d]'}`}
-            onClick={() => _router.push('/member/on-demand')}
+          <span
+            className={`cursor-pointer flex items-center gap-1 ${
+              isOnDemandPage
+                ? 'text-[#000000] font-medium'
+                : isPremiumUser
+                ? 'text-[#6d6d6d]'
+                : 'text-[#9ca3af]'
+            }`}
+            onClick={() => {
+              if (isPremiumUser) {
+                _router.push('/member/on-demand')
+              } else {
+                _router.push('/member/upgrade-required')
+              }
+            }}
           >
-            On Demand
+            <span>On Demand</span>
+            {!isPremiumUser && <Lock className="w-3 h-3 text-orange-500" />}
           </span>
         </nav>
 

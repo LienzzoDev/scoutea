@@ -1,13 +1,18 @@
 /**
  * Servicio centralizado para manejo de roles y metadata de usuarios
- * 
+ *
  * Consolida toda la lógica de asignación de roles, actualización de metadata
  * y manejo de estados de usuario en un solo lugar.
  */
 
-import { clerkClient } from '@clerk/nextjs/server'
+import { createClerkClient } from '@clerk/nextjs/server'
 
 import { logger } from '../logging/production-logger'
+
+// Crear instancia de clerkClient con la clave secreta
+const clerkClient = createClerkClient({
+  secretKey: process.env.CLERK_SECRET_KEY,
+})
 
 export type UserRole = 'member' | 'scout' | 'admin' | 'tester'
 export type ProfileStatus = 'incomplete' | 'complete'
@@ -45,22 +50,27 @@ export interface RoleAssignmentResult {
 export class RoleService {
   /**
    * Determina el rol basado en el plan seleccionado
+   *
+   * IMPORTANTE: Tanto plan 'basic' como 'premium' asignan rol 'member'
+   * La diferencia entre planes se maneja en subscription.plan
+   * El acceso a features se controla con FeatureAccessService
    */
   static getRoleFromPlan(plan: string): UserRole {
     if (!plan) return 'member'
-    
+
     const planLower = plan.toLowerCase()
-    
-    // Plan scout/premium incluye funcionalidades de scouting
-    if (planLower.includes('scout') || planLower.includes('premium')) {
-      return 'scout'
-    }
-    
-    // Plan member/basic solo acceso a jugadores
-    if (planLower.includes('member') || planLower.includes('basic') || planLower.includes('basica')) {
+
+    // Ambos planes (basic y premium) asignan rol 'member'
+    // La diferencia está en subscription.plan que se guarda separadamente
+    if (planLower.includes('member') ||
+        planLower.includes('basic') ||
+        planLower.includes('basica') ||
+        planLower.includes('premium') ||
+        planLower.includes('pro') ||
+        planLower.includes('scout')) {
       return 'member'
     }
-    
+
     // Default a member
     logger.warn('Unknown plan type, defaulting to member', { plan })
     return 'member'

@@ -1,7 +1,8 @@
-import type { Jugador } from '@prisma/client';
+import type { Jugador } from '@prisma/client'
 
-import { prisma } from '@/lib/db';
-import type { Player, PlayerStats } from '@/types/player';
+import { prisma } from '@/lib/db'
+import type { Player, PlayerStats } from '@/types/player'
+import type { PlayerWhereInput, PlayerOrderByInput } from '@/types/service-types'
 
 export class PlayerService {
   /**
@@ -265,7 +266,7 @@ export class PlayerService {
       } = options;
 
       // Construir condiciones WHERE
-      const whereConditions: any = {};
+      const whereConditions: PlayerWhereInput = {}
 
       // IMPORTANTE: Solo mostrar jugadores aprobados (para miembros)
       // Los jugadores con approval_status 'pending' o 'rejected' no deben aparecer
@@ -321,7 +322,7 @@ export class PlayerService {
       });
 
       // Construir ordenamiento
-      const orderBy: any = {};
+      const orderBy: PlayerOrderByInput = {}
       if (sortBy === 'createdAt') {
         orderBy.createdAt = sortOrder;
       } else if (sortBy === 'player_rating') {

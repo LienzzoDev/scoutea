@@ -1,21 +1,44 @@
 'use client'
 
-import { SignUp } from '@clerk/nextjs'
+import { SignUp, useUser } from '@clerk/nextjs'
 import { ChevronRight } from 'lucide-react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-
+import { getUserRole } from '@/lib/auth/user-role'
+import { getUserRoleInfo, getOnboardingRedirectUrl } from '@/lib/auth/role-utils'
 
 export default function RegisterPage() {
+  const { user, isLoaded } = useUser()
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [selectedPlan, setSelectedPlan] = useState('')
+
+  // Verificar si el usuario ya está autenticado
+  useEffect(() => {
+    if (isLoaded && user) {
+      const role = getUserRole(user)
+      if (role) {
+        // Obtener información completa del usuario
+        const roleInfo = getUserRoleInfo(user)
+
+        // Si ya tiene suscripción activa, ir al dashboard
+        if (roleInfo.hasActiveSubscription) {
+          const redirectUrl = getOnboardingRedirectUrl(roleInfo)
+          console.log(`🔄 Usuario ${role} con suscripción activa, redirigiendo a ${redirectUrl}`)
+          router.push(redirectUrl)
+        }
+        // NO redirigir si está en proceso de registro sin suscripción
+        // Clerk se encargará de redirigir con afterSignUpUrl
+      }
+    }
+  }, [isLoaded, user, router, searchParams, selectedPlan])
 
   useEffect(() => {
     const plan = searchParams.get('plan') || localStorage.getItem('selectedPlan') || ''
     setSelectedPlan(plan)
-    
+
     // Debug: Log registration attempt
     console.log('🔍 Registration page loaded with plan:', plan)
   }, [searchParams])
@@ -48,7 +71,7 @@ export default function RegisterPage() {
         color: 'from-blue-500 to-blue-600'
       },
       scout: {
-        name: 'Scout', 
+        name: 'Scout',
         description: 'Para scouts profesionales',
         color: 'from-green-500 to-green-600'
       }
@@ -58,7 +81,14 @@ export default function RegisterPage() {
 
   const planInfo = getPlanInfo(selectedPlan)
 
-
+  // Mostrar loading mientras verificamos autenticación
+  if (!isLoaded || user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#f8f7f4] to-[#e8e6e0] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8c1a10]"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f8f7f4] to-[#e8e6e0]">
@@ -93,7 +123,7 @@ export default function RegisterPage() {
               <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
                 <span className="text-gray-600 text-sm font-medium">3</span>
               </div>
-              <span className="ml-3 text-sm text-gray-600">Confirmar rol</span>
+              <span className="ml-3 text-sm text-gray-600">Realizar Pago</span>
             </div>
           </div>
         </div>

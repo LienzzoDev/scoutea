@@ -21,39 +21,39 @@ export const metadata: Metadata = {
 export default function HomePage() {
   const plans = [
     {
-      id: 'member',
-      name: 'Básica (players)',
+      id: 'basic',
+      name: 'Básica (Wonderkids + Torneos)',
       price: { monthly: 20, yearly: 17 },
-      description: 'Para analistas y profesionales del fútbol',
+      description: 'Acceso esencial para descubrir talentos',
       features: [
-        'Acceso completo a base de datos de jugadores',
-        'Búsqueda avanzada y filtros',
-        'Perfiles detallados de jugadores',
-        'Comparaciones y análisis',
-        'Estadísticas avanzadas',
-        'Reportes personalizados',
-        'Soporte prioritario 24/7',
-        'Actualizaciones semanales'
+        'Acceso a sección Wonderkids',
+        'Acceso a sección Torneos',
+        'Perfiles detallados de jugadores jóvenes',
+        'Información de competiciones y eventos',
+        'Estadísticas de rendimiento',
+        'Actualizaciones semanales',
+        'Soporte por email'
       ],
-      popular: true,
+      popular: false,
       color: 'from-blue-500 to-blue-600'
     },
     {
-      id: 'scout',
-      name: 'Premium (players + scouts)',
-      price: { monthly: 20, yearly: 17 },
-      description: 'Para scouts profesionales',
+      id: 'premium',
+      name: 'Premium (Acceso Completo)',
+      price: { monthly: 30, yearly: 25 },
+      description: 'Para profesionales que buscan análisis avanzado',
       features: [
         'Todo lo del plan Básico',
-        'Herramientas de scouting avanzadas',
-        'Creación de reportes de jugadores',
-        'Sistema de seguimiento de talentos',
-        'Red de contactos con otros scouts',
-        'Acceso a eventos y torneos',
-        'Certificación profesional',
-        'Mentorías y formación continua'
+        'Acceso completo a base de datos de jugadores',
+        'Búsqueda avanzada y filtros',
+        'Comparaciones y análisis',
+        'Radar charts y métricas avanzadas',
+        'Acceso a red de scouts',
+        'Comparador de scouts',
+        'Reportes personalizados',
+        'Soporte prioritario 24/7'
       ],
-      popular: false,
+      popular: true,
       color: 'from-green-500 to-green-600'
     }
   ]

@@ -111,10 +111,37 @@ export function requiresActiveSubscription(pathname: string): boolean {
 export function isOnboardingRoute(pathname: string): boolean {
   const onboardingRoutes = [
     '/member/complete-profile',
-    '/member/welcome-plan',
     '/member/welcome',
-    '/member/subscription-plans'
+    '/member/payment-processing',
+    '/member/complete-profile-after-payment'
   ]
 
   return onboardingRoutes.some(route => pathname.startsWith(route))
+}
+
+/**
+ * Determina a qué ruta de onboarding redirigir según el estado del usuario
+ *
+ * @param roleInfo - Información del usuario (puede ser null si recién se registró)
+ * @returns URL de la ruta de onboarding apropiada
+ */
+export function getOnboardingRedirectUrl(roleInfo: UserRoleInfo | null): string {
+  // Si no hay roleInfo, el webhook aún no ha procesado → ir a complete-profile
+  if (!roleInfo) {
+    return '/member/complete-profile'
+  }
+
+  // Si no tiene suscripción activa → ir a complete-profile
+  // (complete-profile se encarga de redirigir al pago)
+  if (!roleInfo.hasActiveSubscription) {
+    return '/member/complete-profile'
+  }
+
+  // Si tiene suscripción pero perfil incompleto → ir a complete-profile
+  if (!roleInfo.profileCompleted) {
+    return '/member/complete-profile'
+  }
+
+  // Si tiene todo completo → ir a dashboard
+  return getDashboardUrl(roleInfo.role)
 }

@@ -1,12 +1,15 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
+import { FeatureAccessService } from '@/lib/auth/feature-access'
 import {
   getUserRoleInfo,
   getDashboardUrl,
   isOnboardingRoute,
   requiresActiveSubscription,
+  getOnboardingRedirectUrl,
 } from '@/lib/auth/role-utils'
+import type { UserMetadata } from '@/lib/services/role-service'
 import { isDebugApiAllowed, createDebugBlockedResponse } from '@/lib/utils/cleanup-debug-apis'
 
 // Definir rutas con matchers
@@ -14,7 +17,6 @@ const isAuthRoute = createRouteMatcher(['/login(.*)', '/register(.*)', '/admin-l
 const isAdminRoute = createRouteMatcher(['/admin(.*)'])
 const isMemberRoute = createRouteMatcher(['/member(.*)'])
 const isScoutRoute = createRouteMatcher(['/scout(.*)'])
-const isWelcomeRoute = createRouteMatcher(['/member/welcome(.*)'])
 
 const isPublicRoute = createRouteMatcher(['/'])
 
@@ -51,8 +53,15 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.next()
   }
 
-  // Permitir acceso a rutas públicas sin autenticación
+  // Manejar ruta pública (homepage)
   if (isPublicRoute(req)) {
+    // Si el usuario está autenticado y tiene un rol, redirigir a su dashboard
+    if (userId && roleInfo?.role) {
+      const dashboardUrl = getDashboardUrl(roleInfo.role)
+      console.log(`🔄 Usuario ${roleInfo.role} autenticado accediendo a homepage, redirigiendo a ${dashboardUrl}`)
+      return NextResponse.redirect(new URL(dashboardUrl, req.url))
+    }
+    // Si no está autenticado, permitir acceso a homepage
     return NextResponse.next()
   }
 
@@ -74,25 +83,54 @@ export default clerkMiddleware(async (auth, req) => {
 
   // Manejar rutas de member
   if (isMemberRoute(req)) {
-    if (!userId || !roleInfo) {
+    if (!userId) {
       return NextResponse.redirect(new URL('/login', req.url))
     }
 
-    // Verificar si tiene acceso al área de miembros
-    if (!roleInfo.access.memberArea) {
+    // ✅ CRÍTICO: Permitir acceso a rutas de onboarding sin restricciones adicionales
+    const isOnboarding = isOnboardingRoute(req.nextUrl.pathname)
+    if (isOnboarding) {
+      console.log('✅ Permitiendo acceso a ruta de onboarding:', req.nextUrl.pathname)
+      return NextResponse.next()
+    }
+
+    // Verificar si tiene acceso al área de miembros (solo si ya tiene rol y NO está en onboarding)
+    if (roleInfo && !roleInfo.access.memberArea) {
+      console.log('❌ Usuario sin acceso al área de miembros:', roleInfo.role)
       return NextResponse.redirect(new URL('/', req.url))
     }
 
     // Si es scout (pero no tester), redirigir a su dashboard apropiado
-    if (roleInfo.role === 'scout' && !req.nextUrl.pathname.startsWith('/member/welcome')) {
+    if (roleInfo && roleInfo.role === 'scout' && !req.nextUrl.pathname.startsWith('/member/welcome')) {
       return NextResponse.redirect(new URL('/scout/dashboard', req.url))
     }
-    
+
     // Los testers pueden acceder libremente al área de members
 
-    // Verificar suscripción activa para rutas que la requieren
-    if (requiresActiveSubscription(req.nextUrl.pathname) && !roleInfo.hasActiveSubscription) {
-      return NextResponse.redirect(new URL('/member/subscription-plans', req.url))
+    // Si el usuario intenta acceder a una ruta protegida (no onboarding) sin estar listo,
+    // redirigirlo al paso apropiado del onboarding
+    if (requiresActiveSubscription(req.nextUrl.pathname)) {
+      // Determinar si necesita completar onboarding
+      const needsOnboarding = !roleInfo || !roleInfo.hasActiveSubscription
+
+      if (needsOnboarding) {
+        const redirectUrl = getOnboardingRedirectUrl(roleInfo)
+        console.log('🔄 Usuario necesita onboarding, redirigiendo a:', redirectUrl)
+        return NextResponse.redirect(new URL(redirectUrl, req.url))
+      }
+    }
+
+    // ✅ NUEVO: Validar acceso a features según plan (basic vs premium)
+    if (!FeatureAccessService.isExemptRoute(req.nextUrl.pathname)) {
+      const feature = FeatureAccessService.getFeatureFromPath(req.nextUrl.pathname)
+      if (feature) {
+        const metadata = sessionClaims?.public_metadata as UserMetadata | undefined
+        const plan = metadata?.subscription?.plan
+
+        if (!FeatureAccessService.hasFeatureAccess(plan, feature)) {
+          return NextResponse.redirect(new URL('/member/upgrade-required', req.url))
+        }
+      }
     }
 
     return NextResponse.next()
@@ -112,61 +150,41 @@ export default clerkMiddleware(async (auth, req) => {
       }
       return NextResponse.redirect(new URL('/', req.url))
     }
-    
+
     // Los testers pueden acceder libremente al área de scouts
 
-    // Verificar suscripción activa
+    // Verificar suscripción activa - redirigir al paso apropiado de onboarding
     if (!roleInfo.hasActiveSubscription) {
-      return NextResponse.redirect(new URL('/member/subscription-plans', req.url))
+      const redirectUrl = getOnboardingRedirectUrl(roleInfo)
+      return NextResponse.redirect(new URL(redirectUrl, req.url))
     }
 
     return NextResponse.next()
   }
 
-  // Manejar rutas de autenticación
+  // Manejar rutas de autenticación (login, register)
   if (isAuthRoute(req)) {
-    console.log('🔐 Ruta de autenticación detectada:', req.nextUrl.pathname)
-
+    // Si el usuario NO está autenticado, permitir acceso a login/register
     if (!userId) {
-      console.log('❌ Usuario no autenticado, permitiendo acceso a página de auth')
       return NextResponse.next()
     }
 
-    console.log('👤 Usuario autenticado:', userId)
+    // ✅ Usuario YA autenticado intentando acceder a login/register
+    // → Redirigir a su panel correspondiente según su rol
 
-    // Si estamos en cualquier ruta de registro, redirigir a complete-profile
-    if (req.nextUrl.pathname.startsWith('/register')) {
-      console.log('🔄 Usuario autenticado intentando registrarse, redirigiendo a complete-profile')
-      const plan = req.nextUrl.searchParams.get('plan')
-      const redirectUrl = plan
-        ? `/member/complete-profile?plan=${plan}`
-        : '/member/complete-profile'
-      return NextResponse.redirect(new URL(redirectUrl, req.url))
-    }
-
-    // Si estamos en complete-profile, permitir acceso
-    if (req.nextUrl.pathname.startsWith('/member/complete-profile')) {
-      console.log('🔄 Usuario en complete-profile, permitiendo acceso')
-      return NextResponse.next()
-    }
-
-    console.log('📋 Estado del perfil:', {
-      role: roleInfo?.role,
-      profileCompleted: roleInfo?.profileCompleted,
-      hasActiveSubscription: roleInfo?.hasActiveSubscription,
-      metadata: roleInfo?.metadata,
-    })
-
-    // Redirigir según el rol del usuario
     if (roleInfo?.role) {
       const dashboardUrl = getDashboardUrl(roleInfo.role)
-      console.log(`✅ Usuario ${roleInfo.role}, redirigiendo a ${dashboardUrl}`)
+      console.log(`🔄 Usuario ${roleInfo.role} autenticado intentando acceder a ${req.nextUrl.pathname}, redirigiendo a ${dashboardUrl}`)
       return NextResponse.redirect(new URL(dashboardUrl, req.url))
     }
 
-    // Si no tiene rol definido, redirigir a home
-    console.log('🔄 Usuario sin rol definido, redirigiendo a home')
-    return NextResponse.redirect(new URL('/', req.url))
+    // Si no tiene rol definido, redirigir a complete-profile para que complete el onboarding
+    console.log('🔄 Usuario autenticado sin rol, redirigiendo a complete-profile')
+    const plan = req.nextUrl.searchParams.get('plan')
+    const redirectUrl = plan
+      ? `/member/complete-profile?plan=${plan}`
+      : '/member/complete-profile'
+    return NextResponse.redirect(new URL(redirectUrl, req.url))
   }
 
   // Para cualquier otra ruta, permitir acceso

@@ -24,7 +24,7 @@ export function getUserRole(user: UserResource | null | undefined): Role | null 
  */
 export function canAccessMemberArea(user: UserResource | null | undefined): boolean {
   const role = getUserRole(user)
-  return role === 'member' || role === 'tester' || role === 'admin'
+  return role === 'member' || role === 'scout' || role === 'tester' || role === 'admin'
 }
 
 /**
