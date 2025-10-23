@@ -151,6 +151,9 @@ model Jugador {
   lollipopData                    LollipopData[]
   playerLists                     PlayerList[]
   playerStats3m                   PlayerStats3m?
+  playerStats6m                   PlayerStats6m?
+  playerStats1y                   PlayerStats1y?
+  playerStats2y                   PlayerStats2y?
   radarMetrics                    RadarMetrics[]
   reportes                        Reporte[]
 
@@ -787,6 +790,447 @@ model PlayerStats3m {
   @@index([id_player, goals_p90_3m(sort: Desc)], map: "idx_stats_player_goals")
 
   @@map("player_stats_3m")
+}
+
+model PlayerStats6m {
+  id_player                         String   @id
+  wyscout_id                        BigInt?
+  stats_evo_6m                      Decimal? @db.Decimal(6, 2)
+  matches_played_tot_6m             Int?
+  matches_played_tot_6m_norm        Decimal? @db.Decimal(5, 2)
+  matches_played_tot_6m_rank        Int?
+  minutes_played_tot_6m             Int?
+  minutes_played_tot_6m_norm        Decimal? @db.Decimal(5, 2)
+  minutes_played_tot_6m_rank        Int?
+  goals_p90_6m                      Decimal? @db.Decimal(7, 3)
+  goals_p90_6m_norm                 Decimal? @db.Decimal(5, 2)
+  goals_p90_6m_rank                 Int?
+  goals_tot_6m                      Int?
+  goals_tot_6m_norm                 Decimal? @db.Decimal(5, 2)
+  assists_p90_6m                    Decimal? @db.Decimal(7, 3)
+  assists_p90_6m_norm               Decimal? @db.Decimal(5, 2)
+  assists_p90_6m_rank               Int?
+  assists_tot_6m                    Int?
+  assists_tot_6m_norm               Decimal? @db.Decimal(5, 2)
+  yellow_cards_p90_6m               Decimal? @db.Decimal(7, 3)
+  yellow_cards_p90_6m_norm          Decimal? @db.Decimal(5, 2)
+  yellow_cards_p90_rank             Int?
+  yellow_cards_p90_6m_norm_neg      Decimal? @db.Decimal(5, 2)
+  yellow_cards_tot_6m               Int?
+  yellow_cards_tot_6m_norm          Decimal? @db.Decimal(5, 2)
+  red_cards_p90_6m                  Decimal? @db.Decimal(7, 3)
+  red_cards_p90_6m_norm             Decimal? @db.Decimal(5, 2)
+  red_cards_p90_rank                Int?
+  red_cards_p90_6m_norm_neg         Decimal? @db.Decimal(5, 2)
+  red_cards_tot_6m                  Int?
+  red_cards_tot_6m_norm             Decimal? @db.Decimal(5, 2)
+  conceded_goals_p90_6m             Decimal? @db.Decimal(7, 3)
+  conceded_goals_p90_6m_norm        Decimal? @db.Decimal(5, 2)
+  conceded_goals_p90_6m_rank        Int?
+  conceded_goals_p90_6m_norm_neg    Decimal? @db.Decimal(5, 2)
+  conceded_goals_tot_6m             Int?
+  conceded_goals_tot_6m_norm        Decimal? @db.Decimal(5, 2)
+  prevented_goals_p90_6m            Decimal? @db.Decimal(7, 3)
+  prevented_goals_p90_6m_norm       Decimal? @db.Decimal(5, 2)
+  prevented_goals_p90_rank          Int?
+  prevented_goals_tot_6m            Decimal? @db.Decimal(7, 3)
+  prevented_goals_tot_6m_norm       Decimal? @db.Decimal(5, 2)
+  shots_against_p90_6m              Decimal? @db.Decimal(7, 3)
+  shots_against_p90_6m_norm         Decimal? @db.Decimal(5, 2)
+  shots_against_p90_6m_rank         Int?
+  shots_against_tot_6m              Int?
+  shots_against_tot_6m_norm         Decimal? @db.Decimal(5, 2)
+  clean_sheets_percent_6m           Decimal? @map("clean_sheets_%_6m") @db.Decimal(5, 2)
+  clean_sheets_percent_6m_norm      Decimal? @map("clean_sheets_%_6m_norm") @db.Decimal(5, 2)
+  clean_sheets_percent_6m_rank      Int?     @map("clean_sheets_%_6m_rank")
+  clean_sheets_tot_6m               Int?
+  clean_sheets_tot_6m_norm          Decimal? @db.Decimal(5, 2)
+  save_rate_percent_6m              Decimal? @map("save_rate_%_6m") @db.Decimal(5, 2)
+  save_rate_percent_6m_norm         Decimal? @map("save_rate_%_6m_norm") @db.Decimal(5, 2)
+  save_rate_percent_6m_rank         Int?     @map("save_rate_%_6m_rank")
+  tackles_p90_6m                    Decimal? @db.Decimal(7, 3)
+  tackles_p90_6m_norm               Decimal? @db.Decimal(5, 2)
+  tackles_p90_6m_rank               Int?
+  tackles_tot_6m                    Int?
+  tackles_tot_6m_norm               Decimal? @db.Decimal(5, 2)
+  interceptions_p90_6m              Decimal? @db.Decimal(7, 3)
+  interceptions_p90_6m_norm         Decimal? @db.Decimal(5, 2)
+  interceptions_p90_6m_rank         Int?
+  interceptions_tot_6m              Int?
+  interceptions_tot_6m_norm         Decimal? @db.Decimal(5, 2)
+  fouls_p90_6m                      Decimal? @db.Decimal(7, 3)
+  fouls_p90_6m_norm                 Decimal? @db.Decimal(5, 2)
+  fouls_p90_6m_rank                 Int?
+  fouls_p90_6m_norm_neg             Decimal? @db.Decimal(5, 2)
+  fouls_tot_6m                      Int?
+  fouls_tot_6m_norm                 Decimal? @db.Decimal(5, 2)
+  passes_p90_6m                     Decimal? @db.Decimal(7, 3)
+  passes_p90_6m_norm                Decimal? @db.Decimal(5, 2)
+  passes_p90_6m_rank                Int?
+  passes_tot_6m                     Int?
+  passes_tot_6m_norm                Decimal? @db.Decimal(5, 2)
+  forward_passes_p90_6m             Decimal? @db.Decimal(7, 3)
+  forward_passes_p90_6m_norm        Decimal? @db.Decimal(5, 2)
+  forward_passes_p90_6m_rank        Int?
+  forward_passes_tot_6m             Int?
+  forward_passes_tot_6m_norm        Decimal? @db.Decimal(5, 2)
+  crosses_p90_6m                    Decimal? @db.Decimal(7, 3)
+  crosses_p90_6m_norm               Decimal? @db.Decimal(5, 2)
+  crosses_p90_6m_rank               Int?
+  crosses_tot_6m                    Int?
+  crosses_tot_6m_norm               Decimal? @db.Decimal(5, 2)
+  accurate_passes_percent_6m        Decimal? @map("accurate_passes_%_6m") @db.Decimal(5, 2)
+  accurate_passes_percent_6m_norm   Decimal? @map("accurate_passes_%_6m_norm") @db.Decimal(5, 2)
+  accurate_passes_percent_6m_rank   Int?     @map("accurate_passes_%_6m_rank")
+  shots_p90_6m                      Decimal? @db.Decimal(7, 3)
+  shots_p90_6m_norm                 Decimal? @db.Decimal(5, 2)
+  shots_p90_6m_rank                 Int?
+  shots_tot_6m                      Int?
+  shots_tot_6m_norm                 Decimal? @db.Decimal(5, 2)
+  effectiveness_percent_6m          Decimal? @map("effectiveness_%_6m") @db.Decimal(5, 2)
+  effectiveness_percent_6m_norm     Decimal? @map("effectiveness_%_6m_norm") @db.Decimal(5, 2)
+  effectiveness_percent_6m_rank     Int?     @map("effectiveness_%_6m_rank")
+  off_duels_p90_6m                  Decimal? @db.Decimal(7, 3)
+  off_duels_p90_6m_norm             Decimal? @db.Decimal(5, 2)
+  off_duels_p90_6m_rank             Int?
+  off_duels_tot_6m                  Int?
+  off_duels_tot_6m_norm             Decimal? @db.Decimal(5, 2)
+  off_duels_won_percent_6m          Decimal? @map("off_duels_won_%_6m") @db.Decimal(5, 2)
+  off_duels_won_percent_6m_norm     Decimal? @map("off_duels_won_%_6m_norm") @db.Decimal(5, 2)
+  off_duels_won_percent_6m_rank     Int?     @map("off_duels_won_%_6m_rank")
+  def_duels_p90_6m                  Decimal? @db.Decimal(7, 3)
+  def_duels_p90_6m_norm             Decimal? @db.Decimal(5, 2)
+  def_duels_p90_6m_rank             Int?
+  def_duels_tot_6m                  Int?
+  def_duels_tot_6m_norm             Decimal? @db.Decimal(5, 2)
+  def_duels_won_percent_6m          Decimal? @map("def_duels_won_%_6m") @db.Decimal(5, 2)
+  def_duels_won_percent_6m_norm     Decimal? @map("def_duels_won_%_6m_norm") @db.Decimal(5, 2)
+  def_duels_won_percent_6m_rank     Int?     @map("def_duels_won_%_6m_rank")
+  aerials_duels_p90_6m              Decimal? @db.Decimal(7, 3)
+  aerials_duels_p90_6m_norm         Decimal? @db.Decimal(5, 2)
+  aerials_duels_p90_6m_rank         Int?
+  aerials_duels_tot_6m              Int?
+  aerials_duels_tot_6m_norm         Decimal? @db.Decimal(5, 2)
+  aerials_duels_won_percent_6m      Decimal? @map("aerials_duels_won_%_6m") @db.Decimal(5, 2)
+  aerials_duels_won_percent_6m_norm Decimal? @map("aerials_duels_won_%_6m_norm") @db.Decimal(5, 2)
+  aerials_duels_won_percent_6m_rank Int?     @map("aerials_duels_won_%_6m_rank")
+  created_at                        DateTime @default(now()) @map("created_at")
+  updated_at                        DateTime @updatedAt @map("updated_at")
+  player                            Jugador  @relation(fields: [id_player], references: [id_player], onDelete: Cascade)
+
+  // Single indexes
+  @@index([id_player])
+  @@index([goals_p90_6m(sort: Desc)])
+  @@index([assists_p90_6m(sort: Desc)])
+  @@index([stats_evo_6m(sort: Desc)])
+  @@index([goals_p90_6m_rank])
+  @@index([assists_p90_6m_rank])
+  @@index([clean_sheets_percent_6m(sort: Desc)])
+  @@index([save_rate_percent_6m(sort: Desc)])
+  @@index([created_at(sort: Desc)])
+  @@index([updated_at(sort: Desc)])
+  @@index([id_player], map: "idx_player_stats_6m_player_id")
+
+  // NEW: Composite indexes for performance
+  @@index([id_player, matches_played_tot_6m(sort: Desc)], map: "idx_stats_6m_player_matches")
+  @@index([goals_p90_6m(sort: Desc), assists_p90_6m(sort: Desc)], map: "idx_stats_6m_goals_assists")
+  @@index([id_player, goals_p90_6m(sort: Desc)], map: "idx_stats_6m_player_goals")
+
+  @@map("player_stats_6m")
+}
+
+model PlayerStats1y {
+  id_player                         String   @id
+  wyscout_id                        BigInt?
+  stats_evo_1y                      Decimal? @db.Decimal(6, 2)
+  matches_played_tot_1y             Int?
+  matches_played_tot_1y_norm        Decimal? @db.Decimal(5, 2)
+  matches_played_tot_1y_rank        Int?
+  minutes_played_tot_1y             Int?
+  minutes_played_tot_1y_norm        Decimal? @db.Decimal(5, 2)
+  minutes_played_tot_1y_rank        Int?
+  goals_p90_1y                      Decimal? @db.Decimal(7, 3)
+  goals_p90_1y_norm                 Decimal? @db.Decimal(5, 2)
+  goals_p90_1y_rank                 Int?
+  goals_tot_1y                      Int?
+  goals_tot_1y_norm                 Decimal? @db.Decimal(5, 2)
+  assists_p90_1y                    Decimal? @db.Decimal(7, 3)
+  assists_p90_1y_norm               Decimal? @db.Decimal(5, 2)
+  assists_p90_1y_rank               Int?
+  assists_tot_1y                    Int?
+  assists_tot_1y_norm               Decimal? @db.Decimal(5, 2)
+  yellow_cards_p90_1y               Decimal? @db.Decimal(7, 3)
+  yellow_cards_p90_1y_norm          Decimal? @db.Decimal(5, 2)
+  yellow_cards_p90_rank             Int?
+  yellow_cards_p90_1y_norm_neg      Decimal? @db.Decimal(5, 2)
+  yellow_cards_tot_1y               Int?
+  yellow_cards_tot_1y_norm          Decimal? @db.Decimal(5, 2)
+  red_cards_p90_1y                  Decimal? @db.Decimal(7, 3)
+  red_cards_p90_1y_norm             Decimal? @db.Decimal(5, 2)
+  red_cards_p90_rank                Int?
+  red_cards_p90_1y_norm_neg         Decimal? @db.Decimal(5, 2)
+  red_cards_tot_1y                  Int?
+  red_cards_tot_1y_norm             Decimal? @db.Decimal(5, 2)
+  conceded_goals_p90_1y             Decimal? @db.Decimal(7, 3)
+  conceded_goals_p90_1y_norm        Decimal? @db.Decimal(5, 2)
+  conceded_goals_p90_1y_rank        Int?
+  conceded_goals_p90_1y_norm_neg    Decimal? @db.Decimal(5, 2)
+  conceded_goals_tot_1y             Int?
+  conceded_goals_tot_1y_norm        Decimal? @db.Decimal(5, 2)
+  prevented_goals_p90_1y            Decimal? @db.Decimal(7, 3)
+  prevented_goals_p90_1y_norm       Decimal? @db.Decimal(5, 2)
+  prevented_goals_p90_rank          Int?
+  prevented_goals_tot_1y            Decimal? @db.Decimal(7, 3)
+  prevented_goals_tot_1y_norm       Decimal? @db.Decimal(5, 2)
+  shots_against_p90_1y              Decimal? @db.Decimal(7, 3)
+  shots_against_p90_1y_norm         Decimal? @db.Decimal(5, 2)
+  shots_against_p90_1y_rank         Int?
+  shots_against_tot_1y              Int?
+  shots_against_tot_1y_norm         Decimal? @db.Decimal(5, 2)
+  clean_sheets_percent_1y           Decimal? @map("clean_sheets_%_1y") @db.Decimal(5, 2)
+  clean_sheets_percent_1y_norm      Decimal? @map("clean_sheets_%_1y_norm") @db.Decimal(5, 2)
+  clean_sheets_percent_1y_rank      Int?     @map("clean_sheets_%_1y_rank")
+  clean_sheets_tot_1y               Int?
+  clean_sheets_tot_1y_norm          Decimal? @db.Decimal(5, 2)
+  save_rate_percent_1y              Decimal? @map("save_rate_%_1y") @db.Decimal(5, 2)
+  save_rate_percent_1y_norm         Decimal? @map("save_rate_%_1y_norm") @db.Decimal(5, 2)
+  save_rate_percent_1y_rank         Int?     @map("save_rate_%_1y_rank")
+  tackles_p90_1y                    Decimal? @db.Decimal(7, 3)
+  tackles_p90_1y_norm               Decimal? @db.Decimal(5, 2)
+  tackles_p90_1y_rank               Int?
+  tackles_tot_1y                    Int?
+  tackles_tot_1y_norm               Decimal? @db.Decimal(5, 2)
+  interceptions_p90_1y              Decimal? @db.Decimal(7, 3)
+  interceptions_p90_1y_norm         Decimal? @db.Decimal(5, 2)
+  interceptions_p90_1y_rank         Int?
+  interceptions_tot_1y              Int?
+  interceptions_tot_1y_norm         Decimal? @db.Decimal(5, 2)
+  fouls_p90_1y                      Decimal? @db.Decimal(7, 3)
+  fouls_p90_1y_norm                 Decimal? @db.Decimal(5, 2)
+  fouls_p90_1y_rank                 Int?
+  fouls_p90_1y_norm_neg             Decimal? @db.Decimal(5, 2)
+  fouls_tot_1y                      Int?
+  fouls_tot_1y_norm                 Decimal? @db.Decimal(5, 2)
+  passes_p90_1y                     Decimal? @db.Decimal(7, 3)
+  passes_p90_1y_norm                Decimal? @db.Decimal(5, 2)
+  passes_p90_1y_rank                Int?
+  passes_tot_1y                     Int?
+  passes_tot_1y_norm                Decimal? @db.Decimal(5, 2)
+  forward_passes_p90_1y             Decimal? @db.Decimal(7, 3)
+  forward_passes_p90_1y_norm        Decimal? @db.Decimal(5, 2)
+  forward_passes_p90_1y_rank        Int?
+  forward_passes_tot_1y             Int?
+  forward_passes_tot_1y_norm        Decimal? @db.Decimal(5, 2)
+  crosses_p90_1y                    Decimal? @db.Decimal(7, 3)
+  crosses_p90_1y_norm               Decimal? @db.Decimal(5, 2)
+  crosses_p90_1y_rank               Int?
+  crosses_tot_1y                    Int?
+  crosses_tot_1y_norm               Decimal? @db.Decimal(5, 2)
+  accurate_passes_percent_1y        Decimal? @map("accurate_passes_%_1y") @db.Decimal(5, 2)
+  accurate_passes_percent_1y_norm   Decimal? @map("accurate_passes_%_1y_norm") @db.Decimal(5, 2)
+  accurate_passes_percent_1y_rank   Int?     @map("accurate_passes_%_1y_rank")
+  shots_p90_1y                      Decimal? @db.Decimal(7, 3)
+  shots_p90_1y_norm                 Decimal? @db.Decimal(5, 2)
+  shots_p90_1y_rank                 Int?
+  shots_tot_1y                      Int?
+  shots_tot_1y_norm                 Decimal? @db.Decimal(5, 2)
+  effectiveness_percent_1y          Decimal? @map("effectiveness_%_1y") @db.Decimal(5, 2)
+  effectiveness_percent_1y_norm     Decimal? @map("effectiveness_%_1y_norm") @db.Decimal(5, 2)
+  effectiveness_percent_1y_rank     Int?     @map("effectiveness_%_1y_rank")
+  off_duels_p90_1y                  Decimal? @db.Decimal(7, 3)
+  off_duels_p90_1y_norm             Decimal? @db.Decimal(5, 2)
+  off_duels_p90_1y_rank             Int?
+  off_duels_tot_1y                  Int?
+  off_duels_tot_1y_norm             Decimal? @db.Decimal(5, 2)
+  off_duels_won_percent_1y          Decimal? @map("off_duels_won_%_1y") @db.Decimal(5, 2)
+  off_duels_won_percent_1y_norm     Decimal? @map("off_duels_won_%_1y_norm") @db.Decimal(5, 2)
+  off_duels_won_percent_1y_rank     Int?     @map("off_duels_won_%_1y_rank")
+  def_duels_p90_1y                  Decimal? @db.Decimal(7, 3)
+  def_duels_p90_1y_norm             Decimal? @db.Decimal(5, 2)
+  def_duels_p90_1y_rank             Int?
+  def_duels_tot_1y                  Int?
+  def_duels_tot_1y_norm             Decimal? @db.Decimal(5, 2)
+  def_duels_won_percent_1y          Decimal? @map("def_duels_won_%_1y") @db.Decimal(5, 2)
+  def_duels_won_percent_1y_norm     Decimal? @map("def_duels_won_%_1y_norm") @db.Decimal(5, 2)
+  def_duels_won_percent_1y_rank     Int?     @map("def_duels_won_%_1y_rank")
+  aerials_duels_p90_1y              Decimal? @db.Decimal(7, 3)
+  aerials_duels_p90_1y_norm         Decimal? @db.Decimal(5, 2)
+  aerials_duels_p90_1y_rank         Int?
+  aerials_duels_tot_1y              Int?
+  aerials_duels_tot_1y_norm         Decimal? @db.Decimal(5, 2)
+  aerials_duels_won_percent_1y      Decimal? @map("aerials_duels_won_%_1y") @db.Decimal(5, 2)
+  aerials_duels_won_percent_1y_norm Decimal? @map("aerials_duels_won_%_1y_norm") @db.Decimal(5, 2)
+  aerials_duels_won_percent_1y_rank Int?     @map("aerials_duels_won_%_1y_rank")
+  created_at                        DateTime @default(now()) @map("created_at")
+  updated_at                        DateTime @updatedAt @map("updated_at")
+  player                            Jugador  @relation(fields: [id_player], references: [id_player], onDelete: Cascade)
+
+  // Single indexes
+  @@index([id_player])
+  @@index([goals_p90_1y(sort: Desc)])
+  @@index([assists_p90_1y(sort: Desc)])
+  @@index([stats_evo_1y(sort: Desc)])
+  @@index([goals_p90_1y_rank])
+  @@index([assists_p90_1y_rank])
+  @@index([clean_sheets_percent_1y(sort: Desc)])
+  @@index([save_rate_percent_1y(sort: Desc)])
+  @@index([created_at(sort: Desc)])
+  @@index([updated_at(sort: Desc)])
+  @@index([id_player], map: "idx_player_stats_1y_player_id")
+
+  // NEW: Composite indexes for performance
+  @@index([id_player, matches_played_tot_1y(sort: Desc)], map: "idx_stats_1y_player_matches")
+  @@index([goals_p90_1y(sort: Desc), assists_p90_1y(sort: Desc)], map: "idx_stats_1y_goals_assists")
+  @@index([id_player, goals_p90_1y(sort: Desc)], map: "idx_stats_1y_player_goals")
+
+  @@map("player_stats_1y")
+}
+
+model PlayerStats2y {
+  id_player                         String   @id
+  wyscout_id                        BigInt?
+  stats_evo_2y                      Decimal? @db.Decimal(6, 2)
+  matches_played_tot_2y             Int?
+  matches_played_tot_2y_norm        Decimal? @db.Decimal(5, 2)
+  matches_played_tot_2y_rank        Int?
+  minutes_played_tot_2y             Int?
+  minutes_played_tot_2y_norm        Decimal? @db.Decimal(5, 2)
+  minutes_played_tot_2y_rank        Int?
+  goals_p90_2y                      Decimal? @db.Decimal(7, 3)
+  goals_p90_2y_norm                 Decimal? @db.Decimal(5, 2)
+  goals_p90_2y_rank                 Int?
+  goals_tot_2y                      Int?
+  goals_tot_2y_norm                 Decimal? @db.Decimal(5, 2)
+  assists_p90_2y                    Decimal? @db.Decimal(7, 3)
+  assists_p90_2y_norm               Decimal? @db.Decimal(5, 2)
+  assists_p90_2y_rank               Int?
+  assists_tot_2y                    Int?
+  assists_tot_2y_norm               Decimal? @db.Decimal(5, 2)
+  yellow_cards_p90_2y               Decimal? @db.Decimal(7, 3)
+  yellow_cards_p90_2y_norm          Decimal? @db.Decimal(5, 2)
+  yellow_cards_p90_rank             Int?
+  yellow_cards_p90_2y_norm_neg      Decimal? @db.Decimal(5, 2)
+  yellow_cards_tot_2y               Int?
+  yellow_cards_tot_2y_norm          Decimal? @db.Decimal(5, 2)
+  red_cards_p90_2y                  Decimal? @db.Decimal(7, 3)
+  red_cards_p90_2y_norm             Decimal? @db.Decimal(5, 2)
+  red_cards_p90_rank                Int?
+  red_cards_p90_2y_norm_neg         Decimal? @db.Decimal(5, 2)
+  red_cards_tot_2y                  Int?
+  red_cards_tot_2y_norm             Decimal? @db.Decimal(5, 2)
+  conceded_goals_p90_2y             Decimal? @db.Decimal(7, 3)
+  conceded_goals_p90_2y_norm        Decimal? @db.Decimal(5, 2)
+  conceded_goals_p90_2y_rank        Int?
+  conceded_goals_p90_2y_norm_neg    Decimal? @db.Decimal(5, 2)
+  conceded_goals_tot_2y             Int?
+  conceded_goals_tot_2y_norm        Decimal? @db.Decimal(5, 2)
+  prevented_goals_p90_2y            Decimal? @db.Decimal(7, 3)
+  prevented_goals_p90_2y_norm       Decimal? @db.Decimal(5, 2)
+  prevented_goals_p90_rank          Int?
+  prevented_goals_tot_2y            Decimal? @db.Decimal(7, 3)
+  prevented_goals_tot_2y_norm       Decimal? @db.Decimal(5, 2)
+  shots_against_p90_2y              Decimal? @db.Decimal(7, 3)
+  shots_against_p90_2y_norm         Decimal? @db.Decimal(5, 2)
+  shots_against_p90_2y_rank         Int?
+  shots_against_tot_2y              Int?
+  shots_against_tot_2y_norm         Decimal? @db.Decimal(5, 2)
+  clean_sheets_percent_2y           Decimal? @map("clean_sheets_%_2y") @db.Decimal(5, 2)
+  clean_sheets_percent_2y_norm      Decimal? @map("clean_sheets_%_2y_norm") @db.Decimal(5, 2)
+  clean_sheets_percent_2y_rank      Int?     @map("clean_sheets_%_2y_rank")
+  clean_sheets_tot_2y               Int?
+  clean_sheets_tot_2y_norm          Decimal? @db.Decimal(5, 2)
+  save_rate_percent_2y              Decimal? @map("save_rate_%_2y") @db.Decimal(5, 2)
+  save_rate_percent_2y_norm         Decimal? @map("save_rate_%_2y_norm") @db.Decimal(5, 2)
+  save_rate_percent_2y_rank         Int?     @map("save_rate_%_2y_rank")
+  tackles_p90_2y                    Decimal? @db.Decimal(7, 3)
+  tackles_p90_2y_norm               Decimal? @db.Decimal(5, 2)
+  tackles_p90_2y_rank               Int?
+  tackles_tot_2y                    Int?
+  tackles_tot_2y_norm               Decimal? @db.Decimal(5, 2)
+  interceptions_p90_2y              Decimal? @db.Decimal(7, 3)
+  interceptions_p90_2y_norm         Decimal? @db.Decimal(5, 2)
+  interceptions_p90_2y_rank         Int?
+  interceptions_tot_2y              Int?
+  interceptions_tot_2y_norm         Decimal? @db.Decimal(5, 2)
+  fouls_p90_2y                      Decimal? @db.Decimal(7, 3)
+  fouls_p90_2y_norm                 Decimal? @db.Decimal(5, 2)
+  fouls_p90_2y_rank                 Int?
+  fouls_p90_2y_norm_neg             Decimal? @db.Decimal(5, 2)
+  fouls_tot_2y                      Int?
+  fouls_tot_2y_norm                 Decimal? @db.Decimal(5, 2)
+  passes_p90_2y                     Decimal? @db.Decimal(7, 3)
+  passes_p90_2y_norm                Decimal? @db.Decimal(5, 2)
+  passes_p90_2y_rank                Int?
+  passes_tot_2y                     Int?
+  passes_tot_2y_norm                Decimal? @db.Decimal(5, 2)
+  forward_passes_p90_2y             Decimal? @db.Decimal(7, 3)
+  forward_passes_p90_2y_norm        Decimal? @db.Decimal(5, 2)
+  forward_passes_p90_2y_rank        Int?
+  forward_passes_tot_2y             Int?
+  forward_passes_tot_2y_norm        Decimal? @db.Decimal(5, 2)
+  crosses_p90_2y                    Decimal? @db.Decimal(7, 3)
+  crosses_p90_2y_norm               Decimal? @db.Decimal(5, 2)
+  crosses_p90_2y_rank               Int?
+  crosses_tot_2y                    Int?
+  crosses_tot_2y_norm               Decimal? @db.Decimal(5, 2)
+  accurate_passes_percent_2y        Decimal? @map("accurate_passes_%_2y") @db.Decimal(5, 2)
+  accurate_passes_percent_2y_norm   Decimal? @map("accurate_passes_%_2y_norm") @db.Decimal(5, 2)
+  accurate_passes_percent_2y_rank   Int?     @map("accurate_passes_%_2y_rank")
+  shots_p90_2y                      Decimal? @db.Decimal(7, 3)
+  shots_p90_2y_norm                 Decimal? @db.Decimal(5, 2)
+  shots_p90_2y_rank                 Int?
+  shots_tot_2y                      Int?
+  shots_tot_2y_norm                 Decimal? @db.Decimal(5, 2)
+  effectiveness_percent_2y          Decimal? @map("effectiveness_%_2y") @db.Decimal(5, 2)
+  effectiveness_percent_2y_norm     Decimal? @map("effectiveness_%_2y_norm") @db.Decimal(5, 2)
+  effectiveness_percent_2y_rank     Int?     @map("effectiveness_%_2y_rank")
+  off_duels_p90_2y                  Decimal? @db.Decimal(7, 3)
+  off_duels_p90_2y_norm             Decimal? @db.Decimal(5, 2)
+  off_duels_p90_2y_rank             Int?
+  off_duels_tot_2y                  Int?
+  off_duels_tot_2y_norm             Decimal? @db.Decimal(5, 2)
+  off_duels_won_percent_2y          Decimal? @map("off_duels_won_%_2y") @db.Decimal(5, 2)
+  off_duels_won_percent_2y_norm     Decimal? @map("off_duels_won_%_2y_norm") @db.Decimal(5, 2)
+  off_duels_won_percent_2y_rank     Int?     @map("off_duels_won_%_2y_rank")
+  def_duels_p90_2y                  Decimal? @db.Decimal(7, 3)
+  def_duels_p90_2y_norm             Decimal? @db.Decimal(5, 2)
+  def_duels_p90_2y_rank             Int?
+  def_duels_tot_2y                  Int?
+  def_duels_tot_2y_norm             Decimal? @db.Decimal(5, 2)
+  def_duels_won_percent_2y          Decimal? @map("def_duels_won_%_2y") @db.Decimal(5, 2)
+  def_duels_won_percent_2y_norm     Decimal? @map("def_duels_won_%_2y_norm") @db.Decimal(5, 2)
+  def_duels_won_percent_2y_rank     Int?     @map("def_duels_won_%_2y_rank")
+  aerials_duels_p90_2y              Decimal? @db.Decimal(7, 3)
+  aerials_duels_p90_2y_norm         Decimal? @db.Decimal(5, 2)
+  aerials_duels_p90_2y_rank         Int?
+  aerials_duels_tot_2y              Int?
+  aerials_duels_tot_2y_norm         Decimal? @db.Decimal(5, 2)
+  aerials_duels_won_percent_2y      Decimal? @map("aerials_duels_won_%_2y") @db.Decimal(5, 2)
+  aerials_duels_won_percent_2y_norm Decimal? @map("aerials_duels_won_%_2y_norm") @db.Decimal(5, 2)
+  aerials_duels_won_percent_2y_rank Int?     @map("aerials_duels_won_%_2y_rank")
+  created_at                        DateTime @default(now()) @map("created_at")
+  updated_at                        DateTime @updatedAt @map("updated_at")
+  player                            Jugador  @relation(fields: [id_player], references: [id_player], onDelete: Cascade)
+
+  // Single indexes
+  @@index([id_player])
+  @@index([goals_p90_2y(sort: Desc)])
+  @@index([assists_p90_2y(sort: Desc)])
+  @@index([stats_evo_2y(sort: Desc)])
+  @@index([goals_p90_2y_rank])
+  @@index([assists_p90_2y_rank])
+  @@index([clean_sheets_percent_2y(sort: Desc)])
+  @@index([save_rate_percent_2y(sort: Desc)])
+  @@index([created_at(sort: Desc)])
+  @@index([updated_at(sort: Desc)])
+  @@index([id_player], map: "idx_player_stats_2y_player_id")
+
+  // NEW: Composite indexes for performance
+  @@index([id_player, matches_played_tot_2y(sort: Desc)], map: "idx_stats_2y_player_matches")
+  @@index([goals_p90_2y(sort: Desc), assists_p90_2y(sort: Desc)], map: "idx_stats_2y_goals_assists")
+  @@index([id_player, goals_p90_2y(sort: Desc)], map: "idx_stats_2y_player_goals")
+
+  @@map("player_stats_2y")
 }
 
 model OnDemandMessage {

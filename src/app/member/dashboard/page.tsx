@@ -330,17 +330,6 @@ export default function MemberDashboard() {
           </div>
         )}
 
-        {/* Loading State */}
-        {loading && (
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8c1a10]"></div>
-            <span className="ml-3 text-[#6d6d6d] mt-2">{searchTerm
-                ? `Buscando "${searchTerm}"...`
-                : "Cargando jugadores..."}
-            </span>
-          </div>
-        )}
-
         {/* Error State */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
@@ -351,9 +340,9 @@ export default function MemberDashboard() {
         )}
 
         {/* Players List */}
-        {!loading && !error && (
+        {!error && (
           <div className="space-y-4">
-            {filteredPlayers.length === 0 ? (
+            {!loading && filteredPlayers.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-[#6d6d6d] text-lg">{activeTab === "favourites"
                     ? "No tienes jugadores en tus favoritos"
@@ -374,10 +363,10 @@ export default function MemberDashboard() {
                     Ver todos los jugadores
                   </button>
                 )}
-                
+
                 {/* Debug button - only in development and when payment=success */}
-                {process.env.NODE_ENV === 'development' && 
-                 typeof window !== 'undefined' && 
+                {process.env.NODE_ENV === 'development' &&
+                 typeof window !== 'undefined' &&
                  new URLSearchParams(window.location.search).get('payment') === 'success' && (
                   <div className="mt-6">
                     <button
@@ -405,6 +394,7 @@ export default function MemberDashboard() {
                   sortBy={sortBy}
                   sortOrder={sortOrder}
                   onSort={handleSort}
+                  loading={loading && filteredPlayers.length === 0}
                 />
 
                 {/* Infinite Scroll Observer Target */}
@@ -413,7 +403,7 @@ export default function MemberDashboard() {
                   style={{ minHeight: '80px' }}
                   className="flex items-center justify-center py-8"
                 >
-                  {loading && hasMore && (
+                  {loading && hasMore && filteredPlayers.length > 0 && (
                     <div className="flex flex-col items-center gap-2">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8c1a10]"></div>
                       <span className="text-[#6d6d6d] text-sm">Cargando más jugadores...</span>

@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge'
-import { ScoutEconomicService } from '@/lib/services/scout-economic-service'
+import { formatValue, formatROI, formatEconomicChange } from '@/lib/utils/scout-format-utils'
 import type { Scout } from '@/types/scout'
 
 interface ScoutEconomicInfoProps {
@@ -123,9 +123,9 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
             <span className='text-[#6d6d6d] text-sm'>Inversión Total:</span>
             <div className='flex items-center gap-2'>
               <span className='text-[#2e3138] font-medium'>
-                {ScoutEconomicService.formatValue(scout.total_investment)}
+                {formatValue(scout.total_investment)}
                 {(() => {
-                  const change = ScoutEconomicService.formatEconomicChange(
+                  const change = formatEconomicChange(
                     scout.total_investment_change_percent
                   )
                   if (!change.isNeutral && change.text) {
@@ -146,7 +146,7 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
                     }`}
                   >
                     {
-                      ScoutEconomicService.formatEconomicChange(
+                      formatEconomicChange(
                         scout.total_investment_change_percent
                       ).arrow
                     }
@@ -159,9 +159,9 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
             <span className='text-[#6d6d6d] text-sm'>Beneficio Neto:</span>
             <div className='flex items-center gap-2'>
               <span className='text-[#2e3138] font-medium'>
-                {ScoutEconomicService.formatValue(scout.net_profits)}
+                {formatValue(scout.net_profits)}
                 {(() => {
-                  const change = ScoutEconomicService.formatEconomicChange(
+                  const change = formatEconomicChange(
                     scout.net_profits_change_percent
                   )
                   if (!change.isNeutral && change.text) {
@@ -182,7 +182,7 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
                     }`}
                   >
                     {
-                      ScoutEconomicService.formatEconomicChange(scout.net_profits_change_percent)
+                      formatEconomicChange(scout.net_profits_change_percent)
                         .arrow
                     }
                   </Badge>
@@ -194,9 +194,9 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
             <span className='text-[#6d6d6d] text-sm'>ROI:</span>
             <div className='flex items-center gap-2'>
               <span className='text-[#2e3138] font-medium'>
-                {ScoutEconomicService.formatROI(scout.roi)}
+                {formatROI(scout.roi)}
                 {(() => {
-                  const change = ScoutEconomicService.formatEconomicChange(
+                  const change = formatEconomicChange(
                     scout.roi_change_percent,
                     true
                   )
@@ -216,7 +216,7 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
                         : 'bg-gray-500'
                   }`}
                 >
-                  {ScoutEconomicService.formatEconomicChange(scout.roi_change_percent, true).arrow}
+                  {formatEconomicChange(scout.roi_change_percent, true).arrow}
                 </Badge>
               )}
             </div>
@@ -226,9 +226,9 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
             <span className='text-[#6d6d6d] text-sm'>Valor TRFM Inicial Promedio:</span>
             <div className='flex items-center gap-2'>
               <span className='text-[#2e3138] font-medium'>
-                {ScoutEconomicService.formatValue(scout.avg_initial_trfm_value)}
+                {formatValue(scout.avg_initial_trfm_value)}
                 {(() => {
-                  const change = ScoutEconomicService.formatEconomicChange(
+                  const change = formatEconomicChange(
                     scout.avg_initial_trfm_value_change_percent
                   )
                   if (!change.isNeutral && change.text) {
@@ -249,7 +249,7 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
                     }`}
                   >
                     {
-                      ScoutEconomicService.formatEconomicChange(
+                      formatEconomicChange(
                         scout.avg_initial_trfm_value_change_percent
                       ).arrow
                     }
@@ -262,9 +262,9 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
             <span className='text-[#6d6d6d] text-sm'>Máximo Beneficio por Reporte:</span>
             <div className='flex items-center gap-2'>
               <span className='text-[#2e3138] font-medium'>
-                {ScoutEconomicService.formatValue(scout.max_profit_report)}
+                {formatValue(scout.max_profit_report)}
                 {(() => {
-                  const change = ScoutEconomicService.formatEconomicChange(
+                  const change = formatEconomicChange(
                     scout.max_profit_report_change_percent
                   )
                   if (!change.isNeutral && change.text) {
@@ -285,7 +285,7 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
                     }`}
                   >
                     {
-                      ScoutEconomicService.formatEconomicChange(
+                      formatEconomicChange(
                         scout.max_profit_report_change_percent
                       ).arrow
                     }
@@ -298,9 +298,9 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
             <span className='text-[#6d6d6d] text-sm'>Mínimo Beneficio por Reporte:</span>
             <div className='flex items-center gap-2'>
               <span className='text-[#2e3138] font-medium'>
-                {ScoutEconomicService.formatValue(scout.min_profit_report)}
+                {formatValue(scout.min_profit_report)}
                 {(() => {
-                  const change = ScoutEconomicService.formatEconomicChange(
+                  const change = formatEconomicChange(
                     scout.min_profit_report_change_percent
                   )
                   if (!change.isNeutral && change.text) {
@@ -321,7 +321,7 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
                     }`}
                   >
                     {
-                      ScoutEconomicService.formatEconomicChange(
+                      formatEconomicChange(
                         scout.min_profit_report_change_percent
                       ).arrow
                     }
@@ -334,9 +334,9 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
             <span className='text-[#6d6d6d] text-sm'>Beneficio Promedio por Reporte:</span>
             <div className='flex items-center gap-2'>
               <span className='text-[#2e3138] font-medium'>
-                {ScoutEconomicService.formatValue(scout.avg_profit_report)}
+                {formatValue(scout.avg_profit_report)}
                 {(() => {
-                  const change = ScoutEconomicService.formatEconomicChange(
+                  const change = formatEconomicChange(
                     scout.avg_profit_report_change_percent
                   )
                   if (!change.isNeutral && change.text) {
@@ -357,7 +357,7 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
                     }`}
                   >
                     {
-                      ScoutEconomicService.formatEconomicChange(
+                      formatEconomicChange(
                         scout.avg_profit_report_change_percent
                       ).arrow
                     }
@@ -370,9 +370,9 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
             <span className='text-[#6d6d6d] text-sm'>Puntos de Transferencia de Equipo:</span>
             <div className='flex items-center gap-2'>
               <span className='text-[#2e3138] font-medium'>
-                {ScoutEconomicService.formatValue(scout.transfer_team_pts, ' pts')}
+                {formatValue(scout.transfer_team_pts, ' pts')}
                 {(() => {
-                  const change = ScoutEconomicService.formatEconomicChange(
+                  const change = formatEconomicChange(
                     scout.transfer_team_pts_change_percent
                   )
                   if (!change.isNeutral && change.text) {
@@ -393,7 +393,7 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
                     }`}
                   >
                     {
-                      ScoutEconomicService.formatEconomicChange(
+                      formatEconomicChange(
                         scout.transfer_team_pts_change_percent
                       ).arrow
                     }
@@ -413,9 +413,9 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
             <span className='text-[#6d6d6d] text-sm'>Puntos de Transferencia de Competición:</span>
             <div className='flex items-center gap-2'>
               <span className='text-[#2e3138] font-medium'>
-                {ScoutEconomicService.formatValue(scout.transfer_competition_pts, ' pts')}
+                {formatValue(scout.transfer_competition_pts, ' pts')}
                 {(() => {
-                  const change = ScoutEconomicService.formatEconomicChange(
+                  const change = formatEconomicChange(
                     scout.transfer_competition_pts_change_percent
                   )
                   if (!change.isNeutral && change.text) {
@@ -436,7 +436,7 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
                     }`}
                   >
                     {
-                      ScoutEconomicService.formatEconomicChange(
+                      formatEconomicChange(
                         scout.transfer_competition_pts_change_percent
                       ).arrow
                     }

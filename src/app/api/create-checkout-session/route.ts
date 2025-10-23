@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { plan, billing } = body
+    let { plan, billing } = body
 
     console.log('Creating Stripe checkout session for userId:', userId)
     console.log('Plan:', plan, 'Billing:', billing)
@@ -31,7 +31,21 @@ export async function POST(request: NextRequest) {
     const userEmail = user.emailAddresses[0]?.emailAddress
     const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim()
 
-    console.log('User info:', { userEmail, userName })
+    // Si no hay plan pero el usuario tiene rol asignado (por invitación), usar ese rol
+    if (!plan) {
+      const userRole = user.publicMetadata?.role as string | undefined
+      if (userRole === 'scout' || userRole === 'member') {
+        plan = userRole
+        console.log('No plan provided, using role from invitation:', plan)
+      }
+    }
+
+    if (!plan) {
+      console.error('No plan provided and no role in user metadata')
+      return NextResponse.json({ error: 'Plan is required' }, { status: 400 })
+    }
+
+    console.log('User info:', { userEmail, userName, plan })
 
     // Actualizar metadatos del usuario para marcar el plan seleccionado
     const currentMetadata = user.publicMetadata || {}

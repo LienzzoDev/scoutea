@@ -148,7 +148,13 @@ export class FeatureAccessService {
     }
 
     // Plan premium: acceso completo a todas las features
-    if (planLower.includes('premium') || planLower === 'pro') {
+    // Incluye 'scout' y 'member' como premium por defecto
+    if (
+      planLower.includes('premium') ||
+      planLower === 'pro' ||
+      planLower === 'scout' ||
+      planLower === 'member'
+    ) {
       return 'premium'
     }
 

@@ -73,3 +73,8 @@ jspm_packages/
 
 # dotenv environment variables file
 .env
+
+# Sentry
+.sentryclirc
+.sentry-*
+sentry.properties

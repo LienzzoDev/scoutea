@@ -83,15 +83,31 @@ export async function GET(request: NextRequest) {
 
     // 5. El pago está confirmado pero el webhook aún no procesó
     // FORZAR procesamiento manual como fallback
-    const plan = session.metadata?.plan
+    let plan = session.metadata?.plan
     const billing = session.metadata?.billing
 
+    // Si no hay plan en la sesión, intentar obtenerlo del rol del usuario
+    // Esto ocurre cuando el usuario viene de una invitación
     if (!plan) {
-      logger.warn('No plan found in session metadata', { sessionId })
-      return NextResponse.json({
-        success: false,
-        error: 'Invalid session: missing plan information'
-      }, { status: 400 })
+      logger.info('No plan in session metadata, checking user role from invitation', { userId, sessionId })
+
+      // Obtener el rol del usuario desde Clerk
+      const userMetadata = await RoleService.getUserMetadata(userId)
+      const userRole = userMetadata?.role
+
+      if (userRole === 'scout') {
+        plan = 'scout'
+        logger.info('User has scout role from invitation, using scout plan', { userId })
+      } else if (userRole === 'member') {
+        plan = 'member'
+        logger.info('User has member role from invitation, using member plan', { userId })
+      } else {
+        logger.warn('No plan found and no valid role in user metadata', { sessionId, userRole })
+        return NextResponse.json({
+          success: false,
+          error: 'Invalid session: missing plan information and no role assigned'
+        }, { status: 400 })
+      }
     }
 
     logger.info('Payment confirmed, FORCING manual processing', {

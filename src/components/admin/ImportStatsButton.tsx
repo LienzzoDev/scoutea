@@ -256,7 +256,7 @@ export default function ImportStatsButton() {
           ) : (
             <>
               <Upload className="h-4 w-4" />
-              <span>Importar Jugadores desde Excel (Hoja PLAYERS)</span>
+              <span>Importar Jugadores</span>
             </>
           )}
         </button>

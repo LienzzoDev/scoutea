@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db';
+import { formatValue, formatROI, formatEconomicChange } from '@/lib/utils/scout-format-utils';
 
 export interface ScoutEconomicUpdate {
   scoutId: string;
@@ -126,55 +127,32 @@ export class ScoutEconomicService {
 
   /**
    * Formatea un valor monetario
+   * @deprecated Use formatValue from @/lib/utils/scout-format-utils instead
    */
   static formatValue(value?: number | null, suffix: string = ' €'): string {
-    if (!value) return "Por determinar";
-    return new Intl.NumberFormat('es-ES', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value) + suffix;
+    return formatValue(value, suffix);
   }
 
   /**
    * Formatea un valor de ROI
+   * @deprecated Use formatROI from @/lib/utils/scout-format-utils instead
    */
   static formatROI(value?: number | null): string {
-    if (!value) return "Por determinar";
-    return `${value.toFixed(1)}%`;
+    return formatROI(value);
   }
 
   /**
    * Formatea el cambio porcentual para valores económicos
+   * @deprecated Use formatEconomicChange from @/lib/utils/scout-format-utils instead
    */
-  static formatEconomicChange(changePercent?: number | null, isROI: boolean = false): { 
-    text: string; 
-    isPositive: boolean; 
+  static formatEconomicChange(changePercent?: number | null, isROI: boolean = false): {
+    text: string;
+    isPositive: boolean;
     isNeutral: boolean;
     color: string;
     arrow: string;
   } {
-    if (changePercent === null || changePercent === undefined) {
-      return { 
-        text: "", 
-        isPositive: false, 
-        isNeutral: true,
-        color: "text-gray-500",
-        arrow: ""
-      };
-    }
-    
-    const isPositive = changePercent > 0;
-    const isNeutral = changePercent === 0;
-    const sign = isPositive ? "+" : "";
-    const unit = isROI ? "pp" : "%"; // pp = puntos porcentuales para ROI
-    
-    return {
-      text: `${sign}${changePercent.toFixed(1)}${unit}`,
-      isPositive,
-      isNeutral,
-      color: isPositive ? "text-green-600" : isNeutral ? "text-gray-500" : "text-red-600",
-      arrow: isPositive ? "↑" : isNeutral ? "→" : "↓"
-    };
+    return formatEconomicChange(changePercent, isROI);
   }
 
   /**

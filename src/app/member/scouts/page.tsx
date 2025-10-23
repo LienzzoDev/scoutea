@@ -301,10 +301,11 @@ export default function ScoutsPage() {
         // Scouts añadidos en los últimos 7 días
         const sevenDaysAgo = new Date()
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-        
+
         filtered = scouts.filter(scout => {
-          if (!scout.createdAt) return false
-          const scoutDate = new Date(scout.createdAt)
+          const dateToCheck = scout.join_date || scout.createdAt
+          if (!dateToCheck) return false
+          const scoutDate = new Date(dateToCheck)
           return scoutDate >= sevenDaysAgo
         })
         break

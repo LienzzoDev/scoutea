@@ -68,6 +68,7 @@ npm run webhook:setup    # Setup webhooks
 - **Database**: PostgreSQL via Prisma ORM
 - **Auth**: Clerk (multi-role: admin, member, scout, tester)
 - **Payments**: Stripe subscriptions
+- **Monitoring**: Sentry (error tracking, performance monitoring, session replay)
 - **Styling**: Tailwind CSS + Radix UI components
 - **Testing**: Vitest (unit/integration), Playwright (E2E)
 - **Charts**: Recharts for radar charts, lollipop charts, beeswarm plots
@@ -231,7 +232,9 @@ npx playwright test tests/e2e/player-profile.spec.ts
 
 ### Environment Variables
 - Required: `DATABASE_URL`, `DIRECT_URL` (Postgres), `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
+- **Sentry (Monitoring)**: `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` (see [SENTRY_SETUP.md](SENTRY_SETUP.md) for complete setup guide)
 - The app validates env vars on startup (see [src/lib/validation/env-validation.ts](src/lib/validation/env-validation.ts))
+- See [.env.example](.env.example) for a complete list of environment variables
 
 ### Debug Routes Protection
 - Debug routes (`/api/debug/*`) are blocked in production unless admin role
@@ -245,6 +248,36 @@ npx playwright test tests/e2e/player-profile.spec.ts
 - Uses `@clerk/nextjs` v6.32.2+ with App Router
 - Auth state accessed via `await auth()` (async) in routes/middleware
 - Client-side auth: `useAuth()`, `useUser()` hooks
+
+### Sentry Integration
+- **Error Tracking**: Automatic capture of client, server, and edge runtime errors
+- **Performance Monitoring**: Tracks API routes, page loads, and user interactions
+- **Session Replay**: Records user sessions (10% sample rate for normal sessions, 100% for error sessions)
+- **Configuration Files**:
+  - [sentry.client.config.ts](sentry.client.config.ts) - Client-side initialization
+  - [sentry.server.config.ts](sentry.server.config.ts) - Server-side initialization
+  - [sentry.edge.config.ts](sentry.edge.config.ts) - Edge runtime (middleware) initialization
+- **Error Boundaries**:
+  - [src/app/error.tsx](src/app/error.tsx) - Page-level error boundary
+  - [src/app/global-error.tsx](src/app/global-error.tsx) - Root-level error boundary
+- **Disabled by Default in Development**: Set `SENTRY_ENABLE_DEV=true` to enable in local development
+- **Complete Setup Guide**: See [SENTRY_SETUP.md](SENTRY_SETUP.md) for detailed configuration instructions
+
+**Manual Error Capture**:
+```typescript
+import * as Sentry from '@sentry/nextjs'
+
+// Capture exception
+Sentry.captureException(error)
+
+// Capture message
+Sentry.captureMessage('Important event', 'info')
+
+// Add context
+Sentry.setUser({ id: userId, email: userEmail })
+Sentry.setTag('page', 'player-profile')
+Sentry.setContext('player', { id: playerId })
+```
 
 ### Data Import Scripts
 - FMI (Football Manager Index) data: `scripts/` folder has import scripts for player attributes

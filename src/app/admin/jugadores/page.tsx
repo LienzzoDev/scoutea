@@ -1,12 +1,13 @@
 'use client'
 
-import { Search, Globe, Plus, RefreshCw } from 'lucide-react'
+import { Search, Globe, Plus, RefreshCw, Download } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 import AdminColumnSelector from '@/components/admin/AdminColumnSelector'
 import AdminPlayerTable from '@/components/admin/AdminPlayerTable'
 import ImportFMIButton from '@/components/admin/ImportFMIButton'
+import ImportPlayerStatsButton from '@/components/admin/ImportPlayerStatsButton'
 import ImportStatsButton from '@/components/admin/ImportStatsButton'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -245,6 +246,33 @@ export default function JugadoresPage() {
     setSearchTerm(term)
   }
 
+  // Función para exportar a CSV
+  const [isExporting, setIsExporting] = useState(false)
+
+  const handleExportCSV = async () => {
+    try {
+      setIsExporting(true)
+
+      // Construir URL con filtros actuales
+      const params = new URLSearchParams()
+      if (debouncedSearch) {
+        params.append('search', debouncedSearch)
+      }
+
+      const url = `/api/admin/players/export?${params.toString()}`
+
+      // Abrir en nueva ventana para descargar
+      window.open(url, '_blank')
+
+    } catch (error) {
+      console.error('Error exporting CSV:', error)
+      alert('Error al exportar el archivo CSV')
+    } finally {
+      // Esperar un segundo antes de resetear el estado de carga
+      setTimeout(() => setIsExporting(false), 1000)
+    }
+  }
+
   // Si no está cargado, mostrar loading
   if (!isLoaded) {
     return <LoadingPage />
@@ -288,6 +316,7 @@ export default function JugadoresPage() {
       <div className='mb-6 flex flex-wrap items-center gap-4'>
         <ImportFMIButton />
         <ImportStatsButton />
+        <ImportPlayerStatsButton />
         <Button
           variant='outline'
           className='border-slate-700 bg-[#131921] text-white hover:bg-slate-700'
@@ -296,6 +325,15 @@ export default function JugadoresPage() {
         >
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refrescar Lista
+        </Button>
+        <Button
+          variant='outline'
+          className='border-green-700 bg-green-900/20 text-green-400 hover:bg-green-900/40'
+          onClick={handleExportCSV}
+          disabled={isExporting}
+        >
+          <Download className={`h-4 w-4 mr-2 ${isExporting ? 'animate-bounce' : ''}`} />
+          {isExporting ? 'Exportando...' : 'Exportar CSV'}
         </Button>
       </div>
 

@@ -51,8 +51,10 @@ export class RoleService {
   /**
    * Determina el rol basado en el plan seleccionado
    *
-   * IMPORTANTE: Tanto plan 'basic' como 'premium' asignan rol 'member'
-   * La diferencia entre planes se maneja en subscription.plan
+   * IMPORTANTE:
+   * - Plan 'scout' asigna rol 'scout'
+   * - Planes 'member', 'basic', 'premium' asignan rol 'member'
+   * La diferencia entre basic y premium se maneja en subscription.plan
    * El acceso a features se controla con FeatureAccessService
    */
   static getRoleFromPlan(plan: string): UserRole {
@@ -60,14 +62,18 @@ export class RoleService {
 
     const planLower = plan.toLowerCase()
 
-    // Ambos planes (basic y premium) asignan rol 'member'
-    // La diferencia está en subscription.plan que se guarda separadamente
+    // Si el plan es 'scout', asignar rol scout
+    if (planLower === 'scout') {
+      return 'scout'
+    }
+
+    // Para cualquier otro plan (member, basic, premium, pro), asignar rol 'member'
+    // La diferencia entre basic y premium está en subscription.plan
     if (planLower.includes('member') ||
         planLower.includes('basic') ||
         planLower.includes('basica') ||
         planLower.includes('premium') ||
-        planLower.includes('pro') ||
-        planLower.includes('scout')) {
+        planLower.includes('pro')) {
       return 'member'
     }
 

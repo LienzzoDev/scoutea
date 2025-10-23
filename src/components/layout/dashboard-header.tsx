@@ -8,7 +8,8 @@ import {
   ChevronDown,
   Shield,
   Search,
-  User
+  User,
+  UserCog
 } from "lucide-react"
 import { useRouter } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
@@ -100,6 +101,19 @@ export default function DashboardHeader() {
 
           {/* Usuario y acciones */}
           <div className="flex items-center space-x-4">
+            {/* Icono de gestión de usuarios - Solo visible para administradores */}
+            {isAdmin && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => _router.push('/admin/usuarios')}
+                className="text-gray-400 hover:text-[#D6DDE6] hover:bg-slate-800"
+                title="Gestión de Usuarios"
+              >
+                <UserCog className="h-5 w-5" />
+              </Button>
+            )}
+
             {/* Dropdown para cambiar entre áreas - Solo visible para usuarios admin */}
             {isAdmin && (
               <div className="relative" ref={dropdownRef}>
@@ -161,6 +175,15 @@ export default function DashboardHeader() {
             {/* Botones para cambiar entre áreas - Solo visible para usuarios admin */}
             {isAdmin && (
               <>
+                <button
+                  onClick={() =>{
+                    setIsMenuOpen(false)
+                    _router.push('/admin/usuarios')
+                  }}
+                  className="w-full text-left text-[#8c1a10] hover:text-[#6d1410] block px-3 py-2 rounded-md text-base font-medium flex items-center gap-2">
+                  <UserCog className="w-4 h-4" />
+                  Gestión de Usuarios
+                </button>
                 <button
                   onClick={() =>{
                     setIsMenuOpen(false)

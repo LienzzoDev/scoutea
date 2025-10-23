@@ -45,9 +45,10 @@ export class ScoutService {
     roi: true,
     net_profits: true,
     open_to_work: true,
-    profile_pic: true,
-    createdAt: true,
-    updatedAt: true,
+    url_profile: true, // Fixed: was profile_pic, but field is url_profile
+    nationality_expertise: true,
+    competition_expertise: true,
+    join_date: true, // Using join_date instead of createdAt
   }
 
   static async searchScouts(options: ScoutSearchOptions): Promise<ScoutSearchResult> {
@@ -105,8 +106,9 @@ export class ScoutService {
 
       // Construir el orderBy
       const orderBy: any = {};
-      if (sortBy === 'createdAt') {
-        orderBy.createdAt = sortOrder;
+      if (sortBy === 'createdAt' || sortBy === 'join_date') {
+        // Map createdAt to join_date for backward compatibility
+        orderBy.join_date = sortOrder;
       } else if (sortBy === 'scout_elo') {
         orderBy.scout_elo = sortOrder;
       } else if (sortBy === 'total_reports') {
@@ -150,7 +152,7 @@ export class ScoutService {
   static async getAllScouts(): Promise<any[]> {
     try {
       const scouts = await prisma.scout.findMany({
-        orderBy: { createdAt: 'desc' },
+        orderBy: { join_date: 'desc' },
         take: 100, // Limitar para evitar cargar demasiados datos
         select: ScoutService.LIST_SELECT,
       });
