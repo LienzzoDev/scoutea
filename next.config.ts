@@ -167,7 +167,7 @@ const nextConfig: NextConfig = {
 }
 
 // Sentry configuration options
-export default withSentryConfig(nextConfig, {
+const sentryWebpackPluginOptions = {
   // For all available options, see:
   // https://github.com/getsentry/sentry-webpack-plugin#options
 
@@ -204,4 +204,12 @@ export default withSentryConfig(nextConfig, {
   // https://docs.sentry.io/product/crons/
   // https://vercel.com/docs/cron-jobs
   automaticVercelMonitors: true,
-});
+
+  // Disable telemetry to reduce dependencies
+  telemetry: false,
+
+  // Skip source map upload if no auth token is available
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+}
+
+export default withSentryConfig(nextConfig, sentryWebpackPluginOptions);
