@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 import { cachedQuery, MemoryCacheService } from '@/lib/cache/memory-cache'
+import { ScoutClerkSyncService } from '@/lib/services/scout-clerk-sync'
 import { ScoutService } from '@/lib/services/scout-service'
 
 export async function GET(request: NextRequest) {
@@ -128,6 +129,18 @@ export async function GET(request: NextRequest) {
       () => ScoutService.searchScouts(options),
       MemoryCacheService.TTL.SCOUTS_LIST
     )
+
+    // Filtrar scouts huérfanos (usuarios eliminados de Clerk)
+    if (result.scouts && result.scouts.length > 0) {
+      const scoutIds = result.scouts.map((s: any) => s.id_scout)
+      const orphanedIds = await ScoutClerkSyncService.getOrphanedScoutIds(scoutIds)
+
+      if (orphanedIds.length > 0) {
+        console.log(`⚠️  Found ${orphanedIds.length} orphaned scouts, filtering them out`)
+        result.scouts = result.scouts.filter((s: any) => !orphanedIds.includes(s.id_scout))
+        result.total = result.scouts.length
+      }
+    }
 
     return NextResponse.json(result)
   } catch (error) {

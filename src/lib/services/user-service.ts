@@ -128,15 +128,54 @@ export class UserService {
   }
 
   /**
-   * Eliminar usuario
+   * Eliminar usuario y sus registros relacionados (Scout, etc.)
    */
   static async deleteUser(clerkId: string): Promise<Usuario> {
     try {
-      return await prisma.usuario.delete({
-        where: { clerkId }
+      // Usar una transacción para eliminar todo de forma atómica
+      return await prisma.$transaction(async (tx) => {
+        // 1. Buscar scout si existe
+        const scout = await tx.scout.findUnique({
+          where: { clerkId }
+        })
+
+        if (scout) {
+          console.log(`Deleting scout with clerkId: ${clerkId}, scout_id: ${scout.id_scout}`)
+
+          // 1.1. Desvincular reportes del scout (soft delete - preservar valor histórico)
+          const reportCount = await tx.reporte.count({
+            where: { scout_id: scout.id_scout }
+          })
+
+          if (reportCount > 0) {
+            console.log(`Setting ${reportCount} reports to orphaned status`)
+            await tx.reporte.updateMany({
+              where: { scout_id: scout.id_scout },
+              data: { scout_id: null }
+            })
+          }
+
+          // 1.2. Eliminar listas de scouts (ScoutList) - se hace automáticamente con onDelete: Cascade
+          // 1.3. Eliminar mensajes de contacto (ScoutContactMessage) - se hace automáticamente con onDelete: Cascade
+
+          // 1.4. Eliminar el scout
+          await tx.scout.delete({
+            where: { clerkId }
+          })
+          console.log(`Scout deleted successfully: ${clerkId}`)
+        }
+
+        // 2. Eliminar usuario de la tabla Usuario
+        // PlayerList y otras relaciones con onDelete: Cascade se eliminarán automáticamente
+        const deletedUser = await tx.usuario.delete({
+          where: { clerkId }
+        })
+
+        console.log(`User and all related data deleted successfully from database: ${clerkId}`)
+        return deletedUser
       })
     } catch (error) {
-      console.error('Error deleting user:', error)
+      console.error('Error deleting user and related records:', error)
       throw error
     }
   }

@@ -62,8 +62,6 @@ export async function GET(
       },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }
 
@@ -124,7 +122,7 @@ export async function PUT(
         form_text_report: body.reportText || null,
         form_url_report: body.urlReport || null,
         form_url_video: body.urlVideo || null,
-        url_secondary: body.imageUrl || null,
+        // Nota: imageUrl no se guarda en Reporte - el modelo solo soporta text, url_report y url_video
         form_potential: body.potential ? body.potential.toString() : null,
         updatedAt: new Date()
       }
@@ -140,14 +138,12 @@ export async function PUT(
   } catch (error) {
     console.error('Error updating report:', error)
     return NextResponse.json(
-      { 
+      {
         success: false,
         error: 'Error al actualizar el reporte',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }

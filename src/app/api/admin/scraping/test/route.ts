@@ -1,9 +1,10 @@
 /**
  * 🧪 ENDPOINT DE TEST PARA SCRAPING
  *
- * ✅ PROPÓSITO: Probar la funcionalidad de scraping con 3 jugadores + 3 equipos
+ * ✅ PROPÓSITO: Probar la funcionalidad de scraping con 3 jugadores + 3 equipos ALEATORIOS
  * ✅ BENEFICIO: Verificar que el scraping funciona antes de lanzar un job completo
  * ✅ RUTA: POST /api/admin/scraping/test
+ * 🎲 IMPORTANTE: Cada ejecución selecciona jugadores y equipos diferentes al azar
  */
 
 import { auth } from '@clerk/nextjs/server'
@@ -30,7 +31,7 @@ interface TestResult {
 }
 
 /**
- * POST /api/admin/scraping/test - Probar scraping con 3 jugadores + 3 equipos
+ * POST /api/admin/scraping/test - Probar scraping con 3 jugadores + 3 equipos aleatorios
  */
 export async function POST() {
   try {
@@ -55,59 +56,96 @@ export async function POST() {
 
     console.log('🧪 Iniciando TEST de scraping (jugadores + equipos)...')
 
-    // 📊 OBTENER PRIMEROS 3 JUGADORES CON URL
-    const players = await prisma.jugador.findMany({
+    // 📊 OBTENER 3 JUGADORES ALEATORIOS CON URL
+    // Paso 1: Contar total de jugadores con URL
+    const totalPlayers = await prisma.jugador.count({
       where: {
         AND: [
           { url_trfm: { not: null } },
           { url_trfm: { not: '' } }
         ]
-      },
-      select: {
-        id_player: true,
-        player_name: true,
-        url_trfm: true,
-        url_trfm_advisor: true,
-        date_of_birth: true,
-        team_name: true,
-        team_loan_from: true,
-        position_player: true,
-        foot: true,
-        height: true,
-        nationality_1: true,
-        nationality_2: true,
-        national_tier: true,
-        agency: true,
-        contract_end: true
-      },
-      take: 3,
-      orderBy: {
-        player_name: 'asc'
       }
     })
 
-    // 🏟️ OBTENER PRIMEROS 3 EQUIPOS CON URL
-    const teams = await prisma.equipo.findMany({
+    // Paso 2: Generar 3 índices aleatorios únicos
+    const randomIndices = new Set<number>()
+    while (randomIndices.size < Math.min(3, totalPlayers)) {
+      randomIndices.add(Math.floor(Math.random() * totalPlayers))
+    }
+
+    // Paso 3: Obtener los jugadores en esos índices
+    const players = await Promise.all(
+      Array.from(randomIndices).map(async (skip) => {
+        return await prisma.jugador.findFirst({
+          where: {
+            AND: [
+              { url_trfm: { not: null } },
+              { url_trfm: { not: '' } }
+            ]
+          },
+          select: {
+            id_player: true,
+            player_name: true,
+            url_trfm: true,
+            url_trfm_advisor: true,
+            date_of_birth: true,
+            team_name: true,
+            team_loan_from: true,
+            position_player: true,
+            foot: true,
+            height: true,
+            nationality_1: true,
+            nationality_2: true,
+            national_tier: true,
+            agency: true,
+            contract_end: true,
+            photo_coverage: true
+          },
+          skip
+        })
+      })
+    ).then(results => results.filter((p): p is NonNullable<typeof p> => p !== null))
+
+    // 🏟️ OBTENER 3 EQUIPOS ALEATORIOS CON URL
+    // Paso 1: Contar total de equipos con URL
+    const totalTeams = await prisma.equipo.count({
       where: {
         AND: [
           { url_trfm_advisor: { not: null } },
           { url_trfm_advisor: { not: '' } }
         ]
-      },
-      select: {
-        id_team: true,
-        team_name: true,
-        url_trfm_advisor: true,
-        team_country: true,
-        competition: true,
-        team_trfm_value: true,
-        team_rating: true
-      },
-      take: 3,
-      orderBy: {
-        team_name: 'asc'
       }
     })
+
+    // Paso 2: Generar 3 índices aleatorios únicos
+    const randomTeamIndices = new Set<number>()
+    while (randomTeamIndices.size < Math.min(3, totalTeams)) {
+      randomTeamIndices.add(Math.floor(Math.random() * totalTeams))
+    }
+
+    // Paso 3: Obtener los equipos en esos índices
+    const teams = await Promise.all(
+      Array.from(randomTeamIndices).map(async (skip) => {
+        return await prisma.equipo.findFirst({
+          where: {
+            AND: [
+              { url_trfm_advisor: { not: null } },
+              { url_trfm_advisor: { not: '' } }
+            ]
+          },
+          select: {
+            id_team: true,
+            team_name: true,
+            url_trfm_advisor: true,
+            team_country: true,
+            competition: true,
+            team_trfm_value: true,
+            team_rating: true
+          },
+          skip
+        })
+      })
+    ).then(results => results.filter((t): t is NonNullable<typeof t> => t !== null))
 
     if (players.length === 0 && teams.length === 0) {
       return NextResponse.json({
@@ -116,7 +154,9 @@ export async function POST() {
       })
     }
 
-    console.log(`🎯 Procesando ${players.length} jugadores + ${teams.length} equipos de prueba...`)
+    console.log(`🎯 Procesando ${players.length} jugadores + ${teams.length} equipos de prueba (selección aleatoria)...`)
+    console.log(`🎲 Jugadores seleccionados: ${players.map(p => p.player_name).join(', ')}`)
+    console.log(`🎲 Equipos seleccionados: ${teams.map(t => t.team_name).join(', ')}`)
 
     const results: TestResult[] = []
 
@@ -138,7 +178,8 @@ export async function POST() {
           nationality_2: player.nationality_2,
           national_tier: player.national_tier,
           agency: player.agency,
-          contract_end: player.contract_end
+          contract_end: player.contract_end,
+          photo_coverage: player.photo_coverage
         }
 
         // Scrapear datos
@@ -436,6 +477,16 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
     // 12. Valor de mercado (OMITIDO en test - requiere parsing complejo)
     // El campo player_trfm_value es Float en BD y requiere parsing del string
     // Lo omitimos en el test para simplificar
+
+    // 13. Foto de perfil (photo_coverage)
+    // Buscar la imagen de perfil del jugador en Transfermarkt
+    const profileImageElement = $('img.data-header__profile-image')
+    if (profileImageElement.length > 0) {
+      const photoUrl = profileImageElement.attr('data-src') || profileImageElement.attr('src')
+      if (photoUrl && photoUrl !== '') {
+        data.photo_coverage = photoUrl
+      }
+    }
 
     console.log(`🔍 Datos extraídos: ${Object.keys(data).length} campos`)
 

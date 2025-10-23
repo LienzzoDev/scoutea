@@ -34,7 +34,7 @@ export async function POST(__request: NextRequest) {
     // }
 
     // Parse request body
-    const _body = await request.json();
+    const body = await __request.json();
     const {
       dryRun = true,
       batchSize = 50,
@@ -90,14 +90,12 @@ export async function POST(__request: NextRequest) {
         : 'Data population completed successfully.'
     });
 
-  } catch (_error) {
-    console.error('Data population __error: ', error);
+  } catch (error) {
+    console.error('Data population error: ', error);
     return NextResponse.json({
       __error: 'Internal server error',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -128,13 +126,11 @@ export async function GET(__request: NextRequest) {
       }
     });
 
-  } catch (_error) {
-    console.error('Get population stats __error: ', error);
+  } catch (error) {
+    console.error('Get population stats error: ', error);
     return NextResponse.json({
       __error: 'Internal server error',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }

@@ -338,9 +338,9 @@ export default function ScoutPlayersPage() {
                     </button>
                   ) : (
                     <button
-                      onClick={() => window.location.href = '/scout/reports'}
+                      onClick={() => window.location.href = '/scout/reports/new'}
                       className="mt-4 px-4 py-2 bg-[#8c1a10] text-white rounded-lg hover:bg-[#6d1410] transition-colors">
-                      Crear un reporte
+                      Crear primer reporte
                     </button>
                   )}
                 </div>

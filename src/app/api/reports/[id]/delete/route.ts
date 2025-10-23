@@ -72,7 +72,5 @@ export async function DELETE(
       },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }

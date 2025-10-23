@@ -12,6 +12,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { RateLimiter, AdaptiveThrottler } from '@/lib/scraping/rate-limiter'
 import { getRealisticHeaders, randomSleep } from '@/lib/scraping/user-agents'
+import { addJobLog } from '@/app/api/admin/scraping/logs/route'
 
 // ⏱️ Configuración: 5 minutos máximo (Vercel límite)
 export const maxDuration = 300
@@ -803,6 +804,7 @@ export async function POST() {
     }
 
     console.log(`\n📦 Procesando batch ${job.currentBatch + 1}: ${playersToProcess.length} jugadores`)
+    addJobLog(job.id, `📦 Procesando batch ${job.currentBatch + 1}: ${playersToProcess.length} jugadores`)
 
     const results: ScrapingResult[] = []
     let batchSuccessCount = 0
@@ -815,6 +817,7 @@ export async function POST() {
       const player = playersToProcess[i]
 
       console.log(`[${i + 1}/${playersToProcess.length}] ${player.player_name || player.id_player}`)
+      addJobLog(job.id, `🔍 [${i + 1}/${playersToProcess.length}] Scrapeando: ${player.player_name || player.id_player}`)
 
       // 🌐 HACER SCRAPING CON RETRY LOGIC Y RATE LIMITING
       const result = await rateLimiter.executeWithRetry(
@@ -823,6 +826,7 @@ export async function POST() {
         },
         (attempt, delay) => {
           console.log(`  🔄 Reintento ${attempt} en ${delay / 1000}s para ${player.player_name}`)
+          addJobLog(job.id, `  🔄 Reintento ${attempt} en ${delay / 1000}s para ${player.player_name}`)
         }
       )
 
@@ -993,6 +997,7 @@ export async function POST() {
         batchSuccessCount++
         batchRetryCount += result.retries
         console.log(`  ✅ Actualizado: ${fieldsUpdated.length} campos (${result.retries} reintentos)`)
+        addJobLog(job.id, `  ✅ ${player.player_name}: ${fieldsUpdated.length} campos actualizados (${result.retries} reintentos)`)
 
       } else {
         // ❌ ERROR - Registrar fallo
@@ -1014,6 +1019,7 @@ export async function POST() {
         }
 
         console.log(`  ❌ Error: ${result.error} (${result.retries} reintentos)`)
+        addJobLog(job.id, `  ❌ ${player.player_name}: ${result.error} (${result.retries} reintentos)`)
       }
 
       // 📊 ACTUALIZAR THROTTLER BASÁNDOSE EN MÉTRICAS
@@ -1026,6 +1032,7 @@ export async function POST() {
         const delayMs = Math.floor(Math.random() * (delays.max - delays.min + 1)) + delays.min
 
         console.log(`  ⏳ Pausa: ${delayMs / 1000}s (multiplier: ${throttler.getMultiplier().toFixed(2)}x)`)
+        addJobLog(job.id, `  ⏳ Pausa: ${delayMs / 1000}s (multiplier: ${throttler.getMultiplier().toFixed(2)}x)`)
         await randomSleep(delays.min, delays.max)
       }
 
@@ -1090,6 +1097,10 @@ export async function POST() {
     console.log(`   - Speed Multiplier: ${throttler.getMultiplier().toFixed(2)}x`)
     console.log(`📊 Progreso total: ${updatedJob.processedCount}/${updatedJob.totalPlayers}`)
 
+    addJobLog(job.id, `✅ Batch ${updatedJob.currentBatch} completado`)
+    addJobLog(job.id, `   - Exitosos: ${batchSuccessCount}, Errores: ${batchErrorCount}`)
+    addJobLog(job.id, `📊 Progreso total: ${updatedJob.processedCount}/${updatedJob.totalPlayers} (${updatedJob.progress}%)`)
+
     const isCompleted = updatedJob.processedCount >= updatedJob.totalPlayers
 
     if (isCompleted) {
@@ -1100,6 +1111,9 @@ export async function POST() {
           completedAt: new Date()
         }
       })
+      addJobLog(job.id, `🎉 Scraping completado!`)
+      addJobLog(job.id, `✅ Total exitosos: ${updatedJob.successCount}`)
+      addJobLog(job.id, `❌ Total errores: ${updatedJob.errorCount}`)
     }
 
     return NextResponse.json({
@@ -1164,7 +1178,7 @@ export async function POST() {
 /**
  * 🕷️ FUNCIÓN DE SCRAPING DE UN JUGADOR (MEJORADA)
  *
- * Esta función extrae los 14 campos de Transfermarkt con headers realistas
+ * Esta función extrae los 15 campos de Transfermarkt con headers realistas
  */
 async function scrapePlayerData(url: string): Promise<Record<string, any>> {
   // 🌐 HACER REQUEST CON HEADERS REALISTAS Y ROTACIÓN DE USER-AGENT
@@ -1305,6 +1319,26 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
     const advisorNameMatch = html.match(/Agente:<\/span>\s*<a[^>]*>([^<]+)<\/a>/)
     if (advisorNameMatch) {
       data.advisor = advisorNameMatch[1].trim()
+    }
+
+    // 15. Foto de perfil (photo_coverage)
+    // Buscar la imagen de perfil del jugador en Transfermarkt
+    // Patrón: <img ... data-src="..." alt="[Nombre del jugador]" class="...profil..."
+    const profileImageMatch = html.match(/<img[^>]+data-src="([^"]+)"[^>]+class="[^"]*data-header__profile-image[^"]*"[^>]*>/)
+    if (profileImageMatch) {
+      data.photo_coverage = profileImageMatch[1].trim()
+    } else {
+      // Patrón alternativo: buscar src en lugar de data-src
+      const profileImageAltMatch = html.match(/<img[^>]+class="[^"]*data-header__profile-image[^"]*"[^>]+src="([^"]+)"[^>]*>/)
+      if (profileImageAltMatch) {
+        data.photo_coverage = profileImageAltMatch[1].trim()
+      } else {
+        // Tercer patrón: buscar por estructura del div contenedor
+        const profileImageDivMatch = html.match(/<div class="data-header__profile-container"[^>]*>[\s\S]*?<img[^>]+src="([^"]+)"[^>]*>/)
+        if (profileImageDivMatch) {
+          data.photo_coverage = profileImageDivMatch[1].trim()
+        }
+      }
     }
 
     return data

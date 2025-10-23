@@ -105,17 +105,46 @@ export function MediaUpload({ imageValue, videoValue, onImageChange, onVideoChan
 
   const handleUrlSubmit = () => {
     if (urlInput.trim()) {
-      if (mediaType === 'image') {
-        onImageChange(urlInput.trim())
-        onVideoChange('') // Limpiar video
-      } else {
-        onVideoChange(urlInput.trim())
+      const url = urlInput.trim()
+
+      // Auto-detectar si es un video (YouTube, Vimeo, etc.) o MP4/WebM
+      const isVideoUrl =
+        url.includes('youtube.com') ||
+        url.includes('youtu.be') ||
+        url.includes('vimeo.com') ||
+        url.endsWith('.mp4') ||
+        url.endsWith('.webm') ||
+        url.endsWith('.mov')
+
+      // Si es una URL de video, guardarla en urlVideo independientemente de la pestaña
+      if (isVideoUrl) {
+        onVideoChange(url)
         onImageChange('') // Limpiar imagen
+        // Cambiar automáticamente a la pestaña de video
+        setMediaType('video')
+        toast({
+          title: "¡Éxito!",
+          description: "URL de video guardada (detectada automáticamente)"
+        })
+      } else {
+        // Si no, guardar según la pestaña seleccionada
+        if (mediaType === 'image') {
+          onImageChange(url)
+          onVideoChange('') // Limpiar video
+          toast({
+            title: "¡Éxito!",
+            description: "URL de imagen guardada"
+          })
+        } else {
+          onVideoChange(url)
+          onImageChange('') // Limpiar imagen
+          toast({
+            title: "¡Éxito!",
+            description: "URL de video guardada"
+          })
+        }
       }
-      toast({
-        title: "¡Éxito!",
-        description: `URL de ${mediaType === 'image' ? 'imagen' : 'video'} guardada`
-      })
+
       setUrlInput('')
     }
   }
@@ -305,7 +334,7 @@ export function MediaUpload({ imageValue, videoValue, onImageChange, onVideoChan
 
       {/* Info */}
       <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-muted-foreground'}`}>
-        💡 Solo puedes tener una imagen o un video por reporte. Al seleccionar uno, el otro se eliminará automáticamente.
+        💡 <strong>Nota:</strong> Los reportes solo soportan videos. Si pegas una URL de YouTube, Vimeo o video, se detectará automáticamente como video.
       </p>
     </div>
   )

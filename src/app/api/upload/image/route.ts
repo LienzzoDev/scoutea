@@ -17,19 +17,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No se proporcionó ningún archivo' }, { status: 400 })
     }
 
-    // Validar tipo de archivo
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
-    if (!validTypes.includes(file.type)) {
-      return NextResponse.json({ 
-        error: 'Tipo de archivo no válido. Solo se permiten imágenes (JPEG, PNG, WebP, GIF)' 
+    // Validar tipo de archivo (imágenes y videos)
+    const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
+    const validVideoTypes = ['video/mp4', 'video/webm', 'video/quicktime']
+    const allValidTypes = [...validImageTypes, ...validVideoTypes]
+
+    if (!allValidTypes.includes(file.type)) {
+      return NextResponse.json({
+        error: 'Tipo de archivo no válido. Solo se permiten imágenes (JPEG, PNG, WebP, GIF) o videos (MP4, WebM, MOV)'
       }, { status: 400 })
     }
 
-    // Validar tamaño (máximo 5MB)
-    const maxSize = 5 * 1024 * 1024 // 5MB
+    // Validar tamaño según tipo (5MB para imágenes, 50MB para videos)
+    const isVideo = validVideoTypes.includes(file.type)
+    const maxSize = isVideo ? 50 * 1024 * 1024 : 5 * 1024 * 1024 // 50MB para videos, 5MB para imágenes
     if (file.size > maxSize) {
-      return NextResponse.json({ 
-        error: 'El archivo es demasiado grande. Máximo 5MB' 
+      return NextResponse.json({
+        error: `El archivo es demasiado grande. Máximo ${isVideo ? '50MB para videos' : '5MB para imágenes'}`
       }, { status: 400 })
     }
 
@@ -51,10 +55,10 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Error uploading image:', error)
+    console.error('Error uploading file:', error)
     return NextResponse.json(
-      { 
-        error: 'Error al subir la imagen',
+      {
+        error: 'Error al subir el archivo',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }

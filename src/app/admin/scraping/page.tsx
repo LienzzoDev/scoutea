@@ -71,6 +71,40 @@ export default function ScrapingPage() {
     setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${message}`])
   }, [])
 
+  // 📡 CONECTAR A LOGS EN TIEMPO REAL VIA SSE
+  useEffect(() => {
+    if (!job?.id || !isRunning) return
+
+    const eventSource = new EventSource(`/api/admin/scraping/logs?jobId=${job.id}`)
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+
+        if (data.log) {
+          // Añadir log sin timestamp (ya viene con timestamp del servidor)
+          setLogs(prev => [...prev, data.log])
+        }
+
+        if (data.done) {
+          // El job terminó, cerrar conexión
+          eventSource.close()
+        }
+      } catch (error) {
+        console.error('Error parsing SSE data:', error)
+      }
+    }
+
+    eventSource.onerror = (error) => {
+      console.error('SSE error:', error)
+      eventSource.close()
+    }
+
+    return () => {
+      eventSource.close()
+    }
+  }, [job?.id, isRunning])
+
   // 📊 OBTENER ESTADO DEL JOB
   const fetchJobStatus = useCallback(async () => {
     try {
@@ -116,29 +150,10 @@ export default function ScrapingPage() {
         setJob(data.job)
       }
 
-      // Agregar logs de resultados
-      if (data.results && data.results.length > 0) {
-        addLog(`📦 Batch ${data.job.currentBatch} completado`)
-
-        data.results.forEach((result: BatchResult, index: number) => {
-          if (result.success) {
-            if (result.fieldsUpdated.length > 0) {
-              addLog(`✅ ${result.playerName}: ${result.fieldsUpdated.length} campos actualizados`)
-            }
-          } else {
-            addLog(`❌ ${result.playerName}: ${result.error}`)
-          }
-        })
-
-        addLog(`📊 Progreso: ${data.job.processedCount}/${data.job.totalPlayers} (${data.job.progress}%)`)
-        addLog('')
-      }
+      // Los logs ahora vienen automáticamente vía SSE, no es necesario añadirlos aquí
 
       // Si está completo, detener
       if (data.completed) {
-        addLog('🎉 Scraping completado!')
-        addLog(`✅ Total exitosos: ${data.job.successCount}`)
-        addLog(`❌ Total errores: ${data.job.errorCount}`)
         setAutoProcess(false)
         setIsRunning(false)
       }

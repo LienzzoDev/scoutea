@@ -46,7 +46,11 @@
     "check:clerk": "node scripts/check-clerk-domains.js",
     "setup:env": "node scripts/setup-env.js",
     "diagnose:network": "node scripts/diagnose-network.js",
-    "cleanup:processes": "node scripts/cleanup-processes.js"
+    "cleanup:processes": "node scripts/cleanup-processes.js",
+    "sync:scouts": "tsx scripts/sync-scout-names.ts",
+    "sync:scouts:dry-run": "tsx scripts/sync-scout-names.ts --dry-run",
+    "cleanup:scouts": "tsx scripts/cleanup-orphaned-scouts.ts",
+    "cleanup:scouts:dry-run": "tsx scripts/cleanup-orphaned-scouts.ts --dry-run"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.32.2",

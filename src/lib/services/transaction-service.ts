@@ -206,6 +206,7 @@ export class TransactionService {
   ): Promise<TransactionResult> {
     let clerkUpdated = false
     let dbUpdated = false
+    let scoutUpdated = false
 
     try {
       logger.info('Completing user profile', { userId })
@@ -251,22 +252,53 @@ export class TransactionService {
         throw dbError
       }
 
+      // 3. Actualizar nombre del scout si existe
+      try {
+        const { prisma } = await import('@/lib/db')
+        const scout = await prisma.scout.findUnique({
+          where: { clerkId: userId }
+        })
+
+        if (scout) {
+          const scoutName = `${profileData.firstName} ${profileData.lastName}`.trim()
+          await prisma.scout.update({
+            where: { clerkId: userId },
+            data: {
+              name: profileData.firstName,
+              surname: profileData.lastName,
+              scout_name: scoutName || 'Scout',
+              country: profileData.country || scout.country,
+            }
+          })
+          scoutUpdated = true
+          logger.info('Scout profile name updated', { userId, scoutName })
+        }
+      } catch (scoutError) {
+        // No es crítico si falla la actualización del scout
+        logger.warn('Failed to update scout profile name', {
+          userId,
+          error: scoutError instanceof Error ? scoutError.message : 'Unknown error'
+        })
+      }
+
       return {
         success: true,
         data: {
           userId,
           roleResult,
-          profileData
+          profileData,
+          scoutUpdated
         }
       }
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      
+
       logger.error('Profile completion transaction failed', error as Error, {
         userId,
         clerkUpdated,
-        dbUpdated
+        dbUpdated,
+        scoutUpdated
       })
 
       // Rollback Clerk si fue actualizado
