@@ -102,7 +102,7 @@ export async function GET() {
     }
 
     // Get count of players with calculated values
-    const { default: prisma } = await import('@/lib/prisma')
+    const { prisma } = await import('@/lib/db')
 
     const totalPlayers = await prisma.jugador.count({
       where: {

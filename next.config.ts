@@ -2,6 +2,11 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
+  // Output configuration
+  output: 'standalone',
+  // Skip generating default error pages (use App Router error.tsx and not-found.tsx)
+  skipMiddlewareUrlNormalize: true,
+  skipTrailingSlashRedirect: true,
   // Redirects for deprecated Scout pages (now consolidated in /scout/portfolio)
   async redirects() {
     return [
@@ -244,4 +249,6 @@ const sentryWebpackPluginOptions = {
   authToken: process.env.SENTRY_AUTH_TOKEN,
 }
 
-export default withSentryConfig(nextConfig, sentryWebpackPluginOptions);
+// Temporarily export without Sentry to debug build issue
+// export default withSentryConfig(nextConfig, sentryWebpackPluginOptions);
+export default nextConfig;
