@@ -3,6 +3,7 @@
 import Image from "next/image";
 
 import { getTeamLogoData, generateTeamInitials } from "@/lib/utils/team-logos";
+import { isDefaultTransfermarktImage } from "@/lib/utils/image-utils";
 
 interface EntityData {
   // Player fields
@@ -77,9 +78,12 @@ export default function EntityAvatar({
   showBadge = true,
   className = "",
 }: EntityAvatarProps) {
-  // Función para validar si una string es una URL válida
+  // Función para validar si una string es una URL válida y no es una imagen por defecto
   const isValidImageUrl = (url: string | null | undefined): boolean => {
     if (!url || typeof url !== 'string') return false;
+
+    // Verificar si es una imagen por defecto de Transfermarkt
+    if (isDefaultTransfermarktImage(url)) return false;
 
     // Check if it's a valid URL (http/https) or a valid path starting with /
     const isAbsoluteUrl = url.startsWith('http://') || url.startsWith('https://');

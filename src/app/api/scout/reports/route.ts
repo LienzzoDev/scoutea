@@ -66,6 +66,7 @@ export async function GET(request: NextRequest) {
         roi: report.roi,
         profit: report.profit,
         potential: report.potential,
+        approval_status: report.approval_status,
         player: {
           id_player: report.player?.id_player || report.id_player || '',
           player_name: report.player?.player_name || 'Unknown',

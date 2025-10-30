@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 
 import type { Player } from '@/types/player';
+import type { StatsPeriod } from '@/lib/utils/stats-period-utils';
+import type { PlayerStatsByField } from '@/lib/services/player-stats-service';
 
 import { usePlayerList } from './usePlayerList';
 
@@ -12,6 +14,11 @@ export const usePlayerProfile = (playerId: string) => {
   const [activeStatsTab, setActiveStatsTab] = useState('period');
   const [activeFeaturesTab, setActiveFeaturesTab] = useState('on-the-pitch');
   const [isSaving, setIsSaving] = useState(false);
+
+  // Period stats state
+  const [selectedPeriod, setSelectedPeriod] = useState<StatsPeriod>('3m');
+  const [periodStats, setPeriodStats] = useState<Record<string, PlayerStatsByField>>({});
+  const [statsLoading, setStatsLoading] = useState(false);
 
   // Hook para manejar la lista de jugadores
   const { 
@@ -100,6 +107,44 @@ export const usePlayerProfile = (playerId: string) => {
     fetchPlayer();
   }, [playerId]);
 
+  // Fetch period stats when period changes
+  const fetchPeriodStats = async () => {
+    if (!playerId) return;
+
+    setStatsLoading(true);
+    try {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+      const url = `${baseUrl}/api/players/${playerId}/stats-by-period?period=${selectedPeriod}`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        console.error('Failed to fetch period stats:', response.statusText);
+        return;
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        setPeriodStats(data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching period stats:', err);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'stats' && activeStatsTab === 'period') {
+      fetchPeriodStats();
+    }
+  }, [playerId, selectedPeriod, activeTab, activeStatsTab]);
+
   const refreshPlayer = () => {
     fetchPlayer();
   };
@@ -129,9 +174,13 @@ export const usePlayerProfile = (playerId: string) => {
   // Verificar si el jugador está en la lista
   const isPlayerInList = player?.id_player ? isInList(player.id_player) : false;
 
-  const getStatValue = (_statName: string) => {
-    // Mock implementation
-    return Math.floor(Math.random() * 100);
+  const getStatValue = (
+    metricName: string,
+    field: 'totalValue' | 'p90Value' | 'averageValue' | 'maximumValue'
+  ): string => {
+    const stat = periodStats[metricName];
+    if (!stat) return '-';
+    return stat[field] || '-';
   };
 
   return {
@@ -146,11 +195,17 @@ export const usePlayerProfile = (playerId: string) => {
     player,
     loading,
     error,
-    
+
+    // Period stats state
+    selectedPeriod,
+    setSelectedPeriod,
+    periodStats,
+    statsLoading,
+
     // Derived state
     isPlayerInList,
     listLoading,
-    
+
     // Functions
     handleToggleList,
     getStatValue,

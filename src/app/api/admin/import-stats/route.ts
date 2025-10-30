@@ -233,9 +233,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 📝 OBTENER ARCHIVO DEL BODY
+    // 📝 OBTENER ARCHIVO Y PARÁMETROS DEL BODY
     const formData = await request.formData()
     const file = formData.get('file') as File
+    const maxRowsParam = formData.get('maxRows') as string | null
+    const maxRows = maxRowsParam ? parseInt(maxRowsParam) : null
 
     if (!file) {
       return new Response(
@@ -275,16 +277,86 @@ export async function POST(request: NextRequest) {
       )
     }
     const worksheet = workbook.Sheets[sheetName]
-    const data: PlayerImportRow[] = XLSX.utils.sheet_to_json(worksheet)
 
-    if (!data || data.length === 0) {
+    // 🔍 DETECTAR SI LA PRIMERA FILA SON ENCABEZADOS
+    // Leer todas las filas como arrays para inspeccionar
+    const allRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: null }) as any[][]
+
+    if (!allRows || allRows.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'El archivo está vacío o no tiene el formato correcto.' }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        }
+        JSON.stringify({ error: 'El archivo está vacío.' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       )
+    }
+
+    const firstRow = allRows[0] || []
+    const secondRow = allRows[1] || []
+
+    // 🔍 Función para verificar si una fila contiene encabezados
+    const isHeaderRow = (row: any[]) => {
+      return row.some((cell: any) => {
+        const cellStr = String(cell || '').toLowerCase().trim()
+        return cellStr === 'player_name' ||
+               cellStr === 'old_id' ||
+               cellStr === 'id_player' ||
+               cellStr === 'wyscout_id 1' ||
+               cellStr.includes('wyscout') ||
+               (cellStr.includes('player') && cellStr.includes('name'))
+      })
+    }
+
+    // 🔍 Verificar si la primera fila está vacía (todas las celdas son null/undefined/vacías)
+    const firstRowIsEmpty = firstRow.every((cell: any) => !cell || String(cell).trim() === '')
+
+    let headerRow: any[]
+    let dataStartIndex: number
+    let hasHeaders = false
+
+    if (firstRowIsEmpty && isHeaderRow(secondRow)) {
+      // ✅ Caso 1: Primera fila vacía, encabezados en segunda fila
+      headerRow = secondRow
+      dataStartIndex = 2 // Los datos empiezan en la fila 3
+      hasHeaders = true
+    } else if (isHeaderRow(firstRow)) {
+      // ✅ Caso 2: Encabezados en primera fila
+      headerRow = firstRow
+      dataStartIndex = 1 // Los datos empiezan en la fila 2
+      hasHeaders = true
+    } else {
+      // ❌ Caso 3: No hay encabezados reconocibles
+      headerRow = []
+      dataStartIndex = 0
+      hasHeaders = false
+    }
+
+    let data: PlayerImportRow[]
+
+    if (hasHeaders) {
+      // ✅ TIENE ENCABEZADOS: Usar la fila de encabezados detectada
+      const headers = headerRow.map((cell: any) => String(cell || '').trim())
+
+      // Convertir las filas restantes a objetos usando los encabezados
+      data = allRows.slice(dataStartIndex).map((row: any[]) => {
+        const obj: any = {}
+        headers.forEach((header: string, index: number) => {
+          if (header) {
+            obj[header] = row[index]
+          }
+        })
+        return obj as PlayerImportRow
+      })
+    } else {
+      // ❌ NO TIENE ENCABEZADOS: Usar las columnas generadas por XLSX
+      data = XLSX.utils.sheet_to_json(worksheet, {
+        raw: false,
+        defval: null
+      })
+    }
+
+    // 🎯 APLICAR LÍMITE DE FILAS SI SE ESPECIFICÓ
+    const totalRowsInFile = data.length
+    if (maxRows && maxRows > 0 && maxRows < data.length) {
+      data = data.slice(0, maxRows)
     }
 
     // 🌊 CREAR STREAM PARA SSE
@@ -301,10 +373,14 @@ export async function POST(request: NextRequest) {
 
         try {
           // Enviar inicio
+          const startMessage = maxRows && maxRows < totalRowsInFile
+            ? `📥 Iniciando importación de ${data.length} jugadores (límite aplicado: ${maxRows} de ${totalRowsInFile} filas totales)...`
+            : `📥 Iniciando importación de ${data.length} jugadores...`
+
           sendSSE(controller, {
             type: 'start',
             total: data.length,
-            message: `📥 Iniciando importación de ${data.length} jugadores...`
+            message: startMessage
           })
 
           // 🚀 OPTIMIZACIÓN: Pre-cargar todos los jugadores existentes en memoria
@@ -317,11 +393,21 @@ export async function POST(request: NextRequest) {
             .map(row => parseString(row['wyscout_id 1'] || row.id))
             .filter(Boolean) as string[]
 
+          // También cargar jugadores por nombre para matching sin Wyscout ID
+          const allPlayerNames = data
+            .map(row => parseString(row.player_name || row.Player || row['wyscout_name 1']))
+            .filter(Boolean) as string[]
+
           const existingPlayers = await prisma.jugador.findMany({
             where: {
               OR: [
-                { wyscout_id_1: { in: allWyscoutIds } },
-                { wyscout_id_2: { in: allWyscoutIds } }
+                ...(allWyscoutIds.length > 0 ? [
+                  { wyscout_id_1: { in: allWyscoutIds } },
+                  { wyscout_id_2: { in: allWyscoutIds } }
+                ] : []),
+                ...(allPlayerNames.length > 0 ? [
+                  { player_name: { in: allPlayerNames } }
+                ] : [])
               ]
             },
             select: {
@@ -332,11 +418,13 @@ export async function POST(request: NextRequest) {
             }
           })
 
-          // Crear mapa de búsqueda rápida: wyscoutId -> player
+          // Crear mapa de búsqueda rápida: wyscoutId -> player y playerName -> player
           const playerMap = new Map<string, typeof existingPlayers[0]>()
+          const playerNameMap = new Map<string, typeof existingPlayers[0]>()
           existingPlayers.forEach(player => {
             if (player.wyscout_id_1) playerMap.set(player.wyscout_id_1, player)
             if (player.wyscout_id_2) playerMap.set(player.wyscout_id_2, player)
+            if (player.player_name) playerNameMap.set(player.player_name, player)
           })
 
           sendSSE(controller, {
@@ -356,6 +444,78 @@ export async function POST(request: NextRequest) {
             message: `📦 Procesando ${data.length} jugadores en ${batches.length} lotes de hasta ${BATCH_SIZE}`
           })
 
+          // 🔍 DEBUG: Mostrar columnas del Excel para diagnóstico
+          if (data.length > 0) {
+            const firstDataRow = data[0]
+            const columns = Object.keys(firstDataRow)
+
+            sendSSE(controller, {
+              type: 'debug',
+              message: `🔍 Encabezados detectados: ${hasHeaders ? 'SÍ' : 'NO'}`
+            })
+
+            sendSSE(controller, {
+              type: 'debug',
+              message: `🔍 Columnas detectadas en el Excel (${columns.length}): ${columns.slice(0, 20).join(', ')}${columns.length > 20 ? '...' : ''}`
+            })
+
+            // Mostrar TODAS las columnas para diagnóstico completo
+            sendSSE(controller, {
+              type: 'debug',
+              message: `📋 TODAS las columnas: ${columns.join(', ')}`
+            })
+
+            // DEBUG: Verificar campos problemáticos específicos
+            const problematicFields = [
+              'id_fmi', 'url_trfm', 'url_instagram', 'correct_date_of_birth',
+              'age_value', 'age_value_%', 'age_coeff', 'pre_team',
+              'correct_team_name', 'team_country', 'team_elo', 'team_level'
+            ]
+
+            const foundFields: string[] = []
+            const missingFields: string[] = []
+
+            problematicFields.forEach(field => {
+              // Buscar coincidencia exacta o aproximada
+              const exactMatch = columns.find(col => col === field)
+              const caseInsensitiveMatch = columns.find(col => col.toLowerCase() === field.toLowerCase())
+              const similarMatch = columns.find(col =>
+                col.toLowerCase().replace(/[_\s]/g, '') === field.toLowerCase().replace(/[_\s]/g, '')
+              )
+
+              if (exactMatch || caseInsensitiveMatch || similarMatch) {
+                foundFields.push(`${field} → "${exactMatch || caseInsensitiveMatch || similarMatch}"`)
+              } else {
+                missingFields.push(field)
+              }
+            })
+
+            if (foundFields.length > 0) {
+              sendSSE(controller, {
+                type: 'debug',
+                message: `✅ Campos encontrados (${foundFields.length}): ${foundFields.join(', ')}`
+              })
+            }
+
+            if (missingFields.length > 0) {
+              sendSSE(controller, {
+                type: 'warning',
+                message: `⚠️ Campos NO encontrados en Excel (${missingFields.length}): ${missingFields.join(', ')}`
+              })
+            }
+
+            // Mostrar valores de estos campos en la primera fila
+            const fieldValues = problematicFields.map(field => {
+              const value = firstDataRow[field as keyof typeof firstDataRow]
+              return `${field}: "${value || 'N/A'}"`
+            }).join(' | ')
+
+            sendSSE(controller, {
+              type: 'debug',
+              message: `🔍 Valores de campos problemáticos en fila 1: ${fieldValues}`
+            })
+          }
+
           // 🔄 PROCESAR CADA LOTE
           for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
             const batch = batches[batchIndex]
@@ -374,34 +534,53 @@ export async function POST(request: NextRequest) {
               const wyscoutId = parseString(
                 row['wyscout_id 1'] || row.id
               )
+
+              // 🎯 BUSCAR NOMBRE DE JUGADOR en múltiples columnas posibles
               const playerName = parseString(
-                row.player_name || row.Player || row['wyscout_name 1']
+                row.player_name ||
+                row.Player ||
+                row['wyscout_name 1'] ||
+                row.complete_player_name ||
+                row['Player Name'] ||
+                row['Nombre'] ||
+                row['PLAYER'] ||
+                row['Name'] ||
+                // Columnas sin encabezado (__EMPTY)
+                row['__EMPTY_1'] ||
+                row['__EMPTY_2'] ||
+                row['__EMPTY']
               )
 
-              if (!wyscoutId) {
+              // Validar que al menos tengamos un nombre de jugador
+              if (!playerName) {
                 results.failed++
-                results.errors.push(`Fila sin ID de Wyscout: ${playerName || 'Desconocido'}`)
+                const rowIndex = (batchIndex * BATCH_SIZE) + batch.indexOf(row) + 1
+                results.errors.push(`Fila ${rowIndex} sin nombre de jugador`)
                 sendSSE(controller, {
                   type: 'error',
-                  message: `⚠️ Fila sin ID de Wyscout: ${playerName || 'Desconocido'}`
+                  message: `⚠️ Fila ${rowIndex} sin nombre de jugador`
                 })
                 continue
               }
 
               try {
-                // 🔍 BUSCAR JUGADOR EN EL MAPA (O(1) lookup instead of database query!)
-                const existingPlayer = playerMap.get(wyscoutId)
+                // 🔍 BUSCAR JUGADOR EN LOS MAPAS (O(1) lookup instead of database query!)
+                // Primero buscar por Wyscout ID si existe, sino por nombre
+                let existingPlayer = wyscoutId ? playerMap.get(wyscoutId) : null
+                if (!existingPlayer) {
+                  existingPlayer = playerNameMap.get(playerName) || null
+                }
 
           // 📦 PREPARAR DATOS DEL JUGADOR
           const playerData = {
             // Identificación y nombres
-            player_name: playerName || `Player ${wyscoutId}`,
+            player_name: playerName,
             complete_player_name: parseString(row.complete_player_name),
-            wyscout_id_1: wyscoutId,
-            wyscout_name_1: parseString(row['wyscout_name 1']) || playerName,
+            wyscout_id_1: wyscoutId || null,
+            wyscout_name_1: parseString(row['wyscout_name 1']) || null,
             wyscout_id_2: parseString(row['wyscout_id 2']),
             wyscout_name_2: parseString(row['wyscout_name 2']),
-            id_fmi: parseString(row.id_fmi),
+            id_fmi: parseString(row.id_fmi || row.ID_FMI || row['ID FMI'] || row['id FMI'] || row['Id FMI']),
 
             // URLs y referencias
             player_rating: parseNumber(row.player_rating),
@@ -503,28 +682,35 @@ export async function POST(request: NextRequest) {
                       data: playerData,
                       select: { id_player: true }
                     })
-                    // Añadir al mapa para futuras referencias
-                    playerMap.set(wyscoutId, {
+                    // Añadir a los mapas para futuras referencias
+                    const newPlayerData = {
                       id_player: player.id_player,
                       wyscout_id_1: wyscoutId,
                       wyscout_id_2: null,
-                      player_name: playerName || `Player ${wyscoutId}`
-                    })
+                      player_name: playerName
+                    }
+                    if (wyscoutId) {
+                      playerMap.set(wyscoutId, newPlayerData)
+                    }
+                    playerNameMap.set(playerName, newPlayerData)
+
                     results.created++
                     if (results.createdPlayers.length < 50) { // Limitar a 50 para evitar memoria
-                      results.createdPlayers.push(`${playerName} (Wyscout ID: ${wyscoutId})`)
+                      results.createdPlayers.push(wyscoutId
+                        ? `${playerName} (Wyscout ID: ${wyscoutId})`
+                        : `${playerName} (sin Wyscout ID)`)
                     }
 
                     sendSSE(controller, {
                       type: 'player_created',
-                      playerName: playerName || `Player ${wyscoutId}`,
-                      message: `🆕 Jugador creado: ${playerName || `Player ${wyscoutId}`}`
+                      playerName,
+                      message: `🆕 Jugador creado: ${playerName}${wyscoutId ? ` (ID: ${wyscoutId})` : ''}`
                     })
                   } catch (createError) {
                     results.failed++
                     const errorMsg = createError instanceof Error ? createError.message : 'Unknown error'
                     results.errors.push(
-                      `Error creando jugador ${playerName} (Wyscout ID ${wyscoutId}): ${errorMsg}`
+                      `Error creando jugador ${playerName}${wyscoutId ? ` (Wyscout ID ${wyscoutId})` : ''}: ${errorMsg}`
                     )
                     sendSSE(controller, {
                       type: 'error',
@@ -684,11 +870,11 @@ export async function POST(request: NextRequest) {
                 results.failed++
                 const errorMsg = error instanceof Error ? error.message : 'Unknown error'
                 results.errors.push(
-                  `Error procesando jugador ${playerName || wyscoutId}: ${errorMsg}`
+                  `Error procesando jugador ${playerName}${wyscoutId ? ` (Wyscout ID ${wyscoutId})` : ''}: ${errorMsg}`
                 )
                 sendSSE(controller, {
                   type: 'error',
-                  message: `❌ Error en ${playerName || wyscoutId}: ${errorMsg}`
+                  message: `❌ Error en ${playerName}: ${errorMsg}`
                 })
               }
             }

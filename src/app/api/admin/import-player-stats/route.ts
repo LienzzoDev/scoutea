@@ -17,9 +17,23 @@ import {
   type StatsPeriod,
   getExcelSheetName,
   getPeriodLabel,
-  getPrismaTableByPeriod,
   isValidPeriod,
 } from '@/lib/utils/stats-period-utils'
+
+/**
+ * Get the Prisma table model for a given period
+ * This function must be defined here (server-side only)
+ */
+function getPrismaTableByPeriod(period: StatsPeriod) {
+  const tables = {
+    '3m': prisma.playerStats3m,
+    '6m': prisma.playerStats6m,
+    '1y': prisma.playerStats1y,
+    '2y': prisma.playerStats2y,
+  } as const
+
+  return tables[period]
+}
 
 // ⏱️ Configuración del route: timeout extendido para importaciones masivas
 export const maxDuration = 300 // 5 minutos (máximo en Vercel Hobby plan)
@@ -88,181 +102,329 @@ function sendSSE(controller: ReadableStreamDefaultController, data: any) {
 }
 
 /**
+ * Helper: Calcular valores totales basados en valores por 90 minutos
+ */
+function calculateTotal(valuePer90: number | null, minutesPlayed: number | null): number | null {
+  if (valuePer90 === null || minutesPlayed === null || minutesPlayed === 0) return null
+  return Math.round((valuePer90 * minutesPlayed) / 90)
+}
+
+/**
+ * Helper: Calcular efectividad (goles / remates * 100)
+ */
+function calculateEffectiveness(goals: number | null, shots: number | null): number | null {
+  if (goals === null || shots === null || shots === 0) return null
+  return parseFloat(((goals / shots) * 100).toFixed(2))
+}
+
+/**
  * Helper: Mapear los datos del Excel a los campos de la base de datos según el período
  */
 function mapRowToStatsData(row: PlayerStatsImportRow, period: StatsPeriod): Record<string, any> {
   const suffix = period
   const wyscoutId = parseString(row.wyscout_id as string | number)
 
+  // Extraer valores básicos
+  const minutesPlayed = parseInteger(row[`minutes_played_tot_${suffix}`]) || null
+  const matchesPlayed = parseInteger(row[`matches_played_tot_${suffix}`]) || null
+  
+  // Valores por 90
+  const goalsP90 = parseDecimal(row[`goals_p90_${suffix}`]) || null
+  const assistsP90 = parseDecimal(row[`assists_p90_${suffix}`]) || null
+  const yellowCardsP90 = parseDecimal(row[`yellow_cards_p90_${suffix}`]) || null
+  const redCardsP90 = parseDecimal(row[`red_cards_p90_${suffix}`]) || null
+  const concededGoalsP90 = parseDecimal(row[`conceded_goals_p90_${suffix}`]) || null
+  const preventedGoalsP90 = parseDecimal(row[`prevented_goals_p90_${suffix}`]) || null
+  const shotsAgainstP90 = parseDecimal(row[`shots_against_p90_${suffix}`]) || null
+  const tacklesP90 = parseDecimal(row[`tackles_p90_${suffix}`]) || null
+  const interceptionsP90 = parseDecimal(row[`interceptions_p90_${suffix}`]) || null
+  const foulsP90 = parseDecimal(row[`fouls_p90_${suffix}`]) || null
+  const passesP90 = parseDecimal(row[`passes_p90_${suffix}`]) || null
+  const forwardPassesP90 = parseDecimal(row[`forward_passes_p90_${suffix}`]) || null
+  const crossesP90 = parseDecimal(row[`crosses_p90_${suffix}`]) || null
+  const shotsP90 = parseDecimal(row[`shots_p90_${suffix}`]) || null
+  const offDuelsP90 = parseDecimal(row[`off_duels_p90_${suffix}`]) || null
+  const defDuelsP90 = parseDecimal(row[`def_duels_p90_${suffix}`]) || null
+  const aerialsDuelsP90 = parseDecimal(row[`aerials_duels_p90_${suffix}`]) || null
+
+  // Calcular totales automáticamente
+  const goalsTot = calculateTotal(goalsP90, minutesPlayed)
+  const assistsTot = calculateTotal(assistsP90, minutesPlayed)
+  const yellowCardsTot = calculateTotal(yellowCardsP90, minutesPlayed)
+  const redCardsTot = calculateTotal(redCardsP90, minutesPlayed)
+  const concededGoalsTot = calculateTotal(concededGoalsP90, minutesPlayed)
+  const preventedGoalsTot = preventedGoalsP90 && minutesPlayed ? (preventedGoalsP90 * minutesPlayed) / 90 : null
+  const shotsAgainstTot = calculateTotal(shotsAgainstP90, minutesPlayed)
+  const tacklesTot = calculateTotal(tacklesP90, minutesPlayed)
+  const interceptionsTot = calculateTotal(interceptionsP90, minutesPlayed)
+  const foulsTot = calculateTotal(foulsP90, minutesPlayed)
+  const passesTot = calculateTotal(passesP90, minutesPlayed)
+  const forwardPassesTot = calculateTotal(forwardPassesP90, minutesPlayed)
+  const crossesTot = calculateTotal(crossesP90, minutesPlayed)
+  const shotsTot = calculateTotal(shotsP90, minutesPlayed)
+  const offDuelsTot = calculateTotal(offDuelsP90, minutesPlayed)
+  const defDuelsTot = calculateTotal(defDuelsP90, minutesPlayed)
+  const aerialsDuelsTot = calculateTotal(aerialsDuelsP90, minutesPlayed)
+
+  // Calcular clean sheets (porterías imbatidas totales, si aplica)
+  const cleanSheetsPercent = parseDecimal(row[`clean_sheets_percent_${suffix}`]) || null
+  const cleanSheetsTot = cleanSheetsPercent && matchesPlayed ? Math.round((cleanSheetsPercent * matchesPlayed) / 100) : null
+
+  // Calcular efectividad
+  const effectivenessPercent = calculateEffectiveness(goalsTot, shotsTot)
+
   // Crear objeto de datos con mapeo dinámico según período
   const statsData: Record<string, any> = {
     wyscout_id: wyscoutId ? parseBigInt(wyscoutId) : null,
-    [`stats_evo_${suffix}`]: parseDecimal(row[`stats_evo_${suffix}`]),
 
     // Partidos y minutos
-    [`matches_played_tot_${suffix}`]: parseInteger(row[`matches_played_tot_${suffix}`]),
-    [`matches_played_tot_${suffix}_norm`]: parseDecimal(row[`matches_played_tot_${suffix}_norm`]),
-    [`matches_played_tot_${suffix}_rank`]: parseInteger(row[`matches_played_tot_${suffix}_rank`]),
-    [`minutes_played_tot_${suffix}`]: parseInteger(row[`minutes_played_tot_${suffix}`]),
-    [`minutes_played_tot_${suffix}_norm`]: parseDecimal(row[`minutes_played_tot_${suffix}_norm`]),
-    [`minutes_played_tot_${suffix}_rank`]: parseInteger(row[`minutes_played_tot_${suffix}_rank`]),
+    [`matches_played_tot_${suffix}`]: matchesPlayed,
+    [`minutes_played_tot_${suffix}`]: minutesPlayed,
 
     // Goles
-    [`goals_p90_${suffix}`]: parseDecimal(row[`goals_p90_${suffix}`]),
-    [`goals_p90_${suffix}_norm`]: parseDecimal(row[`goals_p90_${suffix}_norm`]),
-    [`goals_p90_${suffix}_rank`]: parseInteger(row[`goals_p90_${suffix}_rank`]),
-    [`goals_tot_${suffix}`]: parseInteger(row[`goals_tot_${suffix}`]),
-    [`goals_tot_${suffix}_norm`]: parseDecimal(row[`goals_tot_${suffix}_norm`]),
+    [`goals_p90_${suffix}`]: goalsP90,
+    [`goals_tot_${suffix}`]: goalsTot,
 
     // Asistencias
-    [`assists_p90_${suffix}`]: parseDecimal(row[`assists_p90_${suffix}`]),
-    [`assists_p90_${suffix}_norm`]: parseDecimal(row[`assists_p90_${suffix}_norm`]),
-    [`assists_p90_${suffix}_rank`]: parseInteger(row[`assists_p90_${suffix}_rank`]),
-    [`assists_tot_${suffix}`]: parseInteger(row[`assists_tot_${suffix}`]),
-    [`assists_tot_${suffix}_norm`]: parseDecimal(row[`assists_tot_${suffix}_norm`]),
+    [`assists_p90_${suffix}`]: assistsP90,
+    [`assists_tot_${suffix}`]: assistsTot,
 
     // Tarjetas amarillas
-    [`yellow_cards_p90_${suffix}`]: parseDecimal(row[`yellow_cards_p90_${suffix}`]),
-    [`yellow_cards_p90_${suffix}_norm`]: parseDecimal(row[`yellow_cards_p90_${suffix}_norm`]),
-    yellow_cards_p90_rank: parseInteger(row.yellow_cards_p90_rank),
-    [`yellow_cards_p90_${suffix}_norm_neg`]: parseDecimal(row[`yellow_cards_p90_${suffix}_norm_neg`]),
-    [`yellow_cards_tot_${suffix}`]: parseInteger(row[`yellow_cards_tot_${suffix}`]),
-    [`yellow_cards_tot_${suffix}_norm`]: parseDecimal(row[`yellow_cards_tot_${suffix}_norm`]),
+    [`yellow_cards_p90_${suffix}`]: yellowCardsP90,
+    [`yellow_cards_tot_${suffix}`]: yellowCardsTot,
 
     // Tarjetas rojas
-    [`red_cards_p90_${suffix}`]: parseDecimal(row[`red_cards_p90_${suffix}`]),
-    [`red_cards_p90_${suffix}_norm`]: parseDecimal(row[`red_cards_p90_${suffix}_norm`]),
-    red_cards_p90_rank: parseInteger(row.red_cards_p90_rank),
-    [`red_cards_p90_${suffix}_norm_neg`]: parseDecimal(row[`red_cards_p90_${suffix}_norm_neg`]),
-    [`red_cards_tot_${suffix}`]: parseInteger(row[`red_cards_tot_${suffix}`]),
-    [`red_cards_tot_${suffix}_norm`]: parseDecimal(row[`red_cards_tot_${suffix}_norm`]),
+    [`red_cards_p90_${suffix}`]: redCardsP90,
+    [`red_cards_tot_${suffix}`]: redCardsTot,
 
     // Goles concedidos (porteros)
-    [`conceded_goals_p90_${suffix}`]: parseDecimal(row[`conceded_goals_p90_${suffix}`]),
-    [`conceded_goals_p90_${suffix}_norm`]: parseDecimal(row[`conceded_goals_p90_${suffix}_norm`]),
-    [`conceded_goals_p90_${suffix}_rank`]: parseInteger(row[`conceded_goals_p90_${suffix}_rank`]),
-    [`conceded_goals_p90_${suffix}_norm_neg`]: parseDecimal(row[`conceded_goals_p90_${suffix}_norm_neg`]),
-    [`conceded_goals_tot_${suffix}`]: parseInteger(row[`conceded_goals_tot_${suffix}`]),
-    [`conceded_goals_tot_${suffix}_norm`]: parseDecimal(row[`conceded_goals_tot_${suffix}_norm`]),
+    [`conceded_goals_p90_${suffix}`]: concededGoalsP90,
+    [`conceded_goals_tot_${suffix}`]: concededGoalsTot,
 
     // Goles prevenidos (porteros)
-    [`prevented_goals_p90_${suffix}`]: parseDecimal(row[`prevented_goals_p90_${suffix}`]),
-    [`prevented_goals_p90_${suffix}_norm`]: parseDecimal(row[`prevented_goals_p90_${suffix}_norm`]),
-    prevented_goals_p90_rank: parseInteger(row.prevented_goals_p90_rank),
-    [`prevented_goals_tot_${suffix}`]: parseDecimal(row[`prevented_goals_tot_${suffix}`]),
-    [`prevented_goals_tot_${suffix}_norm`]: parseDecimal(row[`prevented_goals_tot_${suffix}_norm`]),
+    [`prevented_goals_p90_${suffix}`]: preventedGoalsP90,
+    [`prevented_goals_tot_${suffix}`]: preventedGoalsTot,
 
     // Tiros contra (porteros)
-    [`shots_against_p90_${suffix}`]: parseDecimal(row[`shots_against_p90_${suffix}`]),
-    [`shots_against_p90_${suffix}_norm`]: parseDecimal(row[`shots_against_p90_${suffix}_norm`]),
-    [`shots_against_p90_${suffix}_rank`]: parseInteger(row[`shots_against_p90_${suffix}_rank`]),
-    [`shots_against_tot_${suffix}`]: parseInteger(row[`shots_against_tot_${suffix}`]),
-    [`shots_against_tot_${suffix}_norm`]: parseDecimal(row[`shots_against_tot_${suffix}_norm`]),
+    [`shots_against_p90_${suffix}`]: shotsAgainstP90,
+    [`shots_against_tot_${suffix}`]: shotsAgainstTot,
 
-    // Clean sheets (porteros) - Nota: columnas con % en el Excel
-    [`clean_sheets_percent_${suffix}`]: parseDecimal(row[`clean_sheets_%${suffix}`]),
-    [`clean_sheets_percent_${suffix}_norm`]: parseDecimal(row[`clean_sheets%${suffix}_norm`]),
-    [`clean_sheets_percent_${suffix}_rank`]: parseInteger(row[`clean_sheets%${suffix}_rank`]),
-    [`clean_sheets_tot_${suffix}`]: parseInteger(row[`clean_sheets_tot_${suffix}`]),
-    [`clean_sheets_tot_${suffix}_norm`]: parseDecimal(row[`clean_sheets_tot_${suffix}_norm`]),
+    // Clean sheets (porteros)
+    [`clean_sheets_percent_${suffix}`]: cleanSheetsPercent,
+    [`clean_sheets_tot_${suffix}`]: cleanSheetsTot,
 
-    // Save rate (porteros) - Nota: columnas con % en el Excel
-    [`save_rate_percent_${suffix}`]: parseDecimal(row[`save_rate%${suffix}`]),
-    [`save_rate_percent_${suffix}_norm`]: parseDecimal(row[`save_rate%${suffix}_norm`]),
-    [`save_rate_percent_${suffix}_rank`]: parseInteger(row[`save_rate%${suffix}_rank`]),
+    // Save rate (porteros)
+    [`save_rate_percent_${suffix}`]: parseDecimal(row[`save_rate_percent_${suffix}`]) || null,
 
     // Tackles
-    [`tackles_p90_${suffix}`]: parseDecimal(row[`tackles_p90_${suffix}`]),
-    [`tackles_p90_${suffix}_norm`]: parseDecimal(row[`tackles_p90_${suffix}_norm`]),
-    [`tackles_p90_${suffix}_rank`]: parseInteger(row[`tackles_p90_${suffix}_rank`]),
-    [`tackles_tot_${suffix}`]: parseInteger(row[`tackles_tot_${suffix}`]),
-    [`tackles_tot_${suffix}_norm`]: parseDecimal(row[`tackles_tot_${suffix}_norm`]),
+    [`tackles_p90_${suffix}`]: tacklesP90,
+    [`tackles_tot_${suffix}`]: tacklesTot,
 
     // Intercepciones
-    [`interceptions_p90_${suffix}`]: parseDecimal(row[`interceptions_p90_${suffix}`]),
-    [`interceptions_p90_${suffix}_norm`]: parseDecimal(row[`interceptions_p90_${suffix}_norm`]),
-    [`interceptions_p90_${suffix}_rank`]: parseInteger(row[`interceptions_p90_${suffix}_rank`]),
-    [`interceptions_tot_${suffix}`]: parseInteger(row[`interceptions_tot_${suffix}`]),
-    [`interceptions_tot_${suffix}_norm`]: parseDecimal(row[`interceptions_tot_${suffix}_norm`]),
+    [`interceptions_p90_${suffix}`]: interceptionsP90,
+    [`interceptions_tot_${suffix}`]: interceptionsTot,
 
     // Faltas
-    [`fouls_p90_${suffix}`]: parseDecimal(row[`fouls_p90_${suffix}`]),
-    [`fouls_p90_${suffix}_norm`]: parseDecimal(row[`fouls_p90_${suffix}_norm`]),
-    [`fouls_p90_${suffix}_rank`]: parseInteger(row[`fouls_p90_${suffix}_rank`]),
-    [`fouls_p90_${suffix}_norm_neg`]: parseDecimal(row[`fouls_p90_${suffix}_norm_neg`]),
-    [`fouls_tot_${suffix}`]: parseInteger(row[`fouls_tot_${suffix}`]),
-    [`fouls_tot_${suffix}_norm`]: parseDecimal(row[`fouls_tot_${suffix}_norm`]),
+    [`fouls_p90_${suffix}`]: foulsP90,
+    [`fouls_tot_${suffix}`]: foulsTot,
 
     // Pases
-    [`passes_p90_${suffix}`]: parseDecimal(row[`passes_p90_${suffix}`]),
-    [`passes_p90_${suffix}_norm`]: parseDecimal(row[`passes_p90_${suffix}_norm`]),
-    [`passes_p90_${suffix}_rank`]: parseInteger(row[`passes_p90_${suffix}_rank`]),
-    [`passes_tot_${suffix}`]: parseInteger(row[`passes_tot_${suffix}`]),
-    [`passes_tot_${suffix}_norm`]: parseDecimal(row[`passes_tot_${suffix}_norm`]),
+    [`passes_p90_${suffix}`]: passesP90,
+    [`passes_tot_${suffix}`]: passesTot,
 
     // Pases hacia adelante
-    [`forward_passes_p90_${suffix}`]: parseDecimal(row[`forward_passes_p90_${suffix}`]),
-    [`forward_passes_p90_${suffix}_norm`]: parseDecimal(row[`forward_passes_p90_${suffix}_norm`]),
-    [`forward_passes_p90_${suffix}_rank`]: parseInteger(row[`forward_passes_p90_${suffix}_rank`]),
-    [`forward_passes_tot_${suffix}`]: parseInteger(row[`forward_passes_tot_${suffix}`]),
-    [`forward_passes_tot_${suffix}_norm`]: parseDecimal(row[`forward_passes_tot_${suffix}_norm`]),
+    [`forward_passes_p90_${suffix}`]: forwardPassesP90,
+    [`forward_passes_tot_${suffix}`]: forwardPassesTot,
 
     // Centros
-    [`crosses_p90_${suffix}`]: parseDecimal(row[`crosses_p90_${suffix}`]),
-    [`crosses_p90_${suffix}_norm`]: parseDecimal(row[`crosses_p90_${suffix}_norm`]),
-    [`crosses_p90_${suffix}_rank`]: parseInteger(row[`crosses_p90_${suffix}_rank`]),
-    [`crosses_tot_${suffix}`]: parseInteger(row[`crosses_tot_${suffix}`]),
-    [`crosses_tot_${suffix}_norm`]: parseDecimal(row[`crosses_tot_${suffix}_norm`]),
+    [`crosses_p90_${suffix}`]: crossesP90,
+    [`crosses_tot_${suffix}`]: crossesTot,
 
-    // Pases precisos - Nota: columnas con % en el Excel
-    [`accurate_passes_percent_${suffix}`]: parseDecimal(row[`accurate_passes%${suffix}`]),
-    [`accurate_passes_percent_${suffix}_norm`]: parseDecimal(row[`accurate_passes%${suffix}_norm`]),
-    [`accurate_passes_percent_${suffix}_rank`]: parseInteger(row[`accurate_passes%${suffix}_rank`]),
+    // Pases precisos
+    [`accurate_passes_percent_${suffix}`]: parseDecimal(row[`accurate_passes_percent_${suffix}`]) || null,
 
     // Tiros
-    [`shots_p90_${suffix}`]: parseDecimal(row[`shots_p90_${suffix}`]),
-    [`shots_p90_${suffix}_norm`]: parseDecimal(row[`shots_p90_${suffix}_norm`]),
-    [`shots_p90_${suffix}_rank`]: parseInteger(row[`shots_p90_${suffix}_rank`]),
-    [`shots_tot_${suffix}`]: parseInteger(row[`shots_tot_${suffix}`]),
-    [`shots_tot_${suffix}_norm`]: parseDecimal(row[`shots_tot_${suffix}_norm`]),
+    [`shots_p90_${suffix}`]: shotsP90,
+    [`shots_tot_${suffix}`]: shotsTot,
 
-    // Efectividad - Nota: columnas con % en el Excel
-    [`effectiveness_percent_${suffix}`]: parseDecimal(row[`effectiveness%${suffix}`]),
-    [`effectiveness_percent_${suffix}_norm`]: parseDecimal(row[`effectiveness%${suffix}_norm`]),
-    [`effectiveness_percent_${suffix}_rank`]: parseInteger(row[`effectiveness%${suffix}_rank`]),
+    // Efectividad (CALCULADO AUTOMÁTICAMENTE)
+    [`effectiveness_percent_${suffix}`]: effectivenessPercent,
 
     // Duelos ofensivos
-    [`off_duels_p90_${suffix}`]: parseDecimal(row[`off_duels_p90_${suffix}`]),
-    [`off_duels_p90_${suffix}_norm`]: parseDecimal(row[`off_duels_p90_${suffix}_norm`]),
-    [`off_duels_p90_${suffix}_rank`]: parseInteger(row[`off_duels_p90_${suffix}_rank`]),
-    [`off_duels_tot_${suffix}`]: parseInteger(row[`off_duels_tot_${suffix}`]),
-    [`off_duels_tot_${suffix}_norm`]: parseDecimal(row[`off_duels_tot_${suffix}_norm`]),
-    [`off_duels_won_percent_${suffix}`]: parseDecimal(row[`off_duels_won%${suffix}`]),
-    [`off_duels_won_percent_${suffix}_norm`]: parseDecimal(row[`off_duels_won%${suffix}_norm`]),
-    [`off_duels_won_percent_${suffix}_rank`]: parseInteger(row[`off_duels_won%${suffix}_rank`]),
+    [`off_duels_p90_${suffix}`]: offDuelsP90,
+    [`off_duels_tot_${suffix}`]: offDuelsTot,
+    [`off_duels_won_percent_${suffix}`]: parseDecimal(row[`off_duels_won_percent_${suffix}`]) || null,
 
     // Duelos defensivos
-    [`def_duels_p90_${suffix}`]: parseDecimal(row[`def_duels_p90_${suffix}`]),
-    [`def_duels_p90_${suffix}_norm`]: parseDecimal(row[`def_duels_p90_${suffix}_norm`]),
-    [`def_duels_p90_${suffix}_rank`]: parseInteger(row[`def_duels_p90_${suffix}_rank`]),
-    [`def_duels_tot_${suffix}`]: parseInteger(row[`def_duels_tot_${suffix}`]),
-    [`def_duels_tot_${suffix}_norm`]: parseDecimal(row[`def_duels_tot_${suffix}_norm`]),
-    [`def_duels_won_percent_${suffix}`]: parseDecimal(row[`def_duels_won%${suffix}`]),
-    [`def_duels_won_percent_${suffix}_norm`]: parseDecimal(row[`def_duels_won%${suffix}_norm`]),
-    [`def_duels_won_percent_${suffix}_rank`]: parseInteger(row[`def_duels_won%${suffix}_rank`]),
+    [`def_duels_p90_${suffix}`]: defDuelsP90,
+    [`def_duels_tot_${suffix}`]: defDuelsTot,
+    [`def_duels_won_percent_${suffix}`]: parseDecimal(row[`def_duels_won_percent_${suffix}`]) || null,
 
     // Duelos aéreos
-    [`aerials_duels_p90_${suffix}`]: parseDecimal(row[`aerials_duels_p90_${suffix}`]),
-    [`aerials_duels_p90_${suffix}_norm`]: parseDecimal(row[`aerials_duels_p90_${suffix}_norm`]),
-    [`aerials_duels_p90_${suffix}_rank`]: parseInteger(row[`aerials_duels_p90_${suffix}_rank`]),
-    [`aerials_duels_tot_${suffix}`]: parseInteger(row[`aerials_duels_tot_${suffix}`]),
-    [`aerials_duels_tot_${suffix}_norm`]: parseDecimal(row[`aerials_duels_tot_${suffix}_norm`]),
-    [`aerials_duels_won_percent_${suffix}`]: parseDecimal(row[`aerials_duels_won%${suffix}`]),
-    [`aerials_duels_won_percent_${suffix}_norm`]: parseDecimal(row[`aerials_duels_won%${suffix}_norm`]),
-    [`aerials_duels_won_percent_${suffix}_rank`]: parseInteger(row[`aerials_duels_won%_${suffix}_rank`]),
+    [`aerials_duels_p90_${suffix}`]: aerialsDuelsP90,
+    [`aerials_duels_tot_${suffix}`]: aerialsDuelsTot,
+    [`aerials_duels_won_percent_${suffix}`]: parseDecimal(row[`aerials_duels_won_percent_${suffix}`]) || null,
   }
 
   return statsData
+}
+
+/**
+ * Helper: Calcular normalizaciones y rankings para todas las estadísticas
+ */
+async function calculateNormalizationsAndRankings(
+  period: StatsPeriod,
+  sendSSE: (controller: ReadableStreamDefaultController, data: any) => void,
+  controller: ReadableStreamDefaultController
+) {
+  const suffix = period
+  const statsTable = getPrismaTableByPeriod(period)
+
+  // Obtener todas las estadísticas del período
+  const whereClause: Record<string, any> = {}
+  whereClause[`matches_played_tot_${suffix}`] = { gt: 0 } // Solo jugadores con partidos jugados
+  
+  const allStats = await statsTable.findMany({
+    where: whereClause
+  })
+
+  if (allStats.length === 0) {
+    return
+  }
+
+  sendSSE(controller, {
+    type: 'info',
+    message: `📊 Procesando ${allStats.length} jugadores...`,
+  })
+
+  // Campos con ranking y normalización
+  const fieldsToNormalize = [
+    'goals_p90', 'assists_p90', 'yellow_cards_p90', 'red_cards_p90',
+    'conceded_goals_p90', 'prevented_goals_p90', 'shots_against_p90',
+    'tackles_p90', 'interceptions_p90', 'fouls_p90',
+    'passes_p90', 'forward_passes_p90', 'crosses_p90', 'shots_p90',
+    'off_duels_p90', 'def_duels_p90', 'aerials_duels_p90',
+    // Porcentajes
+    'clean_sheets_percent', 'save_rate_percent', 'accurate_passes_percent',
+    'effectiveness_percent', 'off_duels_won_percent', 'def_duels_won_percent',
+    'aerials_duels_won_percent',
+    // Básicos
+    'matches_played_tot', 'minutes_played_tot'
+  ]
+  
+  // Campos solo con normalización (NO tienen ranking en el esquema)
+  const fieldsOnlyNorm = [
+    'goals_tot', 'assists_tot', 'yellow_cards_tot', 'red_cards_tot',
+    'conceded_goals_tot', 'shots_against_tot', 'clean_sheets_tot',
+    'tackles_tot', 'interceptions_tot', 'fouls_tot',
+    'passes_tot', 'forward_passes_tot', 'crosses_tot', 'shots_tot',
+    'off_duels_tot', 'def_duels_tot', 'aerials_duels_tot',
+    'prevented_goals_tot'
+  ]
+
+  // Calcular min y max para cada campo
+  const statsForNormalization: Record<string, { values: number[], indices: number[] }> = {}
+  
+  fieldsToNormalize.forEach(field => {
+    const fieldWithSuffix = `${field}_${suffix}`
+    const values: number[] = []
+    const indices: number[] = []
+    
+    allStats.forEach((stat, index) => {
+      const value = stat[fieldWithSuffix as keyof typeof stat]
+      if (value !== null && value !== undefined) {
+        // Convertir Decimal de Prisma a number
+        const numValue = typeof value === 'object' && 'toNumber' in value 
+          ? (value as any).toNumber() 
+          : Number(value)
+        
+        if (!isNaN(numValue)) {
+          values.push(numValue)
+          indices.push(index)
+        }
+      }
+    })
+    
+    if (values.length > 0) {
+      statsForNormalization[field] = { values, indices }
+    }
+  })
+
+  // Calcular normalizaciones y rankings
+  const updates: Array<{ id_player: string, data: Record<string, any> }> = []
+
+  allStats.forEach((stat, statIndex) => {
+    const updateData: Record<string, any> = {}
+
+    fieldsToNormalize.forEach(field => {
+      const fieldWithSuffix = `${field}_${suffix}`
+      const normField = `${field}_${suffix}_norm`
+      
+      // Algunos rankings NO tienen sufijo de período (son globales)
+      const fieldsWithoutPeriodSuffix = ['yellow_cards_p90', 'red_cards_p90', 'prevented_goals_p90']
+      const rankField = fieldsWithoutPeriodSuffix.includes(field)
+        ? `${field}_rank`
+        : `${field}_${suffix}_rank`
+      
+      const statsData = statsForNormalization[field]
+      if (!statsData) return
+
+      const value = stat[fieldWithSuffix as keyof typeof stat]
+      if (value === null || value === undefined) return
+
+      // Convertir Decimal de Prisma a number
+      const numValue = typeof value === 'object' && 'toNumber' in value 
+        ? (value as any).toNumber() 
+        : Number(value)
+      
+      if (isNaN(numValue)) return
+      
+      const { values } = statsData
+
+      // Calcular normalización (0-100 usando percentil)
+      const sortedValues = [...values].sort((a, b) => a - b)
+      const position = sortedValues.findIndex(v => v >= numValue)
+      const percentile = position >= 0 ? (position / sortedValues.length) * 100 : 100
+      updateData[normField] = Math.round(percentile * 100) / 100
+
+      // Calcular ranking (1 = mejor)
+      const descendingValues = [...values].sort((a, b) => b - a)
+      const rank = descendingValues.findIndex(v => v <= numValue) + 1
+      
+      // Para campos "negativos" (tarjetas, faltas, goles concedidos), invertir el ranking
+      const negativeFields = ['yellow_cards', 'red_cards', 'fouls', 'conceded_goals']
+      const isNegative = negativeFields.some(nf => field.startsWith(nf))
+      
+      if (isNegative) {
+        updateData[rankField] = values.length - rank + 1
+        // Calcular también la normalización negativa
+        const normNegField = `${field}_${suffix}_norm_neg`
+        updateData[normNegField] = Math.round((100 - percentile) * 100) / 100
+      } else {
+        updateData[rankField] = rank
+      }
+    })
+
+    if (Object.keys(updateData).length > 0) {
+      updates.push({
+        id_player: stat.id_player,
+        data: updateData
+      })
+    }
+  })
+
+  // Aplicar actualizaciones en batch
+  sendSSE(controller, {
+    type: 'info',
+    message: `💾 Guardando ${updates.length} actualizaciones...`,
+  })
+
+  for (const update of updates) {
+    await statsTable.update({
+      where: { id_player: update.id_player },
+      data: update.data
+    })
+  }
 }
 
 /**
@@ -368,7 +530,10 @@ export async function POST(request: NextRequest) {
     const worksheet = workbook.Sheets[sheetName]
     const data: PlayerStatsImportRow[] = XLSX.utils.sheet_to_json(worksheet)
 
+    console.log(`📊 Excel leído: ${data.length} filas encontradas en hoja "${sheetName}"`)
+
     if (!data || data.length === 0) {
+      console.error('❌ El archivo Excel no contiene datos')
       return new Response(
         JSON.stringify({ error: 'El archivo está vacío o no tiene el formato correcto.' }),
         {
@@ -377,6 +542,86 @@ export async function POST(request: NextRequest) {
         }
       )
     }
+
+    // 🔍 DEBUG: Mostrar columnas del Excel
+    if (data.length > 0) {
+      const columns = Object.keys(data[0])
+      console.log(`📋 Columnas detectadas (${columns.length}):`, columns.slice(0, 20))
+    }
+
+    // 🔍 NORMALIZAR NOMBRES DE COLUMNAS: Detectar y mapear variantes comunes
+    // Esto permite que el Excel funcione con diferentes nombres de columna
+    const normalizedData = data.map(row => {
+      const normalizedRow: any = { ...row }
+
+      // Buscar variantes de wyscout_id PRIMERO (tiene prioridad)
+      if (!normalizedRow.wyscout_id) {
+        const wyscoutVariants = ['wyscout_id_1', 'WYSCOUT_ID_1', 'wyscout_id 1', 'Wyscout ID 1', 'WYSCOUT_ID', 'WyscoutID', 'Wyscout ID', 'wyscout id', 'id', 'ID']
+        for (const variant of wyscoutVariants) {
+          if (row[variant] !== undefined && row[variant] !== null && row[variant] !== '') {
+            normalizedRow.wyscout_id = row[variant]
+            break
+          }
+        }
+      }
+
+      // Buscar variantes de id_player
+      if (!normalizedRow.id_player) {
+        const idPlayerVariants = ['ID_PLAYER', 'IdPlayer', 'Id_Player', 'ID Player', 'player_id', 'PLAYER_ID']
+        for (const variant of idPlayerVariants) {
+          if (row[variant] !== undefined && row[variant] !== null && row[variant] !== '') {
+            normalizedRow.id_player = row[variant]
+            break
+          }
+        }
+      }
+
+      // 🌐 MAPEO DE COLUMNAS EN ESPAÑOL A INGLÉS
+      // Mapea nombres de columnas en español a los nombres de base de datos con sufijo
+      const spanishToEnglishMap: Record<string, string> = {
+        'Partidos jugados': `matches_played_tot_${period}`,
+        'Minutos jugados': `minutes_played_tot_${period}`,
+        'Duelos defensivos/90': `def_duels_p90_${period}`,
+        'Duelos defensivos ganados, %': `def_duels_won_percent_${period}`,
+        'Duelos aéreos en los 90': `aerials_duels_p90_${period}`,
+        'Duelos aéreos ganados, %': `aerials_duels_won_percent_${period}`,
+        'Entradas/90': `tackles_p90_${period}`,
+        'Interceptaciones/90': `interceptions_p90_${period}`,
+        'Faltas/90': `fouls_p90_${period}`,
+        'Tarjetas amarillas/90': `yellow_cards_p90_${period}`,
+        'Tarjetas rojas/90': `red_cards_p90_${period}`,
+        'Goles/90': `goals_p90_${period}`,
+        'Remates/90': `shots_p90_${period}`,
+        'Asistencias/90': `assists_p90_${period}`,
+        'Centros/90': `crosses_p90_${period}`,
+        'Duelos atacantes/90': `off_duels_p90_${period}`,
+        'Duelos atacantes ganados, %': `off_duels_won_percent_${period}`,
+        'Pases/90': `passes_p90_${period}`,
+        'Precisión pases, %': `accurate_passes_percent_${period}`,
+        'Pases hacia adelante/90': `forward_passes_p90_${period}`,
+        'Goles recibidos/90': `conceded_goals_p90_${period}`,
+        'Remates en contra/90': `shots_against_p90_${period}`,
+        'Porterías imbatidas en los 90': `clean_sheets_percent_${period}`,
+        'Paradas, %': `save_rate_percent_${period}`,
+        'Goles evitados/90': `prevented_goals_p90_${period}`,
+        // Variantes alternativas
+        'Jugador': 'player_name'
+      }
+
+      // Aplicar mapeo de columnas españolas
+      Object.keys(row).forEach(columnName => {
+        const mappedName = spanishToEnglishMap[columnName]
+        if (mappedName && row[columnName] !== undefined && row[columnName] !== null && row[columnName] !== '') {
+          // Usar directamente el nombre mapeado (ya incluye el sufijo del período)
+          normalizedRow[mappedName] = row[columnName]
+        }
+      })
+
+      return normalizedRow
+    })
+
+    // Reemplazar data con normalizedData
+    data.splice(0, data.length, ...normalizedData)
 
     // 🌊 CREAR STREAM PARA SSE
     const stream = new ReadableStream({
@@ -400,6 +645,81 @@ export async function POST(request: NextRequest) {
             message: `📥 Iniciando importación de ${data.length} registros para período: ${getPeriodLabel(period)}...`,
           })
 
+          // 🔍 DEBUG: Mostrar columnas detectadas en el Excel
+          if (data.length > 0) {
+            const firstRow = data[0]
+            const columns = Object.keys(firstRow)
+
+            sendSSE(controller, {
+              type: 'info',
+              message: `🔍 Total de columnas detectadas: ${columns.length}`,
+            })
+
+            // Mostrar primeras 20 columnas
+            sendSSE(controller, {
+              type: 'info',
+              message: `📋 Primeras columnas: ${columns.slice(0, 20).join(', ')}${columns.length > 20 ? '...' : ''}`,
+            })
+
+            // Verificar campos críticos de identificación
+            const hasIdPlayer = columns.some(col => col === 'id_player' || col.toLowerCase().includes('id_player') || col.toLowerCase() === 'id')
+            const hasWyscoutId = columns.some(col => col.includes('wyscout') && col.includes('id'))
+
+            if (hasIdPlayer) {
+              const idColumn = columns.find(col => col === 'id_player') || columns.find(col => col.toLowerCase().includes('id_player')) || columns.find(col => col.toLowerCase() === 'id')
+              sendSSE(controller, {
+                type: 'info',
+                message: `✅ Columna de ID de jugador detectada: "${idColumn}"`,
+              })
+            } else {
+              sendSSE(controller, {
+                type: 'warning',
+                message: `⚠️ No se detectó columna "id_player" - buscando variantes...`,
+              })
+            }
+
+            if (hasWyscoutId) {
+              const wyscoutColumn = columns.find(col => col.includes('wyscout') && col.includes('id'))
+              sendSSE(controller, {
+                type: 'info',
+                message: `✅ Columna de Wyscout ID detectada: "${wyscoutColumn}"`,
+              })
+            } else {
+              sendSSE(controller, {
+                type: 'warning',
+                message: `⚠️ No se detectó columna "wyscout_id"`,
+              })
+            }
+
+            // Mostrar valores de la primera fila para diagnóstico
+            const firstRowId = firstRow.id_player || firstRow.wyscout_id
+            if (firstRowId) {
+              sendSSE(controller, {
+                type: 'info',
+                message: `📌 Primer identificador detectado: ${firstRowId}`,
+              })
+            } else {
+              sendSSE(controller, {
+                type: 'error',
+                message: `❌ La primera fila NO tiene id_player ni wyscout_id después de normalización`,
+              })
+              // Mostrar todas las columnas que contienen "id" en su nombre
+              const idColumns = columns.filter(col => col.toLowerCase().includes('id'))
+              if (idColumns.length > 0) {
+                sendSSE(controller, {
+                  type: 'info',
+                  message: `🔍 Columnas que contienen "id": ${idColumns.join(', ')}`,
+                })
+                // Mostrar valores de estas columnas en la primera fila
+                const idValues = idColumns.map(col => `${col}: "${firstRow[col]}"`).join(' | ')
+                sendSSE(controller, {
+                  type: 'info',
+                  message: `🔍 Valores de columnas ID en fila 1: ${idValues}`,
+                })
+              }
+            }
+          }
+
           // 🚀 OPTIMIZACIÓN: Pre-cargar todos los jugadores existentes en memoria
           sendSSE(controller, {
             type: 'info',
@@ -410,13 +730,31 @@ export async function POST(request: NextRequest) {
 
           const allWyscoutIds = data
             .map(row => {
+              // La columna ya fue normalizada a wyscout_id
               const wyscoutId = row.wyscout_id
-              if (wyscoutId) {
+              if (wyscoutId !== null && wyscoutId !== undefined && wyscoutId !== '') {
                 return String(wyscoutId)
               }
               return null
             })
             .filter(Boolean) as string[]
+
+          // 🔍 DEBUG: Mostrar primeros IDs extraídos
+          sendSSE(controller, {
+            type: 'info',
+            message: `🔍 Primeros 5 Wyscout IDs del Excel: ${allWyscoutIds.slice(0, 5).join(', ')}`,
+          })
+
+          sendSSE(controller, {
+            type: 'info',
+            message: `📊 Total de Wyscout IDs únicos en Excel: ${allWyscoutIds.length}`,
+          })
+
+          // 🔍 DEBUG: Mostrar query que vamos a ejecutar
+          sendSSE(controller, {
+            type: 'info',
+            message: `🔍 Buscando jugadores en BD con ${allWyscoutIds.length} Wyscout IDs...`,
+          })
 
           const existingPlayers = await prisma.jugador.findMany({
             where: {
@@ -429,6 +767,48 @@ export async function POST(request: NextRequest) {
               player_name: true,
             },
           })
+
+          // 🔍 DEBUG: Mostrar resultado de la query
+          sendSSE(controller, {
+            type: 'info',
+            message: `🔍 Query retornó ${existingPlayers.length} jugadores de BD`,
+          })
+
+          if (existingPlayers.length === 0) {
+            sendSSE(controller, {
+              type: 'error',
+              message: `❌ ¡PROBLEMA! La query NO encontró NINGÚN jugador en la base de datos`,
+            })
+
+            // Mostrar exactamente qué estamos buscando
+            sendSSE(controller, {
+              type: 'info',
+              message: `🔍 IDs que buscamos (primeros 10): ${allWyscoutIds.slice(0, 10).join(', ')}`,
+            })
+
+            // Verificar si hay ALGÚN jugador con wyscout_id_1 en la BD
+            const anyPlayerWithWyscout = await prisma.jugador.findFirst({
+              where: {
+                wyscout_id_1: { not: null }
+              },
+              select: {
+                player_name: true,
+                wyscout_id_1: true
+              }
+            })
+
+            if (anyPlayerWithWyscout) {
+              sendSSE(controller, {
+                type: 'info',
+                message: `🔍 Ejemplo de jugador en BD: "${anyPlayerWithWyscout.player_name}" con wyscout_id_1 = "${anyPlayerWithWyscout.wyscout_id_1}"`,
+              })
+            } else {
+              sendSSE(controller, {
+                type: 'error',
+                message: `❌ NO hay NINGÚN jugador con wyscout_id_1 en la base de datos`,
+              })
+            }
+          }
 
           // Crear mapas de búsqueda rápida
           const playerByIdMap = new Map<string, (typeof existingPlayers)[0]>()
@@ -444,6 +824,20 @@ export async function POST(request: NextRequest) {
             type: 'info',
             message: `✅ ${existingPlayers.length} jugadores existentes cargados en memoria`,
           })
+
+          // 🔍 DEBUG: Mostrar primeros jugadores encontrados
+          if (existingPlayers.length > 0) {
+            const first5 = existingPlayers.slice(0, 5).map(p => `${p.player_name} (ID: ${p.wyscout_id_1})`).join(', ')
+            sendSSE(controller, {
+              type: 'info',
+              message: `🔍 Primeros 5 jugadores de BD: ${first5}`,
+            })
+          } else {
+            sendSSE(controller, {
+              type: 'warning',
+              message: `⚠️ NO se encontraron jugadores en la BD con los IDs del Excel`,
+            })
+          }
 
           // 📦 PROCESAMIENTO POR LOTES (Batch processing)
           const BATCH_SIZE = 100 // Procesar de 100 en 100
@@ -581,6 +975,28 @@ export async function POST(request: NextRequest) {
               totalBatches: batches.length,
               message: `✅ Lote ${batchNum}/${batches.length} completado`,
             })
+          }
+
+          // 📊 CALCULAR NORMALIZACIONES Y RANKINGS
+          if (results.success > 0) {
+            sendSSE(controller, {
+              type: 'info',
+              message: '🧮 Calculando normalizaciones y rankings...',
+            })
+
+            try {
+              await calculateNormalizationsAndRankings(period, sendSSE, controller)
+              
+              sendSSE(controller, {
+                type: 'success',
+                message: '✅ Normalizaciones y rankings calculados',
+              })
+            } catch (error) {
+              sendSSE(controller, {
+                type: 'warning',
+                message: `⚠️ Error calculando normalizaciones: ${error instanceof Error ? error.message : 'Unknown error'}`,
+              })
+            }
           }
 
           // 📊 RESULTADO FINAL

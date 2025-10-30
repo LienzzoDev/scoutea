@@ -9,7 +9,8 @@ import {
   RefreshCw,
   BarChart3,
   Activity,
-  CheckCircle2
+  CheckCircle2,
+  Trash2
 } from "lucide-react"
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useCallback } from 'react'
@@ -21,9 +22,11 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import { usePlayers } from "@/hooks/player/usePlayers"
 
 export default function DashboardPage() {
@@ -32,6 +35,9 @@ export default function DashboardPage() {
   const [hasRedirected, setHasRedirected] = useState(false)
   const [scrapingStatus, setScrapingStatus] = useState<'idle' | 'running' | 'completed' | 'error'>('idle')
   const [showApprovalsDialog, setShowApprovalsDialog] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deleteStatus, setDeleteStatus] = useState<'idle' | 'deleting' | 'completed' | 'error'>('idle')
+  const [confirmText, setConfirmText] = useState('')
 
   // Hook para obtener datos reales de jugadores
   const { players, loading, error, searchPlayers } = usePlayers()
@@ -50,13 +56,13 @@ export default function DashboardPage() {
     try {
       console.log('📊 Loading admin statistics from optimized API...')
       const response = await fetch('/api/players/stats')
-      
+
       if (response.ok) {
         const stats = await response.json()
-        
+
         // 📊 USAR ESTADÍSTICAS REALES DE LA API
         const totalJugadores = stats.totalPlayers || 0
-        
+
         // Calcular jugadores recientes solo de los jugadores cargados (muestra)
         const jugadoresRecientes = players.filter(player => {
           const fechaCreacion = new Date(player.createdAt)
@@ -65,14 +71,14 @@ export default function DashboardPage() {
         }).length
 
         // Estimar jugadores con rating basado en la muestra cargada
-        const jugadoresConRatingMuestra = players.filter(player => 
+        const jugadoresConRatingMuestra = players.filter(player =>
           player.player_rating && player.player_rating > 0
         ).length
-        
-        const porcentajeMuestra = players.length > 0 
+
+        const porcentajeMuestra = players.length > 0
           ? (jugadoresConRatingMuestra / players.length) * 100
           : 0
-        
+
         // Estimar total de jugadores con rating
         const jugadoresConRatingEstimado = Math.round((totalJugadores * porcentajeMuestra) / 100)
 
@@ -83,7 +89,7 @@ export default function DashboardPage() {
           porcentajeConRating: Math.round(porcentajeMuestra),
           promedioRating: stats.averageRating || 0
         })
-        
+
         console.log('✅ Admin stats updated:', {
           totalJugadores,
           jugadoresRecientes,
@@ -108,19 +114,19 @@ export default function DashboardPage() {
   const iniciarScraping = async () => {
     setScrapingStatus('running')
     console.log('🚀 Starting optimized scraping process...')
-    
+
     try {
       // 📊 REFRESCAR ESTADÍSTICAS USANDO LA API OPTIMIZADA
       const refreshStats = fetch('/api/players/stats', { method: 'POST' })
         .then(res => res.ok ? res.json() : null)
         .catch(() => null)
-      
+
       // 🔄 SIMULAR PROCESO DE SCRAPING (en producción sería real)
       const scrapingProcess = new Promise(resolve => setTimeout(resolve, 3000))
-      
+
       // 🚀 EJECUTAR EN PARALELO
       await Promise.all([refreshStats, scrapingProcess])
-      
+
       // 📊 RECARGAR DATOS ACTUALIZADOS
       await Promise.all([
         searchPlayers({
@@ -131,16 +137,54 @@ export default function DashboardPage() {
         }),
         loadAdminStats()
       ])
-      
+
       setScrapingStatus('completed')
       console.log('✅ Scraping process completed successfully')
-      
+
       // Resetear estado después de 2 segundos
       setTimeout(() => setScrapingStatus('idle'), 2000)
     } catch (_error) {
       console.error('❌ Error in scraping process:', error)
       setScrapingStatus('error')
       setTimeout(() => setScrapingStatus('idle'), 3000)
+    }
+  }
+
+  // 🗑️ FUNCIÓN PARA ELIMINAR TODOS LOS JUGADORES
+  const eliminarTodosJugadores = async () => {
+    setDeleteStatus('deleting')
+    console.log('🗑️ Iniciando eliminación de todos los jugadores...')
+
+    try {
+      const response = await fetch('/api/admin/players/delete-all', {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        console.log('✅ Jugadores eliminados:', result)
+
+        setDeleteStatus('completed')
+
+        // Recargar estadísticas
+        await loadAdminStats()
+
+        // Cerrar diálogo y resetear estado después de 2 segundos
+        setTimeout(() => {
+          setShowDeleteDialog(false)
+          setConfirmText('')
+          setDeleteStatus('idle')
+        }, 2000)
+      } else {
+        const error = await response.json()
+        console.error('❌ Error eliminando jugadores:', error)
+        setDeleteStatus('error')
+        setTimeout(() => setDeleteStatus('idle'), 3000)
+      }
+    } catch (_error) {
+      console.error('❌ Error en la petición de eliminación:', _error)
+      setDeleteStatus('error')
+      setTimeout(() => setDeleteStatus('idle'), 3000)
     }
   }
 
@@ -155,14 +199,14 @@ export default function DashboardPage() {
   useEffect(() => {
     if (isSignedIn) {
       console.log('🚀 Loading admin dashboard data with optimized APIs...')
-      
+
       // 📊 CARGAR ESTADÍSTICAS Y JUGADORES EN PARALELO
       Promise.all([
         // Cargar estadísticas usando la nueva API optimizada
         fetch('/api/players/stats')
           .then(res => res.ok ? res.json() : null)
           .catch(() => null),
-        
+
         // Cargar jugadores recientes para métricas
         searchPlayers({
           page: 1,
@@ -207,13 +251,13 @@ export default function DashboardPage() {
             <div>
               <h2 className="text-xl font-semibold mb-2 text-[#D6DDE6]">Actualizar datos</h2>
               <p className="text-gray-400">
-                {scrapingStatus === 'running' 
-                  ? 'Procesando datos de jugadores...' 
+                {scrapingStatus === 'running'
+                  ? 'Procesando datos de jugadores...'
                   : 'Revisar la información de todos los jugadores y actualizarla'
                 }
               </p>
             </div>
-            <Button 
+            <Button
               onClick={iniciarScraping}
               disabled={scrapingStatus === 'running'}
               className="bg-[#FF5733] hover:bg-[#E64A2B] text-white px-6"
@@ -244,6 +288,33 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
+      {/* Delete All Players Section - ZONA PELIGROSA */}
+      <Card className="mb-8 bg-[#1a0a0a] border-red-900">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold mb-2 text-red-400 flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5" />
+                Zona Peligrosa
+              </h2>
+              <p className="text-gray-400">
+                Eliminar TODOS los jugadores de la base de datos de forma permanente
+              </p>
+            </div>
+            <Button
+              onClick={() => setShowDeleteDialog(true)}
+              variant="destructive"
+              className="bg-red-600 hover:bg-red-700 text-white px-6"
+            >
+              <div className="flex items-center space-x-2">
+                <Trash2 className="h-4 w-4" />
+                <span>Eliminar Todos los Jugadores</span>
+              </div>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Pending Approvals Section */}
       <Card className="mb-8 bg-[#131921] border-slate-700">
         <CardContent className="p-6">
@@ -251,7 +322,7 @@ export default function DashboardPage() {
             <div>
               <h2 className="text-xl font-semibold mb-2 text-[#D6DDE6]">Aprobaciones Pendientes</h2>
               <p className="text-gray-400">
-                Revisar y aprobar jugadores y reportes creados por scouts
+                Revisar y aprobar reportes creados por scouts
               </p>
             </div>
             <Button
@@ -260,7 +331,7 @@ export default function DashboardPage() {
             >
               <div className="flex items-center space-x-2">
                 <CheckCircle2 className="h-4 w-4" />
-                <span>Ver Pendientes</span>
+                <span>Ver Reportes Pendientes</span>
               </div>
             </Button>
           </div>
@@ -362,9 +433,9 @@ export default function DashboardPage() {
                     strokeWidth="2"
                     fill="none"
                   />
-                  <path 
-                    d={`M0,${120 - adminStats.porcentajeConRating * 1.2} Q50,${120 - adminStats.porcentajeConRating * 1.1} 100,${120 - adminStats.porcentajeConRating * 1.0} T200,${120 - adminStats.porcentajeConRating * 0.9} T300,${120 - adminStats.porcentajeConRating * 0.8} T400,${120 - adminStats.porcentajeConRating * 0.7} L400,120 L0,120 Z`} 
-                    fill="url(#gradient1)" 
+                  <path
+                    d={`M0,${120 - adminStats.porcentajeConRating * 1.2} Q50,${120 - adminStats.porcentajeConRating * 1.1} 100,${120 - adminStats.porcentajeConRating * 1.0} T200,${120 - adminStats.porcentajeConRating * 0.9} T300,${120 - adminStats.porcentajeConRating * 0.8} T400,${120 - adminStats.porcentajeConRating * 0.7} L400,120 L0,120 Z`}
+                    fill="url(#gradient1)"
                   />
                 </svg>
                 <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-400 px-2">
@@ -401,9 +472,9 @@ export default function DashboardPage() {
                     strokeWidth="2"
                     fill="none"
                   />
-                  <path 
-                    d={`M0,${120 - Math.min(adminStats.jugadoresRecientes * 2, 100)} Q50,${120 - Math.min(adminStats.jugadoresRecientes * 1.8, 90)} 100,${120 - Math.min(adminStats.jugadoresRecientes * 1.6, 80)} T200,${120 - Math.min(adminStats.jugadoresRecientes * 1.4, 70)} T300,${120 - Math.min(adminStats.jugadoresRecientes * 1.2, 60)} T400,${120 - Math.min(adminStats.jugadoresRecientes * 1.0, 50)} L400,120 L0,120 Z`} 
-                    fill="url(#gradient2)" 
+                  <path
+                    d={`M0,${120 - Math.min(adminStats.jugadoresRecientes * 2, 100)} Q50,${120 - Math.min(adminStats.jugadoresRecientes * 1.8, 90)} 100,${120 - Math.min(adminStats.jugadoresRecientes * 1.6, 80)} T200,${120 - Math.min(adminStats.jugadoresRecientes * 1.4, 70)} T300,${120 - Math.min(adminStats.jugadoresRecientes * 1.2, 60)} T400,${120 - Math.min(adminStats.jugadoresRecientes * 1.0, 50)} L400,120 L0,120 Z`}
+                    fill="url(#gradient2)"
                   />
                 </svg>
                 <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-400 px-2">
@@ -434,13 +505,95 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={(open) => {
+        setShowDeleteDialog(open)
+        if (!open) {
+          setConfirmText('')
+          setDeleteStatus('idle')
+        }
+      }}>
+        <DialogContent className="bg-[#080F17] border-red-900">
+          <DialogHeader>
+            <DialogTitle className="text-2xl text-red-400 flex items-center gap-2">
+              <AlertTriangle className="h-6 w-6" />
+              ⚠️ ADVERTENCIA: Acción Irreversible
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="text-slate-300 space-y-3">
+            <p className="font-semibold">Estás a punto de eliminar TODOS los jugadores ({adminStats.totalJugadores.toLocaleString()}) de la base de datos.</p>
+            <p className="text-red-300">Esta acción NO se puede deshacer y perderás:</p>
+            <ul className="list-disc list-inside ml-4 text-slate-400">
+              <li>Todos los datos de jugadores</li>
+              <li>Todas las estadísticas calculadas</li>
+              <li>Todas las relaciones con reportes</li>
+            </ul>
+            <p className="text-slate-300">Para confirmar, escribe <span className="font-mono bg-red-900/30 px-2 py-1 rounded text-red-300">ELIMINAR TODO</span> en el campo de abajo:</p>
+          </div>
+
+          <div className="my-4">
+            <Input
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder="Escribe ELIMINAR TODO"
+              className="bg-[#131921] border-slate-700 text-white"
+              disabled={deleteStatus === 'deleting'}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDeleteDialog(false)
+                setConfirmText('')
+                setDeleteStatus('idle')
+              }}
+              disabled={deleteStatus === 'deleting'}
+              className="border-slate-700 text-slate-300 hover:bg-slate-800"
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={eliminarTodosJugadores}
+              disabled={confirmText !== 'ELIMINAR TODO' || deleteStatus === 'deleting'}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteStatus === 'deleting' ? (
+                <div className="flex items-center space-x-2">
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  <span>Eliminando...</span>
+                </div>
+              ) : deleteStatus === 'completed' ? (
+                <div className="flex items-center space-x-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>Eliminado</span>
+                </div>
+              ) : deleteStatus === 'error' ? (
+                <div className="flex items-center space-x-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span>Error</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Trash2 className="h-4 w-4" />
+                  <span>Confirmar Eliminación</span>
+                </div>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Approvals Dialog */}
       <Dialog open={showApprovalsDialog} onOpenChange={setShowApprovalsDialog}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-[#080F17] border-slate-700">
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto bg-[#080F17] border-slate-700">
           <DialogHeader>
-            <DialogTitle className="text-2xl text-[#D6DDE6]">Aprobaciones Pendientes</DialogTitle>
+            <DialogTitle className="text-2xl text-[#D6DDE6]">Reportes Pendientes de Aprobación</DialogTitle>
             <DialogDescription className="text-slate-400">
-              Revisa y aprueba jugadores y reportes creados por scouts
+              Revisa y aprueba reportes creados por scouts
             </DialogDescription>
           </DialogHeader>
           <ApprovalDashboard />

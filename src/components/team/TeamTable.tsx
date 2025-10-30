@@ -7,6 +7,30 @@ import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import TeamBadge from "@/components/ui/team-badge";
 
+// Campos CALCULADOS automáticamente mediante fórmulas
+const CALCULATED_FIELDS = new Set([
+  // Normalizations
+  'team_trfm_value_norm',  // Normalización de team_trfm_value
+  'team_rating_norm',      // Normalización de team_rating
+]);
+
+// Campos obtenidos mediante SCRAPING de Transfermarkt
+const SCRAPED_FIELDS = new Set([
+  // Datos básicos
+  'team_name',            // Nombre del equipo
+  'team_country',         // País del equipo
+  'competition',          // Competición del equipo
+  
+  // Valores
+  'team_trfm_value',      // Valor de mercado del equipo
+  'team_rating',          // Rating del equipo
+  
+  // Otros datos
+  'founded_year',         // Año de fundación
+  'stadium',              // Estadio
+  'logo_url',             // URL del logo
+]);
+
 interface Team {
   id_team: string;
   team_name: string;
@@ -159,6 +183,9 @@ export default function TeamTable({
           >
             {selectedCategories.map((category, index, array) => {
               const isActive = sortBy === category.key;
+              const isCalculated = CALCULATED_FIELDS.has(category.key);
+              const isScraped = SCRAPED_FIELDS.has(category.key);
+              
               const getSortIcon = () => {
                 if (!isActive) return <ArrowUpDown className={`w-3 h-3 ${darkMode ? 'text-slate-500' : 'text-gray-400'}`} />;
                 const iconColor = darkMode ? 'text-[#FF5733]' : 'text-[#8c1a10]';
@@ -170,7 +197,7 @@ export default function TeamTable({
               return (
                 <div
                   key={category.key}
-                  className={`p-4 text-center border-r last:border-r-0 flex-shrink-0 self-stretch cursor-pointer transition-colors ${
+                  className={`p-4 text-center border-r last:border-r-0 flex-shrink-0 self-stretch cursor-pointer transition-colors relative ${
                     darkMode
                       ? `border-slate-700 hover:bg-slate-700/50 ${isActive ? 'bg-slate-700/50' : ''}`
                       : `border-[#e7e7e7] hover:bg-gray-50 ${isActive ? 'bg-gray-50' : ''}`
@@ -184,6 +211,20 @@ export default function TeamTable({
                   }}
                   onClick={() => onSort?.(category.key)}
                 >
+                  {/* Indicador de campo calculado - esquina superior derecha */}
+                  {isCalculated && (
+                    <div 
+                      className="absolute top-1 right-1 w-2 h-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-sm shadow-sm"
+                      title="Campo calculado automáticamente mediante fórmula"
+                    />
+                  )}
+                  {/* Indicador de campo scrapeado - esquina superior izquierda */}
+                  {isScraped && (
+                    <div 
+                      className="absolute top-1 left-1 w-2 h-2 bg-gradient-to-br from-purple-400 to-violet-500 rounded-sm shadow-sm"
+                      title="Campo obtenido mediante scraping de Transfermarkt"
+                    />
+                  )}
                   <div className="flex items-center justify-center gap-1">
                     <h4 className={`font-semibold text-sm ${
                       isActive
@@ -341,6 +382,24 @@ export default function TeamTable({
             </div>
           </div>
         ))}
+      </div>
+      
+      {/* Leyenda de campos automáticos */}
+      <div className={`px-4 py-3 border-t ${
+        darkMode 
+          ? 'bg-[#0f1419] border-slate-700' 
+          : 'bg-gray-50 border-gray-200'
+      }`}>
+        <div className="flex items-center gap-6 text-xs text-slate-400">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-sm shadow-sm" />
+            <span>Campo calculado automáticamente mediante fórmula</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 bg-gradient-to-br from-purple-400 to-violet-500 rounded-sm shadow-sm" />
+            <span>Campo obtenido mediante scraping de Transfermarkt</span>
+          </div>
+        </div>
       </div>
     </div>
   );

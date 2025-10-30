@@ -1,25 +1,12 @@
 /**
  * Utilities for handling multi-period player statistics
  * Supports periods: 3m, 6m, 1y, 2y
+ *
+ * NOTE: This file contains only pure functions that can be used in client components.
+ * Server-side functions (using Prisma) should go in player-stats-service.ts
  */
-
-import { prisma } from '@/lib/db'
 
 export type StatsPeriod = '3m' | '6m' | '1y' | '2y'
-
-/**
- * Get the Prisma table model for a given period
- */
-export function getPrismaTableByPeriod(period: StatsPeriod) {
-  const tables = {
-    '3m': prisma.playerStats3m,
-    '6m': prisma.playerStats6m,
-    '1y': prisma.playerStats1y,
-    '2y': prisma.playerStats2y,
-  } as const
-
-  return tables[period]
-}
 
 /**
  * Get the Excel sheet name for a given period

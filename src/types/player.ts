@@ -9,6 +9,7 @@ export interface Player {
   id_fmi?: string | null;
   player_rating?: number | null;
   photo_coverage?: string | null;
+  gallery_photo?: string | null;
   url_trfm_advisor?: string | null;
   url_trfm?: string | null;
   url_secondary?: string | null;

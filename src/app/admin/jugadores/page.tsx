@@ -2,7 +2,7 @@
 
 import { Search, Globe, Plus, RefreshCw, Download } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 import AdminColumnSelector from '@/components/admin/AdminColumnSelector'
 import AdminPlayerTable from '@/components/admin/AdminPlayerTable'
@@ -219,6 +219,10 @@ export default function JugadoresPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
 
+  // Ref para preservar posición del scroll
+  const previousPlayersCount = useRef(0)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+
   // Hook de infinite scroll
   const {
     players: filteredPlayers,
@@ -232,6 +236,19 @@ export default function JugadoresPage() {
     search: debouncedSearch,
     limit: 50
   })
+
+  // Preservar posición del scroll cuando se cargan nuevos jugadores
+  useEffect(() => {
+    // Si se agregaron jugadores (no es un reset) y no estamos cargando
+    if (filteredPlayers.length > previousPlayersCount.current && !loading) {
+      // La posición del scroll se mantiene automáticamente
+      // Solo actualizamos el contador
+      previousPlayersCount.current = filteredPlayers.length
+    } else if (filteredPlayers.length < previousPlayersCount.current) {
+      // Se hizo un reset (búsqueda nueva), actualizar contador
+      previousPlayersCount.current = filteredPlayers.length
+    }
+  }, [filteredPlayers.length, loading])
 
   // Debounce del search term
   useEffect(() => {
@@ -352,7 +369,7 @@ export default function JugadoresPage() {
       {error && (
         <div className='mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg'>
           <p className='text-red-400'>
-            Error: {error || 'Error desconocido'}
+            Error: {error.message || 'Error desconocido'}
           </p>
         </div>
       )}
@@ -383,27 +400,26 @@ export default function JugadoresPage() {
             <AdminPlayerTable
               players={filteredPlayers as any}
               selectedColumns={selectedColumns}
-              loading={loading}
             />
           </div>
 
           {/* Infinite Scroll Observer - Separado para evitar re-renders */}
           <div
             ref={observerTarget}
-            className='py-8 flex justify-center'
-            style={{ minHeight: '80px' }}
+            className='py-8 flex justify-center items-center'
+            style={{ minHeight: '100px' }}
           >
-            {loading && (
+            {loading && hasMore && (
               <div className='flex items-center gap-2 text-slate-400'>
                 <div className='animate-spin rounded-full h-5 w-5 border-b-2 border-[#FF5733]'></div>
                 <span>Cargando más jugadores...</span>
               </div>
             )}
-            {!loading && hasMore && (
+            {!loading && hasMore && filteredPlayers.length > 0 && (
               <p className='text-slate-500 text-sm'>Desplázate hacia abajo para cargar más</p>
             )}
-            {!loading && !hasMore && (
-              <p className='text-slate-500 text-sm'>✓ Todos los jugadores cargados</p>
+            {!loading && !hasMore && filteredPlayers.length > 0 && (
+              <p className='text-slate-500 text-sm'>✓ Todos los jugadores cargados ({totalCount})</p>
             )}
           </div>
         </>

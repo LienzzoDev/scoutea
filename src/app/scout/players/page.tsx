@@ -1,18 +1,23 @@
 "use client";
 
-import { Search, X } from "lucide-react";
-
-import AuthGuard from "@/components/auth/AuthGuard";
-import { PlayerTable } from "@/components/dynamic-imports";
-import CategorySelector from "@/components/filters/category-selector";
-import MultiSelectFilter from "@/components/filters/multi-select-filter";
-import RangeFilter from "@/components/filters/range-filter";
-import ScoutNavbar from "@/components/layout/scout-navbar";
-import ScoutPlayerFilters from "@/components/scout/ScoutPlayerFilters";
-import { Input } from "@/components/ui/input";
-import { useScoutPlayersState } from "@/hooks/useScoutPlayersState";
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 export default function ScoutPlayersPage() {
+  const router = useRouter()
+
+  useEffect(() => {
+    router.replace('/scout/portfolio')
+  }, [router])
+
+  return (
+    <div className="min-h-screen bg-[#f8f7f4] flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8c1a10]"></div>
+    </div>
+  )
+}
+
+function _OldScoutPlayersPage() {
   const {
     // Estados
     showFilters,

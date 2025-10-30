@@ -1,33 +1,23 @@
 'use client'
 
-import { useUser } from '@clerk/nextjs'
-import { useState, useEffect } from 'react'
-
-import ScoutNavbar from '@/components/layout/scout-navbar'
-import ScoutReportsSection from '@/components/scout/scout-reports-section'
-
-interface ReportData {
-  id_report: string
-  report_date: Date | null
-  report_type: string | null
-  form_text_report: string | null
-  form_url_report: string | null
-  form_url_video: string | null
-  form_potential: string | null
-  roi: number | null
-  profit: number | null
-  potential: number | null
-  player: {
-    id_player: string
-    player_name: string
-    position_player: string | null
-    nationality_1: string | null
-    team_name: string | null
-    age: number | null
-  }
-}
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 export default function ScoutReportsPage() {
+  const router = useRouter()
+
+  useEffect(() => {
+    router.replace('/scout/portfolio')
+  }, [router])
+
+  return (
+    <div className="min-h-screen bg-[#f8f7f4] flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8c1a10]"></div>
+    </div>
+  )
+}
+
+function _OldScoutReportsPage() {
   const { user } = useUser()
   const [reports, setReports] = useState<ReportData[]>([])
   const [isLoading, setIsLoading] = useState(true)

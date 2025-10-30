@@ -13,6 +13,8 @@ import { NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/db'
 import { getRealisticHeaders, randomSleep } from '@/lib/scraping/user-agents'
+import { isDefaultTransfermarktImage } from '@/lib/utils/image-utils'
+import { addJobLog } from '@/app/api/admin/scraping/logs/route'
 
 export const maxDuration = 60 // 1 minuto máximo
 
@@ -33,7 +35,7 @@ interface TestResult {
 /**
  * POST /api/admin/scraping/test - Probar scraping con 3 jugadores + 3 equipos aleatorios
  */
-export async function POST() {
+export async function POST(request: Request) {
   try {
     // 🔐 VERIFICAR AUTENTICACIÓN Y PERMISOS
     const { userId, sessionClaims } = await auth()
@@ -54,7 +56,17 @@ export async function POST() {
       )
     }
 
+    // Obtener testId del body si existe, o generar uno nuevo
+    let testId: string
+    try {
+      const body = await request.json()
+      testId = body.testId || `test-${Date.now()}`
+    } catch {
+      testId = `test-${Date.now()}`
+    }
+
     console.log('🧪 Iniciando TEST de scraping (jugadores + equipos)...')
+    addJobLog(testId, '🧪 Iniciando test de scraping (3 jugadores + 3 equipos)...')
 
     // 📊 OBTENER 3 JUGADORES ALEATORIOS CON URL
     // Paso 1: Contar total de jugadores con URL
@@ -158,11 +170,17 @@ export async function POST() {
     console.log(`🎲 Jugadores seleccionados: ${players.map(p => p.player_name).join(', ')}`)
     console.log(`🎲 Equipos seleccionados: ${teams.map(t => t.team_name).join(', ')}`)
 
+    addJobLog(testId, `🎲 Jugadores seleccionados: ${players.map(p => p.player_name).join(', ')}`)
+    addJobLog(testId, `🎲 Equipos seleccionados: ${teams.map(t => t.team_name).join(', ')}`)
+    addJobLog(testId, '')
+
     const results: TestResult[] = []
 
     // 🔄 PROCESAR CADA JUGADOR
     for (const player of players) {
+      const playerIndex = players.indexOf(player) + 1
       console.log(`\n🔍 Scrapeando: ${player.player_name}`)
+      addJobLog(testId, `🔍 [${playerIndex}/${players.length}] Scrapeando jugador: ${player.player_name}`)
 
       try {
         // Guardar valores antiguos
@@ -217,16 +235,30 @@ export async function POST() {
         })
 
         console.log(`✅ ${player.player_name}: ${fieldsUpdated.length} campos actualizados`)
+        addJobLog(testId, `  ✅ ${player.player_name}: ${fieldsUpdated.length} campos actualizados`)
+
+        // Mostrar algunos campos actualizados (máximo 3)
+        if (fieldsUpdated.length > 0) {
+          const fieldsToShow = fieldsUpdated.slice(0, 3)
+          for (const field of fieldsToShow) {
+            addJobLog(testId, `     • ${field.field}: "${field.oldValue || 'null'}" → "${field.newValue || 'null'}"`)
+          }
+          if (fieldsUpdated.length > 3) {
+            addJobLog(testId, `     ... y ${fieldsUpdated.length - 3} campos más`)
+          }
+        }
 
         // Delay aleatorio entre jugadores (3-7 segundos para test)
         if (players.indexOf(player) < players.length - 1) {
           const delay = Math.floor(Math.random() * 4000) + 3000
+          addJobLog(testId, `  ⏸️  Pausa de ${Math.round(delay/1000)}s antes del siguiente jugador...`)
           await randomSleep(3000, 7000)
         }
 
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
         console.error(`❌ Error scrapeando ${player.player_name}:`, errorMsg)
+        addJobLog(testId, `  ❌ Error: ${errorMsg}`)
 
         results.push({
           entityType: 'player',
@@ -240,9 +272,13 @@ export async function POST() {
       }
     }
 
+    addJobLog(testId, '')
+
     // 🏟️ PROCESAR CADA EQUIPO
     for (const team of teams) {
+      const teamIndex = teams.indexOf(team) + 1
       console.log(`\n🏟️ Scrapeando equipo: ${team.team_name}`)
+      addJobLog(testId, `🏟️ [${teamIndex}/${teams.length}] Scrapeando equipo: ${team.team_name}`)
 
       try {
         const scrapedData = await scrapeTeamData(team.url_trfm_advisor!)
@@ -300,10 +336,23 @@ export async function POST() {
         })
 
         console.log(`✅ Scraped exitosamente: ${fieldsUpdated.length} campos detectados`)
+        addJobLog(testId, `  ✅ ${team.team_name}: ${fieldsUpdated.length} campos actualizados`)
+
+        // Mostrar algunos campos actualizados (máximo 3)
+        if (fieldsUpdated.length > 0) {
+          const fieldsToShow = fieldsUpdated.slice(0, 3)
+          for (const field of fieldsToShow) {
+            addJobLog(testId, `     • ${field.field}: "${field.oldValue || 'null'}" → "${field.newValue || 'null'}"`)
+          }
+          if (fieldsUpdated.length > 3) {
+            addJobLog(testId, `     ... y ${fieldsUpdated.length - 3} campos más`)
+          }
+        }
 
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
         console.error(`❌ Error: ${errorMsg}`)
+        addJobLog(testId, `  ❌ Error: ${errorMsg}`)
 
         results.push({
           entityType: 'team',
@@ -318,9 +367,13 @@ export async function POST() {
 
       // Pausa entre equipos
       if (teams.indexOf(team) < teams.length - 1) {
+        const delay = Math.floor(Math.random() * 2000) + 2000
+        addJobLog(testId, `  ⏸️  Pausa de ${Math.round(delay/1000)}s antes del siguiente equipo...`)
         await randomSleep(2000, 4000)
       }
     }
+
+    addJobLog(testId, '')
 
     const successCount = results.filter(r => r.success).length
     const errorCount = results.filter(r => !r.success).length
@@ -330,9 +383,18 @@ export async function POST() {
     console.log(`\n✅ Test completado: ${successCount} éxitos, ${errorCount} errores`)
     console.log(`📊 Jugadores: ${playersProcessed}, Equipos: ${teamsProcessed}`)
 
+    // Añadir resumen final a los logs
+    addJobLog(testId, '✅ Test completado exitosamente!')
+    addJobLog(testId, `📊 Jugadores procesados: ${playersProcessed}`)
+    addJobLog(testId, `🏟️ Equipos procesados: ${teamsProcessed}`)
+    addJobLog(testId, `✅ Éxitos: ${successCount}`)
+    addJobLog(testId, `❌ Errores: ${errorCount}`)
+    addJobLog(testId, `📈 Total: ${playersProcessed + teamsProcessed} entidades`)
+
     return NextResponse.json({
       success: true,
       message: `Test completado: ${playersProcessed} jugadores + ${teamsProcessed} equipos procesados`,
+      testId, // Devolver testId para que el frontend se conecte a los logs
       results,
       summary: {
         total: playersProcessed + teamsProcessed,
@@ -483,7 +545,8 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
     const profileImageElement = $('img.data-header__profile-image')
     if (profileImageElement.length > 0) {
       const photoUrl = profileImageElement.attr('data-src') || profileImageElement.attr('src')
-      if (photoUrl && photoUrl !== '') {
+      // Solo guardar si NO es una imagen por defecto
+      if (photoUrl && photoUrl !== '' && !isDefaultTransfermarktImage(photoUrl)) {
         data.photo_coverage = photoUrl
       }
     }

@@ -201,7 +201,7 @@ export const ScoutReportCreateSchema = z.object({
   dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
   team: nonEmptyString.max(100),
   nationality1: nonEmptyString.max(50),
-  urlReference: url,
+  urlReference: z.string().nullable().optional().transform(val => (!val || val === '') ? null : val),
   potential: z.number().int().min(1).max(10),
   position: z.string().max(50).nullable().optional(),
   height: z.union([z.number(), z.string(), z.null()]).nullable().optional().transform(val => {

@@ -1,33 +1,57 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Video, FileText, Share2, ExternalLink } from 'lucide-react'
+import { useEffect, useState, useMemo } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-interface PendingPlayer {
-  id_player: string
-  player_name: string
-  position_player: string | null
-  team_name: string | null
-  nationality_1: string | null
-  age: number | null
-  created_by_scout_id: string | null
-  createdAt: string
+// Función para convertir URLs de YouTube a formato embebido
+function getYouTubeEmbedUrl(url: string): string | null {
+  if (!url) return null
+
+  try {
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/,
+      /youtube\.com\/embed\/([^&\s]+)/,
+      /youtube\.com\/v\/([^&\s]+)/
+    ]
+
+    for (const pattern of patterns) {
+      const match = url.match(pattern)
+      if (match && match[1]) {
+        return `https://www.youtube.com/embed/${match[1]}`
+      }
+    }
+
+    return url
+  } catch (error) {
+    console.error('Error parsing video URL:', error)
+    return url
+  }
 }
 
 interface PendingReport {
   id_report: string
   report_date: string | null
+  report_type: string | null
   form_text_report: string | null
+  form_url_report: string | null
+  form_url_video: string | null
+  url_secondary: string | null
+  form_potential: string | null
+  roi: number | null
+  profit: number | null
+  potential: number | null
   createdAt: string
   player: {
     id_player: string
     player_name: string
     position_player: string | null
     team_name: string | null
+    nationality_1: string | null
+    age: number | null
   } | null
   scout: {
     id_scout: string
@@ -37,11 +61,27 @@ interface PendingReport {
   } | null
 }
 
+interface Report {
+  id: string
+  playerId: string
+  playerName: string
+  profileType: string
+  content: string
+  rating: number
+  date: string
+  type: 'video' | 'written' | 'social'
+  hasVideo?: boolean | undefined
+  image?: string | undefined
+  videoUrl?: string | undefined
+  urlReport?: string | undefined
+  roi?: number | undefined
+  profit?: number | undefined
+  scoutName?: string
+}
+
 interface PendingData {
-  players: PendingPlayer[]
   reports: PendingReport[]
   counts: {
-    players: number
     reports: number
     total: number
   }
@@ -79,46 +119,93 @@ export function ApprovalDashboard() {
     fetchPendingItems()
   }, [])
 
-  const handleApprove = async (id: string, type: 'player' | 'report') => {
+  // Convertir los datos de reportes a formato de visualización
+  const formattedReports: Report[] = useMemo(() => {
+    return data?.reports.map((reportData) => {
+      const { player, report_type, report_date, form_text_report, form_url_video, form_url_report, url_secondary, form_potential, roi, profit, potential } = reportData
+
+      // Determinar el tipo de reporte
+      let reportType: 'video' | 'written' | 'social' = 'written'
+
+      if (form_url_video) {
+        reportType = 'video'
+      } else if (form_url_report && !form_text_report && !url_secondary) {
+        reportType = 'social'
+      } else if (form_text_report || (!form_url_video && !url_secondary)) {
+        reportType = 'written'
+      } else if (report_type) {
+        const typeStr = report_type.toLowerCase()
+        if (typeStr.includes('video')) {
+          reportType = 'video'
+        } else if (typeStr.includes('social') || typeStr.includes('redes')) {
+          reportType = 'social'
+        }
+      }
+
+      // Formatear fecha
+      const formattedDate = report_date
+        ? new Date(report_date).toLocaleDateString('es-ES', {
+            day: 'numeric',
+            month: 'numeric',
+            year: 'numeric'
+          })
+        : 'Sin fecha'
+
+      // Calcular rating
+      const potentialValue = potential || (form_potential ? parseFloat(form_potential) : null)
+      const rating = potentialValue
+        ? Math.min(5, Math.max(1, Math.round(potentialValue)))
+        : 3
+
+      // Contenido
+      const content = form_text_report || `Reporte para ${player?.player_name || 'Desconocido'}. ${player?.team_name ? `Actualmente en ${player.team_name}.` : ''}`
+
+      // Nombre del scout
+      const scoutName = reportData.scout
+        ? `${reportData.scout.name || ''} ${reportData.scout.surname || ''}`.trim() ||
+          reportData.scout.scout_name ||
+          'Desconocido'
+        : 'Desconocido'
+
+      return {
+        id: reportData.id_report,
+        playerId: player?.id_player || '',
+        playerName: player?.player_name || 'Desconocido',
+        profileType: `${player?.position_player || 'N/A'} • ${player?.nationality_1 || 'N/A'}`,
+        content,
+        rating,
+        date: formattedDate,
+        type: reportType,
+        hasVideo: form_url_video ? true : undefined,
+        videoUrl: form_url_video || undefined,
+        urlReport: form_url_report || undefined,
+        image: url_secondary || undefined,
+        roi: roi || undefined,
+        profit: profit || undefined,
+        scoutName,
+      }
+    }) || []
+  }, [data])
+
+  const handleApprove = async (id: string) => {
     try {
       setActionLoading(id)
-      const endpoint =
-        type === 'player'
-          ? `/api/admin/approvals/players/${id}`
-          : `/api/admin/approvals/reports/${id}`
-
-      const response = await fetch(endpoint, {
+      const response = await fetch(`/api/admin/approvals/reports/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'approve' }),
       })
 
       if (response.ok) {
-        // Actualizar el estado local sin recargar toda la lista
         setData(prevData => {
           if (!prevData) return prevData
-
-          if (type === 'player') {
-            const updatedPlayers = prevData.players.filter(p => p.id_player !== id)
-            return {
-              ...prevData,
-              players: updatedPlayers,
-              counts: {
-                ...prevData.counts,
-                players: updatedPlayers.length,
-                total: prevData.counts.total - 1
-              }
-            }
-          } else {
-            const updatedReports = prevData.reports.filter(r => r.id_report !== id)
-            return {
-              ...prevData,
-              reports: updatedReports,
-              counts: {
-                ...prevData.counts,
-                reports: updatedReports.length,
-                total: prevData.counts.total - 1
-              }
+          const updatedReports = prevData.reports.filter(r => r.id_report !== id)
+          return {
+            ...prevData,
+            reports: updatedReports,
+            counts: {
+              reports: updatedReports.length,
+              total: updatedReports.length
             }
           }
         })
@@ -134,46 +221,25 @@ export function ApprovalDashboard() {
     }
   }
 
-  const handleReject = async (id: string, type: 'player' | 'report') => {
+  const handleReject = async (id: string) => {
     try {
       setActionLoading(id)
-      const endpoint =
-        type === 'player'
-          ? `/api/admin/approvals/players/${id}`
-          : `/api/admin/approvals/reports/${id}`
-
-      const response = await fetch(endpoint, {
+      const response = await fetch(`/api/admin/approvals/reports/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'reject' }),
       })
 
       if (response.ok) {
-        // Actualizar el estado local sin recargar toda la lista
         setData(prevData => {
           if (!prevData) return prevData
-
-          if (type === 'player') {
-            const updatedPlayers = prevData.players.filter(p => p.id_player !== id)
-            return {
-              ...prevData,
-              players: updatedPlayers,
-              counts: {
-                ...prevData.counts,
-                players: updatedPlayers.length,
-                total: prevData.counts.total - 1
-              }
-            }
-          } else {
-            const updatedReports = prevData.reports.filter(r => r.id_report !== id)
-            return {
-              ...prevData,
-              reports: updatedReports,
-              counts: {
-                ...prevData.counts,
-                reports: updatedReports.length,
-                total: prevData.counts.total - 1
-              }
+          const updatedReports = prevData.reports.filter(r => r.id_report !== id)
+          return {
+            ...prevData,
+            reports: updatedReports,
+            counts: {
+              reports: updatedReports.length,
+              total: updatedReports.length
             }
           }
         })
@@ -220,187 +286,170 @@ export function ApprovalDashboard() {
   }
 
   return (
-    <div>
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <div className="bg-[#080F17] min-h-screen p-6">
+      {/* Summary Card */}
+      <div className="mb-8">
         <Card className="bg-[#131921] border-slate-700">
-          <div className="p-6">
-            <div className="text-2xl font-bold text-[#D6DDE6]">{data.counts.total}</div>
-            <div className="text-sm text-slate-400">Total Pendientes</div>
-          </div>
-        </Card>
-        <Card className="bg-[#131921] border-slate-700">
-          <div className="p-6">
-            <div className="text-2xl font-bold text-[#D6DDE6]">{data.counts.players}</div>
-            <div className="text-sm text-slate-400">Jugadores Pendientes</div>
-          </div>
-        </Card>
-        <Card className="bg-[#131921] border-slate-700">
-          <div className="p-6">
-            <div className="text-2xl font-bold text-[#D6DDE6]">{data.counts.reports}</div>
-            <div className="text-sm text-slate-400">Reportes Pendientes</div>
+          <div className="p-6 text-center">
+            <div className="text-4xl font-bold text-[#D6DDE6] mb-2">{data.counts.reports}</div>
+            <div className="text-lg text-slate-400">Reportes Pendientes de Aprobación</div>
           </div>
         </Card>
       </div>
 
-      {/* Tabs for Players and Reports */}
-      <Tabs defaultValue="players" className="w-full">
-        <TabsList className="bg-[#131921] border-slate-700">
-          <TabsTrigger value="players" className="data-[state=active]:bg-[#FF5733] data-[state=active]:text-white">
-            Jugadores ({data.counts.players})
-          </TabsTrigger>
-          <TabsTrigger value="reports" className="data-[state=active]:bg-[#FF5733] data-[state=active]:text-white">
-            Reportes ({data.counts.reports})
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="players" className="mt-6">
-          {data.players.length === 0 ? (
-            <Card className="bg-[#131921] border-slate-700">
-              <div className="p-8 text-center">
-                <p className="text-slate-400">No hay jugadores pendientes</p>
+      {/* Reports Grid - Scout Style */}
+      {formattedReports.length === 0 ? (
+        <Card className="bg-white border-[#e7e7e7]">
+          <div className="p-12 text-center">
+            <div className="text-gray-400 text-6xl mb-4">📋</div>
+            <p className="text-[#6d6d6d] text-lg mb-2">No hay reportes pendientes</p>
+            <p className="text-sm text-gray-500">Todos los reportes han sido revisados</p>
+          </div>
+        </Card>
+      ) : (
+        <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+          {formattedReports.map((report) => (
+            <div key={report.id} className="bg-white rounded-xl border border-[#e7e7e7] p-4 break-inside-avoid relative">
+              {/* Header */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-semibold text-[#2e3138]">{report.playerName}</h3>
+                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      report.type === 'video' ? 'bg-red-100 text-red-700' :
+                      report.type === 'written' ? 'bg-blue-100 text-blue-700' :
+                      'bg-green-100 text-green-700'
+                    }`}>
+                      {report.type === 'video' ? '🎥' :
+                       report.type === 'written' ? '📝' : '🔗'}
+                    </div>
+                  </div>
+                  <p className="text-sm text-[#6d6d6d]">{report.profileType}</p>
+                  {report.scoutName && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      <span className="font-medium">Scout:</span> {report.scoutName}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 ml-2">
+                  <span className="text-sm font-medium text-[#2e3138]">{report.rating}.0</span>
+                  {[...Array(5)].map((_, i) => (
+                    <div
+                      key={i}
+                      className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                        i < report.rating ? 'bg-[#8B0000]' : 'bg-gray-300'
+                      }`}
+                    >
+                      <span className="text-white text-xs">⚽</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {data.players.map((player) => (
-                <Card key={player.id_player} className="bg-[#131921] border-slate-700">
-                  <div className="p-6">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-semibold text-[#D6DDE6]">
-                          {player.player_name}
-                        </h3>
-                        <Badge variant="outline" className="border-yellow-600 text-yellow-500">Pendiente</Badge>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-slate-400">
-                        <div>
-                          <span className="font-medium text-slate-300">Posición:</span>{' '}
-                          {player.position_player || 'N/A'}
-                        </div>
-                        <div>
-                          <span className="font-medium text-slate-300">Equipo:</span>{' '}
-                          {player.team_name || 'N/A'}
-                        </div>
-                        <div>
-                          <span className="font-medium text-slate-300">Nacionalidad:</span>{' '}
-                          {player.nationality_1 || 'N/A'}
-                        </div>
-                        <div>
-                          <span className="font-medium text-slate-300">Edad:</span>{' '}
-                          {player.age || 'N/A'}
-                        </div>
-                      </div>
-                      <div className="mt-2 text-xs text-slate-500">
-                        Creado: {new Date(player.createdAt).toLocaleString()}
-                      </div>
-                    </div>
-                    <div className="flex gap-2 ml-4">
-                      <Button
-                        size="sm"
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                        onClick={() => handleApprove(player.id_player, 'player')}
-                        disabled={actionLoading === player.id_player}
-                      >
-                        {actionLoading === player.id_player
-                          ? 'Procesando...'
-                          : 'Aprobar'}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleReject(player.id_player, 'player')}
-                        disabled={actionLoading === player.id_player}
-                      >
-                        Rechazar
-                      </Button>
-                    </div>
-                  </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
 
-        <TabsContent value="reports" className="mt-6">
-          {data.reports.length === 0 ? (
-            <Card className="bg-[#131921] border-slate-700">
-              <div className="p-8 text-center">
-                <p className="text-slate-400">No hay reportes pendientes</p>
+              {/* Video o Image */}
+              {report.hasVideo && report.videoUrl ? (
+                <div className="relative mb-3">
+                  {(() => {
+                    const embedUrl = getYouTubeEmbedUrl(report.videoUrl)
+                    const isYouTube = embedUrl?.includes('youtube.com/embed')
+
+                    if (isYouTube) {
+                      return (
+                        <iframe
+                          src={embedUrl || ''}
+                          className="w-full h-48 rounded-xl"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          title="Video del reporte"
+                        />
+                      )
+                    } else {
+                      return (
+                        <video
+                          controls
+                          className="w-full h-48 object-cover rounded-xl bg-black"
+                          poster={report.image}
+                        >
+                          <source src={report.videoUrl} type="video/mp4" />
+                          Tu navegador no soporta la reproducción de video.
+                        </video>
+                      )
+                    }
+                  })()}
+                </div>
+              ) : report.image ? (
+                <div className="relative mb-3">
+                  <img
+                    src={report.image}
+                    alt="Report visual"
+                    className="w-full h-32 object-cover rounded-xl"
+                  />
+                </div>
+              ) : null}
+
+              {/* Content */}
+              <p className="text-sm text-[#6d6d6d] mb-3 leading-relaxed">
+                {report.content}
+              </p>
+
+              {/* ROI and Profit Info */}
+              {(report.roi || report.profit) && (
+                <div className="flex items-center gap-4 mb-3 p-2 bg-gray-50 rounded-xl">
+                  {report.roi && (
+                    <div className="text-xs">
+                      <span className="text-[#6d6d6d]">ROI: </span>
+                      <span className="font-medium text-[#8B0000]">{report.roi}%</span>
+                    </div>
+                  )}
+                  {report.profit && (
+                    <div className="text-xs">
+                      <span className="text-[#6d6d6d]">Beneficio: </span>
+                      <span className="font-medium text-green-600">€{report.profit.toLocaleString()}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Original Report Link */}
+              {report.urlReport && (
+                <a
+                  href={report.urlReport}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 mb-3 text-xs font-medium text-[#8B0000] bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Ver reporte original
+                </a>
+              )}
+
+              {/* Date */}
+              <p className="text-xs text-[#6d6d6d] font-medium mb-3">{report.date}</p>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-3 border-t border-gray-200">
+                <Button
+                  size="sm"
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                  onClick={() => handleApprove(report.id)}
+                  disabled={actionLoading === report.id}
+                >
+                  {actionLoading === report.id ? 'Aprobando...' : 'Aprobar'}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="flex-1"
+                  onClick={() => handleReject(report.id)}
+                  disabled={actionLoading === report.id}
+                >
+                  {actionLoading === report.id ? 'Rechazando...' : 'Rechazar'}
+                </Button>
               </div>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {data.reports.map((report) => (
-                <Card key={report.id_report} className="bg-[#131921] border-slate-700">
-                  <div className="p-6">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-semibold text-[#D6DDE6]">
-                          Reporte de {report.player?.player_name || 'Desconocido'}
-                        </h3>
-                        <Badge variant="outline" className="border-yellow-600 text-yellow-500">Pendiente</Badge>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-slate-400 mb-3">
-                        <div>
-                          <span className="font-medium text-slate-300">Scout:</span>{' '}
-                          {report.scout
-                            ? `${report.scout.name || ''} ${report.scout.surname || ''}`.trim() ||
-                              report.scout.scout_name ||
-                              'Desconocido'
-                            : 'Desconocido'}
-                        </div>
-                        <div>
-                          <span className="font-medium text-slate-300">Equipo:</span>{' '}
-                          {report.player?.team_name || 'N/A'}
-                        </div>
-                        <div>
-                          <span className="font-medium text-slate-300">Posición:</span>{' '}
-                          {report.player?.position_player || 'N/A'}
-                        </div>
-                      </div>
-                      {report.form_text_report && (
-                        <div className="bg-slate-800 p-3 rounded text-sm mb-2 border border-slate-700">
-                          <p className="line-clamp-3 text-slate-300">
-                            {report.form_text_report}
-                          </p>
-                        </div>
-                      )}
-                      <div className="text-xs text-slate-500">
-                        Creado: {new Date(report.createdAt).toLocaleString()}
-                      </div>
-                    </div>
-                    <div className="flex gap-2 ml-4">
-                      <Button
-                        size="sm"
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                        onClick={() => handleApprove(report.id_report, 'report')}
-                        disabled={actionLoading === report.id_report}
-                      >
-                        {actionLoading === report.id_report
-                          ? 'Procesando...'
-                          : 'Aprobar'}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleReject(report.id_report, 'report')}
-                        disabled={actionLoading === report.id_report}
-                      >
-                        Rechazar
-                      </Button>
-                    </div>
-                  </div>
-                  </div>
-                </Card>
-              ))}
             </div>
-          )}
-        </TabsContent>
-      </Tabs>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

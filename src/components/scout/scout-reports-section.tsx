@@ -48,6 +48,7 @@ interface ReportData {
   roi: number | null
   profit: number | null
   potential: number | null
+  approval_status?: string | null
   player: {
     id_player: string
     player_name: string
@@ -60,18 +61,20 @@ interface ReportData {
 
 interface Report {
   id: string
+  playerId: string
   playerName: string
   profileType: string
   content: string
   rating: number
   date: string
-  type: 'video' | 'written' | 'social' | 'scouting'
+  type: 'video' | 'written' | 'social'
   hasVideo?: boolean
   image?: string
   videoUrl?: string
   urlReport?: string
   roi?: number
   profit?: number
+  approvalStatus?: string
 }
 
 interface ScoutReportsSectionProps {
@@ -108,6 +111,9 @@ export default function ScoutReportsSection({
     position: '',
     rating: ''
   })
+  const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false)
+  const [selectedPlayerData, setSelectedPlayerData] = useState<any>(null)
+  const [loadingPlayerData, setLoadingPlayerData] = useState(false)
 
   // Función para abrir el modal de video
   const openVideoModal = (report: Report) => {
@@ -119,6 +125,68 @@ export default function ScoutReportsSection({
   const closeVideoModal = () => {
     setIsVideoModalOpen(false)
     setSelectedVideoReport(null)
+  }
+
+  // Función para abrir el modal de jugador
+  const openPlayerModal = async (playerId: string) => {
+    setIsPlayerModalOpen(true)
+    setLoadingPlayerData(true)
+
+    try {
+      console.log('🔍 Fetching player data for ID:', playerId)
+      const response = await fetch(`/api/players/${playerId}`)
+
+      console.log('📡 Response status:', response.status)
+      console.log('📡 Response ok:', response.ok)
+
+      // Intentar obtener el texto primero para ver qué recibimos
+      const responseText = await response.text()
+      console.log('📄 Response text:', responseText.substring(0, 200))
+
+      // Intentar parsear como JSON
+      let result
+      try {
+        result = JSON.parse(responseText)
+        console.log('✅ Parsed JSON:', result)
+      } catch (parseError) {
+        console.error('❌ JSON parse error:', parseError)
+        throw new Error('La respuesta del servidor no es un JSON válido')
+      }
+
+      if (!response.ok) {
+        console.error('❌ Response not OK, error data:', result)
+        throw new Error(result.__error || result._error || result.error || `Error ${response.status}`)
+      }
+
+      // Manejar tanto el formato { success: true, data: player } como el formato directo
+      if (result.success && result.data) {
+        console.log('✅ Using result.data format')
+        setSelectedPlayerData(result.data)
+      } else if (result.id_player) {
+        console.log('✅ Using direct player format')
+        // Si el resultado tiene id_player, es el objeto player directamente
+        setSelectedPlayerData(result)
+      } else {
+        console.error('❌ Unexpected result format:', Object.keys(result))
+        throw new Error(result.__error || result._error || result.error || 'Error al cargar datos del jugador')
+      }
+    } catch (error) {
+      console.error('❌ Error loading player data:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudieron cargar los datos del jugador",
+        variant: "destructive"
+      })
+      setIsPlayerModalOpen(false)
+    } finally {
+      setLoadingPlayerData(false)
+    }
+  }
+
+  // Función para cerrar el modal de jugador
+  const closePlayerModal = () => {
+    setIsPlayerModalOpen(false)
+    setSelectedPlayerData(null)
   }
 
   // Función para eliminar reporte
@@ -166,10 +234,10 @@ export default function ScoutReportsSection({
   // Convertir los datos reales de reportes a formato de visualización
   const realReports: Report[] = useMemo(() => {
     return reports.map((reportData, index) => {
-      const { player, report_type, report_date, form_text_report, form_url_video, form_url_report, url_secondary, form_potential, roi, profit, potential } = reportData
-      
+      const { player, report_type, report_date, form_text_report, form_url_video, form_url_report, url_secondary, form_potential, roi, profit, potential, approval_status } = reportData
+
       // Determinar el tipo de reporte basado en el contenido
-      let reportType: 'video' | 'written' | 'social' | 'scouting' = 'written'
+      let reportType: 'video' | 'written' | 'social' = 'written'
 
       // Si tiene video, es Video Reporte
       if (form_url_video) {
@@ -194,7 +262,7 @@ export default function ScoutReportsSection({
       }
 
       // Formatear la fecha
-      const formattedDate = report_date 
+      const formattedDate = report_date
         ? new Date(report_date).toLocaleDateString('es-ES', {
             day: 'numeric',
             month: 'numeric',
@@ -204,27 +272,29 @@ export default function ScoutReportsSection({
 
       // Calcular rating basado en el potencial (escala de 1-5)
       const potentialValue = potential || (form_potential ? parseFloat(form_potential) : null)
-      const rating = potentialValue 
+      const rating = potentialValue
         ? Math.min(5, Math.max(1, Math.round(potentialValue)))
         : 3
 
       // Contenido del reporte
-      const content = form_text_report || `Reporte de ${reportType === 'scouting' ? 'scouting' : reportType === 'analysis' ? 'análisis' : reportType === 'follow-up' ? 'seguimiento' : 'recomendación'} para ${player.player_name}. ${player.team_name ? `Actualmente en ${player.team_name}.` : ''}`
+      const content = form_text_report || `Reporte para ${player.player_name}. ${player.team_name ? `Actualmente en ${player.team_name}.` : ''}`
 
       return {
         id: reportData.id_report,
+        playerId: player.id_player,
         playerName: player.player_name,
         profileType: `${player.position_player || 'N/A'} • ${player.nationality_1 || 'N/A'}`,
         content,
         rating,
         date: formattedDate,
         type: reportType,
-        hasVideo: !!form_url_video,
+        hasVideo: form_url_video ? true : undefined,
         videoUrl: form_url_video || undefined,
         urlReport: form_url_report || undefined,
         image: url_secondary || undefined, // No mostrar imagen placeholder si no hay url_secondary
         roi: roi || undefined,
         profit: profit || undefined,
+        approvalStatus: approval_status || undefined,
       }
     })
   }, [reports])
@@ -325,7 +395,7 @@ export default function ScoutReportsSection({
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-[#000000]">{readOnly ? 'Reports' : 'Your Reports'}</h2>
         {!readOnly && (
-          <Link href="/scout/reports/new">
+          <Link href="/scout/portfolio/new">
             <Button className="bg-[#8B0000] hover:bg-[#660000] text-white">
               <Plus className="w-4 h-4 mr-2" />
               New Report
@@ -547,7 +617,7 @@ export default function ScoutReportsSection({
               </Button>
             </div>
           ) : (
-            <Link href="/scout/reports/new">
+            <Link href="/scout/portfolio/new">
               <Button className="bg-[#8B0000] hover:bg-[#660000] text-white">
                 <Plus className="w-4 h-4 mr-2" />
                 Crear primer reporte
@@ -590,9 +660,15 @@ export default function ScoutReportsSection({
 
               {/* Header */}
               <div className={`flex items-center justify-between mb-3 ${!readOnly ? 'pr-16' : ''}`}>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <div>
-                    <h3 className="font-semibold text-[#2e3138]">{report.playerName}</h3>
+                    <h3
+                      className="font-semibold text-[#2e3138] cursor-pointer hover:text-[#8B0000] transition-colors"
+                      onClick={() => openPlayerModal(report.playerId)}
+                      title="Ver datos del jugador"
+                    >
+                      {report.playerName}
+                    </h3>
                     <p className="text-sm text-[#6d6d6d]">{report.profileType}</p>
                   </div>
                   {/* Type Badge */}
@@ -602,10 +678,16 @@ export default function ScoutReportsSection({
                     report.type === 'social' ? 'bg-green-100 text-green-700' :
                     'bg-gray-100 text-gray-700'
                   }`}>
-                    {report.type === 'video' ? '🎥' : 
-                     report.type === 'written' ? '📝' : 
+                    {report.type === 'video' ? '🎥' :
+                     report.type === 'written' ? '📝' :
                      report.type === 'social' ? '🔗' : '📋'}
                   </div>
+                  {/* Pending Status Badge */}
+                  {report.approvalStatus === 'pending' && (
+                    <div className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-300">
+                      ⏳ Pendiente
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="text-sm font-medium text-[#2e3138]">{report.rating}.0</span>
@@ -808,6 +890,170 @@ export default function ScoutReportsSection({
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Player Info Modal */}
+      {isPlayerModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
+          <div className="relative bg-white rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between mb-6 border-b pb-4">
+              <h3 className="text-2xl font-bold text-[#000000]">Datos del Jugador</h3>
+              <button
+                onClick={closePlayerModal}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-[#6d6d6d]" />
+              </button>
+            </div>
+
+            {/* Loading State */}
+            {loadingPlayerData ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8B0000]"></div>
+                <span className="ml-3 text-[#6d6d6d] mt-2">Cargando datos del jugador...</span>
+              </div>
+            ) : selectedPlayerData ? (
+              <div className="space-y-4">
+                {/* Player Name */}
+                <div className="bg-[#8B0000] text-white p-4 rounded-lg">
+                  <h4 className="text-2xl font-bold">{selectedPlayerData.player_name}</h4>
+                </div>
+
+                {/* Basic Info Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {selectedPlayerData.date_of_birth && (
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-xs text-gray-500 mb-1">Fecha de Nacimiento</p>
+                      <p className="font-semibold text-[#2e3138]">
+                        {new Date(selectedPlayerData.date_of_birth).toLocaleDateString('es-ES', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedPlayerData.age && (
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-xs text-gray-500 mb-1">Edad</p>
+                      <p className="font-semibold text-[#2e3138]">{selectedPlayerData.age} años</p>
+                    </div>
+                  )}
+
+                  {selectedPlayerData.position_player && (
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-xs text-gray-500 mb-1">Posición</p>
+                      <p className="font-semibold text-[#2e3138]">{selectedPlayerData.position_player}</p>
+                    </div>
+                  )}
+
+                  {selectedPlayerData.height && (
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-xs text-gray-500 mb-1">Altura</p>
+                      <p className="font-semibold text-[#2e3138]">{selectedPlayerData.height} cm</p>
+                    </div>
+                  )}
+
+                  {selectedPlayerData.foot && (
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-xs text-gray-500 mb-1">Pie</p>
+                      <p className="font-semibold text-[#2e3138] capitalize">{selectedPlayerData.foot}</p>
+                    </div>
+                  )}
+
+                  {selectedPlayerData.nationality_1 && (
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-xs text-gray-500 mb-1">Nacionalidad</p>
+                      <p className="font-semibold text-[#2e3138]">{selectedPlayerData.nationality_1}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Team Info */}
+                {selectedPlayerData.team_name && (
+                  <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                    <p className="text-xs text-blue-600 mb-1">Equipo Actual</p>
+                    <p className="font-bold text-[#2e3138] text-lg">{selectedPlayerData.team_name}</p>
+                    {selectedPlayerData.team_country && (
+                      <p className="text-sm text-gray-600 mt-1">{selectedPlayerData.team_country}</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Additional Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {selectedPlayerData.nationality_2 && (
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-xs text-gray-500 mb-1">Segunda Nacionalidad</p>
+                      <p className="font-semibold text-[#2e3138]">{selectedPlayerData.nationality_2}</p>
+                    </div>
+                  )}
+
+                  {selectedPlayerData.national_tier && (
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-xs text-gray-500 mb-1">Selección Nacional</p>
+                      <p className="font-semibold text-[#2e3138]">{selectedPlayerData.national_tier}</p>
+                    </div>
+                  )}
+
+                  {selectedPlayerData.agency && (
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-xs text-gray-500 mb-1">Agencia</p>
+                      <p className="font-semibold text-[#2e3138]">{selectedPlayerData.agency}</p>
+                    </div>
+                  )}
+
+                  {selectedPlayerData.competition && (
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-xs text-gray-500 mb-1">Competición</p>
+                      <p className="font-semibold text-[#2e3138]">{selectedPlayerData.competition}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Reference URL */}
+                {selectedPlayerData.url_reference && (
+                  <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg">
+                    <p className="text-xs text-amber-700 mb-2">URL de Referencia</p>
+                    <a
+                      href={selectedPlayerData.url_reference}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#8B0000] hover:underline font-medium break-all"
+                    >
+                      {selectedPlayerData.url_reference}
+                    </a>
+                  </div>
+                )}
+
+                {/* Market Value & Rating */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {selectedPlayerData.market_value && (
+                    <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+                      <p className="text-xs text-green-700 mb-1">Valor de Mercado</p>
+                      <p className="font-bold text-green-700 text-xl">
+                        €{Number(selectedPlayerData.market_value).toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedPlayerData.rating && (
+                    <div className="bg-purple-50 border border-purple-200 p-4 rounded-lg">
+                      <p className="text-xs text-purple-700 mb-1">Rating</p>
+                      <p className="font-bold text-purple-700 text-xl">{selectedPlayerData.rating}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-[#6d6d6d]">No se pudieron cargar los datos del jugador</p>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -46,6 +46,7 @@ model Usuario {
 
 model Jugador {
   id_player                       String              @id @default(cuid())
+  old_id                          String?             // ID original del Excel para mantener orden de importación
   player_name                     String
   complete_player_name            String?
   date_of_birth                   DateTime?
@@ -121,6 +122,7 @@ model Jugador {
   community_potential             Float?
   stats_evo_3m                    Float?
   photo_coverage                  String?
+  gallery_photo                   String?
   url_trfm                        String?
   url_trfm_advisor                String?
   url_secondary                   String?

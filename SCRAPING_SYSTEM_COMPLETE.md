@@ -26,7 +26,7 @@ Sistema de scraping empresarial para actualizar datos de jugadores desde Transfe
 - ✅ **Auto-recuperación** de errores temporales
 - ✅ **Modo Lento Automático** cuando detecta problemas
 
-### 📊 Datos Extraídos (15 campos)
+### 📊 Datos Extraídos (16 campos)
 
 Desde la URL de Transfermarkt de cada jugador:
 
@@ -44,7 +44,8 @@ Desde la URL de Transfermarkt de cada jugador:
 12. `agency` - Agencia representante
 13. `contract_end` - Fecha fin de contrato
 14. `player_trfm_value` - Valor de mercado en €
-15. `photo_coverage` - URL de la foto de perfil del jugador
+15. `photo_coverage` - URL de la foto de perfil del jugador (header)
+16. `gallery_photo` - URL de foto de galería/cuerpo completo del jugador
 
 ---
 

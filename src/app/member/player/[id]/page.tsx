@@ -31,11 +31,16 @@ export default function PlayerProfilePage() {
     player,
     loading,
     error,
-    
+
+    // Period stats state
+    selectedPeriod,
+    setSelectedPeriod,
+    statsLoading,
+
     // Derived state
     isPlayerInList,
     listLoading,
-    
+
     // Functions
     handleToggleList,
     getStatValue,
@@ -157,8 +162,12 @@ export default function PlayerProfilePage() {
                 playerId={playerId}
                 activeStatsTab={activeStatsTab}
                 onStatsTabChange={setActiveStatsTab}
+                selectedPeriod={selectedPeriod}
+                onPeriodChange={setSelectedPeriod}
+                statsLoading={statsLoading}
                 getStatValue={getStatValue}
-              />)}
+              />
+            )}
             {activeTab === "features" && (
               <PlayerFeatures
                 player={player}

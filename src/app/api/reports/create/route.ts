@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
           nationality_2: validatedData.nationality2 || null,
           national_tier: validatedData.nationalTier || null,
           agency: validatedData.agency || null,
+          url_trfm: validatedData.urlReference || null,
         }
       })
     }
@@ -84,15 +85,14 @@ export async function POST(request: NextRequest) {
     // Generar ID secuencial para el reporte
     const reportId = await generateReportId();
 
-    // Crear el reporte
+    // Crear el reporte usando las relaciones de Prisma
     const report = await prisma.reporte.create({
       data: {
         id_report: reportId, // ✅ Nuevo ID secuencial: REP-YYYY-NNNNN
-        scout_id: scout.id_scout,
-        id_player: player.id_player,
         report_date: new Date(),
         report_type: 'original',
         report_status: 'completed',
+        approval_status: 'pending', // ✅ Reporte requiere aprobación
 
         // URLs y contenido del reporte
         form_url_report: validatedData.urlReport || null,
@@ -106,7 +106,22 @@ export async function POST(request: NextRequest) {
         initial_age: player.age,
         initial_player_trfm_value: player.player_trfm_value,
         initial_team: player.team_name,
+
+        // Relaciones usando connect
+        scout: {
+          connect: { id_scout: scout.id_scout }
+        },
+        player: {
+          connect: { id_player: player.id_player }
+        }
       }
+    })
+
+    console.log('✅ Report created successfully:', {
+      id_report: report.id_report,
+      id_player: player.id_player,
+      player_name: player.player_name,
+      approval_status: report.approval_status
     })
 
     // Actualizar estadísticas del scout

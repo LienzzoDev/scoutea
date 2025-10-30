@@ -73,20 +73,30 @@ export default function ScrapingPage() {
 
   // 📡 CONECTAR A LOGS EN TIEMPO REAL VIA SSE
   useEffect(() => {
-    if (!job?.id || !isRunning) return
+    if (!job?.id || !isRunning) {
+      console.log('[SSE] No conectando - Job ID:', job?.id, 'isRunning:', isRunning)
+      return
+    }
 
+    console.log('[SSE] Conectando a logs para job:', job.id)
     const eventSource = new EventSource(`/api/admin/scraping/logs?jobId=${job.id}`)
+
+    eventSource.onopen = () => {
+      console.log('[SSE] Conexión establecida')
+    }
 
     eventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data)
 
         if (data.log) {
+          console.log('[SSE] Nuevo log recibido:', data.log)
           // Añadir log sin timestamp (ya viene con timestamp del servidor)
           setLogs(prev => [...prev, data.log])
         }
 
         if (data.done) {
+          console.log('[SSE] Job completado, cerrando conexión')
           // El job terminó, cerrar conexión
           eventSource.close()
         }
@@ -101,6 +111,7 @@ export default function ScrapingPage() {
     }
 
     return () => {
+      console.log('[SSE] Limpiando conexión')
       eventSource.close()
     }
   }, [job?.id, isRunning])
@@ -112,10 +123,13 @@ export default function ScrapingPage() {
       const data = await response.json()
 
       if (data.exists && data.job) {
+        console.log('[fetchJobStatus] Job encontrado:', data.job.id, 'Status:', data.job.status)
         setJob(data.job)
 
         const status = data.job.status
-        setIsRunning(status === 'running' || status === 'pending')
+        const shouldBeRunning = status === 'running' || status === 'pending'
+        console.log('[fetchJobStatus] Actualizando isRunning a:', shouldBeRunning)
+        setIsRunning(shouldBeRunning)
         setIsPaused(status === 'paused')
 
         // Si está completo, detener auto-procesamiento
@@ -123,6 +137,7 @@ export default function ScrapingPage() {
           setAutoProcess(false)
         }
       } else {
+        console.log('[fetchJobStatus] No hay job activo')
         setJob(null)
         setIsRunning(false)
         setIsPaused(false)
@@ -135,11 +150,15 @@ export default function ScrapingPage() {
   // 🔄 PROCESAR SIGUIENTE BATCH
   const processBatch = useCallback(async () => {
     try {
+      console.log('[processBatch] Llamando a /api/admin/scraping/process')
+
       const response = await fetch('/api/admin/scraping/process', {
         method: 'POST'
       })
 
       const data = await response.json()
+
+      console.log('[processBatch] Respuesta:', response.status, data)
 
       if (!response.ok) {
         throw new Error(data.error || 'Error al procesar batch')
@@ -154,6 +173,7 @@ export default function ScrapingPage() {
 
       // Si está completo, detener
       if (data.completed) {
+        console.log('[processBatch] Job completado!')
         setAutoProcess(false)
         setIsRunning(false)
       }
@@ -161,6 +181,7 @@ export default function ScrapingPage() {
       return data
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
+      console.error('[processBatch] Error:', errorMsg)
       addLog(`❌ ERROR: ${errorMsg}`)
       setAutoProcess(false)
       setIsRunning(false)
@@ -200,12 +221,19 @@ export default function ScrapingPage() {
         addLog('')
       }
 
-      addLog('✅ Ambos procesos iniciados correctamente')
+      addLog('✅ Scraping iniciado - procesamiento automático en el backend')
+      addLog('💡 Puedes cerrar esta página, el scraping continuará')
       addLog('')
+
+      console.log('[startScraping] Job creado:', data.playersJob)
+      console.log('[startScraping] Actualizando estados - isRunning: true')
 
       setJob(data.playersJob)
       setIsRunning(true)
+      // ACTIVAR autoProcess - el frontend manejará el procesamiento
       setAutoProcess(true)
+
+      addLog('🔄 Iniciando procesamiento automático desde el frontend...')
 
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
@@ -242,11 +270,36 @@ export default function ScrapingPage() {
   }
 
   // ▶️ REANUDAR JOB
-  const resumeScraping = () => {
+  const resumeScraping = async () => {
     addLog('▶️ Reanudando scraping...')
-    setAutoProcess(true)
-    setIsRunning(true)
-    setIsPaused(false)
+
+    try {
+      // Cambiar estado del job a 'running'
+      const response = await fetch('/api/admin/scraping/resume', {
+        method: 'POST'
+      })
+
+      if (!response.ok) {
+        throw new Error('Error al reanudar scraping')
+      }
+
+      // Reiniciar el auto-procesamiento en el backend
+      const baseUrl = window.location.origin
+      fetch(`${baseUrl}/api/admin/scraping/process-auto`, {
+        method: 'POST',
+      }).catch(err => {
+        console.error('Error reiniciando auto-procesamiento:', err)
+      })
+
+      addLog('✅ Scraping reanudado')
+      setAutoProcess(false) // El backend se encarga
+      setIsRunning(true)
+      setIsPaused(false)
+      await fetchJobStatus()
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
+      addLog(`❌ ERROR: ${errorMsg}`)
+    }
   }
 
   // ❌ CANCELAR JOB
@@ -286,25 +339,53 @@ export default function ScrapingPage() {
     addLog('🔄 Estado reiniciado')
   }
 
-  // 🧪 TEST SCRAPING (5 jugadores)
+  // 🧪 TEST SCRAPING (3 jugadores + 3 equipos)
   const runTestScraping = async () => {
-    addLog('🧪 Iniciando test de scraping (3 jugadores + 3 equipos)...')
-    addLog('⏳ Procesando... esto puede tardar 30-60 segundos')
-    addLog('')
     setIsTesting(true)
     setTestResults(null)
+    setLogs([]) // Limpiar logs anteriores
 
-    // Mostrar mensaje de progreso cada 5 segundos
-    const progressInterval = setInterval(() => {
-      addLog('⏳ Scraping en progreso...')
-    }, 5000)
+    // Generar un testId predecible (usamos timestamp similar al servidor)
+    const testId = `test-${Date.now()}`
+
+    // Conectar a los logs ANTES de iniciar el test para no perder ningún log
+    const eventSource = new EventSource(`/api/admin/scraping/logs?testId=${testId}`)
+
+    eventSource.onmessage = (event) => {
+      try {
+        const eventData = JSON.parse(event.data)
+
+        if (eventData.log) {
+          // Añadir log (ya viene con timestamp del servidor)
+          setLogs(prev => [...prev, eventData.log])
+        }
+
+        if (eventData.done) {
+          // El test terminó, cerrar conexión
+          eventSource.close()
+        }
+      } catch (error) {
+        console.error('Error parsing SSE data:', error)
+      }
+    }
+
+    eventSource.onerror = (error) => {
+      console.error('SSE error:', error)
+      eventSource.close()
+    }
 
     try {
-      const response = await fetch('/api/admin/scraping/test', {
-        method: 'POST'
-      })
+      // Pequeña espera para asegurar que SSE esté conectado
+      await new Promise(resolve => setTimeout(resolve, 100))
 
-      clearInterval(progressInterval)
+      // Iniciar el test scraping pasando el testId
+      const response = await fetch('/api/admin/scraping/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ testId })
+      })
 
       const data = await response.json()
 
@@ -312,22 +393,14 @@ export default function ScrapingPage() {
         throw new Error(data.error || 'Error al ejecutar test')
       }
 
-      addLog('')
-      addLog(`✅ Test completado exitosamente!`)
-      addLog(`📊 Jugadores procesados: ${data.summary.players}`)
-      addLog(`🏟️ Equipos procesados: ${data.summary.teams}`)
-      addLog(`✅ Éxitos: ${data.summary.success}`)
-      addLog(`❌ Errores: ${data.summary.errors}`)
-      addLog(`📈 Total: ${data.summary.total} entidades`)
-      addLog('')
-
+      // Los logs finales ya vienen por SSE, solo guardamos los resultados
       setTestResults(data.results)
       setShowTestModal(true)
 
     } catch (error) {
-      clearInterval(progressInterval)
       const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
       addLog(`❌ ERROR en test: ${errorMsg}`)
+      eventSource.close()
     } finally {
       setIsTesting(false)
     }
@@ -459,14 +532,15 @@ export default function ScrapingPage() {
           <div className="flex items-center mb-2">
             <Clock className="h-5 w-5 text-blue-400 mr-3 animate-pulse" />
             <p className="text-blue-300 font-semibold">
-              Scraping en proceso
+              🔄 Scraping Automático en Ejecución
             </p>
           </div>
           <div className="ml-8 space-y-1 text-sm text-blue-200">
-            <p>✅ El scraping se ejecuta bajo demanda cuando el administrador lo inicia</p>
-            <p>✅ Procesa 100 jugadores + 50 equipos por ejecución (~10-20 minutos)</p>
-            <p>✅ Puedes cerrar esta página - el scraping continuará en segundo plano</p>
-            <p>✅ Vuelve en cualquier momento para ver el progreso actualizado</p>
+            <p>✅ El scraping se ejecuta <strong>automáticamente en el backend</strong></p>
+            <p>✅ Procesa batches de 50 jugadores (~4 minutos por batch)</p>
+            <p>🚀 <strong>Puedes cerrar esta página</strong> - el scraping continuará ejecutándose</p>
+            <p>📊 Vuelve en cualquier momento para ver el progreso actualizado en tiempo real</p>
+            <p>⏸️ Usa &quot;Pausar&quot; para detener temporalmente el proceso automático</p>
           </div>
         </div>
       )}

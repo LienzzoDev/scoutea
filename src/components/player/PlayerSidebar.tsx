@@ -3,8 +3,8 @@
 import { Facebook, Twitter, Linkedin, Send } from "lucide-react";
 import Image from "next/image";
 
-
 import { Button } from "@/components/ui/button";
+import { getValidImageUrl } from "@/lib/utils/image-utils";
 import type { Player } from "@/types/player";
 
 interface PlayerSidebarProps {
@@ -12,19 +12,46 @@ interface PlayerSidebarProps {
 }
 
 export default function PlayerSidebar({ player }: PlayerSidebarProps) {
+  // Obtener URLs de imágenes válidas (null si son placeholders de Transfermarkt)
+  const validGalleryPhoto = getValidImageUrl(player.gallery_photo);
+  const validProfilePhoto = getValidImageUrl(player.photo_coverage);
+
   return (
     <div className="w-80 bg-white rounded-lg p-6 space-y-4 self-start">
       {/* Player Card */}
       <div className="relative">
-        <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">
-          <Image
-            src="/logo-member.svg"
-            alt="Scoutea Member Logo"
-            width={120}
-            height={120}
-            className="object-contain opacity-40"
-          />
-        </div>
+        {validGalleryPhoto ? (
+          <div className="w-full h-96 bg-gray-100 rounded-lg overflow-hidden relative">
+            <Image
+              src={validGalleryPhoto}
+              alt={player.player_name || "Player"}
+              fill
+              className="object-cover"
+              sizes="320px"
+              priority
+            />
+          </div>
+        ) : validProfilePhoto ? (
+          <div className="w-full h-96 bg-gray-100 rounded-lg overflow-hidden relative">
+            <Image
+              src={validProfilePhoto}
+              alt={player.player_name || "Player"}
+              fill
+              className="object-cover"
+              sizes="320px"
+            />
+          </div>
+        ) : (
+          <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">
+            <Image
+              src="/logo-member.svg"
+              alt="Scoutea Member Logo"
+              width={120}
+              height={120}
+              className="object-contain opacity-40"
+            />
+          </div>
+        )}
         
         {/* Team badge overlay - Top */}
         <div className="absolute top-4 left-4 flex items-center gap-3 bg-black/80 text-white px-3 py-2 rounded-full">
@@ -116,13 +143,31 @@ export default function PlayerSidebar({ player }: PlayerSidebarProps) {
       )}
 
       {/* Transfer Market Button */}
-      <Button
-        variant="outline"
-        className="w-full border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white bg-transparent flex items-center justify-center gap-2"
-      >
-        Transfer market
-        <span className="ml-2">↗</span>
-      </Button>
+      {player.url_trfm ? (
+        <a
+          href={player.url_trfm}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full"
+        >
+          <Button
+            variant="outline"
+            className="w-full border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white bg-transparent flex items-center justify-center gap-2"
+          >
+            Transfer market
+            <span className="ml-2">↗</span>
+          </Button>
+        </a>
+      ) : (
+        <Button
+          variant="outline"
+          className="w-full border-gray-300 text-gray-400 cursor-not-allowed bg-transparent flex items-center justify-center gap-2"
+          disabled
+        >
+          Transfer market
+          <span className="ml-2">↗</span>
+        </Button>
+      )}
 
       {/* Rating */}
       <div className="flex flex-col items-center">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Upload, CheckCircle, XCircle, Loader2, Terminal, Download, RefreshCw, X } from "lucide-react";
+import { Upload, CheckCircle, XCircle, Loader2, Terminal, Download, RefreshCw, X, Copy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 
@@ -258,6 +258,25 @@ export default function ImportPlayerStatsButton() {
     URL.revokeObjectURL(url);
   };
 
+  const copyLogsToClipboard = async () => {
+    const logsText = logs.map(log => `[${log.timestamp}] [${log.type.toUpperCase()}] ${log.message}`).join('\n');
+    try {
+      await navigator.clipboard.writeText(logsText);
+      // Mostrar feedback visual temporal
+      const button = document.getElementById('copy-logs-btn-player-stats');
+      if (button) {
+        const originalText = button.innerHTML;
+        button.innerHTML = '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span class="ml-1">Copiado!</span>';
+        setTimeout(() => {
+          button.innerHTML = originalText;
+        }, 2000);
+      }
+    } catch (err) {
+      console.error('Error al copiar logs:', err);
+      alert('Error al copiar los logs al portapapeles');
+    }
+  };
+
   const handleReload = () => {
     router.refresh();
     window.location.reload();
@@ -319,114 +338,157 @@ export default function ImportPlayerStatsButton() {
           </div>
         )}
 
-        {/* Panel de Logs en Tiempo Real */}
+        {/* Panel de Logs en Tiempo Real - Modal Popup */}
         {showLogs && logs.length > 0 && (
-          <div className="bg-[#0a0e14] border border-slate-700 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-700">
-              <div className="flex items-center gap-2">
-                <Terminal className="h-4 w-4 text-blue-600" />
-                <span className="font-semibold text-slate-300">Live Import Logs</span>
-                <span className="text-slate-500">({filteredLogs.length}/{logs.length} entradas)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {/* Filtros */}
-                <select
-                  value={logFilter}
-                  onChange={(e) => setLogFilter(e.target.value as any)}
-                  className="bg-slate-800 text-slate-300 text-xs px-2 py-1 rounded border border-slate-600"
-                >
-                  <option value="all">Todos</option>
-                  <option value="error">Solo Errores</option>
-                  <option value="success">Solo Exitosos</option>
-                  <option value="info">Solo Info</option>
-                </select>
-
-                {/* Botón de exportar */}
-                <button
-                  onClick={exportLogs}
-                  className="flex items-center gap-1 px-2 py-1 bg-slate-700 text-slate-300 rounded hover:bg-slate-600 text-xs"
-                >
-                  <Download className="h-3 w-3" />
-                  Exportar
-                </button>
-              </div>
-            </div>
-
-            <div className="max-h-96 overflow-y-auto space-y-1">
-              {filteredLogs.map((log, index) => (
-                <div key={index} className="flex items-start gap-2 hover:bg-slate-800/50 px-2 py-1 rounded">
-                  <span className="text-slate-500 flex-shrink-0">[{log.timestamp}]</span>
-                  <span className={`flex-1 ${getLogColor(log.type)}`}>{log.message}</span>
-                </div>
-              ))}
-              <div ref={logsEndRef} />
-            </div>
-          </div>
-        )}
-
-        {/* Resultado de la importación */}
-        {result && (
           <div
-            className={`p-4 rounded-lg border ${
-              result.success
-                ? 'bg-green-900/20 border-green-700 text-green-300'
-                : 'bg-red-900/20 border-red-700 text-red-300'
-            }`}
+            className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowLogs(false)}
           >
-            <div className="flex items-start gap-3">
-              {result.success ? (
-                <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-              ) : (
-                <XCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-              )}
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="font-semibold">{result.message}</p>
-                  {result.success && (
-                    <button
-                      onClick={handleReload}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white rounded text-sm font-medium transition-colors"
-                    >
-                      <RefreshCw className="h-3.5 w-3.5" />
-                      Recargar Página
-                    </button>
+            <div
+              className="bg-[#0a0e14] border border-slate-700 rounded-lg w-full max-w-4xl max-h-[80vh] flex flex-col shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b border-slate-700">
+                <div className="flex items-center gap-2">
+                  <Terminal className="h-5 w-5 text-blue-600" />
+                  <span className="font-semibold text-slate-200 text-lg">Live Import Logs</span>
+                  <span className="text-slate-400 text-sm">({filteredLogs.length}/{logs.length} entradas)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* Filtros */}
+                  <select
+                    value={logFilter}
+                    onChange={(e) => setLogFilter(e.target.value as any)}
+                    className="bg-slate-800 text-slate-300 text-sm px-3 py-1.5 rounded border border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  >
+                    <option value="all">Todos</option>
+                    <option value="error">Solo Errores</option>
+                    <option value="success">Solo Exitosos</option>
+                    <option value="info">Solo Info</option>
+                  </select>
+
+                  {/* Botón de copiar */}
+                  <button
+                    id="copy-logs-btn-player-stats"
+                    onClick={copyLogsToClipboard}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-blue-700 text-white rounded hover:bg-blue-600 text-sm transition-colors"
+                    title="Copiar logs al portapapeles"
+                  >
+                    <Copy className="h-4 w-4" />
+                    <span>Copiar</span>
+                  </button>
+
+                  {/* Botón de exportar */}
+                  <button
+                    onClick={exportLogs}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-slate-700 text-slate-300 rounded hover:bg-slate-600 text-sm transition-colors"
+                    title="Descargar logs como archivo .txt"
+                  >
+                    <Download className="h-4 w-4" />
+                    Exportar
+                  </button>
+
+                  {/* Botón de cerrar */}
+                  <button
+                    onClick={() => setShowLogs(false)}
+                    className="flex items-center justify-center w-8 h-8 bg-slate-700 text-slate-300 rounded hover:bg-slate-600 transition-colors"
+                    title="Cerrar logs"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Contenido scrollable */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-1">
+                {filteredLogs.map((log, index) => (
+                  <div key={index} className="flex items-start gap-2 hover:bg-slate-800/50 px-3 py-2 rounded transition-colors">
+                    <span className="text-slate-500 flex-shrink-0 text-sm font-mono">[{log.timestamp}]</span>
+                    <span className={`flex-1 ${getLogColor(log.type)} text-sm`}>{log.message}</span>
+                  </div>
+                ))}
+                <div ref={logsEndRef} />
+              </div>
+
+              {/* Footer con estadísticas y resultados */}
+              <div className="border-t border-slate-700 bg-[#080c11]">
+                {/* Estadísticas de logs */}
+                <div className="p-3 flex items-center justify-between text-xs text-slate-400">
+                  <span>Total de logs: {logs.length}</span>
+                  {isUploading && (
+                    <span className="flex items-center gap-2">
+                      <div className="animate-pulse w-2 h-2 bg-blue-500 rounded-full"></div>
+                      Importación en progreso...
+                    </span>
                   )}
                 </div>
 
-                {/* Detalles adicionales */}
-                {result.details && (
-                  <div className="mt-2 space-y-1 text-sm">
-                    <p>✅ Exitosos: {result.details.success}</p>
-                    <p>❌ Fallidos: {result.details.failed}</p>
-                    {result.details.created > 0 && (
-                      <p>🆕 Estadísticas nuevas creadas: {result.details.created}</p>
-                    )}
-                    {result.details.updated > 0 && (
-                      <p>🔄 Estadísticas actualizadas: {result.details.updated}</p>
-                    )}
-                    {result.details.notFound > 0 && (
-                      <p>⚠️ Jugadores no encontrados: {result.details.notFound}</p>
-                    )}
-
-                    {result.details.errors.length > 0 && (
-                      <details className="mt-2">
-                        <summary className="cursor-pointer hover:underline">
-                          Ver errores ({result.details.errors.length})
-                        </summary>
-                        <ul className="mt-2 ml-4 space-y-1 text-xs">
-                          {result.details.errors.slice(0, 10).map((error, index) => (
-                            <li key={index} className="list-disc">
-                              {error}
-                            </li>
-                          ))}
-                          {result.details.errors.length > 10 && (
-                            <li className="text-slate-400">
-                              ... y {result.details.errors.length - 10} errores más
-                            </li>
+                {/* Resultado de la importación (si existe) */}
+                {result && (
+                  <div className={`mx-3 mb-3 p-4 rounded-lg border ${
+                    result.success
+                      ? 'bg-green-900/20 border-green-700 text-green-300'
+                      : 'bg-red-900/20 border-red-700 text-red-300'
+                  }`}>
+                    <div className="flex items-start gap-3">
+                      {result.success ? (
+                        <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                      ) : (
+                        <XCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                      )}
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-semibold">{result.message}</p>
+                          {result.success && (
+                            <button
+                              onClick={handleReload}
+                              className="flex items-center gap-2 px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white rounded text-sm font-medium transition-colors"
+                            >
+                              <RefreshCw className="h-3.5 w-3.5" />
+                              Recargar Página
+                            </button>
                           )}
-                        </ul>
-                      </details>
-                    )}
+                        </div>
+
+                        {/* Detalles adicionales */}
+                        {result.details && (
+                          <div className="mt-2 space-y-1 text-sm">
+                            <p>✅ Exitosos: {result.details.success}</p>
+                            <p>❌ Fallidos: {result.details.failed}</p>
+                            {result.details.created > 0 && (
+                              <p>🆕 Estadísticas nuevas creadas: {result.details.created}</p>
+                            )}
+                            {result.details.updated > 0 && (
+                              <p>🔄 Estadísticas actualizadas: {result.details.updated}</p>
+                            )}
+                            {result.details.notFound > 0 && (
+                              <p>⚠️ Jugadores no encontrados: {result.details.notFound}</p>
+                            )}
+
+                            {result.details.errors.length > 0 && (
+                              <details className="mt-2">
+                                <summary className="cursor-pointer hover:underline">
+                                  Ver errores ({result.details.errors.length})
+                                </summary>
+                                <ul className="mt-2 ml-4 space-y-1 text-xs">
+                                  {result.details.errors.slice(0, 10).map((error, index) => (
+                                    <li key={index} className="list-disc">
+                                      {error}
+                                    </li>
+                                  ))}
+                                  {result.details.errors.length > 10 && (
+                                    <li className="text-slate-400">
+                                      ... y {result.details.errors.length - 10} errores más
+                                    </li>
+                                  )}
+                                </ul>
+                              </details>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { prisma } from '@/lib/db'
-import { generatePlayerId } from '@/lib/utils/id-generator'
-import { ScoutPlayerAddSchema } from '@/lib/validation/api-schemas'
+import { generatePlayerId, generateReportId } from '@/lib/utils/id-generator'
+import { ScoutReportCreateSchema } from '@/lib/validation/api-schemas'
 
 const ScoutPlayersQuerySchema = z.object({
   scoutId: z.string().min(1, 'Scout ID requerido')
@@ -83,16 +83,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    console.log('Received body:', JSON.stringify(body, null, 2))
+    console.log('📥 Received body:', JSON.stringify(body, null, 2))
 
-    // Validar con Zod
+    // Validar con Zod usando el schema completo que incluye datos de reporte
     let validatedData;
     try {
-      validatedData = ScoutPlayerAddSchema.parse(body);
-      console.log('Validated data:', JSON.stringify(validatedData, null, 2))
+      validatedData = ScoutReportCreateSchema.parse(body);
+      console.log('✅ Validated data:', JSON.stringify(validatedData, null, 2))
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.error('Validation errors:', error.errors)
+        console.error('❌ Validation errors:', error.errors)
         return NextResponse.json({
           error: 'Datos inválidos',
           details: error.errors.map((err) => ({
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
         nationality_2: validatedData.nationality2 || null,
         national_tier: validatedData.nationalTier || null,
         agency: validatedData.agency || null,
-        url_trfm: validatedData.urlReference,
+        url_trfm: validatedData.urlReference || null,
 
         // Campos de aprobación
         approval_status: 'pending',
@@ -167,6 +167,59 @@ export async function POST(request: NextRequest) {
       status: player.approval_status
     })
 
+    // Generar ID secuencial para el reporte
+    const reportId = await generateReportId()
+
+    // Crear el reporte usando las relaciones de Prisma
+    const report = await prisma.reporte.create({
+      data: {
+        id_report: reportId,
+        report_date: new Date(),
+        report_type: 'original',
+        report_status: 'completed',
+        approval_status: 'pending', // ✅ Reporte requiere aprobación
+
+        // URLs y contenido del reporte
+        form_url_report: validatedData.urlReport || null,
+        form_url_video: validatedData.urlVideo || null,
+        form_text_report: validatedData.reportText || null,
+
+        // Análisis del scout
+        form_potential: validatedData.potential.toString(),
+
+        // Snapshot histórico (estado inicial del jugador al momento del reporte)
+        initial_age: player.age,
+        initial_player_trfm_value: player.player_trfm_value,
+        initial_team: player.team_name,
+
+        // Relaciones usando connect
+        scout: {
+          connect: { id_scout: scout.id_scout }
+        },
+        player: {
+          connect: { id_player: player.id_player }
+        }
+      }
+    })
+
+    console.log('✅ Report created successfully:', {
+      id_report: report.id_report,
+      id_player: player.id_player,
+      player_name: player.player_name,
+      approval_status: report.approval_status
+    })
+
+    // Actualizar estadísticas del scout
+    await prisma.scout.update({
+      where: { id_scout: scout.id_scout },
+      data: {
+        total_reports: { increment: 1 },
+        original_reports: { increment: 1 }
+      }
+    })
+
+    console.log('✅ Scout stats updated')
+
     return NextResponse.json({
       success: true,
       data: {
@@ -175,9 +228,13 @@ export async function POST(request: NextRequest) {
           player_name: player.player_name,
           approval_status: player.approval_status,
           created_by_scout_id: player.created_by_scout_id
+        },
+        report: {
+          id_report: report.id_report,
+          approval_status: report.approval_status
         }
       },
-      message: 'Jugador creado correctamente. Pendiente de aprobación del administrador.'
+      message: 'Jugador y reporte creados correctamente. Pendientes de aprobación del administrador.'
     })
 
   } catch (error) {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useUser } from '@clerk/nextjs'
-import { Search, ChevronDown, User, Shield, Users, FileText, BarChart3, Briefcase } from "lucide-react"
+import { Search, ChevronDown, User, Shield, Users, FileText, BarChart3, Briefcase, Folder } from "lucide-react"
 import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 
@@ -36,8 +36,7 @@ export default function ScoutNavbar() {
   }, [])
 
   // Determine current page
-  const isPlayersPage = pathname === '/scout/dashboard' || pathname === '/scout/players'
-  const isReportsPage = pathname === '/scout/reports'
+  const isPortfolioPage = pathname === '/scout/portfolio' || pathname?.startsWith('/scout/portfolio')
   const isStatsPage = pathname === '/scout/stats'
   const isJobsPage = pathname === '/scout/jobs'
 
@@ -53,31 +52,23 @@ export default function ScoutNavbar() {
 
         {/* Navigation */}
         <nav className="flex items-center gap-8">
-          <span 
-            className={`cursor-pointer flex items-center gap-2 ${isPlayersPage ? 'text-[#000000] font-medium' : 'text-[#6d6d6d] hover:text-[#000000]'} transition-colors`}
-            onClick={() => _router.push('/scout/dashboard')}
+          <span
+            className={`cursor-pointer flex items-center gap-2 ${isPortfolioPage ? 'text-[#000000] font-medium' : 'text-[#6d6d6d] hover:text-[#000000]'} transition-colors`}
+            onClick={() => _router.push('/scout/portfolio')}
           >
-            <Users className="w-4 h-4" />
-            Players
+            <Folder className="w-4 h-4" />
+            Portfolio
           </span>
-          
-          <span 
-            className={`cursor-pointer flex items-center gap-2 ${isReportsPage ? 'text-[#000000] font-medium' : 'text-[#6d6d6d] hover:text-[#000000]'} transition-colors`}
-            onClick={() => _router.push('/scout/reports')}
-          >
-            <FileText className="w-4 h-4" />
-            Reports
-          </span>
-          
-          <span 
+
+          <span
             className={`cursor-pointer flex items-center gap-2 ${isStatsPage ? 'text-[#000000] font-medium' : 'text-[#6d6d6d] hover:text-[#000000]'} transition-colors`}
             onClick={() => _router.push('/scout/stats')}
           >
             <BarChart3 className="w-4 h-4" />
             Stats
           </span>
-          
-          <span 
+
+          <span
             className={`cursor-pointer flex items-center gap-2 ${isJobsPage ? 'text-[#000000] font-medium' : 'text-[#6d6d6d] hover:text-[#000000]'} transition-colors`}
             onClick={() => _router.push('/scout/jobs')}
           >

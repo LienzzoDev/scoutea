@@ -1,12 +1,12 @@
 "use client";
 
-import { Upload, CheckCircle, XCircle, Loader2, Terminal, Download, RefreshCw } from "lucide-react";
+import { Upload, CheckCircle, XCircle, Loader2, Terminal, Download, RefreshCw, Settings, Copy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 
 interface LogEntry {
   timestamp: string;
-  type: 'info' | 'success' | 'error' | 'warning';
+  type: 'info' | 'success' | 'error' | 'warning' | 'debug';
   message: string;
 }
 
@@ -15,12 +15,15 @@ export default function ImportStatsButton() {
   const [progress, setProgress] = useState({ current: 0, total: 0, percentage: 0 });
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [showLogs, setShowLogs] = useState(false);
-  const [logFilter, setLogFilter] = useState<'all' | 'error' | 'success' | 'info'>('all');
+  const [logFilter, setLogFilter] = useState<'all' | 'error' | 'success' | 'info' | 'debug'>('all');
   const [result, setResult] = useState<{
     success: boolean;
     message: string;
     details?: { success: number; failed: number; created: number; updated: number; errors: string[]; createdPlayers: string[] };
   } | null>(null);
+  const [showConfigDialog, setShowConfigDialog] = useState(false);
+  const [maxRows, setMaxRows] = useState<number | null>(null);
+  const [maxRowsInput, setMaxRowsInput] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logsEndRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -69,6 +72,10 @@ export default function ImportStatsButton() {
       // Crear FormData para enviar el archivo
       const formData = new FormData();
       formData.append('file', file);
+      if (maxRows !== null) {
+        formData.append('maxRows', maxRows.toString());
+        addLog('info', `⚙️ Límite configurado: ${maxRows} filas máximo`);
+      }
 
       addLog('info', '📤 Enviando archivo al servidor...');
 
@@ -129,14 +136,18 @@ export default function ImportStatsButton() {
                     addLog('info', `🔄 Jugador actualizado: ${data.playerName}`);
                   } else if (data.type === 'error') {
                     addLog('error', `⚠️ ${data.message}`);
+                  } else if (data.type === 'debug') {
+                    addLog('debug', data.message);
                   } else if (data.type === 'complete') {
                     addLog('success', '✅ Importación completada!');
-                    addLog('info', '💡 Revisa los logs arriba para ver detalles y errores');
+                    addLog('info', '💡 Revisa el resumen de resultados abajo');
                     setResult({
                       success: true,
                       message: data.message,
                       details: data.results
                     });
+                    // Abrir el modal de logs automáticamente al finalizar
+                    setShowLogs(true);
                   }
                 } catch (e) {
                   console.error('Error parsing SSE data:', e);
@@ -197,7 +208,16 @@ export default function ImportStatsButton() {
   };
 
   const handleButtonClick = () => {
-    fileInputRef.current?.click();
+    setShowConfigDialog(true);
+  };
+
+  const handleConfirmConfig = () => {
+    const parsed = maxRowsInput.trim() === '' ? null : parseInt(maxRowsInput);
+    setMaxRows(parsed && !isNaN(parsed) && parsed > 0 ? parsed : null);
+    setShowConfigDialog(false);
+    setTimeout(() => {
+      fileInputRef.current?.click();
+    }, 100);
   };
 
   const getLogColor = (type: LogEntry['type']) => {
@@ -205,6 +225,7 @@ export default function ImportStatsButton() {
       case 'success': return 'text-green-400';
       case 'error': return 'text-red-400';
       case 'warning': return 'text-yellow-400';
+      case 'debug': return 'text-blue-400';
       default: return 'text-slate-300';
     }
   };
@@ -227,6 +248,25 @@ export default function ImportStatsButton() {
     URL.revokeObjectURL(url);
   };
 
+  const copyLogsToClipboard = async () => {
+    const logsText = logs.map(log => `[${log.timestamp}] [${log.type.toUpperCase()}] ${log.message}`).join('\n');
+    try {
+      await navigator.clipboard.writeText(logsText);
+      // Mostrar feedback visual temporal
+      const button = document.getElementById('copy-logs-btn');
+      if (button) {
+        const originalText = button.innerHTML;
+        button.innerHTML = '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span>Copiado!</span>';
+        setTimeout(() => {
+          button.innerHTML = originalText;
+        }, 2000);
+      }
+    } catch (err) {
+      console.error('Error al copiar logs:', err);
+      alert('Error al copiar los logs al portapapeles');
+    }
+  };
+
   const handleReload = () => {
     router.refresh();
     window.location.reload();
@@ -234,6 +274,55 @@ export default function ImportStatsButton() {
 
   return (
     <div className="flex flex-col gap-3">
+      {/* Diálogo de configuración */}
+      {showConfigDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-[#131921] border border-slate-700 rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Settings className="h-5 w-5 text-[#FF5733]" />
+              <h3 className="text-lg font-semibold text-slate-200">Configurar Importación</h3>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Límite de filas (opcional)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="Dejar vacío para importar todas"
+                  value={maxRowsInput}
+                  onChange={(e) => setMaxRowsInput(e.target.value)}
+                  className="w-full px-3 py-2 bg-[#0a0e14] border border-slate-600 rounded text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FF5733]"
+                />
+                <p className="text-xs text-slate-400 mt-1">
+                  Ej: 100 para importar solo las primeras 100 filas
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  onClick={() => {
+                    setShowConfigDialog(false);
+                    setMaxRowsInput('');
+                  }}
+                  className="px-4 py-2 bg-slate-700 text-slate-200 rounded hover:bg-slate-600 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirmConfig}
+                  className="px-4 py-2 bg-[#FF5733] text-white rounded hover:bg-[#E64A2E] transition-colors"
+                >
+                  Continuar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Botón de importación */}
       <div className="flex items-center gap-2">
         <input
@@ -260,6 +349,11 @@ export default function ImportStatsButton() {
             </>
           )}
         </button>
+        {maxRows !== null && !isUploading && (
+          <span className="text-xs text-slate-400 px-2 py-1 bg-slate-800 rounded">
+            Límite: {maxRows} filas
+          </span>
+        )}
         {logs.length > 0 && (
           <button
             onClick={() => setShowLogs(!showLogs)}
@@ -287,126 +381,170 @@ export default function ImportStatsButton() {
         </div>
       )}
 
-      {/* Panel de Logs en Tiempo Real */}
+      {/* Panel de Logs en Tiempo Real - Modal Popup */}
       {showLogs && logs.length > 0 && (
-        <div className="bg-[#0a0e14] border border-slate-700 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-700">
-            <div className="flex items-center gap-2">
-              <Terminal className="h-4 w-4 text-[#FF5733]" />
-              <span className="font-semibold text-slate-300">Live Import Logs</span>
-              <span className="text-slate-500">({filteredLogs.length}/{logs.length} entradas)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              {/* Filtros */}
-              <select
-                value={logFilter}
-                onChange={(e) => setLogFilter(e.target.value as any)}
-                className="bg-slate-800 text-slate-300 text-xs px-2 py-1 rounded border border-slate-600"
-              >
-                <option value="all">Todos</option>
-                <option value="error">Solo Errores</option>
-                <option value="success">Solo Exitosos</option>
-                <option value="info">Solo Info</option>
-              </select>
-
-              {/* Botón de exportar */}
-              <button
-                onClick={exportLogs}
-                className="flex items-center gap-1 px-2 py-1 bg-slate-700 text-slate-300 rounded hover:bg-slate-600 text-xs"
-              >
-                <Download className="h-3 w-3" />
-                Exportar
-              </button>
-            </div>
-          </div>
-
-          <div className="max-h-96 overflow-y-auto space-y-1">
-            {filteredLogs.map((log, index) => (
-              <div key={index} className="flex items-start gap-2 hover:bg-slate-800/50 px-2 py-1 rounded">
-                <span className="text-slate-500 flex-shrink-0">[{log.timestamp}]</span>
-                <span className={`flex-1 ${getLogColor(log.type)}`}>{log.message}</span>
-              </div>
-            ))}
-            <div ref={logsEndRef} />
-          </div>
-        </div>
-      )}
-
-      {/* Resultado de la importación */}
-      {result && (
         <div
-          className={`p-4 rounded-lg border ${
-            result.success
-              ? 'bg-green-900/20 border-green-700 text-green-300'
-              : 'bg-red-900/20 border-red-700 text-red-300'
-          }`}
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowLogs(false)}
         >
-          <div className="flex items-start gap-3">
-            {result.success ? (
-              <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-            ) : (
-              <XCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-            )}
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-semibold">{result.message}</p>
-                {result.success && (
-                  <button
-                    onClick={handleReload}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white rounded text-sm font-medium transition-colors"
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" />
-                    Recargar Página
-                  </button>
+          <div
+            className="bg-[#0a0e14] border border-slate-700 rounded-lg w-full max-w-4xl max-h-[80vh] flex flex-col shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-700">
+              <div className="flex items-center gap-2">
+                <Terminal className="h-5 w-5 text-[#FF5733]" />
+                <span className="font-semibold text-slate-200 text-lg">Live Import Logs</span>
+                <span className="text-slate-400 text-sm">({filteredLogs.length}/{logs.length} entradas)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Filtros */}
+                <select
+                  value={logFilter}
+                  onChange={(e) => setLogFilter(e.target.value as any)}
+                  className="bg-slate-800 text-slate-300 text-sm px-3 py-1.5 rounded border border-slate-600 focus:outline-none focus:ring-2 focus:ring-[#FF5733]"
+                >
+                  <option value="all">Todos</option>
+                  <option value="error">Solo Errores</option>
+                  <option value="success">Solo Exitosos</option>
+                  <option value="info">Solo Info</option>
+                  <option value="debug">Solo Debug</option>
+                </select>
+
+                {/* Botón de copiar */}
+                <button
+                  id="copy-logs-btn"
+                  onClick={copyLogsToClipboard}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-blue-700 text-white rounded hover:bg-blue-600 text-sm transition-colors"
+                  title="Copiar logs al portapapeles"
+                >
+                  <Copy className="h-4 w-4" />
+                  <span>Copiar</span>
+                </button>
+
+                {/* Botón de exportar */}
+                <button
+                  onClick={exportLogs}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-slate-700 text-slate-300 rounded hover:bg-slate-600 text-sm transition-colors"
+                  title="Descargar logs como archivo .txt"
+                >
+                  <Download className="h-4 w-4" />
+                  Exportar
+                </button>
+
+                {/* Botón de cerrar */}
+                <button
+                  onClick={() => setShowLogs(false)}
+                  className="flex items-center justify-center w-8 h-8 bg-slate-700 text-slate-300 rounded hover:bg-slate-600 transition-colors"
+                  title="Cerrar logs"
+                >
+                  <span className="text-xl leading-none">×</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Contenido scrollable */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-1">
+              {filteredLogs.map((log, index) => (
+                <div key={index} className="flex items-start gap-2 hover:bg-slate-800/50 px-3 py-2 rounded transition-colors">
+                  <span className="text-slate-500 flex-shrink-0 text-sm font-mono">[{log.timestamp}]</span>
+                  <span className={`flex-1 ${getLogColor(log.type)} text-sm`}>{log.message}</span>
+                </div>
+              ))}
+              <div ref={logsEndRef} />
+            </div>
+
+            {/* Footer con estadísticas y resultados */}
+            <div className="border-t border-slate-700 bg-[#080c11]">
+              {/* Estadísticas de logs */}
+              <div className="p-3 flex items-center justify-between text-xs text-slate-400">
+                <span>Total de logs: {logs.length}</span>
+                {isUploading && (
+                  <span className="flex items-center gap-2">
+                    <div className="animate-pulse w-2 h-2 bg-green-500 rounded-full"></div>
+                    Importación en progreso...
+                  </span>
                 )}
               </div>
 
-              {/* Detalles adicionales */}
-              {result.details && (
-                <div className="mt-2 space-y-1 text-sm">
-                  <p>✅ Exitosos: {result.details.success}</p>
-                  <p>❌ Fallidos: {result.details.failed}</p>
-                  {result.details.created > 0 && (
-                    <p>🆕 Jugadores nuevos creados: {result.details.created}</p>
-                  )}
-                  {result.details.updated > 0 && (
-                    <p>🔄 Jugadores actualizados: {result.details.updated}</p>
-                  )}
-
-                  {result.details.createdPlayers && result.details.createdPlayers.length > 0 && (
-                    <details className="mt-2">
-                      <summary className="cursor-pointer hover:underline text-green-400">
-                        Ver jugadores creados ({result.details.createdPlayers.length})
-                      </summary>
-                      <ul className="mt-2 ml-4 space-y-1 text-xs">
-                        {result.details.createdPlayers.map((player, index) => (
-                          <li key={index} className="list-disc">
-                            {player}
-                          </li>
-                        ))}
-                      </ul>
-                    </details>
-                  )}
-
-                  {result.details.errors.length > 0 && (
-                    <details className="mt-2">
-                      <summary className="cursor-pointer hover:underline">
-                        Ver errores ({result.details.errors.length})
-                      </summary>
-                      <ul className="mt-2 ml-4 space-y-1 text-xs">
-                        {result.details.errors.slice(0, 10).map((error, index) => (
-                          <li key={index} className="list-disc">
-                            {error}
-                          </li>
-                        ))}
-                        {result.details.errors.length > 10 && (
-                          <li className="text-slate-400">
-                            ... y {result.details.errors.length - 10} errores más
-                          </li>
+              {/* Resultado de la importación (si existe) */}
+              {result && (
+                <div className={`mx-3 mb-3 p-4 rounded-lg border ${
+                  result.success
+                    ? 'bg-green-900/20 border-green-700 text-green-300'
+                    : 'bg-red-900/20 border-red-700 text-red-300'
+                }`}>
+                  <div className="flex items-start gap-3">
+                    {result.success ? (
+                      <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <XCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                    )}
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-semibold">{result.message}</p>
+                        {result.success && (
+                          <button
+                            onClick={handleReload}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white rounded text-sm font-medium transition-colors"
+                          >
+                            <RefreshCw className="h-3.5 w-3.5" />
+                            Recargar Página
+                          </button>
                         )}
-                      </ul>
-                    </details>
-                  )}
+                      </div>
+
+                      {/* Detalles adicionales */}
+                      {result.details && (
+                        <div className="mt-2 space-y-1 text-sm">
+                          <p>✅ Exitosos: {result.details.success}</p>
+                          <p>❌ Fallidos: {result.details.failed}</p>
+                          {result.details.created > 0 && (
+                            <p>🆕 Jugadores nuevos creados: {result.details.created}</p>
+                          )}
+                          {result.details.updated > 0 && (
+                            <p>🔄 Jugadores actualizados: {result.details.updated}</p>
+                          )}
+
+                          {result.details.createdPlayers && result.details.createdPlayers.length > 0 && (
+                            <details className="mt-2">
+                              <summary className="cursor-pointer hover:underline text-green-400">
+                                Ver jugadores creados ({result.details.createdPlayers.length})
+                              </summary>
+                              <ul className="mt-2 ml-4 space-y-1 text-xs">
+                                {result.details.createdPlayers.map((player, index) => (
+                                  <li key={index} className="list-disc">
+                                    {player}
+                                  </li>
+                                ))}
+                              </ul>
+                            </details>
+                          )}
+
+                          {result.details.errors.length > 0 && (
+                            <details className="mt-2">
+                              <summary className="cursor-pointer hover:underline">
+                                Ver errores ({result.details.errors.length})
+                              </summary>
+                              <ul className="mt-2 ml-4 space-y-1 text-xs">
+                                {result.details.errors.slice(0, 10).map((error, index) => (
+                                  <li key={index} className="list-disc">
+                                    {error}
+                                  </li>
+                                ))}
+                                {result.details.errors.length > 10 && (
+                                  <li className="text-slate-400">
+                                    ... y {result.details.errors.length - 10} errores más
+                                  </li>
+                                )}
+                              </ul>
+                            </details>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

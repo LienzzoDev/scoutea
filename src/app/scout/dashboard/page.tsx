@@ -1,13 +1,18 @@
 'use client'
 
-import ScoutNavbar from '@/components/layout/scout-navbar'
-import ScoutPlayersDashboard from '@/components/scout/scout-players-dashboard'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 export default function ScoutDashboard() {
+  const router = useRouter()
+
+  useEffect(() => {
+    router.replace('/scout/portfolio')
+  }, [router])
+
   return (
-    <div className="min-h-screen bg-[#f8f7f4]">
-      <ScoutNavbar />
-      <ScoutPlayersDashboard />
+    <div className="min-h-screen bg-[#f8f7f4] flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8c1a10]"></div>
     </div>
   )
 }

@@ -11,7 +11,6 @@ import type { Player } from "@/types/player";
 interface AdminPlayerTableProps {
   players: Player[];
   selectedColumns: string[];
-  loading?: boolean;
 }
 
 type SortField = keyof Player | null;
@@ -56,6 +55,74 @@ const NON_EDITABLE_FIELDS = new Set([
   'total_fmi_pts_norm', // Procede de BD Attributes
   'createdAt',
   'updatedAt'
+]);
+
+// Campos CALCULADOS automáticamente mediante fórmulas
+const CALCULATED_FIELDS = new Set([
+  // Age calculations (age-calculation-service.ts)
+  'age_value',           // Promedio de player_trfm_value para edad <= player.age
+  'age_value_percent',   // (100 × player_trfm_value / age_value) - 100
+  'age_coeff',           // age <= 22 ? 1 : 2
+  
+  // Nationality calculations (nationality-calculation-service.ts)
+  'nationality_value',         // Promedio de player_trfm_value para misma nacionalidad
+  'nationality_value_percent', // (100 × player_trfm_value / nationality_value) - 100
+  
+  // Position calculations
+  'position_value',         // Promedio de player_trfm_value para misma posición
+  'position_value_percent', // (100 × player_trfm_value / position_value) - 100
+  
+  // Team calculations
+  'team_level_value',         // Valor basado en team_level
+  'team_level_value_percent', // Porcentaje basado en team_level
+  
+  // Competition calculations
+  'team_competition_value',         // Valor basado en competición
+  'team_competition_value_percent', // Porcentaje basado en competición
+  'competition_level_value',         // Valor basado en nivel de competición
+  'competition_level_value_percent', // Porcentaje basado en nivel de competición
+  
+  // Owner club calculations
+  'owner_club_value',         // Valor basado en club propietario
+  'owner_club_value_percent', // Porcentaje basado en club propietario
+  
+  // Normalizations (from stats import)
+  'player_trfm_value_norm', // Normalización de player_trfm_value
+  'player_rating_norm',     // Normalización de player_rating
+  'total_fmi_pts_norm',     // Normalización de total_fmi_pts (from attributes)
+  
+  // Stats evolution (from player_stats_3m/6m/1y/2y)
+  'stats_evo_3m', // Evolución de estadísticas 3 meses
+  
+  // Rankings
+  'player_ranking', // Ranking global del jugador
+]);
+
+// Campos obtenidos mediante SCRAPING de Transfermarkt
+const SCRAPED_FIELDS = new Set([
+  // URLs
+  'url_trfm_advisor',    // URL del agente en Transfermarkt
+  
+  // Datos personales
+  'date_of_birth',       // Fecha de nacimiento
+  'height',              // Altura en cm
+  'foot',                // Pie dominante (izquierdo/derecho/ambos)
+  'nationality_1',       // Nacionalidad principal
+  'nationality_2',       // Nacionalidad secundaria
+  'national_tier',       // Nivel de selección nacional
+  
+  // Datos profesionales
+  'team_name',           // Nombre del equipo actual
+  'team_loan_from',      // Equipo del que está cedido (si aplica)
+  'position_player',     // Posición del jugador
+  'agency',              // Agencia del jugador
+  'contract_end',        // Fecha de fin de contrato
+  
+  // Valor de mercado
+  'player_trfm_value',   // Valor de mercado en €
+  
+  // Imagen
+  'photo_coverage',      // URL de la foto de perfil
 ]);
 
 // Definición de todas las columnas (sin player_name que será columna fija)
@@ -139,7 +206,7 @@ const COLUMN_DEFINITIONS = [
   { key: 'existing_club', label: 'Existing Club', width: '140px' },
 ] as const;
 
-const AdminPlayerTable = memo(function AdminPlayerTable({ players, selectedColumns, loading = false }: AdminPlayerTableProps) {
+const AdminPlayerTable = memo(function AdminPlayerTable({ players, selectedColumns }: AdminPlayerTableProps) {
   const router = useRouter();
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
@@ -251,7 +318,7 @@ const AdminPlayerTable = memo(function AdminPlayerTable({ players, selectedColum
       return value.toLocaleString('es-ES');
     }
 
-    return String(value);
+    return value !== undefined ? String(value) : '';
   };
 
   // Render sort icon
@@ -263,14 +330,6 @@ const AdminPlayerTable = memo(function AdminPlayerTable({ players, selectedColum
       ? <ArrowUp className="w-3 h-3 text-[#FF5733]" />
       : <ArrowDown className="w-3 h-3 text-[#FF5733]" />;
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF5733]"></div>
-      </div>
-    );
-  }
 
   if (players.length === 0) {
     return (
@@ -303,23 +362,41 @@ const AdminPlayerTable = memo(function AdminPlayerTable({ players, selectedColum
               </th>
 
               {/* Scrollable Data Columns */}
-              {visibleColumns.map((col) => (
-                <th
-                  key={col.key}
-                  className="p-4 text-left border-r border-slate-700 cursor-pointer hover:bg-slate-700/50 transition-colors"
-                  style={{ minWidth: col.width }}
-                  onClick={() => handleSort(col.key as keyof Player)}
-                >
-                  <div className="flex items-center gap-2 whitespace-nowrap">
-                    <span className={`font-semibold text-sm ${
-                      sortField === col.key ? 'text-[#FF5733]' : 'text-slate-300'
-                    }`}>
-                      {col.label}
-                    </span>
-                    {renderSortIcon(col.key as keyof Player)}
-                  </div>
-                </th>
-              ))}
+              {visibleColumns.map((col) => {
+                const isCalculated = CALCULATED_FIELDS.has(col.key);
+                const isScraped = SCRAPED_FIELDS.has(col.key);
+                return (
+                  <th
+                    key={col.key}
+                    className="p-4 text-left border-r border-slate-700 cursor-pointer hover:bg-slate-700/50 transition-colors relative"
+                    style={{ minWidth: col.width }}
+                    onClick={() => handleSort(col.key as keyof Player)}
+                  >
+                    {/* Indicador de campo calculado - esquina superior derecha */}
+                    {isCalculated && (
+                      <div 
+                        className="absolute top-1 right-1 w-2 h-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-sm shadow-sm"
+                        title="Campo calculado automáticamente mediante fórmula"
+                      />
+                    )}
+                    {/* Indicador de campo scrapeado - esquina superior izquierda */}
+                    {isScraped && (
+                      <div 
+                        className="absolute top-1 left-1 w-2 h-2 bg-gradient-to-br from-purple-400 to-violet-500 rounded-sm shadow-sm"
+                        title="Campo obtenido mediante scraping de Transfermarkt"
+                      />
+                    )}
+                    <div className="flex items-center gap-2 whitespace-nowrap">
+                      <span className={`font-semibold text-sm ${
+                        sortField === col.key ? 'text-[#FF5733]' : 'text-slate-300'
+                      }`}>
+                        {col.label}
+                      </span>
+                      {renderSortIcon(col.key as keyof Player)}
+                    </div>
+                  </th>
+                );
+              })}
 
               {/* Actions - Fixed Right Column */}
               <th className="p-4 text-center border-l border-slate-700 sticky right-0 bg-[#1a2332] z-20 min-w-[150px]">
@@ -419,8 +496,48 @@ const AdminPlayerTable = memo(function AdminPlayerTable({ players, selectedColum
           </tbody>
         </table>
       </div>
+      
+      {/* Leyenda de campos automáticos */}
+      <div className="px-4 py-3 bg-[#0f1419] border-t border-slate-700">
+        <div className="flex items-center gap-6 text-xs text-slate-400">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-sm shadow-sm" />
+            <span>Campo calculado automáticamente mediante fórmula</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 bg-gradient-to-br from-purple-400 to-violet-500 rounded-sm shadow-sm" />
+            <span>Campo obtenido mediante scraping de Transfermarkt</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 })
 
-export default AdminPlayerTable
+// Comparación personalizada para memo
+const arePropsEqual = (
+  prevProps: AdminPlayerTableProps,
+  nextProps: AdminPlayerTableProps
+) => {
+  // Comparar si las columnas seleccionadas son las mismas
+  if (prevProps.selectedColumns.length !== nextProps.selectedColumns.length) {
+    return false
+  }
+  if (!prevProps.selectedColumns.every((col, i) => col === nextProps.selectedColumns[i])) {
+    return false
+  }
+
+  // Comparar si los jugadores son los mismos (por IDs)
+  if (prevProps.players.length !== nextProps.players.length) {
+    return false
+  }
+
+  // Si la longitud es la misma, verificar si son los mismos jugadores
+  // (esto evita re-renders cuando se actualiza un jugador individual)
+  const prevIds = prevProps.players.map(p => p.id_player).join(',')
+  const nextIds = nextProps.players.map(p => p.id_player).join(',')
+
+  return prevIds === nextIds
+}
+
+export default memo(AdminPlayerTable, arePropsEqual)

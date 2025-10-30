@@ -87,28 +87,113 @@ export async function GET(request: NextRequest) {
     // 🎯 DETERMINAR SI SE NECESITAN TODOS LOS CAMPOS O SOLO LOS BÁSICOS
     const fullFields = searchParams.get('full') === 'true'
 
-    // 📋 SELECT OPTIMIZADO PARA LISTA (solo 16 campos esenciales para mostrar)
+    // 📋 SELECT OPTIMIZADO PARA LISTA (solo campos esenciales para mostrar)
     const listSelect = {
       id_player: true,
+      old_id: true,
       player_name: true,
       wyscout_id_1: true,
       wyscout_id_2: true,
+      wyscout_name_1: true,
+      wyscout_name_2: true,
+      id_fmi: true,
+      complete_player_name: true,
+
+      // Información personal
+      date_of_birth: true,
+      correct_date_of_birth: true,
       age: true,
+      age_value: true,
+      age_value_percent: true,
+      age_coeff: true,
+      height: true,
+      correct_height: true,
+      foot: true,
+      correct_foot: true,
+
+      // Posición
       position_player: true,
+      correct_position_player: true,
+      position_value: true,
+      position_value_percent: true,
+
+      // Nacionalidad
       nationality_1: true,
+      correct_nationality_1: true,
+      nationality_value: true,
+      nationality_value_percent: true,
+      nationality_2: true,
+      correct_nationality_2: true,
+      national_tier: true,
+      rename_national_tier: true,
+      correct_national_tier: true,
+
+      // Equipo
+      pre_team: true,
       team_name: true,
+      correct_team_name: true,
+      team_country: true,
+      team_elo: true,
+      team_level: true,
+      team_level_value: true,
+      team_level_value_percent: true,
+
+      // Competición
       team_competition: true,
-      player_rating: true,
-      player_trfm_value: true,
-      photo_coverage: true,
-      contract_end: true,
+      competition_country: true,
+      team_competition_value: true,
+      team_competition_value_percent: true,
+      competition_tier: true,
+      competition_confederation: true,
+      competition_elo: true,
+      competition_level: true,
+      competition_level_value: true,
+      competition_level_value_percent: true,
+
+      // Club propietario y préstamo
+      owner_club: true,
+      owner_club_country: true,
+      owner_club_value: true,
+      owner_club_value_percent: true,
+      pre_team_loan_from: true,
+      team_loan_from: true,
+      correct_team_loan_from: true,
+      on_loan: true,
+      existing_club: true,
+
+      // Agencia y contrato
       agency: true,
+      correct_agency: true,
+      contract_end: true,
+      correct_contract_end: true,
+
+      // Valor de mercado y estadísticas
+      player_rating: true,
+      player_rating_norm: true,
+      player_trfm_value: true,
+      player_trfm_value_norm: true,
+      player_elo: true,
+      player_level: true,
+      player_ranking: true,
+      stats_evo_3m: true,
+      total_fmi_pts_norm: true,
+      community_potential: true,
+
+      // URLs y referencias
+      photo_coverage: true,
+      video: true,
+      url_trfm_advisor: true,
+      url_trfm: true,
+      url_secondary: true,
+      url_instagram: true,
+
+      // Timestamps
       createdAt: true,
       updatedAt: true
     }
 
     // 📊 EJECUTAR QUERY CON CURSOR-BASED PAGINATION
-    const players = await prisma.jugador.findMany({
+    const queryConfig: any = {
       where,
       take: limit + 1, // Tomar uno extra para saber si hay más
       ...(cursor ? {
@@ -117,14 +202,17 @@ export async function GET(request: NextRequest) {
         },
         skip: 1 // Saltar el cursor actual
       } : {}),
-      orderBy: [
-        { player_rating: 'desc' },
-        { id_player: 'asc' }
-      ],
-      // Usar select optimizado por defecto (16 campos vs 80 campos)
-      // Para obtener todos los campos, usar ?full=true
-      select: fullFields ? undefined : listSelect
-    })
+      orderBy: {
+        id_player: 'asc'
+      }
+    }
+
+    // Agregar select solo si no se piden todos los campos
+    if (!fullFields) {
+      queryConfig.select = listSelect
+    }
+
+    const players = await prisma.jugador.findMany(queryConfig)
 
     // 🔄 DETERMINAR SI HAY MÁS PÁGINAS
     const hasMore = players.length > limit
@@ -156,8 +244,22 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ Error fetching players:', error)
+
+    // Log más detallado del error
+    if (error instanceof Error) {
+      console.error('Error name:', error.name)
+      console.error('Error message:', error.message)
+      console.error('Error stack:', error.stack)
+    }
+
+    // Devolver error más descriptivo en desarrollo
+    const isDevelopment = process.env.NODE_ENV === 'development'
+    const errorMessage = isDevelopment && error instanceof Error
+      ? error.message
+      : 'Error interno del servidor al obtener jugadores.'
+
     return NextResponse.json(
-      { error: 'Error interno del servidor al obtener jugadores.' },
+      { error: errorMessage },
       { status: 500 }
     )
   }

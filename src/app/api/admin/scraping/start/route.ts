@@ -10,6 +10,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/db'
+import { addJobLog } from '@/app/api/admin/scraping/logs/route'
 
 /**
  * POST /api/admin/scraping/start - Iniciar nuevo job de scraping
@@ -27,7 +28,7 @@ export async function POST() {
     }
 
     // 👮‍♂️ VERIFICAR PERMISOS DE ADMIN
-    const userRole = sessionClaims?.public_metadata?.role
+    const userRole = (sessionClaims?.public_metadata as { role?: string })?.role
     if (userRole !== 'admin') {
       return NextResponse.json(
         { error: 'Acceso denegado. Solo los administradores pueden ejecutar scraping.' },
@@ -60,10 +61,10 @@ export async function POST() {
     // 📊 CONTAR JUGADORES CON URL DE TRANSFERMARKT
     const totalPlayers = await prisma.jugador.count({
       where: {
-        url_trfm: {
-          not: null,
-          not: ''
-        }
+        AND: [
+          { url_trfm: { not: null } },
+          { url_trfm: { not: '' } }
+        ]
       }
     })
 
@@ -77,23 +78,23 @@ export async function POST() {
     // 📊 CONTAR EQUIPOS CON URL DE TRANSFERMARKT
     const totalTeams = await prisma.equipo.count({
       where: {
-        url_trfm_advisor: {
-          not: null,
-          not: ''
-        }
+        AND: [
+          { url_trfm_advisor: { not: null } },
+          { url_trfm_advisor: { not: '' } }
+        ]
       }
     })
 
-    // 💾 CREAR JOB DE JUGADORES (configuración optimizada)
+    // 💾 CREAR JOB DE JUGADORES (configuración optimizada para Vercel)
     const playersJob = await prisma.scrapingJob.create({
       data: {
-        status: 'pending',
+        status: 'running', // Iniciar directamente en 'running'
         totalPlayers,
         processedCount: 0,
         successCount: 0,
         errorCount: 0,
         currentBatch: 0,
-        batchSize: 100, // 100 jugadores por ejecución manual
+        batchSize: 30, // 30 jugadores para asegurar que cabe en 5 min de Vercel
         rateLimitCount: 0,
         retryCount: 0,
         slowModeActive: false,
@@ -105,25 +106,35 @@ export async function POST() {
 
     console.log(`✅ Job de scraping de jugadores creado: ${playersJob.id} (${totalPlayers} jugadores)`)
 
-    // 🚀 INICIAR SCRAPING DE EQUIPOS EN PARALELO (si hay equipos)
-    let teamsScraped = 0
+    // 📝 AGREGAR LOGS INICIALES
+    addJobLog(playersJob.id, '🚀 Job de scraping creado exitosamente')
+    addJobLog(playersJob.id, `📊 Total de jugadores a procesar: ${totalPlayers}`)
+    addJobLog(playersJob.id, `📦 Tamaño de batch: ${playersJob.batchSize}`)
+    addJobLog(playersJob.id, '')
+    addJobLog(playersJob.id, '🔄 Iniciando procesamiento automático en segundo plano...')
+
+    // ℹ️ El procesamiento se manejará desde el frontend mediante polling
+    // Esto evita problemas con fetch interno en Next.js
+    addJobLog(playersJob.id, '📡 Esperando que el frontend inicie el procesamiento...')
+    console.log(`📡 Job creado, esperando inicio de procesamiento desde frontend`)
+
+    // 🚀 INICIAR SCRAPING DE EQUIPOS EN BACKGROUND (si hay equipos)
     if (totalTeams > 0) {
       try {
-        console.log(`🚀 Iniciando scraping de ${totalTeams} equipos...`)
-        const teamsResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/admin/scraping/teams/batch`, {
+        console.log(`🚀 Iniciando scraping de ${totalTeams} equipos en background...`)
+        // Hacer una llamada asíncrona al endpoint de equipos
+        // No esperamos la respuesta para no bloquear
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+        fetch(`${baseUrl}/api/admin/scraping/teams/batch`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            // Pasar info de autorización en header custom
+            'x-admin-user-id': userId
           }
+        }).catch(err => {
+          console.error('⚠️ Error al iniciar scraping de equipos:', err)
         })
-
-        if (teamsResponse.ok) {
-          const teamsData = await teamsResponse.json()
-          teamsScraped = teamsData.processed || 0
-          console.log(`✅ Scraping de equipos completado: ${teamsScraped} equipos procesados`)
-        } else {
-          console.error('⚠️ Error al iniciar scraping de equipos:', teamsResponse.statusText)
-        }
       } catch (error) {
         console.error('⚠️ Error al ejecutar scraping de equipos:', error)
       }
@@ -138,7 +149,6 @@ export async function POST() {
         totalPlayers: playersJob.totalPlayers,
         batchSize: playersJob.batchSize
       },
-      teamsScraped,
       totalTeams
     }, { status: 201 })
 

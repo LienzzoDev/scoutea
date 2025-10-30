@@ -1,5 +1,8 @@
 "use client";
 
+import type { StatsPeriod } from "@/lib/utils/stats-period-utils";
+import { getAllPeriods, getPeriodLabel } from "@/lib/utils/stats-period-utils";
+
 import PlayerBeeswarm from "./PlayerBeeswarm";
 import PlayerLollipop from "./PlayerLollipop";
 import PlayerRadar from "./PlayerRadar";
@@ -8,6 +11,9 @@ interface PlayerStatsProps {
   playerId: string;
   activeStatsTab: string;
   onStatsTabChange: (tab: string) =>void;
+  selectedPeriod: StatsPeriod;
+  onPeriodChange: (period: StatsPeriod) => void;
+  statsLoading: boolean;
   getStatValue: (
     metricName: string,
     field: "totalValue" | "p90Value" | "averageValue" | "maximumValue"
@@ -18,8 +24,13 @@ export default function PlayerStats({
   playerId,
   activeStatsTab,
   onStatsTabChange,
+  selectedPeriod,
+  onPeriodChange,
+  statsLoading,
   getStatValue,
 }: PlayerStatsProps) {
+  const periods = getAllPeriods();
+
   return (
     <div className="bg-white p-6">
       {/* Stats Tabs */}
@@ -65,10 +76,41 @@ export default function PlayerStats({
           Lollipop
         </button>
       </div>
-      
+
+
       {/* Stats Content */}
       {activeStatsTab === "period" && (
-        <div className="bg-white p-6">
+        <div className="bg-white">
+          {/* Period Tabs */}
+          <div className="flex gap-4 border-b border-[#e7e7e7] mb-6">
+            {periods.map((period) => (
+              <button
+                key={period}
+                className={`pb-2 px-3 font-medium transition-colors ${
+                  selectedPeriod === period
+                    ? "border-b-2 border-[#8c1a10] text-[#8c1a10]"
+                    : "text-[#6d6d6d] hover:text-[#8c1a10]"
+                }`}
+                onClick={() => onPeriodChange(period)}
+              >
+                {getPeriodLabel(period)}
+              </button>
+            ))}
+          </div>
+
+          {/* Loading State */}
+          {statsLoading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="w-8 h-8 border-4 border-[#8c1a10] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-[#6d6d6d]">Cargando estadísticas...</p>
+              </div>
+            </div>
+          )}
+
+          {/* Stats Table */}
+          {!statsLoading && (
+            <div className="p-6">
           {/* Column Headers */}
           <div className="grid grid-cols-5 gap-4 py-3 border-b border-gray-200 mb-6">
             <span className="font-medium text-[#2e3138]">Metric</span>
@@ -429,7 +471,10 @@ export default function PlayerStats({
               </div>
             </div>
           </div>
-        </div>)}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Radar Content */}
       {activeStatsTab === "radar" && <PlayerRadar playerId={playerId} />}

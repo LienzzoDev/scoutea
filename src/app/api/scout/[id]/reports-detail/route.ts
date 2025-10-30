@@ -89,7 +89,8 @@ export async function GET(
         reportUrl: report.form_url_report,
         roi: report.roi,
         profit: report.profit,
-        potential: report.potential
+        potential: report.potential,
+        approval_status: report.approval_status
       }
     })
 

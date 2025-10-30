@@ -24,46 +24,35 @@ export async function GET() {
       )
     }
 
-    // Get pending players
-    let pendingPlayers = []
+    // Get pending reports with all necessary fields
     let pendingReports = []
 
-    try {
-      pendingPlayers = await prisma.jugador.findMany({
-        where: {
-          approval_status: 'pending',
-        },
-        select: {
-          id_player: true,
-          player_name: true,
-          position_player: true,
-          team_name: true,
-          nationality_1: true,
-          age: true,
-          created_by_scout_id: true,
-          createdAt: true,
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      })
-    } catch (error) {
-      console.error('Error fetching pending players:', error)
-    }
-
-    // Get pending reports
     try {
       pendingReports = await prisma.reporte.findMany({
         where: {
           approval_status: 'pending',
         },
-        include: {
+        select: {
+          id_report: true,
+          report_date: true,
+          report_type: true,
+          form_text_report: true,
+          form_url_report: true,
+          form_url_video: true,
+          url_secondary: true,
+          form_potential: true,
+          roi: true,
+          profit: true,
+          potential: true,
+          createdAt: true,
           player: {
             select: {
               id_player: true,
               player_name: true,
               position_player: true,
               team_name: true,
+              nationality_1: true,
+              age: true,
             },
           },
           scout: {
@@ -84,12 +73,10 @@ export async function GET() {
     }
 
     return NextResponse.json({
-      players: pendingPlayers,
       reports: pendingReports,
       counts: {
-        players: pendingPlayers.length,
         reports: pendingReports.length,
-        total: pendingPlayers.length + pendingReports.length,
+        total: pendingReports.length,
       },
     })
   } catch (error) {

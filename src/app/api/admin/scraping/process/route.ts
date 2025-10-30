@@ -12,6 +12,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { RateLimiter, AdaptiveThrottler } from '@/lib/scraping/rate-limiter'
 import { getRealisticHeaders, randomSleep } from '@/lib/scraping/user-agents'
+import { isDefaultTransfermarktImage } from '@/lib/utils/image-utils'
 import { addJobLog } from '@/app/api/admin/scraping/logs/route'
 
 // ⏱️ Configuración: 5 minutos máximo (Vercel límite)
@@ -27,11 +28,11 @@ interface ScrapingResult {
   retries?: number
 }
 
-// 🎛️ CONFIGURACIÓN DE SCRAPING (más conservadora)
+// 🎛️ CONFIGURACIÓN DE SCRAPING (optimizada para velocidad)
 const SCRAPING_CONFIG = {
-  MIN_DELAY_BETWEEN_PLAYERS: 5000,  // 5 segundos mínimo
-  MAX_DELAY_BETWEEN_PLAYERS: 15000, // 15 segundos máximo
-  REQUEST_TIMEOUT: 30000,             // 30 segundos timeout
+  MIN_DELAY_BETWEEN_PLAYERS: 2000,  // 2 segundos mínimo
+  MAX_DELAY_BETWEEN_PLAYERS: 5000,  // 5 segundos máximo
+  REQUEST_TIMEOUT: 30000,            // 30 segundos timeout
   MAX_RETRIES_PER_PLAYER: 3,
 }
 
@@ -675,7 +676,9 @@ function shouldUpdateHeight(
 /**
  * POST /api/admin/scraping/process - Procesar un batch del job activo
  */
-export async function POST() {
+export async function POST(request: Request) {
+  console.log('🎯 [PROCESS] Endpoint /process ejecutándose...')
+
   const rateLimiter = new RateLimiter({
     maxRetriesPerRequest: SCRAPING_CONFIG.MAX_RETRIES_PER_PLAYER,
     baseRetryDelay: 5000,
@@ -689,23 +692,31 @@ export async function POST() {
   )
 
   try {
-    // 🔐 VERIFICAR AUTENTICACIÓN Y PERMISOS
-    const { userId, sessionClaims } = await auth()
+    // 🔐 VERIFICAR SI ES UNA LLAMADA INTERNA DEL AUTO-PROCESAMIENTO
+    const isAutoProcess = request.headers.get('X-Auto-Process') === 'true'
+    console.log(`🔐 [PROCESS] isAutoProcess: ${isAutoProcess}`)
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'No autorizado. Debes iniciar sesión.' },
-        { status: 401 }
-      )
-    }
+    if (!isAutoProcess) {
+      // Solo verificar autenticación si NO es una llamada del auto-procesamiento
+      const { userId, sessionClaims } = await auth()
 
-    // 👮‍♂️ VERIFICAR PERMISOS DE ADMIN
-    const userRole = sessionClaims?.public_metadata?.role
-    if (userRole !== 'admin') {
-      return NextResponse.json(
-        { error: 'Acceso denegado. Solo los administradores pueden ejecutar scraping.' },
-        { status: 403 }
-      )
+      if (!userId) {
+        return NextResponse.json(
+          { error: 'No autorizado. Debes iniciar sesión.' },
+          { status: 401 }
+        )
+      }
+
+      // 👮‍♂️ VERIFICAR PERMISOS DE ADMIN
+      const userRole = sessionClaims?.public_metadata?.role
+      if (userRole !== 'admin') {
+        return NextResponse.json(
+          { error: 'Acceso denegado. Solo los administradores pueden ejecutar scraping.' },
+          { status: 403 }
+        )
+      }
+    } else {
+      console.log('🔄 [PROCESS] Llamada desde auto-procesamiento, saltando autenticación')
     }
 
     // 🔍 OBTENER JOB ACTIVO
@@ -804,7 +815,9 @@ export async function POST() {
     }
 
     console.log(`\n📦 Procesando batch ${job.currentBatch + 1}: ${playersToProcess.length} jugadores`)
+    addJobLog(job.id, '')
     addJobLog(job.id, `📦 Procesando batch ${job.currentBatch + 1}: ${playersToProcess.length} jugadores`)
+    addJobLog(job.id, '')
 
     const results: ScrapingResult[] = []
     let batchSuccessCount = 0
@@ -818,8 +831,10 @@ export async function POST() {
 
       console.log(`[${i + 1}/${playersToProcess.length}] ${player.player_name || player.id_player}`)
       addJobLog(job.id, `🔍 [${i + 1}/${playersToProcess.length}] Scrapeando: ${player.player_name || player.id_player}`)
+      addJobLog(job.id, `   🌐 URL: ${player.url_trfm}`)
 
       // 🌐 HACER SCRAPING CON RETRY LOGIC Y RATE LIMITING
+      console.log(`  🌐 Iniciando petición HTTP a: ${player.url_trfm}`)
       const result = await rateLimiter.executeWithRetry(
         async () => {
           return await scrapePlayerData(player.url_trfm!)
@@ -997,7 +1012,26 @@ export async function POST() {
         batchSuccessCount++
         batchRetryCount += result.retries
         console.log(`  ✅ Actualizado: ${fieldsUpdated.length} campos (${result.retries} reintentos)`)
-        addJobLog(job.id, `  ✅ ${player.player_name}: ${fieldsUpdated.length} campos actualizados (${result.retries} reintentos)`)
+        addJobLog(job.id, `  ✅ ${player.player_name}: ${fieldsUpdated.length} campos actualizados`)
+
+        // Mostrar algunos campos actualizados (máximo 3)
+        if (fieldsUpdated.length > 0 && fieldsUpdated.length <= 5) {
+          // Si son pocos campos, mostrar todos
+          for (const field of fieldsUpdated) {
+            const oldValue = (player as any)[field]
+            const newValue = scrapedData[field]
+            addJobLog(job.id, `     • ${field}: "${oldValue || 'null'}" → "${newValue || 'null'}"`)
+          }
+        } else if (fieldsUpdated.length > 5) {
+          // Si son muchos, mostrar solo los 3 primeros
+          for (let idx = 0; idx < 3; idx++) {
+            const field = fieldsUpdated[idx]
+            const oldValue = (player as any)[field]
+            const newValue = scrapedData[field]
+            addJobLog(job.id, `     • ${field}: "${oldValue || 'null'}" → "${newValue || 'null'}"`)
+          }
+          addJobLog(job.id, `     ... y ${fieldsUpdated.length - 3} campos más`)
+        }
 
       } else {
         // ❌ ERROR - Registrar fallo
@@ -1032,7 +1066,7 @@ export async function POST() {
         const delayMs = Math.floor(Math.random() * (delays.max - delays.min + 1)) + delays.min
 
         console.log(`  ⏳ Pausa: ${delayMs / 1000}s (multiplier: ${throttler.getMultiplier().toFixed(2)}x)`)
-        addJobLog(job.id, `  ⏳ Pausa: ${delayMs / 1000}s (multiplier: ${throttler.getMultiplier().toFixed(2)}x)`)
+        addJobLog(job.id, `  ⏸️  Pausa de ${(delayMs / 1000).toFixed(1)}s antes del siguiente jugador...`)
         await randomSleep(delays.min, delays.max)
       }
 
@@ -1097,9 +1131,11 @@ export async function POST() {
     console.log(`   - Speed Multiplier: ${throttler.getMultiplier().toFixed(2)}x`)
     console.log(`📊 Progreso total: ${updatedJob.processedCount}/${updatedJob.totalPlayers}`)
 
+    addJobLog(job.id, '')
     addJobLog(job.id, `✅ Batch ${updatedJob.currentBatch} completado`)
     addJobLog(job.id, `   - Exitosos: ${batchSuccessCount}, Errores: ${batchErrorCount}`)
     addJobLog(job.id, `📊 Progreso total: ${updatedJob.processedCount}/${updatedJob.totalPlayers} (${updatedJob.progress}%)`)
+    addJobLog(job.id, '')
 
     const isCompleted = updatedJob.processedCount >= updatedJob.totalPlayers
 
@@ -1111,9 +1147,12 @@ export async function POST() {
           completedAt: new Date()
         }
       })
-      addJobLog(job.id, `🎉 Scraping completado!`)
-      addJobLog(job.id, `✅ Total exitosos: ${updatedJob.successCount}`)
-      addJobLog(job.id, `❌ Total errores: ${updatedJob.errorCount}`)
+      addJobLog(job.id, '')
+      addJobLog(job.id, `🎉 ¡Scraping completado exitosamente!`)
+      addJobLog(job.id, `📊 Total de jugadores procesados: ${updatedJob.processedCount}`)
+      addJobLog(job.id, `✅ Exitosos: ${updatedJob.successCount}`)
+      addJobLog(job.id, `❌ Errores: ${updatedJob.errorCount}`)
+      addJobLog(job.id, `📈 Tasa de éxito: ${((updatedJob.successCount / updatedJob.processedCount) * 100).toFixed(1)}%`)
     }
 
     return NextResponse.json({
@@ -1143,7 +1182,12 @@ export async function POST() {
     }, { status: 200 })
 
   } catch (error) {
-    console.error('❌ Error in scraping process:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
+    const errorStack = error instanceof Error ? error.stack : 'N/A'
+
+    console.error('❌ [PROCESS] Error in scraping process:', error)
+    console.error('❌ [PROCESS] Error message:', errorMessage)
+    console.error('❌ [PROCESS] Error stack:', errorStack)
 
     // Intentar marcar el job como failed
     try {
@@ -1156,20 +1200,23 @@ export async function POST() {
       })
 
       if (failedJob) {
+        console.error(`❌ [PROCESS] Marcando job ${failedJob.id} como failed con error: ${errorMessage}`)
         await prisma.scrapingJob.update({
           where: { id: failedJob.id },
           data: {
             status: 'failed',
-            lastError: error instanceof Error ? error.message : 'Error desconocido'
+            lastError: errorMessage
           }
         })
+      } else {
+        console.error('❌ [PROCESS] No se encontró job activo para marcar como failed')
       }
     } catch (updateError) {
-      console.error('Error updating job status:', updateError)
+      console.error('❌ [PROCESS] Error updating job status:', updateError)
     }
 
     return NextResponse.json(
-      { error: 'Error interno del servidor durante el scraping.' },
+      { error: `Error interno del servidor durante el scraping: ${errorMessage}` },
       { status: 500 }
     )
   }
@@ -1178,7 +1225,7 @@ export async function POST() {
 /**
  * 🕷️ FUNCIÓN DE SCRAPING DE UN JUGADOR (MEJORADA)
  *
- * Esta función extrae los 15 campos de Transfermarkt con headers realistas
+ * Esta función extrae los 16 campos de Transfermarkt con headers realistas
  */
 async function scrapePlayerData(url: string): Promise<Record<string, any>> {
   // 🌐 HACER REQUEST CON HEADERS REALISTAS Y ROTACIÓN DE USER-AGENT
@@ -1326,17 +1373,78 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
     // Patrón: <img ... data-src="..." alt="[Nombre del jugador]" class="...profil..."
     const profileImageMatch = html.match(/<img[^>]+data-src="([^"]+)"[^>]+class="[^"]*data-header__profile-image[^"]*"[^>]*>/)
     if (profileImageMatch) {
-      data.photo_coverage = profileImageMatch[1].trim()
+      const photoUrl = profileImageMatch[1].trim()
+      // Solo guardar si NO es una imagen por defecto
+      if (!isDefaultTransfermarktImage(photoUrl)) {
+        data.photo_coverage = photoUrl
+      }
     } else {
       // Patrón alternativo: buscar src en lugar de data-src
       const profileImageAltMatch = html.match(/<img[^>]+class="[^"]*data-header__profile-image[^"]*"[^>]+src="([^"]+)"[^>]*>/)
       if (profileImageAltMatch) {
-        data.photo_coverage = profileImageAltMatch[1].trim()
+        const photoUrl = profileImageAltMatch[1].trim()
+        if (!isDefaultTransfermarktImage(photoUrl)) {
+          data.photo_coverage = photoUrl
+        }
       } else {
         // Tercer patrón: buscar por estructura del div contenedor
         const profileImageDivMatch = html.match(/<div class="data-header__profile-container"[^>]*>[\s\S]*?<img[^>]+src="([^"]+)"[^>]*>/)
         if (profileImageDivMatch) {
-          data.photo_coverage = profileImageDivMatch[1].trim()
+          const photoUrl = profileImageDivMatch[1].trim()
+          if (!isDefaultTransfermarktImage(photoUrl)) {
+            data.photo_coverage = photoUrl
+          }
+        }
+      }
+    }
+
+    // 16. Foto de galería (gallery_photo)
+    // Buscar foto de cuerpo completo del jugador para sidebar grande
+    // ESTRATEGIA: Intentar obtener versión "big" o "medium" de la foto
+
+    // Si ya tenemos photo_coverage, intentar convertir header → big
+    if (data.photo_coverage && data.photo_coverage.includes('/portrait/header/')) {
+      // Transformar URL: /portrait/header/123-456.jpg → /portrait/big/123-456.jpg
+      const galleryUrl = data.photo_coverage.replace('/portrait/header/', '/portrait/big/')
+      if (!isDefaultTransfermarktImage(galleryUrl)) {
+        data.gallery_photo = galleryUrl
+      }
+    } else {
+      // Patrón 1: Buscar directamente URLs con /portrait/big/ o /portrait/medium/
+      const bigPortraitMatch = html.match(/https?:\/\/[^"'\s]+\/portrait\/(big|medium)\/[^"'\s]+\.(jpg|jpeg|png)/i)
+      if (bigPortraitMatch) {
+        const galleryUrl = bigPortraitMatch[0].trim()
+        if (!isDefaultTransfermarktImage(galleryUrl)) {
+          data.gallery_photo = galleryUrl
+        }
+      } else {
+        // Patrón 2: Buscar en la galería de fotos del jugador
+        const galleryMatch = html.match(/<div[^>]+class="[^"]*gallery[^"]*"[^>]*>[\s\S]*?<img[^>]+data-src="([^"]+)"[^>]*>/)
+        if (galleryMatch) {
+          const galleryUrl = galleryMatch[1].trim()
+          if (!isDefaultTransfermarktImage(galleryUrl)) {
+            data.gallery_photo = galleryUrl
+          }
+        } else {
+          // Patrón 3: Buscar enlaces a fotos grandes
+          const galleryLinkMatch = html.match(/<a[^>]+class="[^"]*photo[^"]*"[^>]*href="([^"]+\.(jpg|jpeg|png)[^"]*)"[^>]*>/)
+          if (galleryLinkMatch) {
+            const galleryUrl = galleryLinkMatch[1].trim()
+            if (!isDefaultTransfermarktImage(galleryUrl)) {
+              data.gallery_photo = galleryUrl
+            }
+          } else {
+            // Patrón 4: Buscar cualquier imagen grande que no sea el header
+            const largeImageMatches = html.matchAll(/<img[^>]+src="([^"]+portrait[^"]+)"[^>]+(?:width="[3-9]\d\d|height="[3-9]\d\d)[^>]*>/g)
+            for (const match of largeImageMatches) {
+              const imageUrl = match[1].trim()
+              // Solo si NO es header, NO es la misma que photo_coverage, y NO es default
+              if (!imageUrl.includes('header') && imageUrl !== data.photo_coverage && !isDefaultTransfermarktImage(imageUrl)) {
+                data.gallery_photo = imageUrl
+                break
+              }
+            }
+          }
         }
       }
     }

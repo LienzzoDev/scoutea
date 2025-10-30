@@ -1,10 +1,12 @@
 "use client";
 
 import { Bookmark, BookmarkCheck } from "lucide-react";
+import Image from "next/image";
 import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useBreadcrumbNavigation } from "@/hooks/useBreadcrumbNavigation";
+import { getValidImageUrl } from "@/lib/utils/image-utils";
 import type { Player } from "@/types/player";
 
 interface PlayerHeaderProps {
@@ -31,6 +33,9 @@ export default function PlayerHeader({
       console.log('PlayerHeader: player_name:', player?.player_name);
     }
   }, [player]);
+
+  // Validar que la foto no sea una imagen por defecto de Transfermarkt
+  const validProfilePhoto = getValidImageUrl(player.photo_coverage);
 
   return (
     <>
@@ -59,8 +64,31 @@ export default function PlayerHeader({
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-[#2e3138]">{player.player_name || "Player Name"}
-        </h1>
+        <div className="flex items-center gap-4">
+          {/* Profile Photo */}
+          {validProfilePhoto ? (
+            <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200 shadow-sm">
+              <Image
+                src={validProfilePhoto}
+                alt={player.player_name || "Player"}
+                fill
+                className="object-cover"
+                sizes="80px"
+                priority
+              />
+            </div>
+          ) : (
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center border-2 border-gray-200 shadow-sm">
+              <span className="text-2xl font-bold text-gray-500">
+                {player.player_name?.charAt(0).toUpperCase() || "?"}
+              </span>
+            </div>
+          )}
+
+          <h1 className="text-3xl font-bold text-[#2e3138]">{player.player_name || "Player Name"}
+          </h1>
+        </div>
+
         <Button
           onClick={onToggleList}
           disabled={isSaving || listLoading}

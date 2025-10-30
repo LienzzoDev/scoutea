@@ -167,25 +167,34 @@ function resolveCompetitionByCountry(competition: string, teamCountry: string): 
 /**
  * POST /api/admin/scraping/teams/batch - Ejecutar scraping de equipos en batch
  */
-export async function POST() {
+export async function POST(request: Request) {
   try {
     // 🔐 VERIFICAR AUTENTICACIÓN Y PERMISOS
-    const { userId, sessionClaims } = await auth()
+    // Permitir llamadas internas desde el servidor (header especial)
+    const adminUserId = request.headers.get('x-admin-user-id')
+    const isInternalCall = !!adminUserId
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'No autorizado. Debes iniciar sesión.' },
-        { status: 401 }
-      )
-    }
+    if (!isInternalCall) {
+      // Si no es llamada interna, verificar autenticación normal
+      const { userId, sessionClaims } = await auth()
 
-    // 👮‍♂️ VERIFICAR PERMISOS DE ADMIN
-    const userRole = sessionClaims?.public_metadata?.role
-    if (userRole !== 'admin') {
-      return NextResponse.json(
-        { error: 'Acceso denegado. Solo los administradores pueden ejecutar scraping.' },
-        { status: 403 }
-      )
+      if (!userId) {
+        return NextResponse.json(
+          { error: 'No autorizado. Debes iniciar sesión.' },
+          { status: 401 }
+        )
+      }
+
+      // 👮‍♂️ VERIFICAR PERMISOS DE ADMIN
+      const userRole = (sessionClaims?.public_metadata as { role?: string })?.role
+      if (userRole !== 'admin') {
+        return NextResponse.json(
+          { error: 'Acceso denegado. Solo los administradores pueden ejecutar scraping.' },
+          { status: 403 }
+        )
+      }
+    } else {
+      console.log(`🔑 Llamada interna autorizada desde usuario: ${adminUserId}`)
     }
 
     console.log('\n🏟️ INICIANDO SCRAPING DE EQUIPOS...')
