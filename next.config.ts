@@ -2,6 +2,26 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
+  // Redirects for deprecated Scout pages (now consolidated in /scout/portfolio)
+  async redirects() {
+    return [
+      {
+        source: '/scout/dashboard',
+        destination: '/scout/portfolio',
+        permanent: true,
+      },
+      {
+        source: '/scout/reports',
+        destination: '/scout/portfolio',
+        permanent: true,
+      },
+      {
+        source: '/scout/players',
+        destination: '/scout/portfolio',
+        permanent: true,
+      },
+    ]
+  },
   // Security headers configuration - disabled in development to avoid Server Actions issues
   async headers() {
     const isDevelopment = process.env.NODE_ENV === 'development'

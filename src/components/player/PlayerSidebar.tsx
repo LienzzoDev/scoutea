@@ -54,11 +54,12 @@ export default function PlayerSidebar({ player }: PlayerSidebarProps) {
         )}
         
         {/* Team badge overlay - Top */}
-        <div className="absolute top-4 left-4 flex items-center gap-3 bg-black/80 text-white px-3 py-2 rounded-full">
-          <span className="text-lg">⚽</span>
-          <span className="text-sm font-medium">{player.team_name || "FC Barcelona"}
-          </span>
-        </div>
+        {player.team_name && (
+          <div className="absolute top-4 left-4 flex items-center gap-3 bg-black/80 text-white px-3 py-2 rounded-full">
+            <span className="text-lg">⚽</span>
+            <span className="text-sm font-medium">{player.team_name}</span>
+          </div>
+        )}
         
         {/* Player name and nationality overlay - Bottom */}
         <div className="absolute bottom-4 left-4 flex items-center gap-3 bg-black/80 text-white px-3 py-2 rounded-full">
@@ -169,16 +170,50 @@ export default function PlayerSidebar({ player }: PlayerSidebarProps) {
         </Button>
       )}
 
-      {/* Rating */}
-      <div className="flex flex-col items-center">
-        <p className="text-2xl font-bold text-[#8c1a10] mb-2">
-          9.000.000 €
-        </p>
-        <p className="text-sm text-[#6d6d6d]">Rank</p>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-[#3cc500] rounded-full"></div>
-          <span className="text-sm font-medium">A (7,75) | Rank 495</span>
-        </div>
+      {/* Rating & Market Value */}
+      <div className="flex flex-col items-center space-y-3">
+        {/* Market Value */}
+        {player.player_trfm_value && (
+          <div className="text-center">
+            <p className="text-2xl font-bold text-[#8c1a10]">
+              {typeof player.player_trfm_value === 'number'
+                ? `€${player.player_trfm_value.toFixed(2)}M`
+                : player.player_trfm_value}
+            </p>
+            <p className="text-xs text-[#6d6d6d]">Market Value</p>
+          </div>
+        )}
+
+        {/* Player Rating & Ranking */}
+        {(player.player_rating || player.player_ranking) && (
+          <div className="text-center">
+            <p className="text-sm text-[#6d6d6d] mb-1">Player Rank</p>
+            <div className="flex items-center gap-2">
+              {player.player_rating && player.player_rating >= 70 && (
+                <div className={`w-2 h-2 rounded-full ${
+                  player.player_rating >= 90 ? 'bg-[#3cc500]' :
+                  player.player_rating >= 80 ? 'bg-blue-500' :
+                  player.player_rating >= 70 ? 'bg-yellow-500' :
+                  'bg-gray-500'
+                }`}></div>
+              )}
+              <span className="text-sm font-medium">
+                {player.player_rating && (
+                  <>
+                    {player.player_rating >= 90 ? 'A' :
+                     player.player_rating >= 80 ? 'B' :
+                     player.player_rating >= 70 ? 'C' :
+                     player.player_rating >= 60 ? 'D' : 'E'
+                    } ({(player.player_rating / 10).toFixed(2)})
+                  </>
+                )}
+                {player.player_ranking && (
+                  <> | Rank {player.player_ranking}</>
+                )}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

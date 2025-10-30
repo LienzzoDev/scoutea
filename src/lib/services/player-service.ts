@@ -94,11 +94,13 @@ export class PlayerService {
       previous_trfm_value_date: player.previous_trfm_value_date,
       trfm_value_change_percent: player.trfm_value_change_percent,
       trfm_value_last_updated: player.trfm_value_last_updated,
-      facebook_profile: player.url_instagram,
-      twitter_profile: player.url_secondary,
+      // Social media profiles - TODO: Add proper fields to Jugador schema
+      // Currently these fields don't exist in schema, so mapping to null
+      facebook_profile: null,
+      twitter_profile: null,
       linkedin_profile: null,
       telegram_profile: null,
-      instagram_profile: player.url_instagram,
+      instagram_profile: player.url_instagram, // This exists
       createdAt: player.createdAt,
       updatedAt: player.updatedAt
     };
@@ -139,8 +141,8 @@ export class PlayerService {
       return players.map(this.mapPrismaToPlayer);
     } catch (error) {
       console.error('Error fetching players:', error);
-      // Fallback to mock data if database is not available
-      return this.getMockPlayers();
+      // Return empty array on database error
+      return [];
     }
   }
 
@@ -160,76 +162,11 @@ export class PlayerService {
       return this.mapPrismaToPlayer(player);
     } catch (error) {
       console.error('Error fetching player by ID:', error);
-      // Fallback to mock data if database is not available
-      const mockPlayers = this.getMockPlayers();
-      return mockPlayers.find(p => p.id === id || p.id_player === id) || null;
+      // Return null on database error
+      return null;
     }
   }
 
-  private static getMockPlayers(): Player[] {
-    return [
-      {
-        id: '1',
-        id_player: '1',
-        player_name: 'Lionel Messi',
-        position_player: 'Delantero',
-        team_name: 'Inter Miami',
-        age: 36,
-        nationality_1: 'Argentina',
-        player_rating: 95,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '2',
-        id_player: '2',
-        player_name: 'Cristiano Ronaldo',
-        position_player: 'Delantero',
-        team_name: 'Al Nassr',
-        age: 39,
-        nationality_1: 'Portugal',
-        player_rating: 94,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '3',
-        id_player: '3',
-        player_name: 'Kylian Mbappé',
-        position_player: 'Delantero',
-        team_name: 'Real Madrid',
-        age: 25,
-        nationality_1: 'Francia',
-        player_rating: 93,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '4',
-        id_player: '4',
-        player_name: 'Erling Haaland',
-        position_player: 'Delantero',
-        team_name: 'Manchester City',
-        age: 24,
-        nationality_1: 'Noruega',
-        player_rating: 92,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '5',
-        id_player: '5',
-        player_name: 'Vinicius Jr.',
-        position_player: 'Extremo',
-        team_name: 'Real Madrid',
-        age: 24,
-        nationality_1: 'Brasil',
-        player_rating: 90,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
-  }
 
   static async searchPlayers(options: {
     page?: number;
@@ -360,15 +297,14 @@ export class PlayerService {
       };
     } catch (error) {
       console.error('Error searching players:', error);
-      // Fallback to mock search
-      const mockPlayers = this.getMockPlayers();
+      // Return empty result on database error
       return {
-        players: mockPlayers,
+        players: [],
         pagination: {
-          page: 1,
-          limit: mockPlayers.length,
-          total: mockPlayers.length,
-          totalPages: 1
+          page: page || 1,
+          limit: limit || 20,
+          total: 0,
+          totalPages: 0
         }
       };
     }
