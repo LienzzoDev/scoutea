@@ -660,12 +660,13 @@ function shouldUpdateHeight(
     return { shouldUpdate: false, finalHeight: null }
   }
 
-  // Si no hay altura existente o es inválida (0 o null), actualizar
+  // Si no hay altura existente o es inválida (0 o null), actualizar con el valor scrapeado (que ya validamos arriba)
   if (!existingHeight || existingHeight === 0) {
+    // Ya sabemos que scrapedHeight es válido por el check anterior
     return { shouldUpdate: true, finalHeight: scrapedHeight }
   }
 
-  // Si son diferentes, actualizar
+  // Si la altura existente es válida, solo actualizar si el nuevo valor es diferente
   if (existingHeight !== scrapedHeight) {
     return { shouldUpdate: true, finalHeight: scrapedHeight }
   }
@@ -692,12 +693,16 @@ export async function POST(request: Request) {
   )
 
   try {
-    // 🔐 VERIFICAR SI ES UNA LLAMADA INTERNA DEL AUTO-PROCESAMIENTO
-    const isAutoProcess = request.headers.get('X-Auto-Process') === 'true'
-    console.log(`🔐 [PROCESS] isAutoProcess: ${isAutoProcess}`)
+    // 🔐 VERIFICAR AUTENTICACIÓN - MÉTODO SEGURO
+    // Verificar si es una llamada interna del backend usando API key secreta
+    const internalApiKey = request.headers.get('X-Internal-API-Key')
+    const expectedApiKey = process.env.SCRAPING_INTERNAL_API_KEY
 
-    if (!isAutoProcess) {
-      // Solo verificar autenticación si NO es una llamada del auto-procesamiento
+    const isInternalCall = internalApiKey && expectedApiKey && internalApiKey === expectedApiKey
+    console.log(`🔐 [PROCESS] isInternalCall: ${isInternalCall}`)
+
+    if (!isInternalCall) {
+      // Si no es llamada interna, verificar autenticación normal de usuario admin
       const { userId, sessionClaims } = await auth()
 
       if (!userId) {
@@ -715,8 +720,10 @@ export async function POST(request: Request) {
           { status: 403 }
         )
       }
+
+      console.log('✅ [PROCESS] Autenticación de usuario admin exitosa')
     } else {
-      console.log('🔄 [PROCESS] Llamada desde auto-procesamiento, saltando autenticación')
+      console.log('✅ [PROCESS] Autenticación de llamada interna exitosa')
     }
 
     // 🔍 OBTENER JOB ACTIVO

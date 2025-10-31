@@ -48,13 +48,51 @@ const getFieldType = (fieldName: string): 'text' | 'number' | 'boolean' | 'url' 
   return 'text';
 };
 
-// Campos NO editables (campos calculados automáticamente o de solo lectura)
+// Campos NO editables (SOLO campos calculados mediante fórmulas)
+// Estos campos se actualizan automáticamente cuando cambian sus factores
 const NON_EDITABLE_FIELDS = new Set([
+  // IDs del sistema y timestamps
   'id_player',
-  'stats_evo_3m', // Procede de BD Stats
-  'total_fmi_pts_norm', // Procede de BD Attributes
   'createdAt',
-  'updatedAt'
+  'updatedAt',
+  
+  // Age calculations (se calculan automáticamente cuando cambia age o player_trfm_value)
+  'age_value',           // = AVG(player_trfm_value WHERE age <= this.age)
+  'age_value_percent',   // = (100 × player_trfm_value / age_value) - 100
+  'age_coeff',           // = age <= 22 ? 1 : 2
+  
+  // Nationality calculations (se calculan cuando cambia nationality o player_trfm_value)
+  'nationality_value',         // = AVG(player_trfm_value WHERE nationality = this.nationality)
+  'nationality_value_percent', // = (100 × player_trfm_value / nationality_value) - 100
+  
+  // Position calculations (se calculan cuando cambia position o player_trfm_value)
+  'position_value',         // = AVG(player_trfm_value WHERE position = this.position)
+  'position_value_percent', // = (100 × player_trfm_value / position_value) - 100
+  
+  // Team calculations (se calculan cuando cambia team_level)
+  'team_level_value',         // = Calculado basado en team_level
+  'team_level_value_percent', // = Calculado basado en team_level
+  
+  // Competition calculations (se calculan cuando cambia competition)
+  'team_competition_value',         // = Calculado basado en competición
+  'team_competition_value_percent', // = Calculado basado en competición
+  'competition_level_value',         // = Calculado basado en nivel
+  'competition_level_value_percent', // = Calculado basado en nivel
+  
+  // Owner club calculations (se calculan cuando cambia owner_club)
+  'owner_club_value',         // = Calculado basado en club propietario
+  'owner_club_value_percent', // = Calculado basado en club propietario
+  
+  // Normalizations (se calculan cuando cambian los valores base)
+  'player_trfm_value_norm', // = PERCENTILE(player_trfm_value, all_players) × 100
+  'player_rating_norm',     // = PERCENTILE(player_rating, all_players) × 100
+  'total_fmi_pts_norm',     // = PERCENTILE(total_fmi_pts, all_players) × 100
+  
+  // Stats evolution (se calcula desde otra tabla - player_stats_3m)
+  'stats_evo_3m',
+  
+  // Rankings (se calculan automáticamente)
+  'player_ranking',
 ]);
 
 // Campos CALCULADOS automáticamente mediante fórmulas
@@ -123,6 +161,42 @@ const SCRAPED_FIELDS = new Set([
   
   // Imagen
   'photo_coverage',      // URL de la foto de perfil
+]);
+
+// Campos FACTORES que influyen en otros campos calculados
+// Al editar estos campos, se recalculan automáticamente otros campos
+const FACTOR_FIELDS = new Set([
+  // Factores de Age calculations
+  'age',                    // → Afecta: age_value, age_value_percent, age_coeff
+  'date_of_birth',          // → Afecta: age (y transitivamente los anteriores)
+  
+  // Factores de Nationality calculations
+  'nationality_1',          // → Afecta: nationality_value, nationality_value_percent
+  
+  // Factores de Position calculations
+  'position_player',        // → Afecta: position_value, position_value_percent
+  'correct_position_player', // → Afecta los mismos si se usa como fuente
+  
+  // Factores de Team calculations
+  'team_level',             // → Afecta: team_level_value, team_level_value_percent
+  'team_name',              // → Puede afectar team_level
+  
+  // Factores de Competition calculations
+  'competition',            // → Afecta: competition_level_value, competition_level_value_percent
+  'team_competition',       // → Afecta: team_competition_value, team_competition_value_percent
+  
+  // Factores de Owner club calculations
+  'owner_club',             // → Afecta: owner_club_value, owner_club_value_percent
+  
+  // Factor principal usado en múltiples cálculos
+  'player_trfm_value',      // → Afecta: age_value, nationality_value, position_value, 
+                            //           player_trfm_value_norm, y todos sus *_percent
+  
+  // Factores de Rating
+  'player_rating',          // → Afecta: player_rating_norm
+  
+  // Factores de FMI
+  'total_fmi_pts',          // → Afecta: total_fmi_pts_norm
 ]);
 
 // Definición de todas las columnas (sin player_name que será columna fija)
@@ -365,6 +439,7 @@ const AdminPlayerTable = memo(function AdminPlayerTable({ players, selectedColum
               {visibleColumns.map((col) => {
                 const isCalculated = CALCULATED_FIELDS.has(col.key);
                 const isScraped = SCRAPED_FIELDS.has(col.key);
+                const isFactor = FACTOR_FIELDS.has(col.key);
                 return (
                   <th
                     key={col.key}
@@ -372,20 +447,30 @@ const AdminPlayerTable = memo(function AdminPlayerTable({ players, selectedColum
                     style={{ minWidth: col.width }}
                     onClick={() => handleSort(col.key as keyof Player)}
                   >
-                    {/* Indicador de campo calculado - esquina superior derecha */}
-                    {isCalculated && (
-                      <div 
-                        className="absolute top-1 right-1 w-2 h-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-sm shadow-sm"
-                        title="Campo calculado automáticamente mediante fórmula"
-                      />
-                    )}
-                    {/* Indicador de campo scrapeado - esquina superior izquierda */}
-                    {isScraped && (
-                      <div 
-                        className="absolute top-1 left-1 w-2 h-2 bg-gradient-to-br from-purple-400 to-violet-500 rounded-sm shadow-sm"
-                        title="Campo obtenido mediante scraping de Transfermarkt"
-                      />
-                    )}
+                    {/* Indicadores en la esquina superior derecha - todos en la misma posición */}
+                    <div className="absolute top-1 right-1 flex gap-0.5">
+                      {/* Indicador de campo calculado */}
+                      {isCalculated && (
+                        <div 
+                          className="w-2 h-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-sm shadow-sm"
+                          title="Campo calculado automáticamente mediante fórmula"
+                        />
+                      )}
+                      {/* Indicador de campo scrapeado */}
+                      {isScraped && (
+                        <div 
+                          className="w-2 h-2 bg-gradient-to-br from-purple-400 to-violet-500 rounded-sm shadow-sm"
+                          title="Campo obtenido mediante scraping de Transfermarkt"
+                        />
+                      )}
+                      {/* Indicador de campo factor */}
+                      {isFactor && !isCalculated && (
+                        <div 
+                          className="w-2 h-2 bg-gradient-to-br from-emerald-400 to-green-500 rounded-sm shadow-sm"
+                          title="Campo factor: al editarlo se recalculan otros campos automáticamente"
+                        />
+                      )}
+                    </div>
                     <div className="flex items-center gap-2 whitespace-nowrap">
                       <span className={`font-semibold text-sm ${
                         sortField === col.key ? 'text-[#FF5733]' : 'text-slate-300'
@@ -499,14 +584,18 @@ const AdminPlayerTable = memo(function AdminPlayerTable({ players, selectedColum
       
       {/* Leyenda de campos automáticos */}
       <div className="px-4 py-3 bg-[#0f1419] border-t border-slate-700">
-        <div className="flex items-center gap-6 text-xs text-slate-400">
+        <div className="flex flex-wrap items-center gap-6 text-xs text-slate-400">
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-sm shadow-sm" />
-            <span>Campo calculado automáticamente mediante fórmula</span>
+            <span>Campo calculado (fórmula automática)</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 bg-gradient-to-br from-purple-400 to-violet-500 rounded-sm shadow-sm" />
-            <span>Campo obtenido mediante scraping de Transfermarkt</span>
+            <span>Campo scrapeado (Transfermarkt)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 bg-gradient-to-br from-emerald-400 to-green-500 rounded-sm shadow-sm" />
+            <span>Campo factor (afecta otros campos)</span>
           </div>
         </div>
       </div>

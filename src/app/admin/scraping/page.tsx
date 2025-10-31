@@ -60,7 +60,6 @@ export default function ScrapingPage() {
   const [isPaused, setIsPaused] = useState(false)
   const [logs, setLogs] = useState<string[]>([])
   const [job, setJob] = useState<ScrapingJob | null>(null)
-  const [autoProcess, setAutoProcess] = useState(false)
 
   // 🧪 Estados para Test Scraping
   const [isTesting, setIsTesting] = useState(false)
@@ -132,10 +131,7 @@ export default function ScrapingPage() {
         setIsRunning(shouldBeRunning)
         setIsPaused(status === 'paused')
 
-        // Si está completo, detener auto-procesamiento
-        if (status === 'completed' || status === 'failed') {
-          setAutoProcess(false)
-        }
+        // Job completado o fallido - no se requiere acción adicional
       } else {
         console.log('[fetchJobStatus] No hay job activo')
         setJob(null)
@@ -147,47 +143,9 @@ export default function ScrapingPage() {
     }
   }, [])
 
-  // 🔄 PROCESAR SIGUIENTE BATCH
-  const processBatch = useCallback(async () => {
-    try {
-      console.log('[processBatch] Llamando a /api/admin/scraping/process')
-
-      const response = await fetch('/api/admin/scraping/process', {
-        method: 'POST'
-      })
-
-      const data = await response.json()
-
-      console.log('[processBatch] Respuesta:', response.status, data)
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al procesar batch')
-      }
-
-      // Actualizar estado del job
-      if (data.job) {
-        setJob(data.job)
-      }
-
-      // Los logs ahora vienen automáticamente vía SSE, no es necesario añadirlos aquí
-
-      // Si está completo, detener
-      if (data.completed) {
-        console.log('[processBatch] Job completado!')
-        setAutoProcess(false)
-        setIsRunning(false)
-      }
-
-      return data
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
-      console.error('[processBatch] Error:', errorMsg)
-      addLog(`❌ ERROR: ${errorMsg}`)
-      setAutoProcess(false)
-      setIsRunning(false)
-      throw error
-    }
-  }, [addLog])
+  // NOTA: El procesamiento de batches ahora se maneja automáticamente en el backend
+  // mediante el endpoint /api/admin/scraping/process-auto. El frontend solo monitorea
+  // el progreso mediante polling del estado y recibe logs vía SSE.
 
   // 🚀 INICIAR NUEVO JOB
   const startScraping = async () => {
@@ -230,10 +188,9 @@ export default function ScrapingPage() {
 
       setJob(data.playersJob)
       setIsRunning(true)
-      // ACTIVAR autoProcess - el frontend manejará el procesamiento
-      setAutoProcess(true)
 
-      addLog('🔄 Iniciando procesamiento automático desde el frontend...')
+      // El procesamiento automático se maneja en el backend vía /process-auto
+      addLog('🔄 Procesamiento automático iniciado en el backend...')
 
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
@@ -258,7 +215,6 @@ export default function ScrapingPage() {
       }
 
       addLog('✅ Scraping pausado')
-      setAutoProcess(false)
       setIsRunning(false)
       setIsPaused(true)
       await fetchJobStatus()
@@ -291,8 +247,7 @@ export default function ScrapingPage() {
         console.error('Error reiniciando auto-procesamiento:', err)
       })
 
-      addLog('✅ Scraping reanudado')
-      setAutoProcess(false) // El backend se encarga
+      addLog('✅ Scraping reanudado - el backend continuará automáticamente')
       setIsRunning(true)
       setIsPaused(false)
       await fetchJobStatus()
@@ -318,7 +273,6 @@ export default function ScrapingPage() {
       }
 
       addLog('✅ Scraping cancelado')
-      setAutoProcess(false)
       setIsRunning(false)
       setIsPaused(false)
       await fetchJobStatus()
@@ -330,13 +284,47 @@ export default function ScrapingPage() {
   }
 
   // 🔄 RESET
-  const resetStats = () => {
+  const resetStats = async () => {
     setLogs([])
+    addLog('🔄 Reiniciando estado...')
+
+    try {
+      // Llamar al endpoint de reset para eliminar todos los jobs
+      addLog('🗑️ Eliminando todos los jobs existentes...')
+
+      const response = await fetch('/api/admin/scraping/reset', {
+        method: 'POST'
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al resetear jobs')
+      }
+
+      addLog(`✅ ${data.jobsDeleted} jobs eliminados exitosamente`)
+      if (data.details) {
+        addLog(`   - Completados: ${data.details.completed}`)
+        addLog(`   - Fallidos: ${data.details.failed}`)
+        addLog(`   - Cancelados: ${data.details.cancelled}`)
+      }
+      addLog('🧹 Logs limpiados')
+      addLog('')
+
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
+      addLog(`❌ ERROR: ${errorMsg}`)
+      console.error('Error resetting jobs:', error)
+    }
+
+    // Limpiar estado local
     setJob(null)
     setIsRunning(false)
     setIsPaused(false)
-    setAutoProcess(false)
-    addLog('🔄 Estado reiniciado')
+    addLog('✅ Estado reiniciado - listo para nuevo scraping')
+
+    // Refrescar el estado
+    await fetchJobStatus()
   }
 
   // 🧪 TEST SCRAPING (3 jugadores + 3 equipos)
@@ -406,28 +394,8 @@ export default function ScrapingPage() {
     }
   }
 
-  // 🔄 AUTO-PROCESAMIENTO
-  useEffect(() => {
-    if (!autoProcess || !isRunning) return
-
-    const interval = setInterval(async () => {
-      try {
-        const data = await processBatch()
-
-        // Si se completó, detener el intervalo
-        if (data.completed) {
-          setAutoProcess(false)
-          setIsRunning(false)
-        }
-      } catch (error) {
-        console.error('Error en auto-procesamiento:', error)
-        setAutoProcess(false)
-        setIsRunning(false)
-      }
-    }, 2000) // Cada 2 segundos
-
-    return () => clearInterval(interval)
-  }, [autoProcess, isRunning, processBatch])
+  // NOTA: El auto-procesamiento se maneja en el backend mediante /api/admin/scraping/process-auto
+  // Este frontend solo monitorea el estado mediante polling cada 5 segundos (ver efecto abajo)
 
   // 📊 POLLING DE ESTADO CADA 5 SEGUNDOS
   useEffect(() => {
@@ -517,8 +485,10 @@ export default function ScrapingPage() {
 
           <Button
             onClick={resetStats}
+            disabled={isRunning || isPaused}
             variant="outline"
-            className="border-slate-700 bg-[#131921] text-white hover:bg-slate-700"
+            className="border-slate-700 bg-[#131921] text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            title={isRunning || isPaused ? "Cancela el job activo antes de resetear" : "Eliminar todos los jobs completados/fallidos"}
           >
             <RotateCcw className="h-4 w-4 mr-2" />
             Reset
@@ -550,6 +520,34 @@ export default function ScrapingPage() {
           <AlertCircle className="h-5 w-5 text-yellow-400 mr-3" />
           <p className="text-yellow-300">
             Scraping pausado. Haz clic en &quot;Reanudar&quot; para continuar desde donde se detuvo.
+          </p>
+        </div>
+      )}
+
+      {job?.status === 'failed' && (
+        <div className="mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg">
+          <div className="flex items-center mb-2">
+            <XCircle className="h-5 w-5 text-red-400 mr-3" />
+            <p className="text-red-300 font-semibold">
+              Job de scraping fallido
+            </p>
+          </div>
+          {job.lastError && (
+            <p className="text-red-200 text-sm ml-8 mb-3">
+              Error: {job.lastError}
+            </p>
+          )}
+          <p className="text-slate-300 text-sm ml-8">
+            💡 Haz clic en el botón &quot;Reset&quot; para limpiar este job y poder iniciar uno nuevo.
+          </p>
+        </div>
+      )}
+
+      {job?.status === 'completed' && !isRunning && (
+        <div className="mb-6 p-4 bg-green-900/20 border border-green-700 rounded-lg flex items-center">
+          <CheckCircle className="h-5 w-5 text-green-400 mr-3" />
+          <p className="text-green-300">
+            ✅ Scraping completado exitosamente. Haz clic en &quot;Reset&quot; para limpiar el estado si deseas iniciar uno nuevo.
           </p>
         </div>
       )}

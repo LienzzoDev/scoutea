@@ -87,12 +87,20 @@ export async function POST() {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 290000) // 290 segundos (un poco menos de maxDuration)
 
+      // Obtener la API key secreta para autenticación interna
+      const internalApiKey = process.env.SCRAPING_INTERNAL_API_KEY
+
+      if (!internalApiKey) {
+        console.error('❌ [AUTO-PROCESS] SCRAPING_INTERNAL_API_KEY no está configurada')
+        throw new Error('Configuración interna faltante')
+      }
+
       const processResponse = await fetch(processUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // Incluir una clave interna para identificar llamadas del auto-procesamiento
-          'X-Auto-Process': 'true'
+          // Incluir API key secreta para autenticación interna
+          'X-Internal-API-Key': internalApiKey
         },
         signal: controller.signal
       })
@@ -139,14 +147,26 @@ export async function POST() {
       // Pequeña pausa de 2 segundos entre batches
       await new Promise(resolve => setTimeout(resolve, 2000))
 
-      // Auto-llamada recursiva (no bloqueante)
+      // Auto-llamada recursiva (no bloqueante) - no necesita API key ya que es público
       fetch(`${baseUrl}/api/admin/scraping/process-auto`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-      }).catch(err => {
+      }).catch(async (err) => {
         console.error('❌ [AUTO-PROCESS] Error en llamada recursiva:', err)
+        // Marcar el job como failed
+        try {
+          await prisma.scrapingJob.update({
+            where: { id: job.id },
+            data: {
+              status: 'failed',
+              lastError: `Error en llamada recursiva: ${err.message}`
+            }
+          })
+        } catch (updateError) {
+          console.error('❌ [AUTO-PROCESS] Error actualizando job tras error recursivo:', updateError)
+        }
       })
 
       return NextResponse.json({

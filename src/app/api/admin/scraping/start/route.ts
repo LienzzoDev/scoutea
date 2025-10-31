@@ -113,10 +113,22 @@ export async function POST() {
     addJobLog(playersJob.id, '')
     addJobLog(playersJob.id, '🔄 Iniciando procesamiento automático en segundo plano...')
 
-    // ℹ️ El procesamiento se manejará desde el frontend mediante polling
-    // Esto evita problemas con fetch interno en Next.js
-    addJobLog(playersJob.id, '📡 Esperando que el frontend inicie el procesamiento...')
-    console.log(`📡 Job creado, esperando inicio de procesamiento desde frontend`)
+    // 🚀 INICIAR AUTO-PROCESAMIENTO EN EL BACKEND
+    // Nota: /process-auto es un endpoint público (no requiere API key) que luego llama
+    // a /process con la API key interna. Esto es seguro porque /process-auto solo puede
+    // llamar a /process si hay un job activo, y los jobs solo pueden ser creados por admins.
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    fetch(`${baseUrl}/api/admin/scraping/process-auto`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }).catch(err => {
+      console.error('⚠️ Error al iniciar auto-procesamiento:', err)
+      addJobLog(playersJob.id, `⚠️ Error al iniciar auto-procesamiento: ${err.message}`)
+    })
+
+    console.log(`📡 Auto-procesamiento iniciado en el backend`)
 
     // 🚀 INICIAR SCRAPING DE EQUIPOS EN BACKGROUND (si hay equipos)
     if (totalTeams > 0) {
@@ -124,7 +136,6 @@ export async function POST() {
         console.log(`🚀 Iniciando scraping de ${totalTeams} equipos en background...`)
         // Hacer una llamada asíncrona al endpoint de equipos
         // No esperamos la respuesta para no bloquear
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
         fetch(`${baseUrl}/api/admin/scraping/teams/batch`, {
           method: 'POST',
           headers: {
