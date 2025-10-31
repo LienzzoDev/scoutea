@@ -1253,24 +1253,24 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
     // 📊 EXTRAER DATOS USANDO REGEX Y PARSING
     const data: Record<string, any> = {}
 
-    // 1. URL del advisor
-    const advisorMatch = html.match(/<a href="(\/berater\/[^"]+)"/)
-    if (advisorMatch) {
-      data.url_trfm_advisor = `https://www.transfermarkt.es${advisorMatch[1]}`
+    // 1. URL del advisor - buscar en info-table después de "Player agent:"
+    const advisorMatch = html.match(/Player agent:[\s\S]*?<a[^>]*href="([^"]+)"[^>]*>/)
+    if (advisorMatch && advisorMatch[1].includes('berater')) {
+      const fullUrl = advisorMatch[1].startsWith('http')
+        ? advisorMatch[1]
+        : `https://www.transfermarkt.es${advisorMatch[1]}`
+      data.url_trfm_advisor = fullUrl
     }
 
-    // 2. Fecha de nacimiento
-    const birthDateMatch = html.match(/<span itemprop="birthDate">([^<]+)<\/span>/)
+    // 2. Fecha de nacimiento - buscar en data-header con itemprop="birthDate"
+    const birthDateMatch = html.match(/<span itemprop="birthDate"[^>]*>\s*(\d{2}\/\d{2}\/\d{4})/)
     if (birthDateMatch) {
-      const parsedDate = parseDateString(birthDateMatch[1].trim())
-      if (parsedDate) {
-        // Guardamos la fecha tal cual - la validación se hará al actualizar
-        data.date_of_birth = parsedDate
-      }
+      // Guardar solo el string de fecha, sin parsear
+      data.date_of_birth = birthDateMatch[1].trim()
     }
 
-    // 3. Equipo actual
-    const teamMatch = html.match(/<span class="[^"]*hauptverein[^"]*"[^>]*>([^<]+)<\/span>/)
+    // 3. Equipo actual - buscar en data-header__club-info el link con title
+    const teamMatch = html.match(/data-header__club-info[\s\S]*?<a[^>]*title="([^"]+)"[^>]*href="[^"]*\/startseite\/verein/)
     if (teamMatch) {
       data.team_name = teamMatch[1].trim()
     }
@@ -1281,14 +1281,14 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
       data.team_loan_from = loanMatch[1].trim()
     }
 
-    // 5. Posición
-    const positionMatch = html.match(/<span class="[^"]*position[^"]*"[^>]*>([^<]+)<\/span>/)
+    // 5. Posición - buscar en data-header después de "Position:"
+    const positionMatch = html.match(/<li class="data-header__label">Position:[\s\S]*?<span class="data-header__content">\s*([^<]+?)\s*<\/span>/)
     if (positionMatch) {
       data.position_player = positionMatch[1].trim()
     }
 
-    // 6. Pie dominante
-    const footMatch = html.match(/Pie:<\/span>\s*<span[^>]*>([^<]+)<\/span>/)
+    // 6. Pie dominante - buscar en info-table después de "Foot:"
+    const footMatch = html.match(/Foot:[\s\S]*?info-table__content--bold[^>]*>([^<]+)</)
     if (footMatch) {
       data.foot = footMatch[1].trim()
     }

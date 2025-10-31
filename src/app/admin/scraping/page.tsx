@@ -1,12 +1,18 @@
 'use client'
 
-import { Play, Pause, RotateCcw, CheckCircle, XCircle, Clock, Database, AlertCircle, RefreshCw, BarChart3, Activity, FlaskRound } from "lucide-react"
+import { Play, Pause, RotateCcw, CheckCircle, XCircle, Clock, Database, AlertCircle, RefreshCw, BarChart3, Activity, FlaskRound, ChevronDown } from "lucide-react"
 import { useEffect, useState, useCallback } from 'react'
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LoadingPage } from "@/components/ui/loading-spinner"
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 
 interface ScrapingJob {
   id: string
@@ -702,76 +708,80 @@ export default function ScrapingPage() {
         </CardContent>
       </Card>
 
-      {/* Instructions */}
+      {/* Instructions - Collapsible */}
       <Card className="bg-[#131921] border-slate-700">
-        <CardHeader>
-          <CardTitle className="text-[#D6DDE6]">Instrucciones</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-slate-300 space-y-2">
-            <p className="font-semibold text-[#FF5733]">🚀 Sistema optimizado Anti-DDoS para miles de jugadores:</p>
-            <ul className="ml-6 space-y-1">
-              <li>✅ Procesamiento por lotes: 5 jugadores por batch (configuración conservadora)</li>
-              <li>✅ Pausas aleatorias: 5-15 segundos entre jugadores (evita patrones)</li>
-              <li>✅ Rotación de User-Agents: 20+ navegadores diferentes</li>
-              <li>✅ Headers realistas: Simula navegador real con todos los headers</li>
-              <li>✅ Manejo de rate limits (429): Retry automático con exponential backoff</li>
-              <li>✅ Throttling adaptativo: Reduce velocidad automáticamente si detecta errores</li>
-              <li>✅ Máximo 3 reintentos por jugador con delays incrementales</li>
-              <li>✅ Protección anti-bloqueo: Pausa automática si hay 5 rate limits consecutivos</li>
-            </ul>
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="instructions" className="border-none">
+            <AccordionTrigger className="px-6 py-4 hover:no-underline">
+              <CardTitle className="text-[#D6DDE6] text-left">Instrucciones</CardTitle>
+            </AccordionTrigger>
+            <AccordionContent className="px-6 pb-6">
+              <div className="text-slate-300 space-y-2">
+                <p className="font-semibold text-[#FF5733]">🚀 Sistema optimizado Anti-DDoS para miles de jugadores:</p>
+                <ul className="ml-6 space-y-1">
+                  <li>✅ Procesamiento por lotes: 5 jugadores por batch (configuración conservadora)</li>
+                  <li>✅ Pausas aleatorias: 5-15 segundos entre jugadores (evita patrones)</li>
+                  <li>✅ Rotación de User-Agents: 20+ navegadores diferentes</li>
+                  <li>✅ Headers realistas: Simula navegador real con todos los headers</li>
+                  <li>✅ Manejo de rate limits (429): Retry automático con exponential backoff</li>
+                  <li>✅ Throttling adaptativo: Reduce velocidad automáticamente si detecta errores</li>
+                  <li>✅ Máximo 3 reintentos por jugador con delays incrementales</li>
+                  <li>✅ Protección anti-bloqueo: Pausa automática si hay 5 rate limits consecutivos</li>
+                </ul>
 
-            <p className="mt-4 font-semibold text-[#FF5733]">📊 Métricas en Tiempo Real:</p>
-            <ul className="ml-6 space-y-1">
-              <li>• Rate Limits (429): Cuántas veces Transfermarkt bloqueó temporalmente</li>
-              <li>• Reintentos: Total de intentos adicionales por errores</li>
-              <li>• Tasa de Error: Porcentaje de fallos (activa modo lento si &gt; 20%)</li>
-              <li>• Velocidad: Multiplicador actual (1.0x = normal, 2.0x = lento, 3.0x = muy lento)</li>
-            </ul>
+                <p className="mt-4 font-semibold text-[#FF5733]">📊 Métricas en Tiempo Real:</p>
+                <ul className="ml-6 space-y-1">
+                  <li>• Rate Limits (429): Cuántas veces Transfermarkt bloqueó temporalmente</li>
+                  <li>• Reintentos: Total de intentos adicionales por errores</li>
+                  <li>• Tasa de Error: Porcentaje de fallos (activa modo lento si &gt; 20%)</li>
+                  <li>• Velocidad: Multiplicador actual (1.0x = normal, 2.0x = lento, 3.0x = muy lento)</li>
+                </ul>
 
-            <p className="mt-4 font-semibold text-[#FF5733]">🎯 Funcionamiento (Procesamiento Manual Bajo Demanda):</p>
-            <ul className="ml-6 space-y-1">
-              <li>1. Haz clic en &quot;Iniciar Scraping&quot; para crear un nuevo trabajo</li>
-              <li>2. 🏟️ <strong>Se ejecutan DOS procesos en paralelo: JUGADORES + EQUIPOS</strong></li>
-              <li>3. 📊 <strong>Procesa 100 jugadores + 50 equipos por ejecución</strong></li>
-              <li>4. ✅ <strong>El scraping solo se ejecuta cuando el administrador lo solicita</strong></li>
-              <li>5. ✅ <strong>Puedes cerrar esta página - el scraping continuará en segundo plano</strong></li>
-              <li>6. El sistema usa pausas aleatorias (5-15s jugadores, 3-8s equipos)</li>
-              <li>7. Si detecta problemas, reduce velocidad automáticamente (throttling adaptativo)</li>
-              <li>8. Cada request usa un User-Agent diferente para evitar detección</li>
-              <li>9. Los errores 429 activan retry con tiempos exponenciales (5s, 15s, 45s, 120s)</li>
-              <li>10. El progreso se guarda continuamente - vuelve en cualquier momento para ver el estado</li>
-              <li>11. Auto-pausa después de 5 errores 429 consecutivos para evitar bloqueos</li>
-            </ul>
+                <p className="mt-4 font-semibold text-[#FF5733]">🎯 Funcionamiento (Procesamiento Manual Bajo Demanda):</p>
+                <ul className="ml-6 space-y-1">
+                  <li>1. Haz clic en &quot;Iniciar Scraping&quot; para crear un nuevo trabajo</li>
+                  <li>2. 🏟️ <strong>Se ejecutan DOS procesos en paralelo: JUGADORES + EQUIPOS</strong></li>
+                  <li>3. 📊 <strong>Procesa 100 jugadores + 50 equipos por ejecución</strong></li>
+                  <li>4. ✅ <strong>El scraping solo se ejecuta cuando el administrador lo solicita</strong></li>
+                  <li>5. ✅ <strong>Puedes cerrar esta página - el scraping continuará en segundo plano</strong></li>
+                  <li>6. El sistema usa pausas aleatorias (5-15s jugadores, 3-8s equipos)</li>
+                  <li>7. Si detecta problemas, reduce velocidad automáticamente (throttling adaptativo)</li>
+                  <li>8. Cada request usa un User-Agent diferente para evitar detección</li>
+                  <li>9. Los errores 429 activan retry con tiempos exponenciales (5s, 15s, 45s, 120s)</li>
+                  <li>10. El progreso se guarda continuamente - vuelve en cualquier momento para ver el estado</li>
+                  <li>11. Auto-pausa después de 5 errores 429 consecutivos para evitar bloqueos</li>
+                </ul>
 
-            <p className="mt-4 font-semibold text-[#FF5733]">⚽ 14 campos de JUGADORES extraídos de Transfermarkt:</p>
-            <ul className="ml-6 space-y-1 text-sm">
-              <li>1. advisor - Nombre del agente/asesor</li>
-              <li>2. url_trfm_advisor - URL del asesor</li>
-              <li>3. date_of_birth - Fecha de nacimiento</li>
-              <li>4. team_name - Equipo actual</li>
-              <li>5. team_loan_from - Equipo de cesión (si aplica)</li>
-              <li>6. position_player - Posición en el campo</li>
-              <li>7. foot - Pie dominante</li>
-              <li>8. height - Altura en cm</li>
-              <li>9. nationality_1 - Nacionalidad principal</li>
-              <li>10. nationality_2 - Segunda nacionalidad (si aplica)</li>
-              <li>11. national_tier - Nivel de selección nacional</li>
-              <li>12. agency - Agencia representante</li>
-              <li>13. contract_end - Fecha fin de contrato</li>
-              <li>14. player_trfm_value - Valor de mercado en €</li>
-            </ul>
+                <p className="mt-4 font-semibold text-[#FF5733]">⚽ 14 campos de JUGADORES extraídos de Transfermarkt:</p>
+                <ul className="ml-6 space-y-1 text-sm">
+                  <li>1. advisor - Nombre del agente/asesor</li>
+                  <li>2. url_trfm_advisor - URL del asesor</li>
+                  <li>3. date_of_birth - Fecha de nacimiento</li>
+                  <li>4. team_name - Equipo actual</li>
+                  <li>5. team_loan_from - Equipo de cesión (si aplica)</li>
+                  <li>6. position_player - Posición en el campo</li>
+                  <li>7. foot - Pie dominante</li>
+                  <li>8. height - Altura en cm</li>
+                  <li>9. nationality_1 - Nacionalidad principal</li>
+                  <li>10. nationality_2 - Segunda nacionalidad (si aplica)</li>
+                  <li>11. national_tier - Nivel de selección nacional</li>
+                  <li>12. agency - Agencia representante</li>
+                  <li>13. contract_end - Fecha fin de contrato</li>
+                  <li>14. player_trfm_value - Valor de mercado en €</li>
+                </ul>
 
-            <p className="mt-4 font-semibold text-[#FF5733]">🏟️ 5 campos de EQUIPOS extraídos de Transfermarkt:</p>
-            <ul className="ml-6 space-y-1 text-sm">
-              <li>1. team_name - Nombre oficial del equipo</li>
-              <li>2. team_country - País del equipo</li>
-              <li>3. competition - Liga/Competición actual</li>
-              <li>4. team_trfm_value - Valor de mercado total del equipo en €</li>
-              <li>5. team_rating - Rating del equipo (si disponible)</li>
-            </ul>
-          </div>
-        </CardContent>
+                <p className="mt-4 font-semibold text-[#FF5733]">🏟️ 5 campos de EQUIPOS extraídos de Transfermarkt:</p>
+                <ul className="ml-6 space-y-1 text-sm">
+                  <li>1. team_name - Nombre oficial del equipo</li>
+                  <li>2. team_country - País del equipo</li>
+                  <li>3. competition - Liga/Competición actual</li>
+                  <li>4. team_trfm_value - Valor de mercado total del equipo en €</li>
+                  <li>5. team_rating - Rating del equipo (si disponible)</li>
+                </ul>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </Card>
 
       {/* 🧪 MODAL DE RESULTADOS DE TEST */}
