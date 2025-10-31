@@ -13,7 +13,7 @@ import { prisma } from '@/lib/db'
 import { RateLimiter, AdaptiveThrottler } from '@/lib/scraping/rate-limiter'
 import { getRealisticHeaders, randomSleep } from '@/lib/scraping/user-agents'
 import { isDefaultTransfermarktImage } from '@/lib/utils/image-utils'
-import { addJobLog } from '@/app/api/admin/scraping/logs/route'
+import { addJobLog } from '@/lib/scraping/logs'
 
 // ⏱️ Configuración: 5 minutos máximo (Vercel límite)
 export const maxDuration = 300

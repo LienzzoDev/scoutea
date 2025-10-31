@@ -10,7 +10,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/db'
-import { addJobLog } from '@/app/api/admin/scraping/logs/route'
+import { addJobLog } from '@/lib/scraping/logs'
 
 /**
  * POST /api/admin/scraping/start - Iniciar nuevo job de scraping

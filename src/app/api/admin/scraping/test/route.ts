@@ -11,7 +11,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/db'
-import { addJobLog } from '@/app/api/admin/scraping/logs/route'
+import { addJobLog } from '@/lib/scraping/logs'
 import { scrapePlayerData, scrapeTeamData } from '@/lib/scraping/scraper'
 import { randomSleep } from '@/lib/scraping/user-agents'
 

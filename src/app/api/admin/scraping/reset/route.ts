@@ -10,7 +10,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/db'
-import { clearJobLogs } from '@/app/api/admin/scraping/logs/route'
+import { clearJobLogs } from '@/lib/scraping/logs'
 
 /**
  * POST /api/admin/scraping/reset - Limpiar todos los jobs
