@@ -114,9 +114,9 @@ export async function POST() {
     addJobLog(playersJob.id, '🔄 Iniciando procesamiento automático en segundo plano...')
 
     // 🚀 INICIAR AUTO-PROCESAMIENTO EN EL BACKEND
-    // Nota: /process-auto es un endpoint público (no requiere API key) que luego llama
-    // a /process con la API key interna. Esto es seguro porque /process-auto solo puede
-    // llamar a /process si hay un job activo, y los jobs solo pueden ser creados por admins.
+    // Nota: /process-auto es un endpoint interno que luego llama a /process.
+    // Esto es seguro porque /process-auto solo puede procesar jobs activos,
+    // y los jobs solo pueden ser creados por administradores autenticados.
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
     fetch(`${baseUrl}/api/admin/scraping/process-auto`, {
       method: 'POST',

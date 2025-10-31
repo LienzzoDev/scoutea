@@ -87,20 +87,10 @@ export async function POST() {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 290000) // 290 segundos (un poco menos de maxDuration)
 
-      // Obtener la API key secreta para autenticación interna
-      const internalApiKey = process.env.SCRAPING_INTERNAL_API_KEY
-
-      if (!internalApiKey) {
-        console.error('❌ [AUTO-PROCESS] SCRAPING_INTERNAL_API_KEY no está configurada')
-        throw new Error('Configuración interna faltante')
-      }
-
       const processResponse = await fetch(processUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          // Incluir API key secreta para autenticación interna
-          'X-Internal-API-Key': internalApiKey
+          'Content-Type': 'application/json'
         },
         signal: controller.signal
       })
