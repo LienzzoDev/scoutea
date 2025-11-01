@@ -1265,8 +1265,11 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
     // 2. Fecha de nacimiento - buscar en data-header con itemprop="birthDate"
     const birthDateMatch = html.match(/<span itemprop="birthDate"[^>]*>\s*(\d{2}\/\d{2}\/\d{4})/)
     if (birthDateMatch) {
-      // Guardar solo el string de fecha, sin parsear
-      data.date_of_birth = birthDateMatch[1].trim()
+      // Parsear la fecha a formato ISO para Prisma
+      const parsedDate = parseDateString(birthDateMatch[1].trim())
+      if (parsedDate) {
+        data.date_of_birth = parsedDate
+      }
     }
 
     // 3. Equipo actual - buscar en data-header__club-info el link con title
@@ -1293,15 +1296,15 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
       data.foot = footMatch[1].trim()
     }
 
-    // 7. Altura
-    const heightMatch = html.match(/Altura:<\/span>\s*<span[^>]*>([0-9,]+)\s*m<\/span>/)
+    // 7. Altura - buscar en data-header después de "Height:"
+    const heightMatch = html.match(/<li class="data-header__label">Height:[\s\S]*?<span[^>]*itemprop="height"[^>]*>\s*([0-9,]+)\s*m/)
     if (heightMatch) {
       const heightInMeters = parseFloat(heightMatch[1].replace(',', '.'))
       data.height = Math.round(heightInMeters * 100)
     }
 
-    // 8. Nacionalidad 1
-    const nat1Match = html.match(/<img[^>]+title="([^"]+)"[^>]+alt="[^"]*bandera[^"]*"/)
+    // 8. Nacionalidad 1 - buscar en info-table después de "Citizenship:"
+    const nat1Match = html.match(/Citizenship:[\s\S]*?info-table__content--bold[^>]*>[\s\S]*?<img[^>]+title="([^"]+)"/)
     if (nat1Match) {
       data.nationality_1 = nat1Match[1].trim()
     }
