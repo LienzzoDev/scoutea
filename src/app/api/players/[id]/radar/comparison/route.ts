@@ -5,13 +5,13 @@ import { prisma } from '@/lib/db';
 import { RadarCalculationService } from '../../../../../../lib/services/RadarCalculationService';
 
 export async function GET(
-  __request: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const radarService = new RadarCalculationService(prisma);
-  
+
   try {
-    const playerId = params.id;
+    const { id: playerId } = await params;
     const { searchParams } = new URL(request.url);
     const period = searchParams.get('period') || '2023-24';
     
@@ -85,13 +85,14 @@ export async function GET(
       }
     });
 
-  } catch (_error) {
+  } catch (error) {
+    const { id: playerId } = await params;
     console.error('Error fetching radar comparison data:', error);
     return NextResponse.json(
-      { 
+      {
         __error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
-        _playerId: params.id
+        _playerId: playerId
       },
       { status: 500 }
     );

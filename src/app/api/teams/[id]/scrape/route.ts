@@ -4,8 +4,8 @@ import * as cheerio from 'cheerio'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(
-  __request: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth()
@@ -13,8 +13,10 @@ export async function POST(
       return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
+
     // Obtener datos del equipo desde la base de datos
-    const teamResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/teams/${params.id}`)
+    const teamResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/teams/${id}`)
     if (!teamResponse.ok) {
       return NextResponse.json({ __error: 'Team not found' }, { status: 404 })
     }

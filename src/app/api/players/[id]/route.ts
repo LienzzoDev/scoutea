@@ -26,23 +26,26 @@ import type { Player } from '@/types/player'
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<Player | { _error: string }>> {
   try {
     // 🔐 VERIFICAR AUTENTICACIÓN
     const { userId } = await auth()
-    
+
     if (!userId) {
       return NextResponse.json(
-        { __error: 'No autorizado. Debes iniciar sesión para ver jugadores.' }, 
+        { __error: 'No autorizado. Debes iniciar sesión para ver jugadores.' },
         { status: 401 }
       )
     }
 
+    // Get params
+    const { id } = await params
+
     // 🛡️ VALIDAR ID DEL JUGADOR
     let validatedId: string
     try {
-      validatedId = validatePlayerId(params.id)
+      validatedId = validatePlayerId(id)
     } catch (validationError) {
       return NextResponse.json(
         { __error: `ID inválido: ${validationError instanceof Error ? validationError.message : 'Formato de ID incorrecto'}` },
@@ -99,10 +102,11 @@ export async function GET(
 
   } catch (error) {
     // 🚨 MANEJO DE ERRORES
+    const { id } = await params
     console.error('❌ Error getting player: ', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
-      playerId: params.id,
+      playerId: id,
       userId: (await auth()).userId,
       timestamp: new Date().toISOString()
     })
@@ -110,10 +114,10 @@ export async function GET(
     // En desarrollo, devolver más detalles del error
     if (process.env.NODE_ENV === 'development') {
       return NextResponse.json(
-        { 
+        {
           __error: 'Error interno del servidor',
           details: error instanceof Error ? error.message : 'Unknown error',
-          playerId: params.id
+          playerId: id
         },
         { status: 500 }
       )
@@ -139,15 +143,15 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<Player | { _error: string }>> {
   try {
     // 🔐 VERIFICAR AUTENTICACIÓN Y PERMISOS
     const { userId, sessionClaims } = await auth()
-    
+
     if (!userId) {
       return NextResponse.json(
-        { __error: 'No autorizado. Debes iniciar sesión para actualizar jugadores.' }, 
+        { __error: 'No autorizado. Debes iniciar sesión para actualizar jugadores.' },
         { status: 401 }
       )
     }
@@ -161,10 +165,13 @@ export async function PUT(
       )
     }
 
+    // Get params
+    const { id } = await params
+
     // 🛡️ VALIDAR ID DEL JUGADOR
     let validatedId: string
     try {
-      validatedId = validatePlayerId(params.id)
+      validatedId = validatePlayerId(id)
     } catch (validationError) {
       return NextResponse.json(
         { __error: `ID inválido: ${validationError instanceof Error ? validationError.message : 'Formato de ID incorrecto'}` },
@@ -220,9 +227,10 @@ export async function PUT(
 
   } catch (error) {
     // 🚨 MANEJO DE ERRORES ESPECÍFICOS
+    const { id } = await params
     console.error('❌ Error updating player: ', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      playerId: params.id,
+      playerId: id,
       userId: (await auth()).userId,
       timestamp: new Date().toISOString()
     })
@@ -267,15 +275,15 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<{ success: boolean; message: string } | { error: string }>> {
   try {
     // 🔐 VERIFICAR AUTENTICACIÓN Y PERMISOS
     const { userId, sessionClaims } = await auth()
-    
+
     if (!userId) {
       return NextResponse.json(
-        { __error: 'No autorizado. Debes iniciar sesión para eliminar jugadores.' }, 
+        { __error: 'No autorizado. Debes iniciar sesión para eliminar jugadores.' },
         { status: 401 }
       )
     }
@@ -289,10 +297,13 @@ export async function DELETE(
       )
     }
 
+    // Get params
+    const { id } = await params
+
     // 🛡️ VALIDAR ID DEL JUGADOR
     let validatedId: string
     try {
-      validatedId = validatePlayerId(params.id)
+      validatedId = validatePlayerId(id)
     } catch (validationError) {
       return NextResponse.json(
         { __error: `ID inválido: ${validationError instanceof Error ? validationError.message : 'Formato de ID incorrecto'}` },
@@ -336,9 +347,10 @@ export async function DELETE(
 
   } catch (error) {
     // 🚨 MANEJO DE ERRORES
+    const { id } = await params
     console.error('❌ Error deleting player: ', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      playerId: params.id,
+      playerId: id,
       userId: (await auth()).userId,
       timestamp: new Date().toISOString()
     })
@@ -374,7 +386,7 @@ export async function DELETE(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<Player | { error: string }>> {
   try {
     // 🔐 VERIFICAR AUTENTICACIÓN Y PERMISOS
@@ -396,8 +408,8 @@ export async function PATCH(
       )
     }
 
-    // 🛡️ VALIDAR ID DEL JUGADOR
-    const playerId = params.id
+    // Get params
+    const { id: playerId } = await params
 
     // 📝 OBTENER DATOS DEL BODY
     let requestBody
@@ -435,9 +447,10 @@ export async function PATCH(
 
   } catch (error) {
     // 📊 LOG DE ERROR
+    const { id: playerId } = await params
     console.error('❌ Error updating player field:', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      playerId: params.id,
+      playerId: playerId,
       userId: (await auth()).userId,
       timestamp: new Date().toISOString()
     })

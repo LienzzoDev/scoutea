@@ -4,10 +4,10 @@ import { prisma } from "@/lib/db";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const playerId = params.id;
+    const { id: playerId } = await params;
 
     // Obtener el jugador actual
     const player = await prisma.jugador.findUnique({

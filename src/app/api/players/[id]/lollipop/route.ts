@@ -3,15 +3,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ChartService } from '@/lib/services/chart-service'
 
 export async function GET(
-  __request: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { searchParams } = new URL(request.url)
     const period = searchParams.get('period') || 'current'
     const position = searchParams.get('position') || undefined
 
-    const playerId = params.id
+    const { id: playerId } = await params
 
     if (!playerId) {
       return NextResponse.json(

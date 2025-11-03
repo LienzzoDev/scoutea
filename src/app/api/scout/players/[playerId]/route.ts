@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { playerId: string } }
+  { params }: { params: Promise<{ playerId: string }> }
 ) {
   try {
     const { userId } = await auth()
@@ -14,7 +14,7 @@ export async function GET(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    const { playerId } = params
+    const { playerId } = await params
 
     if (!playerId) {
       return NextResponse.json({ error: 'Player ID requerido' }, { status: 400 })

@@ -12,10 +12,10 @@ const nationalities = ['Spain', 'Brazil', 'Italy', 'Germany', 'France', 'England
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const scoutId = params.id
+    const { id: scoutId } = await params
     
     // Verificar que el scout existe
     const scout = await prisma.scout.findUnique({

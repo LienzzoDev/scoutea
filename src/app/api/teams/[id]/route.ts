@@ -12,19 +12,22 @@ import {
 
 // GET /api/teams/[id] - Obtener un equipo por ID
 export async function GET(
-  __request: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = extractErrorContext(request)
     const { userId } = await auth()
-    
+
+    // Get params
+    const { id } = await params
+
     // Validaciones usando nuevas funciones
     requireAuth(userId, context)
-    requireParam(params.id, 'id', context)
+    requireParam(id, 'id', context)
 
     const team = await prisma.equipo.findUnique({
-      where: { id_team: params.id }
+      where: { id_team: id }
     })
 
     if (!team) {
@@ -40,21 +43,24 @@ export async function GET(
 
 // PUT /api/teams/[id] - Actualizar un equipo
 export async function PUT(
-  __request: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = extractErrorContext(request)
     const { userId } = await auth()
-    
+
+    // Get params
+    const { id } = await params
+
     // Validaciones usando nuevas funciones
     requireAuth(userId, context)
-    requireParam(params.id, 'id', context)
+    requireParam(id, 'id', context)
 
-    const _body = await request.json()
+    const body = await request.json()
 
     const team = await prisma.equipo.update({
-      where: { id_team: params.id },
+      where: { id_team: id },
       data: {
         team_name: body.team_name?.trim(),
         correct_team_name: body.correct_team_name?.trim(),
@@ -87,22 +93,25 @@ export async function PUT(
 
 // DELETE /api/teams/[id] - Eliminar un equipo
 export async function DELETE(
-  __request: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = extractErrorContext(request)
     const { userId } = await auth()
-    
+
+    // Get params
+    const { id } = await params
+
     // Validaciones usando nuevas funciones
     requireAuth(userId, context)
-    requireParam(params.id, 'id', context)
+    requireParam(id, 'id', context)
 
     await prisma.equipo.delete({
-      where: { id_team: params.id }
+      where: { id_team: id }
     })
 
-    console.log('✅ Equipo eliminado exitosamente:', params.id)
+    console.log('✅ Equipo eliminado exitosamente:', id)
     return NextResponse.json({ success: true })
 
   } catch (_error) {

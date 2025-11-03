@@ -12,7 +12,7 @@ const approvalSchema = z.object({
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth()
@@ -50,7 +50,7 @@ export async function PATCH(
     }
 
     const { action, rejectionReason } = validation.data
-    const reportId = params.id
+    const { id: reportId } = await params
 
     // Check if report exists and is pending
     const report = await prisma.reporte.findUnique({

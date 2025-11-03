@@ -4,17 +4,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ReportService } from '@/lib/services/report-service'
 
 export async function GET(
-  __request: NextRequest,
-  { params }: { params: { _playerId: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ playerId: string }> }
 ) {
   try {
     const { userId } = await auth()
-    
+
     if (!userId) {
       return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
     }
 
-    const reports = await ReportService.getReportsByPlayer(params.playerId)
+    const { playerId } = await params
+    const reports = await ReportService.getReportsByPlayer(playerId)
     
     return NextResponse.json(reports)
   } catch (_error) {

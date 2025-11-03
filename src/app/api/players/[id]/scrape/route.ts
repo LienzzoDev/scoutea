@@ -169,19 +169,19 @@ function extractAgency($: cheerio.CheerioAPI) {
 }
 
 export async function POST(
-  __request: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth()
-    
+
     if (!userId) {
       return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
     }
-    
+
     console.log('🔍 Iniciando API de scraping...')
-    
-    const playerId = params.id
+
+    const { id: playerId } = await params
     console.log('📝 Player ID:', playerId)
 
     // Obtener el jugador de la base de datos

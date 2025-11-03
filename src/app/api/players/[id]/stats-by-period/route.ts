@@ -5,13 +5,13 @@ import { isValidPeriod, type StatsPeriod } from '@/lib/utils/stats-period-utils'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { searchParams } = new URL(request.url)
     const periodParam = searchParams.get('period') || '3m'
 
-    const playerId = params.id
+    const { id: playerId } = await params
 
     if (!playerId) {
       return NextResponse.json(

@@ -4,10 +4,10 @@ import { ScoutQualitativeService } from '@/lib/services/scout-qualitative-servic
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const scoutId = params.id
+    const { id: scoutId } = await params
     const { searchParams } = new URL(request.url)
     
     // Extraer filtros de los query parameters
