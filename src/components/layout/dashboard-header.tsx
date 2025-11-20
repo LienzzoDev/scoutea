@@ -62,7 +62,7 @@ export default function DashboardHeader() {
             </div>
             
             {/* Navegación desktop */}
-            <nav className="hidden md:ml-6 md:flex md:space-x-8">
+            <nav className="hidden md:ml-6 md:flex md:space-x-4">
               <a href="/admin/dashboard" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
                 Dashboard
               </a>
@@ -80,6 +80,9 @@ export default function DashboardHeader() {
               </a>
               <a href="/admin/reportes" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
                 Reportes
+              </a>
+              <a href="/admin/correcciones" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
+                Correcciones
               </a>
               <a href="/admin/jobs" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
                 Jobs
@@ -222,6 +225,9 @@ export default function DashboardHeader() {
             </a>
             <a href="/admin/reportes" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
               Reportes
+            </a>
+            <a href="/admin/correcciones" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
+              Correcciones
             </a>
             <a href="/admin/jobs" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
               Jobs

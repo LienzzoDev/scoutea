@@ -12,7 +12,6 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { RateLimiter, AdaptiveThrottler } from '@/lib/scraping/rate-limiter'
 import { getRealisticHeaders, randomSleep } from '@/lib/scraping/user-agents'
-import { isDefaultTransfermarktImage } from '@/lib/utils/image-utils'
 import { addJobLog } from '@/lib/scraping/logs'
 
 // ⏱️ Configuración: 5 minutos máximo (Vercel límite)
@@ -1373,87 +1372,6 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
     const advisorNameMatch = html.match(/Agente:<\/span>\s*<a[^>]*>([^<]+)<\/a>/)
     if (advisorNameMatch) {
       data.advisor = advisorNameMatch[1].trim()
-    }
-
-    // 15. Foto de perfil (photo_coverage)
-    // Buscar la imagen de perfil del jugador en Transfermarkt
-    // Patrón: <img ... data-src="..." alt="[Nombre del jugador]" class="...profil..."
-    const profileImageMatch = html.match(/<img[^>]+data-src="([^"]+)"[^>]+class="[^"]*data-header__profile-image[^"]*"[^>]*>/)
-    if (profileImageMatch) {
-      const photoUrl = profileImageMatch[1].trim()
-      // Solo guardar si NO es una imagen por defecto
-      if (!isDefaultTransfermarktImage(photoUrl)) {
-        data.photo_coverage = photoUrl
-      }
-    } else {
-      // Patrón alternativo: buscar src en lugar de data-src
-      const profileImageAltMatch = html.match(/<img[^>]+class="[^"]*data-header__profile-image[^"]*"[^>]+src="([^"]+)"[^>]*>/)
-      if (profileImageAltMatch) {
-        const photoUrl = profileImageAltMatch[1].trim()
-        if (!isDefaultTransfermarktImage(photoUrl)) {
-          data.photo_coverage = photoUrl
-        }
-      } else {
-        // Tercer patrón: buscar por estructura del div contenedor
-        const profileImageDivMatch = html.match(/<div class="data-header__profile-container"[^>]*>[\s\S]*?<img[^>]+src="([^"]+)"[^>]*>/)
-        if (profileImageDivMatch) {
-          const photoUrl = profileImageDivMatch[1].trim()
-          if (!isDefaultTransfermarktImage(photoUrl)) {
-            data.photo_coverage = photoUrl
-          }
-        }
-      }
-    }
-
-    // 16. Foto de galería (gallery_photo)
-    // Buscar foto de cuerpo completo del jugador para sidebar grande
-    // ESTRATEGIA: Intentar obtener versión "big" o "medium" de la foto
-
-    // Si ya tenemos photo_coverage, intentar convertir header → big
-    if (data.photo_coverage && data.photo_coverage.includes('/portrait/header/')) {
-      // Transformar URL: /portrait/header/123-456.jpg → /portrait/big/123-456.jpg
-      const galleryUrl = data.photo_coverage.replace('/portrait/header/', '/portrait/big/')
-      if (!isDefaultTransfermarktImage(galleryUrl)) {
-        data.gallery_photo = galleryUrl
-      }
-    } else {
-      // Patrón 1: Buscar directamente URLs con /portrait/big/ o /portrait/medium/
-      const bigPortraitMatch = html.match(/https?:\/\/[^"'\s]+\/portrait\/(big|medium)\/[^"'\s]+\.(jpg|jpeg|png)/i)
-      if (bigPortraitMatch) {
-        const galleryUrl = bigPortraitMatch[0].trim()
-        if (!isDefaultTransfermarktImage(galleryUrl)) {
-          data.gallery_photo = galleryUrl
-        }
-      } else {
-        // Patrón 2: Buscar en la galería de fotos del jugador
-        const galleryMatch = html.match(/<div[^>]+class="[^"]*gallery[^"]*"[^>]*>[\s\S]*?<img[^>]+data-src="([^"]+)"[^>]*>/)
-        if (galleryMatch) {
-          const galleryUrl = galleryMatch[1].trim()
-          if (!isDefaultTransfermarktImage(galleryUrl)) {
-            data.gallery_photo = galleryUrl
-          }
-        } else {
-          // Patrón 3: Buscar enlaces a fotos grandes
-          const galleryLinkMatch = html.match(/<a[^>]+class="[^"]*photo[^"]*"[^>]*href="([^"]+\.(jpg|jpeg|png)[^"]*)"[^>]*>/)
-          if (galleryLinkMatch) {
-            const galleryUrl = galleryLinkMatch[1].trim()
-            if (!isDefaultTransfermarktImage(galleryUrl)) {
-              data.gallery_photo = galleryUrl
-            }
-          } else {
-            // Patrón 4: Buscar cualquier imagen grande que no sea el header
-            const largeImageMatches = html.matchAll(/<img[^>]+src="([^"]+portrait[^"]+)"[^>]+(?:width="[3-9]\d\d|height="[3-9]\d\d)[^>]*>/g)
-            for (const match of largeImageMatches) {
-              const imageUrl = match[1].trim()
-              // Solo si NO es header, NO es la misma que photo_coverage, y NO es default
-              if (!imageUrl.includes('header') && imageUrl !== data.photo_coverage && !isDefaultTransfermarktImage(imageUrl)) {
-                data.gallery_photo = imageUrl
-                break
-              }
-            }
-          }
-        }
-      }
     }
 
     return data

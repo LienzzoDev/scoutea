@@ -79,8 +79,30 @@ export async function GET(request: NextRequest) {
       select: {
         id_team: true,
         team_name: true,
+        correct_team_name: true,
         team_country: true,
-        competition: true
+        url_trfm_advisor: true,
+        url_trfm: true,
+        owner_club: true,
+        owner_club_country: true,
+        pre_competition: true,
+        competition: true,
+        correct_competition: true,
+        competition_country: true,
+        team_trfm_value: true,
+        team_trfm_value_norm: true,
+        team_rating: true,
+        team_rating_norm: true,
+        team_elo: true,
+        team_level: true,
+        short_name: true,
+        founded_year: true,
+        stadium: true,
+        website_url: true,
+        logo_url: true,
+        admin_notes: true,
+        createdAt: true,
+        updatedAt: true
       }
     })
 

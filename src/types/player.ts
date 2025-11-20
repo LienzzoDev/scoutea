@@ -89,26 +89,30 @@ export interface Player {
   linkedin_profile?: string | null;
   telegram_profile?: string | null;
   instagram_profile?: string | null;
+  // Notas administrativas
+  admin_notes?: string | null;
+  player_color?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface CrearJugadorData {
   nombre: string;
-  posicion: string;
+  posicion?: string; // Ahora es opcional
   equipo: string;
-  edad: number;
-  numeroCamiseta?: number;
-  valoracion?: string;
-  urlAvatar?: string;
-  biografia?: string;
-  atributos?: Array<{
-    nombre: string;
-    valor: string;
-  }>;
+  fecha_nacimiento: string; // Cambiado de edad a fecha de nacimiento
   nationality?: string;
+  nationality_2?: string; // Segunda nacionalidad
   height?: number;
   weight?: number;
+  // Nuevos campos
+  player_trfm_value?: number; // Valor de mercado
+  on_loan?: boolean; // Cedido
+  owner_club?: string; // Club propietario
+  national_tier?: string; // National tier
+  contract_end?: string; // Fin de contrato
+  url_instagram?: string; // URL de Instagram
+  url_secondary?: string; // URL secundaria
 }
 
 export interface PlayerStats {

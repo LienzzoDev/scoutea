@@ -1,7 +1,7 @@
 "use client"
 
 import { useAuth } from "@clerk/nextjs"
-import { ChevronLeft, Edit, Settings, Plus, X, Save } from "lucide-react"
+import { ChevronLeft, Edit, Settings, Save, Search } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState, FormEvent } from "react"
 
@@ -9,32 +9,88 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { usePlayers } from "@/hooks/player/usePlayers"
 import { CrearJugadorData } from "@/types/player"
+
+// Posiciones disponibles
+const POSITIONS = [
+  'GK',
+  'CB', 'LB', 'RB', 'LWB', 'RWB',
+  'DM', 'CM', 'LM', 'RM', 'AM',
+  'LW', 'RW', 'CF', 'ST'
+]
 
 export default function NuevoJugadorPage() {
   const { isSignedIn, isLoaded } = useAuth()
   const _router = useRouter()
   const { crearJugador } = usePlayers()
-  
+
   // Estado del formulario
   const [formData, setFormData] = useState<CrearJugadorData>({
     nombre: '',
-    posicion: '',
-    edad: 18,
-    equipo: ''
+    posicion: undefined,
+    equipo: '',
+    fecha_nacimiento: ''
   })
+
+  // Estado de búsqueda
+  const [searchingPlayer, setSearchingPlayer] = useState(false)
+  const [searchingTeam, setSearchingTeam] = useState(false)
+  const [playerSearchResults, setPlayerSearchResults] = useState<any[]>([])
+  const [teamSearchResults, setTeamSearchResults] = useState<any[]>([])
+  const [showPlayerResults, setShowPlayerResults] = useState(false)
 
   // Estado de la UI
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [newAttribute, setNewAttribute] = useState({ nombre: '', valor: '' })
 
   // Estado para scraping
   const [urlTrfm, setUrlTrfm] = useState('')
   const [scraping, setScraping] = useState(false)
   const [scrapingResult, setScrapingResult] = useState<any>(null)
+
+  // Buscar jugadores
+  const searchPlayers = async (query: string) => {
+    if (!query || query.length < 2) {
+      setPlayerSearchResults([])
+      setShowPlayerResults(false)
+      return
+    }
+
+    setSearchingPlayer(true)
+    setShowPlayerResults(true)
+    try {
+      const response = await fetch(`/api/admin/players?search=${encodeURIComponent(query)}&limit=10`)
+      const data = await response.json()
+      setPlayerSearchResults(data.players || [])
+    } catch (error) {
+      console.error('Error searching players:', error)
+      setPlayerSearchResults([])
+    } finally {
+      setSearchingPlayer(false)
+    }
+  }
+
+  // Buscar equipos
+  const searchTeams = async (query: string) => {
+    if (!query || query.length < 2) {
+      setTeamSearchResults([])
+      return
+    }
+
+    setSearchingTeam(true)
+    try {
+      const response = await fetch(`/api/teams?search=${encodeURIComponent(query)}&limit=10`)
+      const data = await response.json()
+      setTeamSearchResults(data.teams || [])
+    } catch (error) {
+      console.error('Error searching teams:', error)
+      setTeamSearchResults([])
+    } finally {
+      setSearchingTeam(false)
+    }
+  }
 
   // Validar formulario
   const validateForm = (): boolean => {
@@ -43,11 +99,8 @@ export default function NuevoJugadorPage() {
     if (!formData.nombre.trim()) {
       newErrors.nombre = 'El nombre es requerido'
     }
-    if (!formData.posicion.trim()) {
-      newErrors.posicion = 'La posición es requerida'
-    }
-    if (formData.edad < 16 || formData.edad > 50) {
-      newErrors.edad = 'La edad debe estar entre 16 y 50 años'
+    if (!formData.fecha_nacimiento) {
+      newErrors.fecha_nacimiento = 'La fecha de nacimiento es requerida'
     }
     if (!formData.equipo.trim()) {
       newErrors.equipo = 'El equipo es requerido'
@@ -58,31 +111,12 @@ export default function NuevoJugadorPage() {
   }
 
   // Manejar cambios en inputs
-  const handleInputChange = (field: keyof CrearJugadorData, value: string | number | undefined) => {
+  const handleInputChange = (field: keyof CrearJugadorData, value: string | number | boolean | undefined) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     // Limpiar error del campo
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }))
     }
-  }
-
-  // Agregar atributo
-  const addAttribute = () => {
-    if (newAttribute.nombre.trim() && newAttribute.valor.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        atributos: [...(prev.atributos ?? []), { ...newAttribute }]
-      }))
-      setNewAttribute({ nombre: '', valor: '' })
-    }
-  }
-
-  // Remover atributo
-  const removeAttribute = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      atributos: prev.atributos?.filter((_attr, i) => i !== index) ?? []
-    }))
   }
 
   // Hacer scraping de URL individual
@@ -132,11 +166,29 @@ export default function NuevoJugadorPage() {
         if (scraped.team_name && !formData.equipo) {
           handleInputChange('equipo', scraped.team_name)
         }
-        if (scraped.date_of_birth && !formData.edad) {
-          // Calcular edad desde fecha de nacimiento
-          const birthDate = new Date(scraped.date_of_birth)
-          const age = new Date().getFullYear() - birthDate.getFullYear()
-          handleInputChange('edad', age)
+        if (scraped.date_of_birth && !formData.fecha_nacimiento) {
+          handleInputChange('fecha_nacimiento', scraped.date_of_birth)
+        }
+        if (scraped.nationality_1 && !formData.nationality) {
+          handleInputChange('nationality', scraped.nationality_1)
+        }
+        if (scraped.nationality_2 && !formData.nationality_2) {
+          handleInputChange('nationality_2', scraped.nationality_2)
+        }
+        if (scraped.player_trfm_value && !formData.player_trfm_value) {
+          handleInputChange('player_trfm_value', scraped.player_trfm_value)
+        }
+        if (scraped.owner_club && !formData.owner_club) {
+          handleInputChange('owner_club', scraped.owner_club)
+        }
+        if (scraped.national_tier && !formData.national_tier) {
+          handleInputChange('national_tier', scraped.national_tier)
+        }
+        if (scraped.contract_end && !formData.contract_end) {
+          handleInputChange('contract_end', scraped.contract_end)
+        }
+        if (scraped.height && !formData.height) {
+          handleInputChange('height', scraped.height)
         }
       }
 
@@ -184,9 +236,9 @@ export default function NuevoJugadorPage() {
         {/* Player Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="text-slate-400 hover:text-white"
               onClick={() => _router.back()}
             >
@@ -194,7 +246,7 @@ export default function NuevoJugadorPage() {
             </Button>
             <div className="relative">
               <Avatar className="w-16 h-16">
-                <AvatarImage src={formData.urlAvatar ?? "/dynamic-soccer-player.png"} />
+                <AvatarImage src="/dynamic-soccer-player.png" />
                 <AvatarFallback>JP</AvatarFallback>
               </Avatar>
               <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#FF5733] rounded-full flex items-center justify-center">
@@ -205,7 +257,7 @@ export default function NuevoJugadorPage() {
           </div>
 
           <div className="flex items-center space-x-3">
-            <Button 
+            <Button
               type="submit"
               form="jugador-form"
               disabled={loading}
@@ -279,180 +331,321 @@ export default function NuevoJugadorPage() {
           <section>
             <h2 className="text-xl font-semibold mb-6 text-[#D6DDE6]">Información Personal</h2>
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="nombre" className="text-sm text-slate-300 mb-2 block">
-                    Nombre Completo *
-                  </Label>
+              {/* Nombre - Buscador */}
+              <div>
+                <Label htmlFor="nombre" className="text-sm text-slate-300 mb-2 block">
+                  Nombre Completo *
+                </Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
                     id="nombre"
                     value={formData.nombre}
-                    onChange={(e) =>handleInputChange('nombre', e.target.value)}
-                    placeholder="Nombre completo del jugador" className={`bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 ${
+                    onChange={(e) => {
+                      handleInputChange('nombre', e.target.value)
+                      searchPlayers(e.target.value)
+                    }}
+                    onFocus={() => {
+                      if (formData.nombre && formData.nombre.length >= 2 && playerSearchResults.length > 0) {
+                        setShowPlayerResults(true)
+                      }
+                    }}
+                    onBlur={() => {
+                      // Delay para permitir clicks en los resultados si fuera necesario
+                      setTimeout(() => setShowPlayerResults(false), 200)
+                    }}
+                    placeholder="Buscar o escribir nombre del jugador"
+                    className={`pl-10 bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 ${
                       errors.nombre ? 'border-red-500' : ''
                     }`}
                   />
-                  {errors.nombre && (
-                    <p className="text-red-400 text-sm mt-1">{errors.nombre}</p>
+                  {searchingPlayer && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                    </div>
                   )}
                 </div>
+                {errors.nombre && (
+                  <p className="text-red-400 text-sm mt-1">{errors.nombre}</p>
+                )}
+                {/* Resultados de búsqueda de jugadores - Solo para mostrar, no clickables */}
+                {showPlayerResults && playerSearchResults.length > 0 && (
+                  <div className="mt-2 bg-slate-800 border border-yellow-600 rounded-lg max-h-48 overflow-y-auto">
+                    <div className="p-2 bg-yellow-900/20 border-b border-yellow-600">
+                      <p className="text-xs text-yellow-400">⚠️ Jugadores existentes con nombre similar:</p>
+                    </div>
+                    {playerSearchResults.map((player) => (
+                      <div
+                        key={player.id_player}
+                        className="p-3 border-b border-slate-700 last:border-b-0"
+                      >
+                        <p className="text-white font-medium">{player.player_name}</p>
+                        <p className="text-sm text-slate-400">{player.team_name} • {player.position_player}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Posición - Desplegable (Opcional) */}
                 <div>
                   <Label htmlFor="posicion" className="text-sm text-slate-300 mb-2 block">
-                    Posición *
+                    Posición
+                  </Label>
+                  <Select
+                    value={formData.posicion || ''}
+                    onValueChange={(value) => handleInputChange('posicion', value)}
+                  >
+                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                      <SelectValue placeholder="Seleccionar posición" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-800 border-slate-700">
+                      {POSITIONS.map((pos) => (
+                        <SelectItem key={pos} value={pos} className="text-white hover:bg-slate-700">
+                          {pos}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Fecha de Nacimiento */}
+                <div>
+                  <Label htmlFor="fecha_nacimiento" className="text-sm text-slate-300 mb-2 block">
+                    Fecha de Nacimiento *
                   </Label>
                   <Input
-                    id="posicion"
-                    value={formData.posicion}
-                    onChange={(e) =>handleInputChange('posicion', e.target.value)}
-                    placeholder="Posición en el campo" className={`bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 ${
-                      errors.posicion ? 'border-red-500' : ''
+                    id="fecha_nacimiento"
+                    type="date"
+                    value={formData.fecha_nacimiento}
+                    onChange={(e) => handleInputChange('fecha_nacimiento', e.target.value)}
+                    className={`bg-slate-800 border-slate-700 text-white ${
+                      errors.fecha_nacimiento ? 'border-red-500' : ''
                     }`}
                   />
-                  {errors.posicion && (
-                    <p className="text-red-400 text-sm mt-1">{errors.posicion}</p>
+                  {errors.fecha_nacimiento && (
+                    <p className="text-red-400 text-sm mt-1">{errors.fecha_nacimiento}</p>
                   )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="edad" className="text-sm text-slate-300 mb-2 block">
-                    Edad *
-                  </Label>
-                  <Input
-                    id="edad"
-                    type="number"
-                    min="16"
-                    max="50"
-                    value={formData.edad}
-                    onChange={(e) => handleInputChange('edad', parseInt(e.target.value) || 18)}
-                    className={`bg-slate-800 border-slate-700 text-white ${
-                      errors.edad ? 'border-red-500' : ''
-                    }`}
-                  />
-                  {errors.edad && (
-                    <p className="text-red-400 text-sm mt-1">{errors.edad}</p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="equipo" className="text-sm text-slate-300 mb-2 block">
-                    Equipo *
-                  </Label>
+              {/* Equipo - Buscador */}
+              <div>
+                <Label htmlFor="equipo" className="text-sm text-slate-300 mb-2 block">
+                  Equipo *
+                </Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
                     id="equipo"
                     value={formData.equipo}
-                    onChange={(e) =>handleInputChange('equipo', e.target.value)}
-                    placeholder="Nombre del equipo" className={`bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 ${
+                    onChange={(e) => {
+                      handleInputChange('equipo', e.target.value)
+                      searchTeams(e.target.value)
+                    }}
+                    placeholder="Buscar o escribir nombre del equipo"
+                    className={`pl-10 bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 ${
                       errors.equipo ? 'border-red-500' : ''
                     }`}
                   />
-                  {errors.equipo && (
-                    <p className="text-red-400 text-sm mt-1">{errors.equipo}</p>
+                  {searchingTeam && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                    </div>
                   )}
                 </div>
+                {errors.equipo && (
+                  <p className="text-red-400 text-sm mt-1">{errors.equipo}</p>
+                )}
+                {/* Resultados de búsqueda de equipos */}
+                {teamSearchResults.length > 0 && (
+                  <div className="mt-2 bg-slate-800 border border-slate-700 rounded-lg max-h-48 overflow-y-auto">
+                    {teamSearchResults.map((team) => (
+                      <div
+                        key={team.id_team}
+                        onClick={() => {
+                          handleInputChange('equipo', team.team_name)
+                          setTeamSearchResults([])
+                        }}
+                        className="p-3 hover:bg-slate-700 cursor-pointer border-b border-slate-700 last:border-b-0"
+                      >
+                        <p className="text-white font-medium">{team.team_name}</p>
+                        <p className="text-sm text-slate-400">{team.competition} • {team.team_country}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
+              {/* Nacionalidades */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="numeroCamiseta" className="text-sm text-slate-300 mb-2 block">
-                    Número de Camiseta
+                  <Label htmlFor="nationality" className="text-sm text-slate-300 mb-2 block">
+                    Nacionalidad Principal
                   </Label>
                   <Input
-                    id="numeroCamiseta"
-                    type="number"
-                    min="1"
-                    max="99"
-                    value={formData.numeroCamiseta ?? ''}
-                    onChange={(e) =>handleInputChange('numeroCamiseta', e.target.value ? parseInt(e.target.value) : undefined)}
-                    placeholder="Número" className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400" />
+                    id="nationality"
+                    value={formData.nationality ?? ''}
+                    onChange={(e) => handleInputChange('nationality', e.target.value)}
+                    placeholder="Ej: España"
+                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="valoracion" className="text-sm text-slate-300 mb-2 block">
-                    Valoración
+                  <Label htmlFor="nationality_2" className="text-sm text-slate-300 mb-2 block">
+                    Segunda Nacionalidad
                   </Label>
                   <Input
-                    id="valoracion"
-                    value={formData.valoracion ?? ''}
-                    onChange={(e) =>handleInputChange('valoracion', e.target.value)}
-                    placeholder="Ej: 250k, 1.5M" className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400" />
+                    id="nationality_2"
+                    value={formData.nationality_2 ?? ''}
+                    onChange={(e) => handleInputChange('nationality_2', e.target.value)}
+                    placeholder="Ej: Argentina"
+                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
+                  />
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="urlAvatar" className="text-sm text-slate-300 mb-2 block">
-                  URL del Avatar
-                </Label>
-                <Input
-                  id="urlAvatar"
-                  value={formData.urlAvatar ?? ''}
-                  onChange={(e) =>handleInputChange('urlAvatar', e.target.value)}
-                  placeholder="URL de la imagen del jugador" className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400" />
-              </div>
-
-              <div>
-                <Label htmlFor="biografia" className="text-sm text-slate-300 mb-2 block">
-                  Biografía
-                </Label>
-                <Textarea
-                  id="biografia"
-                  value={formData.biografia ?? ''}
-                  onChange={(e) =>handleInputChange('biografia', e.target.value)}
-                  placeholder="Escribe una breve biografía del jugador" className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 min-h-[100px]" />
+              {/* Altura y Peso */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="height" className="text-sm text-slate-300 mb-2 block">
+                    Altura (cm)
+                  </Label>
+                  <Input
+                    id="height"
+                    type="number"
+                    min="150"
+                    max="220"
+                    value={formData.height ?? ''}
+                    onChange={(e) => handleInputChange('height', e.target.value ? parseInt(e.target.value) : undefined)}
+                    placeholder="Ej: 180"
+                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="weight" className="text-sm text-slate-300 mb-2 block">
+                    Peso (kg)
+                  </Label>
+                  <Input
+                    id="weight"
+                    type="number"
+                    min="50"
+                    max="120"
+                    value={formData.weight ?? ''}
+                    onChange={(e) => handleInputChange('weight', e.target.value ? parseInt(e.target.value) : undefined)}
+                    placeholder="Ej: 75"
+                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
+                  />
+                </div>
               </div>
             </div>
           </section>
 
-          {/* Atributos */}
+          {/* Información Contractual y de Mercado */}
           <section>
-            <h2 className="text-xl font-semibold mb-6 text-[#D6DDE6]">Atributos</h2>
+            <h2 className="text-xl font-semibold mb-6 text-[#D6DDE6]">Información Contractual y de Mercado</h2>
             <div className="space-y-4">
-              {/* Agregar nuevo atributo */}
-              <div className="flex space-x-3">
-                <div className="flex-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="player_trfm_value" className="text-sm text-slate-300 mb-2 block">
+                    Valor de Mercado (€)
+                  </Label>
                   <Input
-                    placeholder="Nombre del atributo"
-                    value={newAttribute.nombre}
-                    onChange={(e) => setNewAttribute(prev => ({ ...prev, nombre: e.target.value }))}
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400" />
+                    id="player_trfm_value"
+                    type="number"
+                    min="0"
+                    value={formData.player_trfm_value ?? ''}
+                    onChange={(e) => handleInputChange('player_trfm_value', e.target.value ? parseInt(e.target.value) : undefined)}
+                    placeholder="Ej: 5000000"
+                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
+                  />
                 </div>
-                <div className="flex-1">
+                <div>
+                  <Label htmlFor="contract_end" className="text-sm text-slate-300 mb-2 block">
+                    Fin de Contrato
+                  </Label>
                   <Input
-                    placeholder="Valor del atributo"
-                    value={newAttribute.valor}
-                    onChange={(e) => setNewAttribute(prev => ({ ...prev, valor: e.target.value }))}
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400" />
+                    id="contract_end"
+                    type="date"
+                    value={formData.contract_end ?? ''}
+                    onChange={(e) => handleInputChange('contract_end', e.target.value)}
+                    className="bg-slate-800 border-slate-700 text-white"
+                  />
                 </div>
-                <Button
-                  type="button"
-                  onClick={addAttribute}
-                  disabled={!newAttribute.nombre.trim() || !newAttribute.valor.trim()}
-                  className="bg-[#FF5733] hover:bg-[#E64A2B] text-white px-4"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
               </div>
 
-              {/* Lista de atributos */}
-              {formData.atributos && formData.atributos.length > 0 && (
-                <div className="space-y-2">
-                  {formData.atributos.map((attr: { nombre: string; valor: string }, index: number) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
-                      <div className="flex-1">
-                        <span className="text-[#D6DDE6] font-medium">{attr.nombre}:</span>
-                        <span className="text-slate-300 ml-2">{attr.valor}</span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() =>removeAttribute(index)}
-                        className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-900/20">
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="owner_club" className="text-sm text-slate-300 mb-2 block">
+                    Club Propietario
+                  </Label>
+                  <Input
+                    id="owner_club"
+                    value={formData.owner_club ?? ''}
+                    onChange={(e) => handleInputChange('owner_club', e.target.value)}
+                    placeholder="Ej: Real Madrid CF"
+                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
+                  />
                 </div>
-              )}
+                <div>
+                  <Label htmlFor="national_tier" className="text-sm text-slate-300 mb-2 block">
+                    National Tier
+                  </Label>
+                  <Input
+                    id="national_tier"
+                    value={formData.national_tier ?? ''}
+                    onChange={(e) => handleInputChange('national_tier', e.target.value)}
+                    placeholder="Ej: A-Nationalmannschaft"
+                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
+                  />
+                </div>
+              </div>
+
+              {/* Cedido */}
+              <div className="flex items-center space-x-2">
+                <input
+                  id="on_loan"
+                  type="checkbox"
+                  checked={formData.on_loan ?? false}
+                  onChange={(e) => handleInputChange('on_loan', e.target.checked)}
+                  className="w-4 h-4 bg-slate-800 border border-slate-700 rounded text-[#FF5733] focus:ring-[#FF5733]"
+                />
+                <Label htmlFor="on_loan" className="text-sm text-slate-300">
+                  Jugador Cedido
+                </Label>
+              </div>
+            </div>
+          </section>
+
+          {/* URLs */}
+          <section>
+            <h2 className="text-xl font-semibold mb-6 text-[#D6DDE6]">Enlaces y Redes Sociales</h2>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="url_instagram" className="text-sm text-slate-300 mb-2 block">
+                  URL de Instagram
+                </Label>
+                <Input
+                  id="url_instagram"
+                  value={formData.url_instagram ?? ''}
+                  onChange={(e) => handleInputChange('url_instagram', e.target.value)}
+                  placeholder="https://instagram.com/jugador"
+                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
+                />
+              </div>
+              <div>
+                <Label htmlFor="url_secondary" className="text-sm text-slate-300 mb-2 block">
+                  URL Secundaria
+                </Label>
+                <Input
+                  id="url_secondary"
+                  value={formData.url_secondary ?? ''}
+                  onChange={(e) => handleInputChange('url_secondary', e.target.value)}
+                  placeholder="URL adicional del jugador"
+                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
+                />
+              </div>
             </div>
           </section>
         </form>

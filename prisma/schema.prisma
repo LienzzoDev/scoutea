@@ -143,6 +143,10 @@ model Jugador {
   approval_date                   DateTime?           // Fecha de aprobación/rechazo
   rejection_reason                String?             // Motivo de rechazo (opcional)
 
+  // NOTAS ADMINISTRATIVAS
+  admin_notes                     String?             // Notas del administrador sobre el jugador
+  player_color                    String?             // Color asignado por el admin (hex format: #RRGGBB)
+
   createdAt                       DateTime            @default(now())
   updatedAt                       DateTime            @updatedAt
   
@@ -230,6 +234,10 @@ model Equipo {
   stadium              String?
   website_url          String?
   logo_url             String?
+
+  // NOTAS ADMINISTRATIVAS
+  admin_notes          String?    // Notas del administrador sobre el equipo
+
   createdAt            DateTime   @default(now())
   updatedAt            DateTime   @updatedAt
 
@@ -1684,6 +1692,37 @@ model PlayerRole {
   @@index([player_id])
   @@index([role_name])
   @@map("player_roles")
+}
+
+// ============================================================================
+// SISTEMA DE REGLAS DE CORRECCIÓN
+// ============================================================================
+
+model TeamNameCorrection {
+  id                String   @id @default(cuid())
+  original_name     String   @unique  // Nombre original del equipo (ej: "Real Madrid CF")
+  corrected_name    String             // Nombre corregido (ej: "Real Madrid")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  created_by        String?            // Usuario que creó la regla
+
+  @@index([original_name])
+  @@index([corrected_name])
+  @@map("team_name_corrections")
+}
+
+model LeagueCorrection {
+  id                    String   @id @default(cuid())
+  national_tier         String   @unique  // Tier original (ej: "LaLiga")
+  rename_national_tier  String             // Nombre de la liga (ej: "La Liga")
+  country               String             // País de la liga (ej: "Spain")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  created_by            String?            // Usuario que creó la regla
+
+  @@index([national_tier])
+  @@index([country])
+  @@map("league_corrections")
 }
 
 // ============================================================================

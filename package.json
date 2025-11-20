@@ -50,7 +50,8 @@
     "sync:scouts": "tsx scripts/sync-scout-names.ts",
     "sync:scouts:dry-run": "tsx scripts/sync-scout-names.ts --dry-run",
     "cleanup:scouts": "tsx scripts/cleanup-orphaned-scouts.ts",
-    "cleanup:scouts:dry-run": "tsx scripts/cleanup-orphaned-scouts.ts --dry-run"
+    "cleanup:scouts:dry-run": "tsx scripts/cleanup-orphaned-scouts.ts --dry-run",
+    "migrate:corrections": "tsx scripts/migrate-corrections-to-table.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.32.2",

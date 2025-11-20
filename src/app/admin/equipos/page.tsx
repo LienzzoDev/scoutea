@@ -9,6 +9,7 @@ import TeamTable from "@/components/team/TeamTable"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingPage } from "@/components/ui/loading-spinner"
+import { EditableCellProvider } from "@/contexts/EditableCellContext"
 import { useInfiniteTeamsScroll } from '@/hooks/admin/useInfiniteTeamsScroll'
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 import type { Team } from "@/hooks/team/useTeams"
@@ -84,11 +85,6 @@ export default function EquiposPage() {
       key: 'owner_club_country',
       label: 'País Club Propietario',
       getValue: (team: Team) => team.owner_club_country,
-    },
-    {
-      key: 'pre_competition',
-      label: 'Pre Competición',
-      getValue: (team: Team) => team.pre_competition,
     },
     {
       key: 'competition',
@@ -310,7 +306,7 @@ export default function EquiposPage() {
           <p className='text-lg text-slate-400'>No se encontraron equipos</p>
         </div>
       ) : (
-        <>
+        <EditableCellProvider>
           {/* Team Table */}
           <TeamTable
             teams={sortedTeams}
@@ -343,7 +339,7 @@ export default function EquiposPage() {
               <p className='text-slate-500 text-sm'>✓ Todos los equipos cargados</p>
             )}
           </div>
-        </>
+        </EditableCellProvider>
       )}
 
       {/* Modal de confirmación de eliminación */}

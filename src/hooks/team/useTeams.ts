@@ -25,6 +25,7 @@ export interface Team {
   stadium?: string | null;
   website_url?: string | null;
   logo_url?: string | null;
+  admin_notes?: string | null;
 }
 
 export const useTeams = () => {

@@ -180,7 +180,11 @@ export const PlayerCreateSchema = z.object({
   // 🔗 ENLACES (OPCIONAL)
   url_trfm: urlSchema.optional(),
   url_instagram: urlSchema.optional(),
-  video: urlSchema.optional()
+  video: urlSchema.optional(),
+
+  // 📝 NOTAS Y ORGANIZACIÓN (OPCIONAL)
+  admin_notes: z.string().max(5000).optional(),
+  player_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'El color debe ser un código hexadecimal válido (ej: #FF5733)').optional()
 }).strict() // No permitir campos adicionales
 
 /**

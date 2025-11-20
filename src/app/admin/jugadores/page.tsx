@@ -12,6 +12,7 @@ import ImportStatsButton from '@/components/admin/ImportStatsButton'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { LoadingPage } from '@/components/ui/loading-spinner'
+import { EditableCellProvider } from '@/contexts/EditableCellContext'
 import { useInfinitePlayersScroll } from '@/hooks/admin/useInfinitePlayersScroll'
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 
@@ -19,200 +20,49 @@ export default function JugadoresPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
   const _router = useRouter()
 
-  const [selectedColumns, setSelectedColumns] = useState<string[]>(() => {
+  // Columnas ocultas - por defecto ninguna (se muestran todas)
+  const [hiddenColumns, setHiddenColumns] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('admin-player-columns')
+      const saved = localStorage.getItem('admin-player-hidden-columns')
       if (saved) {
         try {
           return JSON.parse(saved)
         } catch (e) {
-          console.error('Error parsing saved columns:', e)
+          console.error('Error parsing saved hidden columns:', e)
         }
       }
     }
-    return [
-      'id_player',
-      'wyscout_id_1',
-      'wyscout_id_2',
-      'wyscout_name_1',
-      'wyscout_name_2',
-      'id_fmi',
-      'complete_player_name',
-      'date_of_birth',
-      'correct_date_of_birth',
-      'age',
-      'age_value',
-      'age_value_percent',
-      'age_coeff',
-      'height',
-      'correct_height',
-      'foot',
-      'correct_foot',
-      'position_player',
-      'correct_position_player',
-      'position_value',
-      'position_value_percent',
-      'nationality_1',
-      'correct_nationality_1',
-      'nationality_value',
-      'nationality_value_percent',
-      'nationality_2',
-      'correct_nationality_2',
-      'national_tier',
-      'rename_national_tier',
-      'correct_national_tier',
-      'pre_team',
-      'team_name',
-      'correct_team_name',
-      'team_country',
-      'team_elo',
-      'team_level',
-      'team_level_value',
-      'team_level_value_percent',
-      'team_competition',
-      'competition_country',
-      'team_competition_value',
-      'team_competition_value_percent',
-      'competition_tier',
-      'competition_confederation',
-      'competition_elo',
-      'competition_level',
-      'competition_level_value',
-      'competition_level_value_percent',
-      'owner_club',
-      'owner_club_country',
-      'owner_club_value',
-      'owner_club_value_percent',
-      'pre_team_loan_from',
-      'team_loan_from',
-      'correct_team_loan_from',
-      'on_loan',
-      'existing_club',
-      'agency',
-      'correct_agency',
-      'contract_end',
-      'correct_contract_end',
-      'player_rating',
-      'player_rating_norm',
-      'player_trfm_value',
-      'player_trfm_value_norm',
-      'player_elo',
-      'player_level',
-      'player_ranking',
-      'stats_evo_3m',
-      'total_fmi_pts_norm',
-      'community_potential',
-      'photo_coverage',
-      'video',
-      'url_trfm_advisor',
-      'url_trfm',
-      'url_secondary',
-      'url_instagram'
-    ]
+    return [] // Por defecto, ninguna columna está oculta (se muestran todas)
   })
 
-  // Guardar en localStorage cuando cambien las columnas
+  // Guardar en localStorage cuando cambien las columnas ocultas
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('admin-player-columns', JSON.stringify(selectedColumns))
+      localStorage.setItem('admin-player-hidden-columns', JSON.stringify(hiddenColumns))
     }
-  }, [selectedColumns])
+  }, [hiddenColumns])
 
   const handleColumnToggle = (columnKey: string) => {
-    setSelectedColumns(prev => {
+    setHiddenColumns(prev => {
       if (prev.includes(columnKey)) {
+        // Si está oculta, la mostramos (la quitamos de hiddenColumns)
         return prev.filter(key => key !== columnKey)
       } else {
+        // Si está visible, la ocultamos (la agregamos a hiddenColumns)
         return [...prev, columnKey]
       }
     })
   }
 
   const handleSelectAll = () => {
-    // Seleccionar todas las columnas disponibles
-    setSelectedColumns([
-      'id_player',
-      'wyscout_id_1',
-      'wyscout_id_2',
-      'wyscout_name_1',
-      'wyscout_name_2',
-      'id_fmi',
-      'complete_player_name',
-      'date_of_birth',
-      'correct_date_of_birth',
-      'age',
-      'age_value',
-      'age_value_percent',
-      'age_coeff',
-      'height',
-      'correct_height',
-      'foot',
-      'correct_foot',
-      'position_player',
-      'correct_position_player',
-      'position_value',
-      'position_value_percent',
-      'nationality_1',
-      'correct_nationality_1',
-      'nationality_value',
-      'nationality_value_percent',
-      'nationality_2',
-      'correct_nationality_2',
-      'national_tier',
-      'rename_national_tier',
-      'correct_national_tier',
-      'pre_team',
-      'team_name',
-      'correct_team_name',
-      'team_country',
-      'team_elo',
-      'team_level',
-      'team_level_value',
-      'team_level_value_percent',
-      'team_competition',
-      'competition_country',
-      'team_competition_value',
-      'team_competition_value_percent',
-      'competition_tier',
-      'competition_confederation',
-      'competition_elo',
-      'competition_level',
-      'competition_level_value',
-      'competition_level_value_percent',
-      'owner_club',
-      'owner_club_country',
-      'owner_club_value',
-      'owner_club_value_percent',
-      'pre_team_loan_from',
-      'team_loan_from',
-      'correct_team_loan_from',
-      'on_loan',
-      'existing_club',
-      'agency',
-      'correct_agency',
-      'contract_end',
-      'correct_contract_end',
-      'player_rating',
-      'player_rating_norm',
-      'player_trfm_value',
-      'player_trfm_value_norm',
-      'player_elo',
-      'player_level',
-      'player_ranking',
-      'stats_evo_3m',
-      'total_fmi_pts_norm',
-      'community_potential',
-      'photo_coverage',
-      'video',
-      'url_trfm_advisor',
-      'url_trfm',
-      'url_secondary',
-      'url_instagram'
-    ])
+    // Mostrar todas (ninguna oculta)
+    setHiddenColumns([])
   }
 
   const handleDeselectAll = () => {
-    setSelectedColumns([])
+    // Ocultar todas (todas ocultas) - aunque esto no tiene mucho sentido
+    // Por ahora dejamos que oculte todas excepto las mínimas requeridas
+    setHiddenColumns([])
   }
 
   // Estado para búsqueda
@@ -375,7 +225,7 @@ export default function JugadoresPage() {
       )}
 
       <AdminColumnSelector
-        selectedColumns={selectedColumns}
+        hiddenColumns={hiddenColumns}
         onColumnToggle={handleColumnToggle}
         onSelectAll={handleSelectAll}
         onDeselectAll={handleDeselectAll}
@@ -395,11 +245,11 @@ export default function JugadoresPage() {
           <p className='text-lg text-slate-400'>No se encontraron jugadores</p>
         </div>
       ) : (
-        <>
+        <EditableCellProvider>
           <div className='mb-4'>
             <AdminPlayerTable
               players={filteredPlayers as any}
-              selectedColumns={selectedColumns}
+              hiddenColumns={hiddenColumns}
             />
           </div>
 
@@ -422,7 +272,7 @@ export default function JugadoresPage() {
               <p className='text-slate-500 text-sm'>✓ Todos los jugadores cargados ({totalCount})</p>
             )}
           </div>
-        </>
+        </EditableCellProvider>
       )}
     </main>
   )

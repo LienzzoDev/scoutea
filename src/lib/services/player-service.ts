@@ -101,6 +101,7 @@ export class PlayerService {
       linkedin_profile: null,
       telegram_profile: null,
       instagram_profile: player.url_instagram, // This exists
+      admin_notes: player.admin_notes,
       createdAt: player.createdAt,
       updatedAt: player.updatedAt
     };
@@ -312,19 +313,24 @@ export class PlayerService {
 
   static async updatePlayer(id: string, data: Partial<Player>): Promise<Player> {
     try {
+      // Clean up the data object to only include defined fields
+      const updateData: any = {}
+
+      // Add all defined fields from data to updateData
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined) {
+          updateData[key] = value
+        }
+      })
+
+      // Always update the timestamp
+      updateData.updatedAt = new Date()
+
       const updatedPlayer = await prisma.jugador.update({
         where: {
           id_player: id
         },
-        data: {
-          player_name: data.player_name,
-          position_player: data.position_player,
-          team_name: data.team_name,
-          age: data.age,
-          nationality_1: data.nationality_1,
-          player_rating: data.player_rating,
-          updatedAt: new Date()
-        }
+        data: updateData
       });
 
       return {

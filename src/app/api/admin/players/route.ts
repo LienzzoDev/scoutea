@@ -187,6 +187,10 @@ export async function GET(request: NextRequest) {
       url_secondary: true,
       url_instagram: true,
 
+      // Notas administrativas
+      admin_notes: true,
+      player_color: true,
+
       // Timestamps
       createdAt: true,
       updatedAt: true

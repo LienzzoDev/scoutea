@@ -91,6 +91,48 @@ export async function PUT(
   }
 }
 
+// PATCH /api/teams/[id] - Actualización parcial de equipo
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const context = extractErrorContext(request)
+    const { userId } = await auth()
+
+    // Get params
+    const { id } = await params
+
+    // Validaciones
+    requireAuth(userId, context)
+    requireParam(id, 'id', context)
+
+    const body = await request.json()
+
+    // Construir objeto de actualización dinámicamente
+    const updateData: any = {}
+    Object.entries(body).forEach(([key, value]) => {
+      if (value !== undefined) {
+        updateData[key] = value
+      }
+    })
+
+    // Siempre actualizar timestamp
+    updateData.updatedAt = new Date()
+
+    const team = await prisma.equipo.update({
+      where: { id_team: id },
+      data: updateData
+    })
+
+    console.log('✅ Campo de equipo actualizado:', id, Object.keys(body))
+    return NextResponse.json(team)
+
+  } catch (_error) {
+    return handleAPIError(error, extractErrorContext(request))
+  }
+}
+
 // DELETE /api/teams/[id] - Eliminar un equipo
 export async function DELETE(
   request: NextRequest,

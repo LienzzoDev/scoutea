@@ -94,8 +94,7 @@ export async function POST(request: Request) {
         position_player: true,
         agency: true,
         contract_end: true,
-        player_trfm_value: true,
-        photo_coverage: true
+        player_trfm_value: true
       },
       take: TEST_CONFIG.MAX_PLAYERS,
       orderBy: {

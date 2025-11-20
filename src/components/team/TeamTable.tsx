@@ -1,11 +1,21 @@
 "use client";
 
-import { ArrowUpDown, ArrowUp, ArrowDown, Edit, Trash2 } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
 
+import EditableCell from "@/components/admin/EditableCell";
 import { Button } from "@/components/ui/button";
 import TeamBadge from "@/components/ui/team-badge";
+
+// Campos NO editables (campos calculados y IDs del sistema)
+const NON_EDITABLE_FIELDS = new Set([
+  'id_team',
+  'createdAt',
+  'updatedAt',
+  'team_trfm_value_norm',  // Normalización de team_trfm_value
+  'team_rating_norm',      // Normalización de team_rating
+]);
 
 // Campos CALCULADOS automáticamente mediante fórmulas
 const CALCULATED_FIELDS = new Set([
@@ -55,6 +65,7 @@ interface Team {
   stadium?: string | null;
   website_url?: string | null;
   logo_url?: string | null;
+  admin_notes?: string | null;
 }
 
 interface Category {
@@ -90,6 +101,83 @@ export default function TeamTable({
   const router = useRouter();
   const headerScrollRef = useRef<HTMLDivElement>(null);
   const rowScrollRefs = useRef<HTMLDivElement[]>([]);
+
+  // Función para calcular el ancho de columna basado en el contenido
+  const calculateColumnWidth = (category: Category): number => {
+    const MIN_WIDTH = 140;
+    const PADDING = 32; // 16px padding on each side
+    const CHAR_WIDTH = 8; // Aproximadamente 8px por carácter
+
+    // Calcular ancho del header
+    let maxWidth = category.label.length * CHAR_WIDTH + PADDING;
+
+    // Calcular ancho del contenido más largo
+    teams.forEach(team => {
+      const value = category.getValue(team);
+      let formattedValue = category.format ? category.format(value) : value;
+
+      if (typeof formattedValue === 'object') {
+        formattedValue = JSON.stringify(formattedValue);
+      } else if (formattedValue === null || formattedValue === undefined) {
+        formattedValue = "N/A";
+      } else {
+        formattedValue = String(formattedValue);
+      }
+
+      const contentWidth = formattedValue.length * CHAR_WIDTH + PADDING;
+      maxWidth = Math.max(maxWidth, contentWidth);
+    });
+
+    return Math.max(MIN_WIDTH, Math.min(maxWidth, 400)); // Max 400px
+  };
+
+  // Función para determinar el tipo de campo
+  const getFieldType = (fieldName: string): 'text' | 'number' | 'boolean' | 'url' | 'date' => {
+    // Campos de URL
+    if (fieldName.startsWith('url_') || fieldName === 'website_url') {
+      return 'url';
+    }
+
+    // Campos numéricos
+    if (fieldName.includes('value') || fieldName.includes('elo') ||
+        fieldName.includes('rating') || fieldName.includes('norm') ||
+        fieldName === 'founded_year') {
+      return 'number';
+    }
+
+    // Por defecto, texto
+    return 'text';
+  };
+
+  // Función para guardar cambios en campos editables
+  const handleSaveField = async (
+    teamId: string,
+    fieldName: string,
+    value: string | number | boolean
+  ): Promise<boolean> => {
+    try {
+      const response = await fetch(`/api/teams/${teamId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          [fieldName]: value
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al actualizar el campo');
+      }
+
+      // Recargar la página para mostrar los cambios
+      window.location.reload();
+      return true;
+    } catch (error) {
+      console.error('Error updating team field:', error);
+      return false;
+    }
+  };
 
   // Función para manejar scroll sincronizado
   const handleScroll = (scrollLeft: number) => {
@@ -165,6 +253,23 @@ export default function TeamTable({
           </div>
         </div>
 
+        {/* Columna fija - Notas */}
+        <div
+          className={`w-60 p-4 border-r flex-shrink-0 ${
+            darkMode
+              ? 'border-slate-700'
+              : 'border-[#e7e7e7]'
+          }`}
+        >
+          <div className="flex items-center gap-1">
+            <h4 className={`font-semibold text-sm ${
+              darkMode ? 'text-slate-300' : 'text-[#6d6d6d]'
+            }`}>
+              Notas
+            </h4>
+          </div>
+        </div>
+
         {/* Headers scrolleables */}
         <div
           ref={headerScrollRef}
@@ -175,10 +280,7 @@ export default function TeamTable({
           <div
             className="flex items-stretch"
             style={{
-              minWidth: `${Math.max(
-                selectedCategories.length * 140,
-                100
-              )}px`,
+              minWidth: `${selectedCategories.reduce((sum, cat) => sum + calculateColumnWidth(cat), 0)}px`,
             }}
           >
             {selectedCategories.map((category, index, array) => {
@@ -194,6 +296,8 @@ export default function TeamTable({
                   : <ArrowDown className={`w-3 h-3 ${iconColor}`} />;
               };
 
+              const columnWidth = calculateColumnWidth(category);
+
               return (
                 <div
                   key={category.key}
@@ -203,11 +307,7 @@ export default function TeamTable({
                       : `border-[#e7e7e7] hover:bg-gray-50 ${isActive ? 'bg-gray-50' : ''}`
                   }`}
                   style={{
-                    minWidth: "140px",
-                    width:
-                      array.length <= 4
-                        ? `${100 / array.length}%`
-                        : "140px",
+                    width: `${columnWidth}px`,
                   }}
                   onClick={() => onSort?.(category.key)}
                 >
@@ -256,33 +356,30 @@ export default function TeamTable({
         {teams.map((team, index) => (
           <div
             key={team.id_team}
-            className={`flex items-stretch cursor-pointer transition-colors ${
+            className={`flex items-stretch transition-colors ${
               darkMode ? 'hover:bg-slate-700/30' : 'hover:bg-gray-50'
             }`}
-            onClick={() => router.push(`/admin/equipos/${team.id_team}`)}
           >
             {/* Columna fija - Team Info */}
             <div className={`w-80 p-4 border-r flex-shrink-0 ${
               darkMode ? 'border-slate-700' : 'border-[#e7e7e7]'
             }`}>
-              <div className="flex items-center gap-4">
-                <TeamBadge teamName={team.team_name} size="lg" />
-                <div>
-                  <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-[#000000]'}`}>
-                    {team.team_name}
-                  </h3>
-                  <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-[#6d6d6d]'}`}>
-                    {team.correct_team_name || team.team_name}
-                  </p>
-                  {team.short_name && (
-                    <p className={`text-xs font-medium mt-1 ${
-                      darkMode ? 'text-[#FF5733]' : 'text-[#8c1a10]'
-                    }`}>
-                      {team.short_name}
-                    </p>
-                  )}
-                </div>
-              </div>
+              <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-[#000000]'}`}>
+                {team.team_name}
+              </h3>
+            </div>
+
+            {/* Columna fija - Notas (Editable) */}
+            <div className={`w-60 p-4 border-r flex-shrink-0 ${
+              darkMode ? 'border-slate-700' : 'border-[#e7e7e7]'
+            }`}>
+              <EditableCell
+                value={team.admin_notes ?? null}
+                playerId={team.id_team}
+                fieldName="admin_notes"
+                onSave={handleSaveField}
+                type="text"
+              />
             </div>
 
             {/* Valores scrolleables */}
@@ -300,14 +397,15 @@ export default function TeamTable({
               <div
                 className="flex items-stretch"
                 style={{
-                  minWidth: `${Math.max(
-                    selectedCategories.length * 140,
-                    100
-                  )}px`,
+                  minWidth: `${selectedCategories.reduce((sum, cat) => sum + calculateColumnWidth(cat), 0)}px`,
                 }}
               >
                 {selectedCategories.map((category, catIndex, array) => {
                   const value = category.getValue(team);
+                  const isEditable = !NON_EDITABLE_FIELDS.has(category.key);
+                  const fieldType = getFieldType(category.key);
+                  const columnWidth = calculateColumnWidth(category);
+
                   let formattedValue = category.format
                     ? category.format(value)
                     : value || "N/A";
@@ -328,18 +426,24 @@ export default function TeamTable({
                         darkMode ? 'border-slate-700' : 'border-[#e7e7e7]'
                       }`}
                       style={{
-                        minWidth: "140px",
-                        width:
-                          array.length <= 4
-                            ? `${100 / array.length}%`
-                            : "140px",
+                        width: `${columnWidth}px`,
                       }}
                     >
-                      <p className={`font-medium break-words ${
-                        darkMode ? 'text-white' : 'text-[#000000]'
-                      }`}>
-                        {formattedValue}
-                      </p>
+                      {isEditable ? (
+                        <EditableCell
+                          value={value ?? null}
+                          playerId={team.id_team}
+                          fieldName={category.key}
+                          onSave={handleSaveField}
+                          type={fieldType}
+                        />
+                      ) : (
+                        <p className={`font-medium break-words ${
+                          darkMode ? 'text-white' : 'text-[#000000]'
+                        }`}>
+                          {formattedValue}
+                        </p>
+                      )}
                     </div>
                   );
                 })}
@@ -349,22 +453,8 @@ export default function TeamTable({
             {/* Columna fija - Actions */}
             <div className={`w-24 p-4 text-center border-l flex-shrink-0 ${
               darkMode ? 'border-slate-700' : 'border-[#e7e7e7]'
-            }`}
-            onClick={(e) => e.stopPropagation()}>
+            }`}>
               <div className="flex items-center justify-center gap-2">
-                {onEdit && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`h-8 w-8 ${darkMode ? 'text-slate-400 hover:text-[#FF5733] hover:bg-slate-700' : 'text-slate-600 hover:text-[#8c1a10]'}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEdit(team.id_team);
-                    }}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                )}
                 {onDelete && (
                   <Button
                     variant="ghost"

@@ -74,16 +74,7 @@ export async function scrapePlayerData(url: string): Promise<Record<string, any>
     // Extraer datos usando regex
     const data: Record<string, any> = {}
 
-    // 1. URL del advisor - buscar en info-table después de "Player agent:"
-    const advisorMatch = html.match(/Player agent:[\s\S]*?<a[^>]*href="([^"]+)"[^>]*>/)
-    if (advisorMatch && advisorMatch[1].includes('berater')) {
-      const fullUrl = advisorMatch[1].startsWith('http')
-        ? advisorMatch[1]
-        : `https://www.transfermarkt.es${advisorMatch[1]}`
-      data.url_trfm_advisor = fullUrl
-    }
-
-    // 2. Fecha de nacimiento - buscar en data-header con itemprop="birthDate"
+    // 1. Fecha de nacimiento - buscar en data-header con itemprop="birthDate"
     const birthDateMatch = html.match(/<span itemprop="birthDate"[^>]*>\s*(\d{2}\/\d{2}\/\d{4})/)
     if (birthDateMatch) {
       // Parsear la fecha a formato ISO para Prisma
@@ -93,50 +84,50 @@ export async function scrapePlayerData(url: string): Promise<Record<string, any>
       }
     }
 
-    // 3. Equipo actual - buscar en data-header__club-info el link con title
+    // 2. Equipo actual - buscar en data-header__club-info el link con title
     const teamMatch = html.match(/data-header__club-info[\s\S]*?<a[^>]*title="([^"]+)"[^>]*href="[^"]*\/startseite\/verein/)
     if (teamMatch) {
       data.team_name = teamMatch[1].trim()
     }
 
-    // 4. Posición - buscar en data-header después de "Position:"
+    // 3. Posición - buscar en data-header después de "Position:"
     const positionMatch = html.match(/<li class="data-header__label">Position:[\s\S]*?<span class="data-header__content">\s*([^<]+?)\s*<\/span>/)
     if (positionMatch) {
       data.position_player = positionMatch[1].trim()
     }
 
-    // 5. Pie - buscar en info-table después de "Foot:"
+    // 4. Pie - buscar en info-table después de "Foot:"
     const footMatch = html.match(/Foot:[\s\S]*?info-table__content--bold[^>]*>([^<]+)</)
     if (footMatch) {
       data.foot = footMatch[1].trim()
     }
 
-    // 6. Altura - buscar en data-header después de "Height:"
+    // 5. Altura - buscar en data-header después de "Height:"
     const heightMatch = html.match(/<li class="data-header__label">Height:[\s\S]*?<span[^>]*itemprop="height"[^>]*>\s*([0-9,]+)\s*m/)
     if (heightMatch) {
       const heightInMeters = parseFloat(heightMatch[1].replace(',', '.'))
       data.height = Math.round(heightInMeters * 100)
     }
 
-    // 7. Nacionalidad 1 - buscar en info-table después de "Citizenship:"
+    // 6. Nacionalidad 1 - buscar en info-table después de "Citizenship:"
     const nat1Match = html.match(/Citizenship:[\s\S]*?info-table__content--bold[^>]*>[\s\S]*?<img[^>]+title="([^"]+)"/)
     if (nat1Match) {
       data.nationality_1 = nat1Match[1].trim()
     }
 
-    // 8. Nacionalidad 2
+    // 7. Nacionalidad 2
     const nat2Match = html.match(/Nacionalidad:<\/span>[\s\S]*?title="[^"]+"[\s\S]*?title="([^"]+)"/)
     if (nat2Match) {
       data.nationality_2 = nat2Match[1].trim()
     }
 
-    // 9. Agencia
+    // 8. Agencia
     const agencyMatch = html.match(/Agente:<\/span>[\s\S]*?<a[^>]*>([^<]+)<\/a>/)
     if (agencyMatch) {
       data.agency = agencyMatch[1].trim()
     }
 
-    // 10. Fin de contrato
+    // 9. Fin de contrato
     const contractMatch = html.match(/Contrato hasta:<\/span>\s*<span[^>]*>([^<]+)<\/span>/)
     if (contractMatch) {
       const contractStr = contractMatch[1].trim()
@@ -146,7 +137,7 @@ export async function scrapePlayerData(url: string): Promise<Record<string, any>
       }
     }
 
-    // 11. Valor de mercado
+    // 10. Valor de mercado
     const valueMatch = html.match(/Valor de mercado:<\/span>\s*<[^>]*>([^<]+)<\//)
     if (valueMatch) {
       data.player_trfm_value = valueMatch[1].trim()

@@ -7,8 +7,9 @@ import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 import { PlayerService } from '@/lib/services/player-service'
-import { 
-  validatePlayerId, 
+import { CorrectionService } from '@/lib/services/correction-service'
+import {
+  validatePlayerId,
   validatePlayerUpdate
 } from '@/lib/validation/player-schema'
 import type { Player } from '@/types/player'
@@ -210,8 +211,11 @@ export async function PUT(
       )
     }
 
+    // 🔧 APLICAR CORRECCIONES AUTOMÁTICAS
+    const correctedData = await CorrectionService.applyPlayerCorrections(validatedData)
+
     // ✏️ ACTUALIZAR JUGADOR
-    const updatedPlayer = await PlayerService.updatePlayer(validatedId, validatedData)
+    const updatedPlayer = await PlayerService.updatePlayer(validatedId, correctedData)
 
     // 📊 LOG DE AUDITORÍA
     console.log('✅ Player updated successfully:', {
@@ -431,8 +435,11 @@ export async function PATCH(
       )
     }
 
+    // 🔧 APLICAR CORRECCIONES AUTOMÁTICAS
+    const correctedData = await CorrectionService.applyPlayerCorrections(requestBody)
+
     // ✏️ ACTUALIZAR JUGADOR (solo los campos proporcionados)
-    const updatedPlayer = await PlayerService.updatePlayer(playerId, requestBody)
+    const updatedPlayer = await PlayerService.updatePlayer(playerId, correctedData)
 
     // 📊 LOG DE AUDITORÍA
     console.log('✅ Player field updated successfully:', {

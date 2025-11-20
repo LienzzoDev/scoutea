@@ -2,6 +2,7 @@
 
 import { Edit2, Check, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { useEditableCell } from "@/contexts/EditableCellContext";
 
 interface EditableCellProps {
   value: string | number | boolean | Date | null;
@@ -18,6 +19,8 @@ export default function EditableCell({
   onSave,
   type = 'text'
 }: EditableCellProps) {
+  const { activeCell, setActiveCell, requestEdit } = useEditableCell();
+  const cellId = `${playerId}-${fieldName}`;
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(() => {
     if (type === 'date' && value) {
@@ -48,6 +51,12 @@ export default function EditableCell({
   }, [isEditing, type]);
 
   const handleEdit = () => {
+    // Solicitar permiso para editar esta celda
+    if (!requestEdit(cellId)) {
+      // Si hay otra celda activa, no permitir editar
+      return;
+    }
+
     if (type === 'date' && value) {
       if (value instanceof Date) {
         setEditValue(value.toISOString().split('T')[0]);
@@ -70,6 +79,7 @@ export default function EditableCell({
     setIsEditing(false);
     setEditValue(value?.toString() || '');
     setError(null);
+    setActiveCell(null); // Liberar la celda activa
   };
 
   const handleSave = async () => {
@@ -105,6 +115,7 @@ export default function EditableCell({
 
       if (success) {
         setIsEditing(false);
+        setActiveCell(null); // Liberar la celda activa
       } else {
         setError('Error al guardar');
       }
@@ -154,7 +165,7 @@ export default function EditableCell({
     // Para campos booleanos, mostrar checkbox
     if (type === 'boolean') {
       return (
-        <div className="flex items-center gap-1 min-w-[100px]">
+        <div className="flex flex-col gap-1 w-full items-center">
           <input
             ref={inputRef}
             type="checkbox"
@@ -163,29 +174,31 @@ export default function EditableCell({
             disabled={isSaving}
             className="w-4 h-4 bg-slate-800 border border-[#FF5733] rounded focus:outline-none focus:ring-1 focus:ring-[#FF5733]"
           />
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="p-1 hover:bg-green-600/20 rounded transition-colors disabled:opacity-50"
-            title="Guardar"
-          >
-            <Check className="h-3 w-3 text-green-500" />
-          </button>
-          <button
-            onClick={handleCancel}
-            disabled={isSaving}
-            className="p-1 hover:bg-red-600/20 rounded transition-colors disabled:opacity-50"
-            title="Cancelar"
-          >
-            <X className="h-3 w-3 text-red-500" />
-          </button>
+          <div className="flex items-center justify-center gap-2">
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="p-1 hover:bg-green-600/20 rounded transition-colors disabled:opacity-50 flex-shrink-0"
+              title="Guardar"
+            >
+              <Check className="h-3 w-3 text-green-500" />
+            </button>
+            <button
+              onClick={handleCancel}
+              disabled={isSaving}
+              className="p-1 hover:bg-red-600/20 rounded transition-colors disabled:opacity-50 flex-shrink-0"
+              title="Cancelar"
+            >
+              <X className="h-3 w-3 text-red-500" />
+            </button>
+          </div>
         </div>
       );
     }
 
     // Para otros tipos, input normal
     return (
-      <div className="flex items-center gap-1 min-w-[150px]">
+      <div className="flex flex-col gap-1 w-full">
         <input
           ref={inputRef}
           type={type === 'date' ? 'date' : type === 'number' ? 'number' : 'text'}
@@ -193,24 +206,26 @@ export default function EditableCell({
           onChange={(e) => setEditValue(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={isSaving}
-          className="flex-1 px-2 py-1 text-xs bg-slate-800 border border-[#FF5733] rounded text-white focus:outline-none focus:ring-1 focus:ring-[#FF5733]"
+          className="w-full px-2 py-1 text-xs bg-slate-800 border border-[#FF5733] rounded text-white focus:outline-none focus:ring-1 focus:ring-[#FF5733]"
         />
-        <button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="p-1 hover:bg-green-600/20 rounded transition-colors disabled:opacity-50"
-          title="Guardar"
-        >
-          <Check className="h-3 w-3 text-green-500" />
-        </button>
-        <button
-          onClick={handleCancel}
-          disabled={isSaving}
-          className="p-1 hover:bg-red-600/20 rounded transition-colors disabled:opacity-50"
-          title="Cancelar"
-        >
-          <X className="h-3 w-3 text-red-500" />
-        </button>
+        <div className="flex items-center justify-center gap-2">
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="p-1 hover:bg-green-600/20 rounded transition-colors disabled:opacity-50 flex-shrink-0"
+            title="Guardar"
+          >
+            <Check className="h-3 w-3 text-green-500" />
+          </button>
+          <button
+            onClick={handleCancel}
+            disabled={isSaving}
+            className="p-1 hover:bg-red-600/20 rounded transition-colors disabled:opacity-50 flex-shrink-0"
+            title="Cancelar"
+          >
+            <X className="h-3 w-3 text-red-500" />
+          </button>
+        </div>
       </div>
     );
   }

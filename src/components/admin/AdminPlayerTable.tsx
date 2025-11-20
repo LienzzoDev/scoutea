@@ -4,13 +4,25 @@ import { ArrowUpDown, ArrowUp, ArrowDown, Edit, ExternalLink } from "lucide-reac
 import { useRouter } from "next/navigation";
 import { useState, useMemo, memo } from "react";
 
+import ColorPickerCell from "@/components/admin/ColorPickerCell";
 import EditableCell from "@/components/admin/EditableCell";
 import { Button } from "@/components/ui/button";
 import type { Player } from "@/types/player";
 
+// Campos importantes que deben ser verificados por duplicados
+const IMPORTANT_DUPLICATE_FIELDS = new Set([
+  'player_name',
+  'complete_player_name',
+  'wyscout_id_1',
+  'wyscout_id_2',
+  'wyscout_name_1',
+  'wyscout_name_2',
+  'id_fmi'
+]);
+
 interface AdminPlayerTableProps {
   players: Player[];
-  selectedColumns: string[];
+  hiddenColumns: string[];
 }
 
 type SortField = keyof Player | null;
@@ -201,6 +213,8 @@ const FACTOR_FIELDS = new Set([
 
 // Definición de todas las columnas (sin player_name que será columna fija)
 const COLUMN_DEFINITIONS = [
+  { key: 'admin_notes', label: 'Notas', width: '250px' },
+  { key: 'player_color', label: 'Color', width: '80px' },
   { key: 'id_player', label: 'ID Player', width: '120px' },
   { key: 'wyscout_id_1', label: 'Wyscout ID 1', width: '120px' },
   { key: 'wyscout_id_2', label: 'Wyscout ID 2', width: '120px' },
@@ -280,15 +294,68 @@ const COLUMN_DEFINITIONS = [
   { key: 'existing_club', label: 'Existing Club', width: '140px' },
 ] as const;
 
-const AdminPlayerTable = memo(function AdminPlayerTable({ players, selectedColumns }: AdminPlayerTableProps) {
+const AdminPlayerTable = memo(function AdminPlayerTable({ players, hiddenColumns }: AdminPlayerTableProps) {
   const router = useRouter();
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
-  // Filtrar columnas para mostrar solo las seleccionadas
+  // Detectar valores duplicados en campos importantes
+  const duplicateValues = useMemo(() => {
+    const duplicates = new Map<string, Set<string | number>>();
+
+    // Inicializar el mapa para cada campo importante
+    IMPORTANT_DUPLICATE_FIELDS.forEach(field => {
+      duplicates.set(field, new Set());
+    });
+
+    // Contar ocurrencias de cada valor en cada campo
+    const valueCounts = new Map<string, Map<string | number, number>>();
+
+    players.forEach(player => {
+      IMPORTANT_DUPLICATE_FIELDS.forEach(field => {
+        const value = player[field as keyof Player];
+
+        // Ignorar valores nulos, undefined o vacíos
+        if (value === null || value === undefined || value === '') return;
+
+        const valueStr = String(value);
+
+        if (!valueCounts.has(field)) {
+          valueCounts.set(field, new Map());
+        }
+
+        const fieldCounts = valueCounts.get(field)!;
+        fieldCounts.set(valueStr, (fieldCounts.get(valueStr) || 0) + 1);
+      });
+    });
+
+    // Identificar valores que aparecen más de una vez
+    valueCounts.forEach((fieldCounts, field) => {
+      fieldCounts.forEach((count, value) => {
+        if (count > 1) {
+          duplicates.get(field)!.add(value);
+        }
+      });
+    });
+
+    return duplicates;
+  }, [players]);
+
+  // Función para verificar si un valor está duplicado
+  const isDuplicate = (fieldName: string, value: unknown): boolean => {
+    if (!IMPORTANT_DUPLICATE_FIELDS.has(fieldName)) return false;
+    if (value === null || value === undefined || value === '') return false;
+
+    const duplicateSet = duplicateValues.get(fieldName);
+    if (!duplicateSet) return false;
+
+    return duplicateSet.has(String(value));
+  };
+
+  // Filtrar columnas para mostrar todas EXCEPTO las ocultas
   const visibleColumns = useMemo(() => {
-    return COLUMN_DEFINITIONS.filter(col => selectedColumns.includes(col.key));
-  }, [selectedColumns]);
+    return COLUMN_DEFINITIONS.filter(col => !hiddenColumns.includes(col.key));
+  }, [hiddenColumns]);
 
   // Función para guardar cambios en campos editables
   const handleSaveField = async (
@@ -499,13 +566,15 @@ const AdminPlayerTable = memo(function AdminPlayerTable({ players, selectedColum
               >
                 {/* Player Name - Fixed Left Column (Editable) */}
                 <td className="p-4 border-r border-slate-700 sticky left-0 bg-[#131921] z-10 min-w-[200px]">
-                  <EditableCell
-                    value={player.player_name}
-                    playerId={player.id_player}
-                    fieldName="player_name"
-                    onSave={handleSaveField}
-                    type="text"
-                  />
+                  <div className={isDuplicate('player_name', player.player_name) ? 'font-bold' : ''}>
+                    <EditableCell
+                      value={player.player_name}
+                      playerId={player.id_player}
+                      fieldName="player_name"
+                      onSave={handleSaveField}
+                      type="text"
+                    />
+                  </div>
                 </td>
 
                 {/* Scrollable Data Columns */}
@@ -514,6 +583,7 @@ const AdminPlayerTable = memo(function AdminPlayerTable({ players, selectedColum
                   const formattedValue = formatValue(value, col.key);
                   const isEditable = !NON_EDITABLE_FIELDS.has(col.key);
                   const fieldType = getFieldType(col.key);
+                  const hasDuplicate = isDuplicate(col.key, value);
 
                   return (
                     <td
@@ -521,30 +591,38 @@ const AdminPlayerTable = memo(function AdminPlayerTable({ players, selectedColum
                       className="p-4 border-r border-slate-700"
                       style={{ minWidth: col.width }}
                     >
-                      {isEditable ? (
-                        <EditableCell
-                          value={value}
-                          playerId={player.id_player}
-                          fieldName={col.key}
-                          onSave={handleSaveField}
-                          type={fieldType}
-                        />
-                      ) : fieldType === 'url' && value ? (
-                        <a
-                          href={String(value)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[#FF5733] hover:underline flex items-center gap-1"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          Link
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      ) : (
-                        <span className="text-sm text-white whitespace-nowrap">
-                          {formattedValue}
-                        </span>
-                      )}
+                      <div className={hasDuplicate ? 'font-bold' : ''}>
+                        {col.key === 'player_color' ? (
+                          <ColorPickerCell
+                            value={value as string || null}
+                            playerId={player.id_player}
+                            onSave={handleSaveField}
+                          />
+                        ) : isEditable ? (
+                          <EditableCell
+                            value={value ?? null}
+                            playerId={player.id_player}
+                            fieldName={col.key}
+                            onSave={handleSaveField}
+                            type={fieldType}
+                          />
+                        ) : fieldType === 'url' && value ? (
+                          <a
+                            href={String(value)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#FF5733] hover:underline flex items-center gap-1"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Link
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        ) : (
+                          <span className="text-sm text-white whitespace-nowrap">
+                            {formattedValue}
+                          </span>
+                        )}
+                      </div>
                     </td>
                   );
                 })}
@@ -597,6 +675,10 @@ const AdminPlayerTable = memo(function AdminPlayerTable({ players, selectedColum
             <div className="w-2 h-2 bg-gradient-to-br from-emerald-400 to-green-500 rounded-sm shadow-sm" />
             <span>Campo factor (afecta otros campos)</span>
           </div>
+          <div className="flex items-center gap-1.5">
+            <span className="font-bold text-white">Negrita</span>
+            <span>- Valor duplicado en múltiples jugadores</span>
+          </div>
         </div>
       </div>
     </div>
@@ -608,11 +690,11 @@ const arePropsEqual = (
   prevProps: AdminPlayerTableProps,
   nextProps: AdminPlayerTableProps
 ) => {
-  // Comparar si las columnas seleccionadas son las mismas
-  if (prevProps.selectedColumns.length !== nextProps.selectedColumns.length) {
+  // Comparar si las columnas ocultas son las mismas
+  if (prevProps.hiddenColumns.length !== nextProps.hiddenColumns.length) {
     return false
   }
-  if (!prevProps.selectedColumns.every((col, i) => col === nextProps.selectedColumns[i])) {
+  if (!prevProps.hiddenColumns.every((col, i) => col === nextProps.hiddenColumns[i])) {
     return false
   }
 

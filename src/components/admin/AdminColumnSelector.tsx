@@ -16,7 +16,7 @@ interface ColumnGroup {
 }
 
 interface AdminColumnSelectorProps {
-  selectedColumns: string[]
+  hiddenColumns: string[]
   onColumnToggle: (columnKey: string) => void
   onSelectAll?: () => void
   onDeselectAll?: () => void
@@ -160,7 +160,7 @@ export const ADMIN_COLUMN_GROUPS: ColumnGroup[] = [
 ]
 
 export default function AdminColumnSelector({
-  selectedColumns,
+  hiddenColumns,
   onColumnToggle,
   onSelectAll,
   onDeselectAll,
@@ -169,23 +169,26 @@ export default function AdminColumnSelector({
   const [showSelector, setShowSelector] = useState(false)
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
 
-  // Obtener columnas seleccionadas con su label
-  const getSelectedColumnsData = () => {
-    const allColumns = ADMIN_COLUMN_GROUPS.flatMap(group => group.columns)
-    return selectedColumns
-      .map(key => allColumns.find(col => col.key === key))
-      .filter(Boolean) as Column[]
-  }
-
   // Obtener el total de columnas disponibles
   const totalColumns = ADMIN_COLUMN_GROUPS.flatMap(group => group.columns).length
-  const allSelected = selectedColumns.length === totalColumns
+
+  // Calcular columnas visibles (todas menos las ocultas)
+  const visibleColumnsCount = totalColumns - hiddenColumns.length
+  const allSelected = hiddenColumns.length === 0
+
+  // Obtener columnas visibles con su label
+  const getVisibleColumnsData = () => {
+    const allColumns = ADMIN_COLUMN_GROUPS.flatMap(group => group.columns)
+    return allColumns.filter(col => !hiddenColumns.includes(col.key))
+  }
 
   const handleColumnToggle = (columnKey: string) => {
-    const isSelected = selectedColumns.includes(columnKey)
+    const isHidden = hiddenColumns.includes(columnKey)
+    const currentVisibleCount = totalColumns - hiddenColumns.length
 
-    if (isSelected && selectedColumns.length <= minColumns) {
-      return // No permitir deseleccionar si estamos en el mínimo
+    // Si la columna está visible y estamos en el mínimo, no permitir ocultarla
+    if (!isHidden && currentVisibleCount <= minColumns) {
+      return
     }
 
     onColumnToggle(columnKey)
@@ -206,7 +209,7 @@ export default function AdminColumnSelector({
           <Settings className="w-4 h-4 text-[#FF5733]" />
           <span>Customize Display</span>
           <span className="text-xs bg-[#FF5733] text-white px-2 py-0.5 rounded-full font-semibold">
-            {selectedColumns.length}
+            {visibleColumnsCount}
           </span>
           <ChevronDown className="w-4 h-4" />
         </Button>
@@ -222,7 +225,7 @@ export default function AdminColumnSelector({
           <Settings className="w-5 h-5 text-[#FF5733]" />
           <h3 className="font-semibold text-white">Customize Table Columns</h3>
           <span className="text-sm text-slate-400">
-            ({selectedColumns.length} selected)
+            ({visibleColumnsCount} visible)
           </span>
         </div>
         <Button
@@ -235,9 +238,9 @@ export default function AdminColumnSelector({
         </Button>
       </div>
 
-      {/* Columnas seleccionadas actualmente */}
+      {/* Columnas visibles actualmente */}
       <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin' }}>
-        {getSelectedColumnsData().map((column) => (
+        {getVisibleColumnsData().map((column) => (
           <div
             key={column.key}
             className="flex items-center gap-2 bg-[#FF5733] text-white px-3 py-1 rounded-full text-sm whitespace-nowrap"
@@ -246,7 +249,7 @@ export default function AdminColumnSelector({
             <button
               onClick={() => handleColumnToggle(column.key)}
               className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
-              disabled={selectedColumns.length <= minColumns}
+              disabled={visibleColumnsCount <= minColumns}
             >
               <X className="w-3 h-3" />
             </button>
@@ -273,7 +276,7 @@ export default function AdminColumnSelector({
             <Button
               size="sm"
               onClick={onDeselectAll}
-              disabled={selectedColumns.length === 0}
+              disabled={hiddenColumns.length === totalColumns}
               className="bg-slate-800 border-2 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white hover:border-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               <X className="w-3 h-3 mr-1" />
@@ -311,26 +314,26 @@ export default function AdminColumnSelector({
                 {ADMIN_COLUMN_GROUPS
                   .find(g => g.groupName === expandedGroup)!
                   .columns.map((column) => {
-                    const isSelected = selectedColumns.includes(column.key)
-                    const canDeselect = isSelected && selectedColumns.length > minColumns
+                    const isVisible = !hiddenColumns.includes(column.key)
+                    const canHide = isVisible && visibleColumnsCount > minColumns
 
                     return (
                       <button
                         key={column.key}
                         onClick={() => handleColumnToggle(column.key)}
-                        disabled={isSelected && !canDeselect}
+                        disabled={isVisible && !canHide}
                         className={`flex items-center gap-2 p-2 rounded-lg border-2 transition-all text-xs font-medium ${
-                          isSelected
+                          isVisible
                             ? 'bg-[#FF5733] text-white border-[#FF5733] shadow-sm'
                             : 'bg-[#131921] text-slate-300 border-slate-700 hover:border-[#FF5733] hover:text-white hover:bg-slate-800'
-                        } ${isSelected && !canDeselect ? 'opacity-75 cursor-not-allowed' : 'cursor-pointer'}`}
+                        } ${isVisible && !canHide ? 'opacity-75 cursor-not-allowed' : 'cursor-pointer'}`}
                       >
                         <div className={`w-3 h-3 rounded border-2 flex items-center justify-center flex-shrink-0 ${
-                          isSelected
+                          isVisible
                             ? 'bg-white border-white'
                             : 'border-current'
                         }`}>
-                          {isSelected && <Check className="w-2 h-2 text-[#FF5733]" />}
+                          {isVisible && <Check className="w-2 h-2 text-[#FF5733]" />}
                         </div>
                         <span className="truncate text-left">{column.label}</span>
                       </button>
@@ -341,9 +344,9 @@ export default function AdminColumnSelector({
           )}
         </div>
 
-        {selectedColumns.length > 10 && (
+        {visibleColumnsCount > 10 && (
           <p className="text-xs text-blue-400 mt-4">
-            💡 Tip: With many columns selected, use horizontal scroll to navigate the table.
+            💡 Tip: With many columns visible, use horizontal scroll to navigate the table.
           </p>
         )}
       </div>
