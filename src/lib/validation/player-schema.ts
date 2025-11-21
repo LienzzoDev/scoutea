@@ -156,7 +156,16 @@ export const PlayerCreateSchema = z.object({
   age: ageSchema.optional(),
   nationality_1: nationalitySchema.optional(),
   nationality_2: nationalitySchema.optional(),
-  
+
+  // 🔗 IDs DE PLATAFORMAS EXTERNAS (OPCIONAL)
+  wyscout_id_1: z.string().max(50).optional(),
+  wyscout_id_2: z.string().max(50).optional(),
+  wyscout_name_1: z.string().max(500).optional(),
+  wyscout_name_2: z.string().max(500).optional(),
+  wyscout_notes: z.string().max(500).optional(),
+  fmi_notes: z.string().max(500).optional(),
+  id_fmi: z.string().max(50).optional(),
+
   // 🏃‍♂️ ATRIBUTOS FÍSICOS (OPCIONAL)
   height: heightSchema.optional(),
   foot: footSchema.optional(),

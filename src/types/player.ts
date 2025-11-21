@@ -1,11 +1,13 @@
 export interface Player {
   id: string;
-  id_player: string;
+  id_player: number;
   player_name: string;
   wyscout_id_1?: string | null;
   wyscout_id_2?: string | null;
   wyscout_name_1?: string | null;
   wyscout_name_2?: string | null;
+  wyscout_notes?: string | null;
+  fmi_notes?: string | null;
   id_fmi?: string | null;
   player_rating?: number | null;
   photo_coverage?: string | null;

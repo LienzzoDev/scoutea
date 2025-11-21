@@ -9,7 +9,7 @@
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll'
 
 interface Player {
-  id_player: string
+  id_player: number
   player_name: string
   [key: string]: unknown
 }
@@ -51,7 +51,7 @@ export function useInfinitePlayersScroll({
     observerTarget
   } = useInfiniteScroll<Player, UseInfinitePlayersScrollParams>({
     apiEndpoint: '/api/admin/players',
-    getItemId: (player) => player.id_player,
+    getItemId: (player) => String(player.id_player), // Convertir número a string para el hook
     filters: { search, nationality, position, team },
     limit,
     rootMargin: '100px' // Empezar a cargar 100px antes de llegar al final

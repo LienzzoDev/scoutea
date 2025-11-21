@@ -96,6 +96,8 @@ export async function GET(request: NextRequest) {
       wyscout_id_2: true,
       wyscout_name_1: true,
       wyscout_name_2: true,
+      wyscout_notes: true,
+      fmi_notes: true,
       id_fmi: true,
       complete_player_name: true,
 
@@ -202,7 +204,7 @@ export async function GET(request: NextRequest) {
       take: limit + 1, // Tomar uno extra para saber si hay más
       ...(cursor ? {
         cursor: {
-          id_player: cursor
+          id_player: parseInt(cursor, 10) // Convertir cursor a número
         },
         skip: 1 // Saltar el cursor actual
       } : {}),

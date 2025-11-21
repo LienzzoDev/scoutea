@@ -6,9 +6,9 @@ import { useEditableCell } from "@/contexts/EditableCellContext";
 
 interface EditableCellProps {
   value: string | number | boolean | Date | null;
-  playerId: string;
+  playerId: number;
   fieldName: string;
-  onSave: (playerId: string, fieldName: string, value: string | number | boolean) => Promise<boolean>;
+  onSave: (playerId: number, fieldName: string, value: string | number | boolean) => Promise<boolean>;
   type?: 'text' | 'number' | 'boolean' | 'url' | 'date';
 }
 

@@ -45,7 +45,7 @@ model Usuario {
 }
 
 model Jugador {
-  id_player                       String              @id @default(cuid())
+  id_player                       Int                 @id @default(autoincrement())
   old_id                          String?             // ID original del Excel para mantener orden de importación
   player_name                     String
   complete_player_name            String?
@@ -59,6 +59,8 @@ model Jugador {
   wyscout_name_1                  String?
   wyscout_id_2                    String?
   wyscout_name_2                  String?
+  wyscout_notes                   String?             // Notas de Wyscout (independiente)
+  fmi_notes                       String?             // Notas de FM Inside (independiente)
   id_fmi                          String?
   position_player                 String?
   correct_position_player         String?
@@ -319,7 +321,7 @@ model Reporte {
   scout_id                    String?
   report_date                 DateTime?
   report_type                 String?
-  id_player                   String?   // Foreign key - toda la info del jugador viene de aquí
+  id_player                   Int?      // Foreign key - toda la info del jugador viene de aquí
   report_format               String?
   form_url_report             String?
   form_url_video              String?
@@ -532,7 +534,7 @@ model Scout {
 
 model RadarMetrics {
   id                String   @id @default(cuid())
-  playerId          String
+  playerId          Int
   category          String
   playerValue       Float
   percentile        Float?
@@ -559,7 +561,7 @@ model RadarMetrics {
 
 model DataPopulationLog {
   id               String   @id @default(cuid())
-  playerId         String
+  playerId         Int
   tableName        String
   fieldName        String
   originalValue    String?
@@ -578,7 +580,7 @@ model DataPopulationLog {
 model BeeswarmData {
   id          String   @id @default(cuid())
   metric      String
-  playerId    String
+  playerId    Int
   playerName  String
   value       Float
   position    String
@@ -603,7 +605,7 @@ model BeeswarmData {
 
 model LollipopData {
   id           String   @id @default(cuid())
-  playerId     String
+  playerId     Int
   metricName   String
   value        Float
   rank         Int
@@ -626,7 +628,7 @@ model LollipopData {
 model PlayerList {
   id        String   @id @default(cuid())
   userId    String
-  playerId  String
+  playerId  Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   player    Jugador  @relation(fields: [playerId], references: [id_player], onDelete: Cascade)
@@ -656,7 +658,7 @@ model ScoutList {
 }
 
 model PlayerStats3m {
-  id_player                         String   @id
+  id_player                         Int      @id
   wyscout_id                        BigInt?
   stats_evo_3m                      Decimal? @db.Decimal(6, 2)
   matches_played_tot_3m             Int?
@@ -803,7 +805,7 @@ model PlayerStats3m {
 }
 
 model PlayerStats6m {
-  id_player                         String   @id
+  id_player                         Int      @id
   wyscout_id                        BigInt?
   stats_evo_6m                      Decimal? @db.Decimal(6, 2)
   matches_played_tot_6m             Int?
@@ -950,7 +952,7 @@ model PlayerStats6m {
 }
 
 model PlayerStats1y {
-  id_player                         String   @id
+  id_player                         Int      @id
   wyscout_id                        BigInt?
   stats_evo_1y                      Decimal? @db.Decimal(6, 2)
   matches_played_tot_1y             Int?
@@ -1097,7 +1099,7 @@ model PlayerStats1y {
 }
 
 model PlayerStats2y {
-  id_player                         String   @id
+  id_player                         Int      @id
   wyscout_id                        BigInt?
   stats_evo_2y                      Decimal? @db.Decimal(6, 2)
   matches_played_tot_2y             Int?
@@ -1277,7 +1279,7 @@ model ScoutContactMessage {
 }
 
 model Atributos {
-  id_player                         String   @id
+  id_player                         Int      @id
   id_fmi                            Int?
   total_fmi_pts                     Int?
   total_fmi_pts_norm                Int?
@@ -1633,7 +1635,7 @@ model Agency {
 
 model PlayerCorrection {
   id                String        @id @default(cuid())
-  player_id         String
+  player_id         Int
   field_name        String        // "team_name", "position", "nationality", etc.
   original_value    String?
   corrected_value   String
@@ -1654,7 +1656,7 @@ model PlayerCorrection {
 
 model PlayerMetric {
   id                String        @id @default(cuid())
-  player_id         String
+  player_id         Int
   metric_name       String        // "goals_p90", "assists_p90", "pass_accuracy", etc.
   value             Float
   period            String        // "3m", "season", "career"
@@ -1680,7 +1682,7 @@ model PlayerMetric {
 
 model PlayerRole {
   id          String   @id @default(cuid())
-  player_id   String
+  player_id   Int
   role_name   String   // "GK Dominator", "Central Att Finisher", etc.
   percentage  Float    // 0-100
   createdAt   DateTime @default(now())
@@ -1770,7 +1772,7 @@ model AttributeDefinition {
 
 model PlayerAttribute {
   id                  String              @id @default(cuid())
-  player_id           String
+  player_id           Int
   attribute_id        String
   value               Int                 // Valor del atributo (ej: 85)
 

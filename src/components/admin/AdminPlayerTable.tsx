@@ -31,7 +31,7 @@ type SortOrder = 'asc' | 'desc';
 // Función para determinar el tipo de campo automáticamente
 const getFieldType = (fieldName: string): 'text' | 'number' | 'boolean' | 'url' | 'date' => {
   // Campos de URL
-  if (fieldName.startsWith('url_') || fieldName === 'video') {
+  if (fieldName.startsWith('url_') || fieldName === 'video' || fieldName === 'photo_coverage') {
     return 'url';
   }
 
@@ -216,10 +216,12 @@ const COLUMN_DEFINITIONS = [
   { key: 'admin_notes', label: 'Notas', width: '250px' },
   { key: 'player_color', label: 'Color', width: '80px' },
   { key: 'id_player', label: 'ID Player', width: '120px' },
+  { key: 'wyscout_notes', label: 'Wyscout', width: '200px' },
   { key: 'wyscout_id_1', label: 'Wyscout ID 1', width: '120px' },
   { key: 'wyscout_id_2', label: 'Wyscout ID 2', width: '120px' },
   { key: 'wyscout_name_1', label: 'Wyscout Name 1', width: '160px' },
   { key: 'wyscout_name_2', label: 'Wyscout Name 2', width: '160px' },
+  { key: 'fmi_notes', label: 'FM Inside', width: '200px' },
   { key: 'id_fmi', label: 'ID FMI', width: '100px' },
   { key: 'player_rating', label: 'Player Rating', width: '120px' },
   { key: 'photo_coverage', label: 'Photo Coverage', width: '130px' },

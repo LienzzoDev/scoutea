@@ -6,8 +6,8 @@ import { useEditableCell } from "@/contexts/EditableCellContext";
 
 interface ColorPickerCellProps {
   value: string | null;
-  playerId: string;
-  onSave: (playerId: string, fieldName: string, value: string) => Promise<boolean>;
+  playerId: number;
+  onSave: (playerId: number, fieldName: string, value: string) => Promise<boolean>;
 }
 
 // Colores predefinidos para selección rápida
