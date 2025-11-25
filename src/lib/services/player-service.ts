@@ -11,7 +11,7 @@ export class PlayerService {
    */
   private static mapPrismaToPlayer(player: Jugador): Player {
     return {
-      id: player.id_player,
+      id: String(player.id_player),
       id_player: player.id_player,
       player_name: player.player_name,
       wyscout_id_1: player.wyscout_id_1,
@@ -149,9 +149,18 @@ export class PlayerService {
 
   static async getPlayerById(id: string): Promise<Player | null> {
     try {
+      // Convert string ID to number since id_player is Int in Prisma
+      const playerId = parseInt(id, 10);
+
+      // Validate that the conversion was successful
+      if (isNaN(playerId)) {
+        console.error('Invalid player ID format:', id);
+        return null;
+      }
+
       const player = await prisma.jugador.findUnique({
         where: {
-          id_player: id
+          id_player: playerId
         }
       });
 
@@ -313,6 +322,14 @@ export class PlayerService {
 
   static async updatePlayer(id: string, data: Partial<Player>): Promise<Player> {
     try {
+      // Convert string ID to number since id_player is Int in Prisma
+      const playerId = parseInt(id, 10);
+
+      // Validate that the conversion was successful
+      if (isNaN(playerId)) {
+        throw new Error(`Invalid player ID format: ${id}`);
+      }
+
       // Clean up the data object to only include defined fields
       const updateData: any = {}
 
@@ -328,13 +345,13 @@ export class PlayerService {
 
       const updatedPlayer = await prisma.jugador.update({
         where: {
-          id_player: id
+          id_player: playerId
         },
         data: updateData
       });
 
       return {
-        id: updatedPlayer.id_player,
+        id: String(updatedPlayer.id_player),
         id_player: updatedPlayer.id_player,
         player_name: updatedPlayer.player_name,
         complete_player_name: updatedPlayer.complete_player_name,
@@ -391,9 +408,17 @@ export class PlayerService {
 
   static async deletePlayer(id: string): Promise<void> {
     try {
+      // Convert string ID to number since id_player is Int in Prisma
+      const playerId = parseInt(id, 10);
+
+      // Validate that the conversion was successful
+      if (isNaN(playerId)) {
+        throw new Error(`Invalid player ID format: ${id}`);
+      }
+
       await prisma.jugador.delete({
         where: {
-          id_player: id
+          id_player: playerId
         }
       });
     } catch (error) {
@@ -418,7 +443,7 @@ export class PlayerService {
       });
 
       return {
-        id: newPlayer.id_player,
+        id: String(newPlayer.id_player),
         id_player: newPlayer.id_player,
         player_name: newPlayer.player_name,
         complete_player_name: newPlayer.complete_player_name,
