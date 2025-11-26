@@ -56,6 +56,24 @@ export default function HomePage() {
       popular: true,
       color: 'from-green-500 to-green-600',
       requiresApproval: true
+    },
+    {
+      id: 'scout',
+      name: 'Scout',
+      price: { monthly: 20, yearly: 17 },
+      description: 'Para scouts profesionales que buscan visibilidad',
+      features: [
+        'Perfil de scout verificado',
+        'Publicación de reportes',
+        'Portfolio de jugadores descubiertos',
+        'Visibilidad en la red de scouts',
+        'Acceso a sección Wonderkids',
+        'Acceso a sección Torneos',
+        'Opción de upgrade a Premium'
+      ],
+      popular: false,
+      color: 'from-emerald-500 to-emerald-600',
+      isScoutPlan: true
     }
   ]
 

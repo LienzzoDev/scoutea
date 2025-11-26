@@ -15,11 +15,13 @@ const clerkClient = createClerkClient({
 })
 
 export type UserRole = 'member' | 'scout' | 'admin' | 'tester'
+export type UserType = 'member' | 'scout' // Tipo de usuario (scout tiene rol member pero es identificado como scout)
 export type ProfileStatus = 'incomplete' | 'complete'
 export type SubscriptionStatus = 'active' | 'inactive' | 'cancelled' | 'pending'
 
 export interface UserMetadata {
   role: UserRole
+  userType?: UserType // Identifica si es un scout registrado (con rol member pero tipo scout)
   profileStatus: ProfileStatus
   subscription?: {
     status: SubscriptionStatus
@@ -52,7 +54,8 @@ export class RoleService {
    * Determina el rol basado en el plan seleccionado
    *
    * IMPORTANTE:
-   * - Plan 'scout' asigna rol 'scout'
+   * - Plan 'scout' asigna rol 'member' con plan 'basic' y userType 'scout'
+   *   (Los scouts acceden al área de member BASIC con opción de upgrade)
    * - Planes 'member', 'basic', 'premium' asignan rol 'member'
    * La diferencia entre basic y premium se maneja en subscription.plan
    * El acceso a features se controla con FeatureAccessService
@@ -62,9 +65,10 @@ export class RoleService {
 
     const planLower = plan.toLowerCase()
 
-    // Si el plan es 'scout', asignar rol scout
+    // Plan 'scout' ahora asigna rol 'member' (acceso al área de member BASIC)
+    // El tipo de usuario 'scout' se maneja en metadata.userType
     if (planLower === 'scout') {
-      return 'scout'
+      return 'member'
     }
 
     // Para cualquier otro plan (member, basic, premium, pro), asignar rol 'member'
@@ -80,6 +84,13 @@ export class RoleService {
     // Default a member
     logger.warn('Unknown plan type, defaulting to member', { plan })
     return 'member'
+  }
+
+  /**
+   * Determina si el plan es de tipo Scout
+   */
+  static isScoutPlan(plan: string): boolean {
+    return plan?.toLowerCase() === 'scout'
   }
 
   /**
@@ -183,6 +194,11 @@ export class RoleService {
 
   /**
    * Asigna rol después de un pago exitoso
+   *
+   * Para scouts:
+   * - Se asigna rol 'member' (acceso al área de member)
+   * - Se guarda plan 'basic' (acceso a Wonderkids + Torneos)
+   * - Se marca userType como 'scout' para identificarlos
    */
   static async assignRoleAfterPayment(
     userId: string,
@@ -195,12 +211,17 @@ export class RoleService {
     }
   ): Promise<RoleAssignmentResult> {
     const role = this.getRoleFromPlan(plan)
-    
+    const isScout = this.isScoutPlan(plan)
+
+    // Para scouts: plan se guarda como 'basic' pero userType es 'scout'
+    const actualPlan = isScout ? 'basic' : plan
+
     const updates: Partial<UserMetadata> = {
       role,
+      userType: isScout ? 'scout' : 'member',
       subscription: {
         status: 'active' as SubscriptionStatus,
-        plan,
+        plan: actualPlan,
         stripeCustomerId: stripeData.customerId,
         stripeSubscriptionId: stripeData.subscriptionId,
         stripeSessionId: stripeData.sessionId,
@@ -213,6 +234,14 @@ export class RoleService {
         completedAt: new Date().toISOString()
       }
     }
+
+    logger.info('Assigning role after payment', {
+      userId,
+      originalPlan: plan,
+      actualPlan,
+      role,
+      isScout
+    })
 
     return this.updateUserRole(userId, updates, 'payment_completed')
   }

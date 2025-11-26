@@ -66,13 +66,33 @@ export async function POST(request: NextRequest) {
     })
 
     // Configurar precios según el plan y billing
+    const getPlanDetails = (planType: string) => {
+      switch (planType) {
+        case 'scout':
+          return {
+            name: 'Plan Scout Básico',
+            description: 'Perfil verificado, publicación de reportes y portfolio de jugadores'
+          }
+        case 'basic':
+          return {
+            name: 'Plan Básico (Wonderkids + Torneos)',
+            description: 'Acceso a sección Wonderkids y Torneos'
+          }
+        default:
+          return {
+            name: 'Plan Miembro',
+            description: 'Acceso completo para analistas y profesionales del fútbol'
+          }
+      }
+    }
+
+    const planDetails = getPlanDetails(plan)
+
     const priceData = {
       currency: 'usd',
       product_data: {
-        name: plan === 'member' ? 'Plan Miembro' : 'Plan Scout',
-        description: plan === 'member' 
-          ? 'Acceso completo para analistas y profesionales del fútbol'
-          : 'Herramientas avanzadas para scouts profesionales'
+        name: planDetails.name,
+        description: planDetails.description
       },
       unit_amount: 2000, // $20.00 en centavos
       recurring: {
@@ -84,7 +104,11 @@ export async function POST(request: NextRequest) {
     // URLs de redirección - usar página de procesamiento para manejar la transición
     const baseUrl = request.nextUrl.origin
     const successUrl = `${baseUrl}/member/payment-processing?session_id={CHECKOUT_SESSION_ID}&plan=${plan}`
-    const cancelUrl = `${baseUrl}/member/complete-profile?plan=${plan}&payment=cancelled`
+
+    // URL de cancelación según el tipo de plan
+    const cancelUrl = plan === 'scout'
+      ? `${baseUrl}/register/scout/complete-profile?payment=cancelled`
+      : `${baseUrl}/member/complete-profile?plan=${plan}&payment=cancelled`
 
     console.log('Creating Stripe session with:', {
       priceData,

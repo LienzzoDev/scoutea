@@ -1,6 +1,7 @@
 'use client'
 
 import { ArrowLeft, Send, CheckCircle } from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -112,10 +113,12 @@ export default function RequestAccessPage() {
           </Link>
 
           <div className="text-center">
-            <img
+            <Image
               src="/logo-member.svg"
               alt="Scoutea Logo"
-              className="h-12 mx-auto mb-4"
+              width={150}
+              height={48}
+              className="h-12 w-auto mx-auto mb-4"
             />
             <h1 className="text-4xl font-bold text-[#000000] mb-2">
               Solicita Acceso Premium

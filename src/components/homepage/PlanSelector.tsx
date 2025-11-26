@@ -13,6 +13,7 @@ interface Plan {
   popular: boolean
   color: string
   requiresApproval?: boolean
+  isScoutPlan?: boolean
 }
 
 interface PlanSelectorProps {
@@ -45,6 +46,9 @@ export default function PlanSelector({ plans }: PlanSelectorProps) {
       // Si el plan requiere aprobación, ir al formulario de solicitud
       if (plan?.requiresApproval) {
         router.push('/request-access?plan=' + selectedPlan)
+      } else if (plan?.isScoutPlan) {
+        // Flujo de registro para Scouts
+        router.push('/register/scout')
       } else {
         // Flujo normal de registro con Stripe
         router.push('/register?plan=' + selectedPlan)
@@ -96,16 +100,24 @@ export default function PlanSelector({ plans }: PlanSelectorProps) {
       </div>
 
       {/* Pricing Cards */}
-      <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto mb-16">
+      <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-16">
         {plans.map((plan) => (
-          <div 
+          <div
             key={plan.id}
+            role="button"
+            tabIndex={0}
             className={`relative cursor-pointer transition-all duration-300 hover:shadow-2xl rounded-lg border bg-white shadow-sm ${
-              selectedPlan === plan.id 
-                ? 'ring-2 ring-[#8c1a10] shadow-xl scale-105' 
+              selectedPlan === plan.id
+                ? 'ring-2 ring-[#8c1a10] shadow-xl scale-105'
                 : 'hover:shadow-lg'
             }`}
             onClick={() => handlePlanSelect(plan.id)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                handlePlanSelect(plan.id)
+              }
+            }}
           >
             {plan.popular && (
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
