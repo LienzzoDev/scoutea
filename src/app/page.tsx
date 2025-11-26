@@ -40,7 +40,7 @@ export default function HomePage() {
     {
       id: 'premium',
       name: 'Premium (Acceso Completo)',
-      price: { monthly: 30, yearly: 25 },
+      price: null,
       description: 'Para profesionales que buscan análisis avanzado',
       features: [
         'Todo lo del plan Básico',
@@ -54,7 +54,8 @@ export default function HomePage() {
         'Soporte prioritario 24/7'
       ],
       popular: true,
-      color: 'from-green-500 to-green-600'
+      color: 'from-green-500 to-green-600',
+      requiresApproval: true
     }
   ]
 

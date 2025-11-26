@@ -7,11 +7,12 @@ import { useState, useEffect } from 'react'
 interface Plan {
   id: string
   name: string
-  price: { monthly: number; yearly: number }
+  price: { monthly: number; yearly: number } | null
   description: string
   features: string[]
   popular: boolean
   color: string
+  requiresApproval?: boolean
 }
 
 interface PlanSelectorProps {
@@ -39,7 +40,15 @@ export default function PlanSelector({ plans }: PlanSelectorProps) {
 
   const handleSubscribe = () => {
     if (selectedPlan) {
-      router.push('/register?plan=' + selectedPlan)
+      const plan = plans.find(p => p.id === selectedPlan)
+
+      // Si el plan requiere aprobación, ir al formulario de solicitud
+      if (plan?.requiresApproval) {
+        router.push('/request-access?plan=' + selectedPlan)
+      } else {
+        // Flujo normal de registro con Stripe
+        router.push('/register?plan=' + selectedPlan)
+      }
     } else {
       router.push('/register')
     }
@@ -66,12 +75,16 @@ export default function PlanSelector({ plans }: PlanSelectorProps) {
     <>
       {/* CTA Buttons */}
       <div className="flex items-center justify-center gap-4 mb-12">
-        <button 
+        <button
           onClick={handleSubscribe}
           disabled={!selectedPlan}
           className="bg-[#8c1a10] hover:bg-[#6d1410] text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {selectedPlan ? `Registrarse como ${plans.find(p => p.id === selectedPlan)?.name}` : 'Selecciona tu Rol'}
+          {selectedPlan ? (
+            plans.find(p => p.id === selectedPlan)?.requiresApproval
+              ? 'Solicitar Acceso Premium'
+              : `Registrarse como ${plans.find(p => p.id === selectedPlan)?.name}`
+          ) : 'Selecciona tu Plan'}
           <ArrowRight className="ml-2 w-5 h-5" />
         </button>
         <button 
@@ -108,17 +121,30 @@ export default function PlanSelector({ plans }: PlanSelectorProps) {
                 {plan.name}
               </h3>
               <p className="text-[#6d6d6d] mb-4">{plan.description}</p>
-              
+
               <div className="mb-4">
-                <div className="flex items-baseline justify-center">
-                  <span className="text-4xl font-bold text-[#8c1a10]">
-                    ${plan.price.monthly}
-                  </span>
-                  <span className="text-[#6d6d6d] ml-1">/mes</span>
-                </div>
-                <p className="text-sm text-green-600 mt-1">
-                  ${plan.price.yearly}/mes si pagas anualmente (20% descuento)
-                </p>
+                {plan.price ? (
+                  <>
+                    <div className="flex items-baseline justify-center">
+                      <span className="text-4xl font-bold text-[#8c1a10]">
+                        ${plan.price.monthly}
+                      </span>
+                      <span className="text-[#6d6d6d] ml-1">/mes</span>
+                    </div>
+                    <p className="text-sm text-green-600 mt-1">
+                      ${plan.price.yearly}/mes si pagas anualmente (20% descuento)
+                    </p>
+                  </>
+                ) : (
+                  <div className="text-center py-2">
+                    <p className="text-lg font-semibold text-[#8c1a10]">
+                      Precio personalizado
+                    </p>
+                    <p className="text-sm text-[#6d6d6d] mt-1">
+                      Contacta con nosotros para más información
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
             
@@ -159,12 +185,16 @@ export default function PlanSelector({ plans }: PlanSelectorProps) {
           Únete a cientos de profesionales del fútbol que ya forman parte de nuestra comunidad
         </p>
         <div className="flex items-center justify-center gap-4">
-          <button 
+          <button
             onClick={handleSubscribe}
             disabled={!selectedPlan}
             className="bg-[#8c1a10] hover:bg-[#6d1410] text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {selectedPlan ? `Comenzar como ${plans.find(p => p.id === selectedPlan)?.name}` : 'Selecciona tu Rol'}
+            {selectedPlan ? (
+              plans.find(p => p.id === selectedPlan)?.requiresApproval
+                ? 'Solicitar Acceso Premium'
+                : `Comenzar como ${plans.find(p => p.id === selectedPlan)?.name}`
+            ) : 'Selecciona tu Plan'}
             <ArrowRight className="ml-2 w-5 h-5" />
           </button>
           <button 

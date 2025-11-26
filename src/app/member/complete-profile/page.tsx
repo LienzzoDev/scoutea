@@ -62,6 +62,14 @@ export default function CompleteProfilePage() {
     // Obtener el plan seleccionado desde la URL
     const plan = searchParams.get('plan') || localStorage.getItem('selectedPlan') || ''
     console.log('🔍 Plan detectado:', plan || 'NINGUNO')
+
+    // Si el plan es premium, redirigir al formulario de solicitud
+    if (plan === 'premium') {
+      console.log('🚫 Plan Premium detected in complete-profile, redirecting to request access')
+      router.push('/request-access?plan=premium')
+      return
+    }
+
     setSelectedPlan(plan)
 
     // Pre-llenar con datos de Clerk si están disponibles

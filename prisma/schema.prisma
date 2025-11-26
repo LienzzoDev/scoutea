@@ -1981,3 +1981,37 @@ model JobOffer {
   @@index([status, expires_at])
   @@map("job_offers")
 }
+
+// 📝 MODELO PARA SOLICITUDES DE ACCESO PREMIUM
+model AccessRequest {
+  id           String   @id @default(cuid())
+
+  // Información del solicitante
+  firstName    String
+  lastName     String
+  email        String
+  organization String
+  phone        String?
+  message      String?  @db.Text
+
+  // Plan solicitado
+  plan         String   @default("premium") // "premium", "basic", etc.
+
+  // Estado de la solicitud
+  status       String   @default("pending") // "pending", "approved", "rejected", "contacted"
+
+  // Notas del administrador
+  adminNotes   String?  @db.Text
+  reviewedBy   String?  // clerkId del admin que revisó
+  reviewedAt   DateTime?
+
+  // Timestamps
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([email])
+  @@index([status])
+  @@index([createdAt])
+  @@index([plan])
+  @@map("access_requests")
+}

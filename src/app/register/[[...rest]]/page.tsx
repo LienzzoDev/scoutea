@@ -37,11 +37,19 @@ export default function RegisterPage() {
 
   useEffect(() => {
     const plan = searchParams.get('plan') || localStorage.getItem('selectedPlan') || ''
+
+    // Si el plan es premium, redirigir al formulario de solicitud
+    if (plan === 'premium') {
+      console.log('🚫 Plan Premium detected, redirecting to request access form')
+      router.push('/request-access?plan=premium')
+      return
+    }
+
     setSelectedPlan(plan)
 
     // Debug: Log registration attempt
     console.log('🔍 Registration page loaded with plan:', plan)
-  }, [searchParams])
+  }, [searchParams, router])
 
 
 

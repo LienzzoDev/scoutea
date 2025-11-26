@@ -45,6 +45,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Plan is required' }, { status: 400 })
     }
 
+    // Validar que no sea plan premium (premium requiere aprobación manual)
+    if (plan === 'premium') {
+      console.error('Premium plan detected in checkout - should go through request access flow')
+      return NextResponse.json(
+        { error: 'El plan Premium requiere aprobación. Por favor, usa el formulario de solicitud.' },
+        { status: 400 }
+      )
+    }
+
     console.log('User info:', { userEmail, userName, plan })
 
     // Actualizar metadatos del usuario para marcar el plan seleccionado
