@@ -1,6 +1,6 @@
 'use client'
 
-import { Plus, RefreshCw, Search, X } from 'lucide-react'
+import { Plus, RefreshCw, Search, X, Trash2, AlertTriangle } from 'lucide-react'
 import { useEffect, useState, useCallback, useRef } from 'react'
 
 import { AdminReportForm } from '@/components/admin/AdminReportForm'
@@ -45,6 +45,8 @@ export default function AdminReportesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [orphanCount, setOrphanCount] = useState<number | null>(null)
+  const [deletingOrphans, setDeletingOrphans] = useState(false)
   const hasFetched = useRef(false)
 
   // Debounce search
@@ -54,6 +56,55 @@ export default function AdminReportesPage() {
     }, 300)
     return () => clearTimeout(timer)
   }, [searchTerm])
+
+  // Check for orphan reports
+  const checkOrphanReports = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/reports/orphans')
+      if (response.ok) {
+        const data = await response.json()
+        setOrphanCount(data.total || 0)
+      }
+    } catch (error) {
+      console.error('Error checking orphan reports:', error)
+    }
+  }, [])
+
+  // Delete orphan reports
+  const handleDeleteOrphans = async () => {
+    if (!confirm(`¿Estás seguro de que deseas eliminar ${orphanCount} reportes huérfanos? Esta acción no se puede deshacer.`)) {
+      return
+    }
+
+    setDeletingOrphans(true)
+    try {
+      const response = await fetch('/api/admin/reports/orphans', {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) {
+        throw new Error('Error deleting orphan reports')
+      }
+
+      const data = await response.json()
+      toast({
+        title: 'Éxito',
+        description: data.message || `${data.deleted} reportes huérfanos eliminados`
+      })
+
+      setOrphanCount(0)
+      loadReports()
+    } catch (error) {
+      console.error('Error deleting orphan reports:', error)
+      toast({
+        title: 'Error',
+        description: 'No se pudieron eliminar los reportes huérfanos',
+        variant: 'destructive'
+      })
+    } finally {
+      setDeletingOrphans(false)
+    }
+  }
 
   // Load reports
   const loadReports = useCallback(async () => {
@@ -91,8 +142,9 @@ export default function AdminReportesPage() {
     if (!hasFetched.current) {
       hasFetched.current = true
       loadReports()
+      checkOrphanReports()
     }
-  }, [loadReports])
+  }, [loadReports, checkOrphanReports])
 
   // Reload when search changes
   useEffect(() => {
@@ -159,12 +211,52 @@ export default function AdminReportesPage() {
           </div>
         </div>
 
+        {/* Orphan Reports Alert */}
+        {orphanCount !== null && orphanCount > 0 && (
+          <div className="mb-6 p-4 rounded-lg border border-yellow-600/50 bg-yellow-900/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                <div>
+                  <p className="text-yellow-300 font-medium">
+                    {orphanCount} reporte{orphanCount !== 1 ? 's' : ''} huérfano{orphanCount !== 1 ? 's' : ''} detectado{orphanCount !== 1 ? 's' : ''}
+                  </p>
+                  <p className="text-yellow-500/80 text-sm">
+                    Estos reportes tienen referencias a jugadores que ya no existen en la base de datos
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                className="border-yellow-600 bg-yellow-900/30 text-yellow-300 hover:bg-yellow-900/50"
+                onClick={handleDeleteOrphans}
+                disabled={deletingOrphans}
+              >
+                {deletingOrphans ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Eliminando...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Limpiar reportes huérfanos
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Actions Bar */}
         <div className="mb-6 flex flex-wrap items-center gap-4">
           <Button
             variant="outline"
             className="border-slate-700 bg-[#131921] text-white hover:bg-slate-700"
-            onClick={loadReports}
+            onClick={() => {
+              loadReports()
+              checkOrphanReports()
+            }}
             disabled={loading}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />

@@ -85,8 +85,11 @@ export class ReportService {
 
     const skip = (page - 1) * limit
 
-    // Build where clause
-    const where: any = {}
+    // Build where clause - Only include reports with valid player references
+    const where: any = {
+      id_player: { not: null },
+      player: { isNot: null }
+    }
 
     // Direct report filters
     if (filters.report_status) {
@@ -444,5 +447,71 @@ export class ReportService {
     } catch {
       return false
     }
+  }
+
+  /**
+   * Count orphan reports (reports with invalid player or scout references)
+   */
+  static async countOrphanReports(): Promise<{ total: number; noPlayer: number; noScout: number }> {
+    // Get all report IDs with their player and scout references
+    const allReports = await prisma.reporte.findMany({
+      select: {
+        id_report: true,
+        id_player: true,
+        scout_id: true,
+        player: { select: { id_player: true } },
+        scout: { select: { id: true } }
+      }
+    })
+
+    let noPlayer = 0
+    let noScout = 0
+
+    for (const report of allReports) {
+      // Report has id_player but player doesn't exist
+      if (report.id_player !== null && report.player === null) {
+        noPlayer++
+      }
+      // Report has scout_id but scout doesn't exist
+      if (report.scout_id !== null && report.scout === null) {
+        noScout++
+      }
+    }
+
+    // Total orphans are reports where player reference is broken (main issue)
+    const total = noPlayer
+
+    return { total, noPlayer, noScout }
+  }
+
+  /**
+   * Delete all orphan reports (reports with invalid player references)
+   */
+  static async deleteOrphanReports(): Promise<{ deleted: number }> {
+    // First, find all reports where id_player is set but player doesn't exist
+    const allReports = await prisma.reporte.findMany({
+      select: {
+        id_report: true,
+        id_player: true,
+        player: { select: { id_player: true } }
+      }
+    })
+
+    const orphanIds = allReports
+      .filter(r => r.id_player !== null && r.player === null)
+      .map(r => r.id_report)
+
+    if (orphanIds.length === 0) {
+      return { deleted: 0 }
+    }
+
+    // Delete all orphan reports
+    const result = await prisma.reporte.deleteMany({
+      where: {
+        id_report: { in: orphanIds }
+      }
+    })
+
+    return { deleted: result.count }
   }
 }
