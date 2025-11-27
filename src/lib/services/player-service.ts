@@ -102,6 +102,8 @@ export class PlayerService {
       telegram_profile: null,
       instagram_profile: player.url_instagram, // This exists
       admin_notes: player.admin_notes,
+      player_color: player.player_color,
+      is_visible: player.is_visible,
       createdAt: player.createdAt,
       updatedAt: player.updatedAt
     };
@@ -119,6 +121,8 @@ export class PlayerService {
     age: true,
     player_rating: true,
     photo_coverage: true,
+    player_color: true,
+    is_visible: true,
     createdAt: true,
     updatedAt: true,
   }
@@ -183,6 +187,7 @@ export class PlayerService {
     limit?: number;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
+    includeHidden?: boolean; // Si true, incluye jugadores con is_visible=false (para admin)
     filters?: {
       player_name?: string;
       position_player?: string;
@@ -209,6 +214,7 @@ export class PlayerService {
         limit = 20,
         sortBy = 'player_name',
         sortOrder = 'asc',
+        includeHidden = false,
         filters = {}
       } = options;
 
@@ -218,6 +224,11 @@ export class PlayerService {
       // IMPORTANTE: Solo mostrar jugadores aprobados (para miembros)
       // Los jugadores con approval_status 'pending' o 'rejected' no deben aparecer
       whereConditions.approval_status = 'approved';
+
+      // Filtrar por visibilidad: si no es admin (includeHidden=false), solo mostrar jugadores visibles
+      if (!includeHidden) {
+        whereConditions.is_visible = true;
+      }
 
       if (filters.player_name) {
         whereConditions.player_name = {

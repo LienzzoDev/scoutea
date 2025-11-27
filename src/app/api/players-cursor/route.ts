@@ -2,7 +2,6 @@ import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/db'
-import { PlayerService } from '@/lib/services/player-service'
 
 /**
  * GET /api/players-cursor
@@ -40,62 +39,80 @@ export async function GET(request: NextRequest) {
     const maxValue = searchParams.get('max_value') ? parseFloat(searchParams.get('max_value')!) : undefined
 
     // Construir where clause
-    const where: any = {}
+    const where: any = {
+      // IMPORTANTE: Solo mostrar jugadores aprobados y visibles para miembros
+      approval_status: 'approved',
+      is_visible: true
+    }
 
-    // IMPORTANTE: Solo mostrar jugadores aprobados para miembros
-    where.approval_status = 'approved'
+    // Construir array de condiciones AND para combinar con búsqueda OR
+    const andConditions: any[] = []
 
     if (search) {
-      where.OR = [
-        { player_name: { contains: search, mode: 'insensitive' } },
-        { nationality_1: { contains: search, mode: 'insensitive' } },
-        { team_name: { contains: search, mode: 'insensitive' } },
-        { position_player: { contains: search, mode: 'insensitive' } },
-      ]
+      // La búsqueda usa OR entre campos, pero debe combinarse con AND de las otras condiciones
+      andConditions.push({
+        OR: [
+          { player_name: { contains: search, mode: 'insensitive' } },
+          { nationality_1: { contains: search, mode: 'insensitive' } },
+          { team_name: { contains: search, mode: 'insensitive' } },
+          { position_player: { contains: search, mode: 'insensitive' } },
+        ]
+      })
     }
 
     if (nationality) {
-      where.nationality_1 = { contains: nationality, mode: 'insensitive' }
+      andConditions.push({ nationality_1: { contains: nationality, mode: 'insensitive' } })
     }
 
     if (position) {
-      where.position_player = { contains: position, mode: 'insensitive' }
+      andConditions.push({ position_player: { contains: position, mode: 'insensitive' } })
     }
 
     if (team) {
-      where.team_name = { contains: team, mode: 'insensitive' }
+      andConditions.push({ team_name: { contains: team, mode: 'insensitive' } })
     }
 
     if (competition) {
-      where.team_competition = { contains: competition, mode: 'insensitive' }
+      andConditions.push({ team_competition: { contains: competition, mode: 'insensitive' } })
     }
 
     if (minAge !== undefined || maxAge !== undefined) {
-      where.age = {}
-      if (minAge !== undefined) where.age.gte = minAge
-      if (maxAge !== undefined) where.age.lte = maxAge
+      const ageCondition: any = {}
+      if (minAge !== undefined) ageCondition.gte = minAge
+      if (maxAge !== undefined) ageCondition.lte = maxAge
+      andConditions.push({ age: ageCondition })
     }
 
     if (minRating !== undefined || maxRating !== undefined) {
-      where.player_rating = {}
-      if (minRating !== undefined) where.player_rating.gte = minRating
-      if (maxRating !== undefined) where.player_rating.lte = maxRating
+      const ratingCondition: any = {}
+      if (minRating !== undefined) ratingCondition.gte = minRating
+      if (maxRating !== undefined) ratingCondition.lte = maxRating
+      andConditions.push({ player_rating: ratingCondition })
     }
 
     if (minValue !== undefined || maxValue !== undefined) {
-      where.player_trfm_value = {}
-      if (minValue !== undefined) where.player_trfm_value.gte = minValue
-      if (maxValue !== undefined) where.player_trfm_value.lte = maxValue
+      const valueCondition: any = {}
+      if (minValue !== undefined) valueCondition.gte = minValue
+      if (maxValue !== undefined) valueCondition.lte = maxValue
+      andConditions.push({ player_trfm_value: valueCondition })
+    }
+
+    // Combinar condiciones con AND si hay alguna
+    if (andConditions.length > 0) {
+      where.AND = andConditions
     }
 
     // Obtener total solo en la primera carga (sin cursor)
     const totalPromise = !cursor ? prisma.jugador.count({ where }) : Promise.resolve(0)
 
+    // Parsear cursor a número si existe
+    const cursorId = cursor ? parseInt(cursor, 10) : null
+
     // Fetch jugadores con cursor
     const players = await prisma.jugador.findMany({
       where,
       take: limit + 1, // Fetch one extra to check if there are more
-      ...(cursor ? { cursor: { id_player: cursor }, skip: 1 } : {}),
+      ...(cursorId ? { cursor: { id_player: cursorId }, skip: 1 } : {}),
       orderBy: [
         { player_rating: 'desc' },
         { id_player: 'asc' } // Segundo criterio para desempatar
@@ -129,8 +146,26 @@ export async function GET(request: NextRequest) {
     // Next cursor is the id of the last player
     const nextCursor = hasMore ? returnPlayers[returnPlayers.length - 1]?.id_player : null
 
-    // Map to Player type
-    const mappedPlayers = returnPlayers.map(PlayerService.mapPrismaToPlayer)
+    // Map to Player type (mapeo directo ya que solo seleccionamos campos específicos)
+    const mappedPlayers = returnPlayers.map(player => ({
+      id: String(player.id_player),
+      id_player: player.id_player,
+      player_name: player.player_name,
+      position_player: player.position_player,
+      team_name: player.team_name,
+      nationality_1: player.nationality_1,
+      age: player.age,
+      player_rating: player.player_rating,
+      photo_coverage: player.photo_coverage,
+      player_trfm_value: player.player_trfm_value,
+      team_competition: player.team_competition,
+      height: player.height,
+      foot: player.foot,
+      contract_end: player.contract_end,
+      date_of_birth: player.date_of_birth,
+      createdAt: player.createdAt,
+      updatedAt: player.updatedAt,
+    }))
 
     return NextResponse.json({
       players: mappedPlayers,

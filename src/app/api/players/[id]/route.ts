@@ -6,8 +6,8 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 
-import { PlayerService } from '@/lib/services/player-service'
 import { CorrectionService } from '@/lib/services/correction-service'
+import { PlayerService } from '@/lib/services/player-service'
 import {
   validatePlayerId,
   validatePlayerUpdate

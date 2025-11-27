@@ -1,14 +1,9 @@
 'use client'
 
+import { MoreHorizontal, Shield, Trash2, CheckCircle, XCircle, Mail } from 'lucide-react'
 import { useState } from 'react'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,9 +12,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { MoreHorizontal, Shield, Trash2, CheckCircle, XCircle, Mail } from 'lucide-react'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { UserRole } from '@/lib/services/role-service'
 
 interface User {

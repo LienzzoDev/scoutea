@@ -6,6 +6,7 @@ import { useState, useMemo, memo } from "react";
 
 import ColorPickerCell from "@/components/admin/ColorPickerCell";
 import EditableCell from "@/components/admin/EditableCell";
+import VisibilityCheckbox from "@/components/admin/VisibilityCheckbox";
 import { Button } from "@/components/ui/button";
 import type { Player } from "@/types/player";
 
@@ -211,8 +212,9 @@ const FACTOR_FIELDS = new Set([
   'total_fmi_pts',          // → Afecta: total_fmi_pts_norm
 ]);
 
-// Definición de todas las columnas (ordenadas: Color, Notas, ID Player, Player Name primero)
+// Definición de todas las columnas (ordenadas: Visible, Color, Notas, ID Player, Player Name primero)
 const COLUMN_DEFINITIONS = [
+  { key: 'is_visible', label: 'Visible', width: '70px' },
   { key: 'player_color', label: 'Color', width: '80px' },
   { key: 'admin_notes', label: 'Notas', width: '250px' },
   { key: 'id_player', label: 'ID Player', width: '120px' },
@@ -361,7 +363,7 @@ const AdminPlayerTable = memo(function AdminPlayerTable({ players, hiddenColumns
 
   // Función para guardar cambios en campos editables
   const handleSaveField = async (
-    playerId: string,
+    playerId: string | number,
     fieldName: string,
     value: string | number | boolean
   ): Promise<boolean> => {
@@ -566,7 +568,13 @@ const AdminPlayerTable = memo(function AdminPlayerTable({ players, hiddenColumns
                       style={{ minWidth: col.width }}
                     >
                       <div className={hasDuplicate ? 'font-bold' : ''}>
-                        {col.key === 'player_color' ? (
+                        {col.key === 'is_visible' ? (
+                          <VisibilityCheckbox
+                            value={value as boolean | null | undefined}
+                            playerId={player.id_player}
+                            onSave={handleSaveField}
+                          />
+                        ) : col.key === 'player_color' ? (
                           <ColorPickerCell
                             value={value as string || null}
                             playerId={player.id_player}

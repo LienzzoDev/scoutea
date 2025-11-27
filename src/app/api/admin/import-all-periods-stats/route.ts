@@ -530,7 +530,7 @@ export async function POST(request: NextRequest) {
           // 🔄 PROCESAR CADA PERÍODO EN SERIE
           for (const period of periods) {
             const expectedSheetName = getExcelSheetName(period)
-            let sheetName = workbook.SheetNames.find(name => name.toUpperCase() === expectedSheetName)
+            const sheetName = workbook.SheetNames.find(name => name.toUpperCase() === expectedSheetName)
 
             if (!sheetName) {
               sendSSE(controller, {

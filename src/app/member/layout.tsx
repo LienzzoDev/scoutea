@@ -6,8 +6,8 @@ import { useEffect, useState } from 'react'
 
 import { ErrorBoundary } from '@/components/error/ErrorBoundary'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import { canAccessMemberArea, isAdmin } from '@/lib/auth/user-role'
 import { isOnboardingRoute } from '@/lib/auth/role-utils'
+import { canAccessMemberArea, isAdmin } from '@/lib/auth/user-role'
 
 interface MemberGuardProps {
   children: React.ReactNode

@@ -6,7 +6,6 @@ import { useRef } from "react";
 
 import EditableCell from "@/components/admin/EditableCell";
 import { Button } from "@/components/ui/button";
-import TeamBadge from "@/components/ui/team-badge";
 
 // Campos NO editables (campos calculados y IDs del sistema)
 const NON_EDITABLE_FIELDS = new Set([

@@ -1,7 +1,7 @@
 'use client'
 
 import { useUser } from '@clerk/nextjs'
-import { Loader2, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { Loader2, CheckCircle, XCircle } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 

@@ -5,12 +5,12 @@ import { Search, ChevronDown, User, Shield, X, Users, Lock } from "lucide-react"
 import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 
+import { useSubscriptionPlan } from '@/components/auth/feature-guard'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import PlayerAvatar from "@/components/ui/player-avatar"
 import ScoutAvatar from "@/components/ui/scout-avatar"
 import { TesterBadge } from '@/components/ui/tester-badge'
-import { useSubscriptionPlan } from '@/components/auth/feature-guard'
 import { getUserRole, isTester } from '@/lib/auth/user-role'
 
 

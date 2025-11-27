@@ -1,9 +1,8 @@
 'use client'
 
-import { Video, FileText, Share2, ExternalLink } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import { useEffect, useState, useMemo } from 'react'
 
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 

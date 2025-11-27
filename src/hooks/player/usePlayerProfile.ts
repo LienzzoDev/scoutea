@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 
-import type { Player } from '@/types/player';
-import type { StatsPeriod } from '@/lib/utils/stats-period-utils';
 import type { PlayerStatsByField } from '@/lib/services/player-stats-service';
+import type { StatsPeriod } from '@/lib/utils/stats-period-utils';
+import type { Player } from '@/types/player';
 
 import { usePlayerList } from './usePlayerList';
 

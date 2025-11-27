@@ -149,6 +149,9 @@ model Jugador {
   admin_notes                     String?             // Notas del administrador sobre el jugador
   player_color                    String?             // Color asignado por el admin (hex format: #RRGGBB)
 
+  // VISIBILIDAD PARA MEMBERS
+  is_visible                      Boolean             @default(true) // Si false, el jugador no aparece para members
+
   createdAt                       DateTime            @default(now())
   updatedAt                       DateTime            @updatedAt
   

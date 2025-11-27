@@ -1,6 +1,8 @@
 'use client'
 
+import { PlusCircle } from 'lucide-react'
 import { useState } from 'react'
+
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -21,7 +23,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { UserRole } from '@/lib/services/role-service'
-import { PlusCircle } from 'lucide-react'
 
 interface CreateUserDialogProps {
   onUserCreated: () => void

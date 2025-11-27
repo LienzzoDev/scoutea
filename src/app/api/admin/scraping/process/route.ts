@@ -10,9 +10,9 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/db'
+import { addJobLog } from '@/lib/scraping/logs'
 import { RateLimiter, AdaptiveThrottler } from '@/lib/scraping/rate-limiter'
 import { getRealisticHeaders, randomSleep } from '@/lib/scraping/user-agents'
-import { addJobLog } from '@/lib/scraping/logs'
 
 // ⏱️ Configuración: 5 minutos máximo (Vercel límite)
 export const maxDuration = 300

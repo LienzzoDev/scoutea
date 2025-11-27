@@ -97,7 +97,7 @@ export function UnifiedReportForm() {
     const timeoutId = setTimeout(loadPlayers, 300)
 
     return () => clearTimeout(timeoutId)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [searchTerm])
 
   // Convertir players a formato SearchableOption con información adicional

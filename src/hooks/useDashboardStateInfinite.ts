@@ -95,10 +95,10 @@ export const useDashboardStateInfinite = () => {
     })
 
     return {
-      nationalities: Array.from(nationalities).sort().map(n => ({ value: n, label: n, count: 0 })),
-      positions: Array.from(positions).sort().map(p => ({ value: p, label: p, count: 0 })),
-      teams: Array.from(teams).sort().map(t => ({ value: t, label: t, count: 0 })),
-      competitions: Array.from(competitions).sort().map(c => ({ value: c, label: c, count: 0 })),
+      nationalities: Array.from(nationalities).sort(),
+      positions: Array.from(positions).sort(),
+      teams: Array.from(teams).sort(),
+      competitions: Array.from(competitions).sort(),
       ages: ['16-20', '21-25', '26-30', '31-35', '36+']
     }
   }, [allPlayers])

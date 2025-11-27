@@ -5,8 +5,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
-import { getUserRole } from '@/lib/auth/user-role'
 import { getUserRoleInfo, getOnboardingRedirectUrl } from '@/lib/auth/role-utils'
+import { getUserRole } from '@/lib/auth/user-role'
 
 export default function LoginPage() {
   const { user, isLoaded } = useUser()

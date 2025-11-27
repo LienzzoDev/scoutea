@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 
-import { getTeamLogoData, generateTeamInitials } from "@/lib/utils/team-logos";
 import { isDefaultTransfermarktImage } from "@/lib/utils/image-utils";
+import { getTeamLogoData, generateTeamInitials } from "@/lib/utils/team-logos";
 
 interface EntityData {
   // Player fields

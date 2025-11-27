@@ -1,18 +1,18 @@
 'use client'
 
-import { Play, Pause, RotateCcw, CheckCircle, XCircle, Clock, Database, AlertCircle, RefreshCw, BarChart3, Activity, FlaskRound, ChevronDown } from "lucide-react"
+import { Play, Pause, RotateCcw, CheckCircle, XCircle, Clock, Database, AlertCircle, RefreshCw, BarChart3, Activity, FlaskRound } from "lucide-react"
 import { useEffect, useState, useCallback } from 'react'
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { LoadingPage } from "@/components/ui/loading-spinner"
-import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { LoadingPage } from "@/components/ui/loading-spinner"
+import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 
 interface ScrapingJob {
   id: string

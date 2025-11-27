@@ -2,7 +2,6 @@ import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-import { getUserRoleInfo } from '@/lib/auth/role-utils'
 import { logger } from '@/lib/logging/production-logger'
 import { RoleService } from '@/lib/services/role-service'
 import { TransactionService } from '@/lib/services/transaction-service'

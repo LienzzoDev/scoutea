@@ -94,6 +94,8 @@ export interface Player {
   // Notas administrativas
   admin_notes?: string | null;
   player_color?: string | null;
+  // Visibilidad para members
+  is_visible?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

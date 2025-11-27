@@ -193,6 +193,9 @@ export async function GET(request: NextRequest) {
       admin_notes: true,
       player_color: true,
 
+      // Visibilidad para members
+      is_visible: true,
+
       // Timestamps
       createdAt: true,
       updatedAt: true
