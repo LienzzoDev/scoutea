@@ -4,7 +4,7 @@ import { ArrowLeft, Send, CheckCircle } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 
-export default function RequestAccessPage() {
+function RequestAccessContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const plan = searchParams.get('plan') || 'premium'
@@ -291,5 +291,24 @@ export default function RequestAccessPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#f8f7f4] to-[#e8e6e0] flex items-center justify-center">
+      <div className="flex items-center gap-2 text-slate-600">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#8c1a10]"></div>
+        <span>Cargando...</span>
+      </div>
+    </div>
+  )
+}
+
+export default function RequestAccessPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <RequestAccessContent />
+    </Suspense>
   )
 }
