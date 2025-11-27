@@ -114,7 +114,6 @@ export const ADMIN_COLUMN_GROUPS: ColumnGroup[] = [
       { key: 'team_loan_from', label: 'Team Loan From' },
       { key: 'correct_team_loan_from', label: 'Correct Team Loan From' },
       { key: 'on_loan', label: 'On Loan' },
-      { key: 'existing_club', label: 'Existing Club' },
     ]
   },
   {

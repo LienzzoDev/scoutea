@@ -7,16 +7,30 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: playerIdParam } = await params;
+  const playerIdNum = parseInt(playerIdParam, 10);
+
   try {
-    const { id: playerId } = await params;
     const { searchParams } = new URL(request.url);
     const period = searchParams.get('period') || '2023-24';
 
-    console.log('🔍 Radar API: Loading radar data for player:', playerId);
+    console.log('🔍 Radar API: Loading radar data for player:', playerIdNum);
+
+    // Validate player ID is a valid number
+    if (isNaN(playerIdNum)) {
+      return NextResponse.json(
+        {
+          error: 'Invalid player ID',
+          playerId: playerIdParam,
+          message: 'Player ID must be a valid number'
+        },
+        { status: 400 }
+      );
+    }
 
     // Verify player exists
     const player = await prisma.jugador.findUnique({
-      where: { id_player: playerId },
+      where: { id_player: playerIdNum },
       select: {
         player_name: true,
         position_player: true,
@@ -28,11 +42,11 @@ export async function GET(
     });
 
     if (!player) {
-      console.log('❌ Radar API: Player not found:', playerId);
+      console.log('❌ Radar API: Player not found:', playerIdNum);
       return NextResponse.json(
-        { 
+        {
           error: 'Player not found',
-          playerId: playerId,
+          playerId: playerIdNum,
           message: 'The specified player does not exist in the database'
         },
         { status: 404 }
@@ -42,31 +56,8 @@ export async function GET(
     console.log('✅ Radar API: Player found:', player.player_name);
 
     // Use the static method from RadarCalculationService
-    let radarData;
-    try {
-      radarData = await RadarCalculationService.calculatePlayerRadar(playerId);
-      console.log('✅ Radar API: Radar data calculated:', radarData);
-    } catch (calculationError) {
-      console.error('❌ Radar API: Error calculating radar data:', calculationError);
-      
-      // Return mock data for now with correct categories
-      radarData = {
-        playerId,
-        playerName: player.player_name,
-        metrics: [
-          { name: 'Off Transition', value: 85, percentile: 75, category: 'Off Transition' },
-          { name: 'Maintenance', value: 88, percentile: 80, category: 'Maintenance' },
-          { name: 'Progression', value: 82, percentile: 72, category: 'Progression' },
-          { name: 'Finishing', value: 90, percentile: 85, category: 'Finishing' },
-          { name: 'Off Stopped Ball', value: 78, percentile: 68, category: 'Off Stopped Ball' },
-          { name: 'Def Transition', value: 75, percentile: 65, category: 'Def Transition' },
-          { name: 'Recovery', value: 80, percentile: 70, category: 'Recovery' },
-          { name: 'Evitation', value: 65, percentile: 45, category: 'Evitation' },
-          { name: 'Def Stopped Ball', value: 72, percentile: 58, category: 'Def Stopped Ball' }
-        ],
-        overallRating: player.player_rating || 75
-      };
-    }
+    const radarData = await RadarCalculationService.calculatePlayerRadar(playerIdParam);
+    console.log('✅ Radar API: Radar data calculated:', radarData);
 
     // Format response for the frontend
     const formattedRadarData = radarData.metrics.map(metric => ({
@@ -96,10 +87,10 @@ export async function GET(
   } catch (error) {
     console.error('❌ Radar API: Error fetching radar data:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
-        playerId: playerId || 'unknown'
+        playerId: playerIdParam
       },
       { status: 500 }
     );

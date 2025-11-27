@@ -7,11 +7,25 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: playerIdParam } = await params;
+  const playerIdNum = parseInt(playerIdParam, 10);
+
   try {
-    const { id: playerId } = await params;
     const { searchParams } = new URL(request.url);
 
-    console.log('🔍 Radar Compare API: Loading comparison data for player:', playerId);
+    console.log('🔍 Radar Compare API: Loading comparison data for player:', playerIdNum);
+
+    // Validate player ID is a valid number
+    if (isNaN(playerIdNum)) {
+      return NextResponse.json(
+        {
+          error: 'Invalid player ID',
+          playerId: playerIdParam,
+          message: 'Player ID must be a valid number'
+        },
+        { status: 400 }
+      );
+    }
     console.log('🔍 Radar Compare API: Filters:', Object.fromEntries(searchParams.entries()));
 
     // Parse filters from query parameters
@@ -27,7 +41,7 @@ export async function GET(
 
     // Verify player exists
     const player = await prisma.jugador.findUnique({
-      where: { id_player: playerId },
+      where: { id_player: playerIdNum },
       select: {
         player_name: true,
         position_player: true,
@@ -39,11 +53,11 @@ export async function GET(
     });
 
     if (!player) {
-      console.log('❌ Radar Compare API: Player not found:', playerId);
+      console.log('❌ Radar Compare API: Player not found:', playerIdNum);
       return NextResponse.json(
-        { 
+        {
           error: 'Player not found',
-          playerId: playerId,
+          playerId: playerIdNum,
           message: 'The specified player does not exist in the database'
         },
         { status: 404 }
@@ -53,7 +67,7 @@ export async function GET(
     console.log('✅ Radar Compare API: Player found:', player.player_name);
 
     // Get base radar data for the player
-    const baseRadarData = await RadarCalculationService.calculatePlayerRadar(playerId);
+    const baseRadarData = await RadarCalculationService.calculatePlayerRadar(playerIdParam);
     console.log('✅ Radar Compare API: Base radar data:', baseRadarData);
 
     // Build comparison group query
@@ -144,7 +158,7 @@ export async function GET(
 
     return NextResponse.json({
       player: {
-        id: playerId,
+        id: playerIdNum,
         name: player.player_name,
         position: player.position_player,
         age: player.age,
@@ -165,10 +179,10 @@ export async function GET(
   } catch (error) {
     console.error('❌ Radar Compare API: Error:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
-        playerId: playerId || 'unknown'
+        playerId: playerIdParam
       },
       { status: 500 }
     );

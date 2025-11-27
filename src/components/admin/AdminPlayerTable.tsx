@@ -211,11 +211,12 @@ const FACTOR_FIELDS = new Set([
   'total_fmi_pts',          // → Afecta: total_fmi_pts_norm
 ]);
 
-// Definición de todas las columnas (sin player_name que será columna fija)
+// Definición de todas las columnas (ordenadas: Color, Notas, ID Player, Player Name primero)
 const COLUMN_DEFINITIONS = [
-  { key: 'admin_notes', label: 'Notas', width: '250px' },
   { key: 'player_color', label: 'Color', width: '80px' },
+  { key: 'admin_notes', label: 'Notas', width: '250px' },
   { key: 'id_player', label: 'ID Player', width: '120px' },
+  { key: 'player_name', label: 'Player Name', width: '200px' },
   { key: 'wyscout_notes', label: 'Wyscout', width: '200px' },
   { key: 'wyscout_id_1', label: 'Wyscout ID 1', width: '120px' },
   { key: 'wyscout_id_2', label: 'Wyscout ID 2', width: '120px' },
@@ -293,7 +294,6 @@ const COLUMN_DEFINITIONS = [
   { key: 'player_ranking', label: 'Player Ranking', width: '140px' },
   { key: 'community_potential', label: 'Community Potential', width: '170px' },
   { key: 'video', label: 'Video', width: '100px' },
-  { key: 'existing_club', label: 'Existing Club', width: '140px' },
 ] as const;
 
 const AdminPlayerTable = memo(function AdminPlayerTable({ players, hiddenColumns }: AdminPlayerTableProps) {
@@ -489,22 +489,7 @@ const AdminPlayerTable = memo(function AdminPlayerTable({ players, hiddenColumns
           {/* HEADER */}
           <thead className="bg-[#1a2332] border-b border-slate-700 sticky top-0 z-10">
             <tr>
-              {/* Player Name - Fixed Left Column */}
-              <th
-                className="p-4 text-left border-r border-slate-700 sticky left-0 bg-[#1a2332] z-20 min-w-[200px] cursor-pointer hover:bg-slate-700/50 transition-colors"
-                onClick={() => handleSort('player_name')}
-              >
-                <div className="flex items-center gap-2 whitespace-nowrap">
-                  <span className={`font-semibold text-sm ${
-                    sortField === 'player_name' ? 'text-[#FF5733]' : 'text-slate-300'
-                  }`}>
-                    Player Name
-                  </span>
-                  {renderSortIcon('player_name')}
-                </div>
-              </th>
-
-              {/* Scrollable Data Columns */}
+              {/* All Columns (Color, Notas, ID Player, Player Name first) */}
               {visibleColumns.map((col) => {
                 const isCalculated = CALCULATED_FIELDS.has(col.key);
                 const isScraped = SCRAPED_FIELDS.has(col.key);
@@ -566,20 +551,7 @@ const AdminPlayerTable = memo(function AdminPlayerTable({ players, hiddenColumns
                 key={player.id_player}
                 className="hover:bg-slate-700/30 transition-colors"
               >
-                {/* Player Name - Fixed Left Column (Editable) */}
-                <td className="p-4 border-r border-slate-700 sticky left-0 bg-[#131921] z-10 min-w-[200px]">
-                  <div className={isDuplicate('player_name', player.player_name) ? 'font-bold' : ''}>
-                    <EditableCell
-                      value={player.player_name}
-                      playerId={player.id_player}
-                      fieldName="player_name"
-                      onSave={handleSaveField}
-                      type="text"
-                    />
-                  </div>
-                </td>
-
-                {/* Scrollable Data Columns */}
+                {/* All Columns (Color, Notas, ID Player, Player Name first) */}
                 {visibleColumns.map((col) => {
                   const value = player[col.key as keyof Player];
                   const formattedValue = formatValue(value, col.key);
