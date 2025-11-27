@@ -19,6 +19,18 @@ interface UseInfinitePlayersScrollParams {
   nationality?: string
   position?: string
   team?: string
+  competition?: string
+  foot?: string
+  onLoan?: string // 'all' | 'yes' | 'no'
+  isVisible?: string // 'all' | 'yes' | 'no'
+  ageMin?: string
+  ageMax?: string
+  valueMin?: string
+  valueMax?: string
+  ratingMin?: string
+  ratingMax?: string
+  heightMin?: string
+  heightMax?: string
   limit?: number
 }
 
@@ -38,6 +50,18 @@ export function useInfinitePlayersScroll({
   nationality = '',
   position = '',
   team = '',
+  competition = '',
+  foot = '',
+  onLoan = 'all',
+  isVisible = 'all',
+  ageMin = '',
+  ageMax = '',
+  valueMin = '',
+  valueMax = '',
+  ratingMin = '',
+  ratingMax = '',
+  heightMin = '',
+  heightMax = '',
   limit = 50
 }: UseInfinitePlayersScrollParams = {}): UseInfinitePlayersScrollReturn {
   const {
@@ -52,7 +76,24 @@ export function useInfinitePlayersScroll({
   } = useInfiniteScroll<Player, UseInfinitePlayersScrollParams>({
     apiEndpoint: '/api/admin/players',
     getItemId: (player) => String(player.id_player), // Convertir número a string para el hook
-    filters: { search, nationality, position, team },
+    filters: {
+      search,
+      nationality,
+      position,
+      team,
+      competition,
+      foot,
+      onLoan,
+      isVisible,
+      ageMin,
+      ageMax,
+      valueMin,
+      valueMax,
+      ratingMin,
+      ratingMax,
+      heightMin,
+      heightMax
+    },
     limit,
     rootMargin: '100px' // Empezar a cargar 100px antes de llegar al final
   })

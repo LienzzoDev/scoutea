@@ -2,9 +2,13 @@
 
 import { Search, Globe, Plus, RefreshCw, Download } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 
 import AdminColumnSelector from '@/components/admin/AdminColumnSelector'
+import AdminPlayerFilters, {
+  type PlayerFilters,
+  DEFAULT_FILTERS
+} from '@/components/admin/AdminPlayerFilters'
 import AdminPlayerTable from '@/components/admin/AdminPlayerTable'
 import ImportFMIButton from '@/components/admin/ImportFMIButton'
 import ImportPlayerStatsButton from '@/components/admin/ImportPlayerStatsButton'
@@ -69,11 +73,15 @@ export default function JugadoresPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
 
+  // Estado para filtros avanzados
+  const [filters, setFilters] = useState<PlayerFilters>(DEFAULT_FILTERS)
+  const [debouncedFilters, setDebouncedFilters] = useState<PlayerFilters>(DEFAULT_FILTERS)
+
   // Ref para preservar posición del scroll
   const previousPlayersCount = useRef(0)
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const _scrollContainerRef = useRef<HTMLDivElement>(null)
 
-  // Hook de infinite scroll
+  // Hook de infinite scroll con todos los filtros
   const {
     players: filteredPlayers,
     loading,
@@ -84,6 +92,21 @@ export default function JugadoresPage() {
     refresh
   } = useInfinitePlayersScroll({
     search: debouncedSearch,
+    nationality: debouncedFilters.nationality,
+    position: debouncedFilters.position,
+    team: debouncedFilters.team,
+    competition: debouncedFilters.competition,
+    foot: debouncedFilters.foot,
+    onLoan: debouncedFilters.onLoan,
+    isVisible: debouncedFilters.isVisible,
+    ageMin: debouncedFilters.ageMin,
+    ageMax: debouncedFilters.ageMax,
+    valueMin: debouncedFilters.valueMin,
+    valueMax: debouncedFilters.valueMax,
+    ratingMin: debouncedFilters.ratingMin,
+    ratingMax: debouncedFilters.ratingMax,
+    heightMin: debouncedFilters.heightMin,
+    heightMax: debouncedFilters.heightMax,
     limit: 50
   })
 
@@ -109,9 +132,26 @@ export default function JugadoresPage() {
     return () => clearTimeout(timer)
   }, [searchTerm])
 
+  // Debounce de los filtros avanzados
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedFilters(filters)
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [filters])
+
   const handleSearch = (term: string) => {
     setSearchTerm(term)
   }
+
+  const handleFiltersChange = useCallback((newFilters: PlayerFilters) => {
+    setFilters(newFilters)
+  }, [])
+
+  const handleFiltersReset = useCallback(() => {
+    setFilters(DEFAULT_FILTERS)
+  }, [])
 
   // Función para exportar a CSV
   const [isExporting, setIsExporting] = useState(false)
@@ -215,6 +255,13 @@ export default function JugadoresPage() {
           />
         </div>
       </div>
+
+      {/* Filtros avanzados */}
+      <AdminPlayerFilters
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        onReset={handleFiltersReset}
+      />
 
       {error && (
         <div className='mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg'>

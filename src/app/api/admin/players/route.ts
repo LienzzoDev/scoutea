@@ -53,6 +53,18 @@ export async function GET(request: NextRequest) {
     const nationality = searchParams.get('nationality')
     const position = searchParams.get('position')
     const team = searchParams.get('team')
+    const competition = searchParams.get('competition')
+    const foot = searchParams.get('foot')
+    const onLoan = searchParams.get('onLoan')
+    const isVisible = searchParams.get('isVisible')
+    const ageMin = searchParams.get('ageMin')
+    const ageMax = searchParams.get('ageMax')
+    const valueMin = searchParams.get('valueMin')
+    const valueMax = searchParams.get('valueMax')
+    const ratingMin = searchParams.get('ratingMin')
+    const ratingMax = searchParams.get('ratingMax')
+    const heightMin = searchParams.get('heightMin')
+    const heightMax = searchParams.get('heightMax')
 
     // Validar y parsear limit
     const limit = Math.min(
@@ -73,7 +85,7 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    // Filtros específicos
+    // Filtros específicos de texto
     if (nationality) {
       where.nationality_1 = nationality
     }
@@ -82,6 +94,64 @@ export async function GET(request: NextRequest) {
     }
     if (team) {
       where.team_name = team
+    }
+    if (competition) {
+      where.team_competition = competition
+    }
+    if (foot) {
+      where.foot = { equals: foot, mode: 'insensitive' }
+    }
+
+    // Filtros booleanos
+    if (onLoan && onLoan !== 'all') {
+      where.on_loan = onLoan === 'yes'
+    }
+    if (isVisible && isVisible !== 'all') {
+      where.is_visible = isVisible === 'yes'
+    }
+
+    // Filtros de rango numérico - Edad
+    if (ageMin || ageMax) {
+      where.age = {}
+      if (ageMin) {
+        where.age.gte = parseInt(ageMin, 10)
+      }
+      if (ageMax) {
+        where.age.lte = parseInt(ageMax, 10)
+      }
+    }
+
+    // Filtros de rango numérico - Valor de mercado
+    if (valueMin || valueMax) {
+      where.player_trfm_value = {}
+      if (valueMin) {
+        where.player_trfm_value.gte = parseFloat(valueMin)
+      }
+      if (valueMax) {
+        where.player_trfm_value.lte = parseFloat(valueMax)
+      }
+    }
+
+    // Filtros de rango numérico - Rating
+    if (ratingMin || ratingMax) {
+      where.player_rating = {}
+      if (ratingMin) {
+        where.player_rating.gte = parseFloat(ratingMin)
+      }
+      if (ratingMax) {
+        where.player_rating.lte = parseFloat(ratingMax)
+      }
+    }
+
+    // Filtros de rango numérico - Altura
+    if (heightMin || heightMax) {
+      where.height = {}
+      if (heightMin) {
+        where.height.gte = parseInt(heightMin, 10)
+      }
+      if (heightMax) {
+        where.height.lte = parseInt(heightMax, 10)
+      }
     }
 
     // 🎯 DETERMINAR SI SE NECESITAN TODOS LOS CAMPOS O SOLO LOS BÁSICOS
