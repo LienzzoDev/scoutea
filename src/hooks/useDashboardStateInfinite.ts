@@ -70,8 +70,24 @@ export const useDashboardStateInfinite = () => {
     limit: 50
   });
 
+  // Helper to flatten categories from groups (moved up for use in sorting)
+  const flattenCategories = useCallback((groups: typeof DASHBOARD_CATEGORY_GROUPS): Category[] => {
+    const flattened: Category[] = []
+    const processGroup = (group: typeof DASHBOARD_CATEGORY_GROUPS[0]) => {
+      flattened.push(...group.categories)
+      if (group.subgroups) {
+        group.subgroups.forEach(processGroup)
+      }
+    }
+    groups.forEach(processGroup)
+    return flattened
+  }, [])
+
+  // Get all categories for sorting lookup
+  const allCategories = useMemo(() => flattenCategories(DASHBOARD_CATEGORY_GROUPS), [flattenCategories])
+
   // Filtrar jugadores según tab (client-side para favourites)
-  const filteredPlayers = useMemo(() => {
+  const baseFilteredPlayers = useMemo(() => {
     if (activeTab === 'favourites') {
       return allPlayers.filter(player =>
         playerList.includes(player.id_player || player.id)
@@ -87,6 +103,70 @@ export const useDashboardStateInfinite = () => {
     }
     return allPlayers
   }, [allPlayers, activeTab, playerList])
+
+  // Apply sorting to filtered players
+  const filteredPlayers = useMemo(() => {
+    if (!sortBy || sortBy === 'name') {
+      // Sort by name (player_name)
+      const sorted = [...baseFilteredPlayers].sort((a, b) => {
+        const nameA = (a.player_name || '').toLowerCase()
+        const nameB = (b.player_name || '').toLowerCase()
+        return sortOrder === 'asc'
+          ? nameA.localeCompare(nameB)
+          : nameB.localeCompare(nameA)
+      })
+      return sorted
+    }
+
+    // Find the category to get its getValue function
+    const category = allCategories.find(cat => cat.key === sortBy)
+
+    const sorted = [...baseFilteredPlayers].sort((a, b) => {
+      let valueA: unknown
+      let valueB: unknown
+
+      if (category?.getValue) {
+        valueA = category.getValue(a as unknown as Record<string, unknown>)
+        valueB = category.getValue(b as unknown as Record<string, unknown>)
+      } else {
+        // Fallback: direct property access
+        valueA = (a as unknown as Record<string, unknown>)[sortBy]
+        valueB = (b as unknown as Record<string, unknown>)[sortBy]
+      }
+
+      // Handle N/A values - push them to the end
+      const isNaA = valueA === 'N/A' || valueA === null || valueA === undefined
+      const isNaB = valueB === 'N/A' || valueB === null || valueB === undefined
+
+      if (isNaA && isNaB) return 0
+      if (isNaA) return 1 // A goes to end
+      if (isNaB) return -1 // B goes to end
+
+      // Compare based on type
+      if (typeof valueA === 'number' && typeof valueB === 'number') {
+        return sortOrder === 'asc' ? valueA - valueB : valueB - valueA
+      }
+
+      // String comparison (including formatted values like "€10.00M", "180 cm")
+      const strA = String(valueA).toLowerCase()
+      const strB = String(valueB).toLowerCase()
+
+      // Try to extract numbers from formatted strings
+      const numA = parseFloat(strA.replace(/[^0-9.-]/g, ''))
+      const numB = parseFloat(strB.replace(/[^0-9.-]/g, ''))
+
+      if (!isNaN(numA) && !isNaN(numB)) {
+        return sortOrder === 'asc' ? numA - numB : numB - numA
+      }
+
+      // Fallback to string comparison
+      return sortOrder === 'asc'
+        ? strA.localeCompare(strB)
+        : strB.localeCompare(strA)
+    })
+
+    return sorted
+  }, [baseFilteredPlayers, sortBy, sortOrder, allCategories])
 
   // Opciones de filtros (extraídas de los jugadores cargados)
   const filterOptions = useMemo(() => {
@@ -121,26 +201,12 @@ export const useDashboardStateInfinite = () => {
   // Categorías disponibles
   const AVAILABLE_CATEGORIES = useMemo(() => DASHBOARD_CATEGORY_GROUPS, [])
 
-  // Helper to flatten categories from groups
-  const flattenCategories = useCallback((groups: typeof DASHBOARD_CATEGORY_GROUPS): Category[] => {
-    const flattened: Category[] = []
-    const processGroup = (group: typeof DASHBOARD_CATEGORY_GROUPS[0]) => {
-      flattened.push(...group.categories)
-      if (group.subgroups) {
-        group.subgroups.forEach(processGroup)
-      }
-    }
-    groups.forEach(processGroup)
-    return flattened
-  }, [])
-
   // Datos de categorías seleccionadas
   const selectedCategoriesData = useMemo(() => {
-    const allCategories = flattenCategories(AVAILABLE_CATEGORIES)
     return selectedCategories
       .map(categoryKey => allCategories.find(cat => cat.key === categoryKey))
       .filter(Boolean) as Category[]
-  }, [AVAILABLE_CATEGORIES, selectedCategories, flattenCategories])
+  }, [selectedCategories, allCategories])
 
   // Funciones
   const handleSearch = useCallback((term: string) => {

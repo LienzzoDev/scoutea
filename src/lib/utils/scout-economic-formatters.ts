@@ -3,15 +3,15 @@
  * Este archivo NO importa Prisma, por lo que es seguro usarlo en componentes del cliente
  */
 
+import { formatMoneyCompact } from '@/lib/utils/format-money'
+
 /**
  * Formatea un valor monetario
+ * @deprecated Use formatMoney, formatMoneyCompact, or formatMoneyPrecise from @/lib/utils/format-money instead
  */
-export function formatValue(value?: number | null, suffix: string = ' €'): string {
+export function formatValue(value?: number | null, _suffix: string = ' €'): string {
   if (!value) return "Por determinar";
-  return new Intl.NumberFormat('es-ES', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(value) + suffix;
+  return formatMoneyCompact(value);
 }
 
 /**

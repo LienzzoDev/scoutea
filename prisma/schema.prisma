@@ -32,6 +32,7 @@ model Usuario {
   profileCompleted Boolean           @default(false)
   subscription     Json?
   dashboardPreferences Json?         // Preferencias del dashboard (categorías seleccionadas, etc.)
+  scoutPreferences     Json?         // Preferencias de scouts (categorías seleccionadas, etc.)
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
   onDemandMessages     OnDemandMessage[]

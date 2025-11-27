@@ -11,20 +11,24 @@ import { prisma } from '@/lib/db'
 
 export class ScoutClerkSyncService {
   /**
-   * Verifica si un usuario existe en Clerk y NO es admin
+   * Verifica si un usuario existe en Clerk
+   * @param clerkId - ID del usuario en Clerk
+   * @param excludeAdmins - Si es true, excluye usuarios admin (default: false)
    */
-  static async userExistsInClerk(clerkId: string): Promise<boolean> {
+  static async userExistsInClerk(clerkId: string, excludeAdmins = false): Promise<boolean> {
     try {
       const clerk = await clerkClient()
       const user = await clerk.users.getUser(clerkId)
 
       if (!user) return false
 
-      // Verificar que el usuario NO sea admin
-      const role = user.publicMetadata?.role as string | undefined
-      if (role === 'admin') {
-        console.log(`User ${clerkId} is admin - excluding from scout list`)
-        return false
+      // Verificar que el usuario NO sea admin (solo si excludeAdmins es true)
+      if (excludeAdmins) {
+        const role = user.publicMetadata?.role as string | undefined
+        if (role === 'admin') {
+          console.log(`User ${clerkId} is admin - excluding from scout list`)
+          return false
+        }
       }
 
       return true
@@ -107,7 +111,8 @@ export class ScoutClerkSyncService {
       // Verificar cada scout en Clerk
       for (const scout of scouts) {
         try {
-          const exists = await this.userExistsInClerk(scout.clerkId)
+          // Para sync, excluimos admins (queremos eliminar scouts de admin users)
+          const exists = await this.userExistsInClerk(scout.clerkId, true)
 
           if (!exists) {
             console.log(`⚠️  Scout ${scout.id_scout} (Clerk: ${scout.clerkId}) - User not found in Clerk`)

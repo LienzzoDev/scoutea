@@ -3,6 +3,8 @@
 import { Loader2, Globe } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
+import { formatMoneyCompact } from '@/lib/utils/format-money'
+
 import { ScoutMetricsCards } from './scout-metrics-cards'
 
 interface ScoutSummaryStatsProps {
@@ -67,12 +69,7 @@ export function ScoutSummaryStats({ scoutId }: ScoutSummaryStatsProps) {
 
   const formatCurrency = (value: number | null) => {
     if (!value) return '€0'
-    return new Intl.NumberFormat('es-ES', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value)
+    return formatMoneyCompact(value)
   }
 
   const formatPercentage = (value: number | null) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
 
@@ -265,7 +265,7 @@ export default function PlayerTable({
                   return (
                     <div
                       key={`${player.id_player}-${category.key}`}
-                      className={`text-center border-r last:border-r-0 flex-shrink-0 self-stretch ${
+                      className={`text-center border-r last:border-r-0 flex-shrink-0 self-stretch flex items-center justify-center ${
                         darkMode ? 'border-slate-700' : 'border-[#e7e7e7]'
                       } ${
                         category.key === "nationality" || category.key === "nationality_1" || category.key === "nationality_2" || category.key === "team"
@@ -280,23 +280,39 @@ export default function PlayerTable({
                             : "140px",
                       }}
                     >
-                      {/* Columna de Nacionalidad - mostrar bandera */}
+                      {/* Columna de Nacionalidad - mostrar bandera solo si hay nacionalidad */}
                       {category.key === "nationality" || category.key === "nationality_1" || category.key === "nationality_2" ? (
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <FlagIcon
-                            nationality={
-                              category.key === "nationality_2"
-                                ? (player.nationality_2 ?? null)
-                                : (player.nationality_1 ?? null)
-                            }
-                            size="lg"
-                          />
-                          <p className={`font-medium text-xs text-center ${
-                            darkMode ? 'text-white' : 'text-[#000000]'
-                          }`}>
-                            {formattedValue}
-                          </p>
-                        </div>
+                        (() => {
+                          const nationalityValue = category.key === "nationality_2"
+                            ? player.nationality_2
+                            : player.nationality_1;
+
+                          // Si no hay nacionalidad, solo mostrar N/A sin bandera
+                          if (!nationalityValue) {
+                            return (
+                              <p className={`font-medium break-words ${
+                                darkMode ? 'text-white' : 'text-[#000000]'
+                              }`}>
+                                N/A
+                              </p>
+                            );
+                          }
+
+                          // Si hay nacionalidad, mostrar bandera y texto
+                          return (
+                            <div className="flex flex-col items-center justify-center gap-2">
+                              <FlagIcon
+                                nationality={nationalityValue}
+                                size="lg"
+                              />
+                              <p className={`font-medium text-xs text-center ${
+                                darkMode ? 'text-white' : 'text-[#000000]'
+                              }`}>
+                                {formattedValue}
+                              </p>
+                            </div>
+                          );
+                        })()
                       ) : category.key === "team" ? (
                         /* Columna de Equipo - mostrar escudo */
                         <div className="flex flex-col items-center justify-center gap-2">
@@ -332,31 +348,22 @@ export default function PlayerTable({
             </div>
 
             {/* Columna fija - Actions */}
-            <div className={`w-20 p-4 text-center border-l flex-shrink-0 ${
+            <div className={`w-20 p-4 text-center border-l flex-shrink-0 flex items-center justify-center ${
               darkMode ? 'border-slate-700' : 'border-[#e7e7e7]'
             }`}>
-              <div className="flex items-center justify-center gap-2">
-                <BookmarkButton
-                  entityId={player.id_player}
-                  isBookmarked={isInList(player.id_player)}
-                  onToggle={async (playerId) => {
-                    if (isInList(playerId)) {
-                      await removeFromList(playerId);
-                      return false;
-                    } else {
-                      await addToList(playerId);
-                      return true;
-                    }
-                  }}
-                />
-                <ArrowRight
-                  className="w-4 h-4 text-[#8c1a10] cursor-pointer hover:text-[#8c1a10]/80"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    _router.push(`/member/player/${player.id_player}`);
-                  }}
-                />
-              </div>
+              <BookmarkButton
+                entityId={player.id_player}
+                isBookmarked={isInList(player.id_player)}
+                onToggle={async (playerId) => {
+                  if (isInList(playerId)) {
+                    await removeFromList(playerId);
+                    return false;
+                  } else {
+                    await addToList(playerId);
+                    return true;
+                  }
+                }}
+              />
             </div>
           </div>
         ))}

@@ -1,3 +1,5 @@
+import { formatMoney } from '@/lib/utils/format-money'
+
 export interface Category {
   key: string
   label: string
@@ -177,9 +179,7 @@ export const DASHBOARD_CATEGORY_GROUPS: CategoryGroup[] = [
         label: 'TRFM value',
         getValue: (player: Record<string, unknown>) => {
           const value = player.player_trfm_value || player.trfm_value || player.market_value;
-          if (!value) return 'N/A';
-          const numValue = typeof value === 'string' ? parseFloat(value) : (value as number);
-          return `€${numValue.toFixed(2)}M`;
+          return formatMoney(value as number | string | null);
         }
       },
     ]

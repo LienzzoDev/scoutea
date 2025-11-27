@@ -3,25 +3,11 @@
  * Este archivo NO debe importar Prisma para poder ser usado en componentes cliente
  */
 
+import { formatMoney } from '@/lib/utils/format-money';
+
 export function formatValue(value?: number | null): string {
   if (!value) return "Por determinar";
-
-  // Los valores están en millones, formatear directamente
-  if (value >= 1_000) {
-    // Billones (B) - si el valor es >= 1000M
-    const billions = value / 1_000;
-    return `€${billions.toFixed(billions >= 10 ? 1 : 2)}B`;
-  } else if (value >= 1) {
-    // Millones (M)
-    return `€${value.toFixed(value >= 10 ? 1 : 2)}M`;
-  } else if (value >= 0.001) {
-    // Miles (K) - si el valor es < 1M pero >= 1K
-    const thousands = value * 1_000;
-    return `€${thousands.toFixed(thousands >= 10 ? 1 : 2)}K`;
-  } else {
-    // Valores muy pequeños
-    return `€${(value * 1_000_000).toFixed(0)}`;
-  }
+  return formatMoney(value);
 }
 
 export function formatPercentageChange(changePercent?: number | null): {

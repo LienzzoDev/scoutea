@@ -1,6 +1,6 @@
 'use client'
 
-import { Search, Filter, ArrowRight, X, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import { Search, Filter, X, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback, useRef } from 'react'
 
@@ -18,15 +18,21 @@ import ScoutAvatar from "@/components/ui/scout-avatar"
 import { SCOUT_CATEGORY_GROUPS, ScoutCategory } from "@/constants/scout-categories"
 import { useScoutList } from "@/hooks/scout/useScoutList"
 import { useScouts, Scout } from "@/hooks/scout/useScouts"
+import { useScoutPreferences } from "@/hooks/useScoutPreferences"
 
 export default function ScoutsPage() {
   const _router = useRouter()
   const [showFilters, setShowFilters] = useState(false)
   const [activeTab, setActiveTab] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
-  
-  // 🎛️ ESTADO PARA GESTIÓN DE CATEGORÍAS MOSTRADAS
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+
+  // 🎛️ HOOK PARA GESTIÓN DE CATEGORÍAS (guardadas en DB)
+  const {
+    selectedCategories,
+    setSelectedCategories,
+    resetToDefaults: resetCategories,
+    loading: preferencesLoading
+  } = useScoutPreferences()
 
   // 🔍 ESTADO PARA FILTROS AVANZADOS
   const [activeFilters, setActiveFilters] = useState<Record<string, unknown>>({})
@@ -100,62 +106,21 @@ export default function ScoutsPage() {
     return flattened
   }
 
-  // 💾 CARGAR CATEGORÍAS GUARDADAS AL MONTAR EL COMPONENTE
-  useEffect(() => {
-    const savedCategories = localStorage.getItem('scouts-selected-categories')
-    if (savedCategories) {
-      try {
-        const parsed = JSON.parse(savedCategories)
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setSelectedCategories(parsed)
-
-        } else {
-          // Si no hay categorías válidas guardadas, usar las por defecto
-          const defaultCategories = ['scout_level', 'scout_elo', 'total_reports']
-          setSelectedCategories(defaultCategories)
-          localStorage.setItem('scouts-selected-categories', JSON.stringify(defaultCategories))
-
-        }
-      } catch (_error) {
-        console.error('❌ Error parsing saved scout categories:', error)
-        const defaultCategories = ['scout_level', 'scout_elo', 'total_reports']
-        setSelectedCategories(defaultCategories)
-        localStorage.setItem('scouts-selected-categories', JSON.stringify(defaultCategories))
-      }
-    } else {
-      // Primera vez, usar categorías por defecto y guardarlas
-      const defaultCategories = ['scout_level', 'scout_elo', 'total_reports']
-      setSelectedCategories(defaultCategories)
-      localStorage.setItem('scouts-selected-categories', JSON.stringify(defaultCategories))
-
-    }
-  }, [])
-
   // 🎛️ FUNCIÓN PARA MANEJAR SELECCIÓN DE CATEGORÍAS
-  const handleCategoryToggle = (categoryKey: string) => {
-    setSelectedCategories(prev => {
-      const isSelected = prev.includes(categoryKey)
-      let newCategories: string[]
-      
-      if (isSelected) {
-        // Remover categoría (mínimo 1 categoría)
-        newCategories = prev.length > 1 ? prev.filter(key => key !== categoryKey) : prev
-      } else {
-        // Añadir categoría al principio (izquierda)
-        newCategories = [categoryKey, ...prev]
-      }
-      
-      // 💾 GUARDAR EN LOCALSTORAGE
-      try {
-        localStorage.setItem('scouts-selected-categories', JSON.stringify(newCategories))
-        console.log('✅ Scout categories saved to localStorage:', newCategories)
-      } catch (_error) {
-        console.error('❌ Error saving scout categories to localStorage:', error)
-      }
-      
-      return newCategories
-    })
-  }
+  const handleCategoryToggle = useCallback((categoryKey: string) => {
+    const isSelected = selectedCategories.includes(categoryKey)
+    let newCategories: string[]
+
+    if (isSelected) {
+      // Remover categoría (mínimo 1 categoría)
+      newCategories = selectedCategories.length > 1 ? selectedCategories.filter(key => key !== categoryKey) : selectedCategories
+    } else {
+      // Añadir categoría al principio (izquierda)
+      newCategories = [categoryKey, ...selectedCategories]
+    }
+
+    setSelectedCategories(newCategories)
+  }, [selectedCategories, setSelectedCategories])
 
   // 🎯 OBTENER CATEGORÍAS SELECCIONADAS PARA MOSTRAR
   const getSelectedCategoriesData = () => {
@@ -495,6 +460,7 @@ export default function ScoutsPage() {
           categories={SCOUT_CATEGORY_GROUPS}
           selectedCategories={selectedCategories}
           onCategoryToggle={handleCategoryToggle}
+          onReset={resetCategories}
           minCategories={1}
           storageKey="scouts-selected-categories"
         />
@@ -704,7 +670,7 @@ export default function ScoutsPage() {
         )}
 
         {/* Loading State */}
-        {loading && (
+        {(loading || preferencesLoading) && (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8c1a10]"></div>
             <span className="ml-3 text-[#6d6d6d]">Loading scouts...</span>
@@ -723,7 +689,7 @@ export default function ScoutsPage() {
         )}
 
         {/* Scouts List */}
-        {!loading && !error && (
+        {!loading && !preferencesLoading && !error && (
           <div className="space-y-4">
             {/* Results count */}
             <div className="text-[#6d6d6d] text-sm mb-4">Showing {filteredScouts.length} scout{filteredScouts.length !== 1 ? 's' : ''}
@@ -833,11 +799,11 @@ export default function ScoutsPage() {
                   {filteredScouts.map((scout, index) => (
                     <div
                       key={scout.id_scout}
-                      className="flex items-stretch cursor-pointer hover:bg-gray-50 transition-colors min-h-[80px]"
+                      className="flex items-center cursor-pointer hover:bg-gray-50 transition-colors min-h-[80px]"
                       onClick={() => _router.push(`/member/scout/${scout.id_scout}`)}
                     >
                       {/* Columna fija - Scout Info */}
-                      <div className="w-80 p-4 border-r border-[#e7e7e7] flex-shrink-0">
+                      <div className="w-80 p-4 border-r border-[#e7e7e7] flex-shrink-0 flex items-center">
                         <div className="flex items-center gap-4">
                           <ScoutAvatar scout={scout} size="md" showFlag={false} />
                           <div>
@@ -861,10 +827,10 @@ export default function ScoutsPage() {
                         ref={(el) =>{
                           if (el) rowScrollRefs.current[index] = el
                         }}
-                        className="flex-1 overflow-x-auto scrollbar-hide" onScroll={(e) => handleScroll(e.currentTarget.scrollLeft)}
+                        className="flex-1 overflow-x-auto scrollbar-hide flex items-center" onScroll={(e) => handleScroll(e.currentTarget.scrollLeft)}
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                       >
-                        <div className="flex items-stretch w-full">
+                        <div className="flex items-center w-full">
                           {getSelectedCategoriesData().map((category, catIndex, array) => {
                             try {
                               const value = category.getValue ? category.getValue(scout) : 'N/A'
@@ -879,7 +845,7 @@ export default function ScoutsPage() {
                               return (
                                 <div
                                   key={category.key}
-                                  className={`text-center border-r border-[#e7e7e7] last:border-r-0 flex-shrink-0 self-stretch ${
+                                  className={`text-center border-r border-[#e7e7e7] last:border-r-0 flex-shrink-0 flex items-center justify-center ${
                                     category.key === "nationality"
                                       ? "p-3"
                                       : "p-4"
@@ -892,15 +858,28 @@ export default function ScoutsPage() {
                                 >
                                   {/* Columna de Nacionalidad - mostrar bandera */}
                                   {category.key === "nationality" ? (
-                                    <div className="flex flex-col items-center justify-center gap-2">
-                                      <FlagIcon
-                                        nationality={value as string}
-                                        size="lg"
-                                      />
-                                      <p className="font-medium text-[#000000] text-xs text-center">
-                                        {formattedValue}
-                                      </p>
-                                    </div>
+                                    (() => {
+                                      // Si no hay nacionalidad, solo mostrar N/A sin bandera
+                                      if (!value || value === 'N/A') {
+                                        return (
+                                          <p className="font-medium text-[#000000]">
+                                            N/A
+                                          </p>
+                                        );
+                                      }
+                                      // Si hay nacionalidad, mostrar bandera y texto
+                                      return (
+                                        <div className="flex flex-col items-center justify-center gap-2">
+                                          <FlagIcon
+                                            nationality={value as string}
+                                            size="lg"
+                                          />
+                                          <p className="font-medium text-[#000000] text-xs text-center">
+                                            {formattedValue}
+                                          </p>
+                                        </div>
+                                      );
+                                    })()
                                   ) : (
                                     /* Otras columnas - mostrar solo texto */
                                     <p className="font-medium text-[#000000]">
@@ -914,7 +893,7 @@ export default function ScoutsPage() {
                               return (
                                 <div
                                   key={category.key}
-                                  className="p-4 text-center border-r border-[#e7e7e7] last:border-r-0 flex-shrink-0 self-stretch"
+                                  className="p-4 text-center border-r border-[#e7e7e7] last:border-r-0 flex-shrink-0 flex items-center justify-center"
                                   style={{
                                     minWidth: '140px',
                                     width: `${100 / array.length}%`,
@@ -932,29 +911,18 @@ export default function ScoutsPage() {
                       </div>
 
                       {/* Columna fija - Actions */}
-                      <div className="w-24 p-4 border-l border-[#e7e7e7] flex-shrink-0">
-                        <div className="flex items-center justify-center gap-2">
-                          <BookmarkButton
-                            entityId={scout.id_scout}
-                            isBookmarked={isInList(scout.id_scout)}
-                            onToggle={async (scoutId) => {
-                              if (isInList(scoutId)) {
-                                return await removeFromList(scoutId)
-                              } else {
-                                return await addToList(scoutId)
-                              }
-                            }}
-
-                          />
-                          
-                          <ArrowRight 
-                            className="w-4 h-4 text-[#8c1a10] cursor-pointer hover:text-[#8c1a10]/80" 
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              _router.push(`/member/scout/${scout.id_scout}`)
-                            }}
-                          />
-                        </div>
+                      <div className="w-24 p-4 border-l border-[#e7e7e7] flex-shrink-0 flex items-center justify-center">
+                        <BookmarkButton
+                          entityId={scout.id_scout}
+                          isBookmarked={isInList(scout.id_scout)}
+                          onToggle={async (scoutId) => {
+                            if (isInList(scoutId)) {
+                              return await removeFromList(scoutId)
+                            } else {
+                              return await addToList(scoutId)
+                            }
+                          }}
+                        />
                       </div>
                     </div>
                   ))}
