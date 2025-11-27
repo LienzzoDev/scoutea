@@ -21,43 +21,6 @@ export const metadata: Metadata = {
 export default function HomePage() {
   const plans = [
     {
-      id: 'basic',
-      name: 'Básica (Wonderkids + Torneos)',
-      price: { monthly: 20, yearly: 17 },
-      description: 'Acceso esencial para descubrir talentos',
-      features: [
-        'Acceso a sección Wonderkids',
-        'Acceso a sección Torneos',
-        'Perfiles detallados de jugadores jóvenes',
-        'Información de competiciones y eventos',
-        'Estadísticas de rendimiento',
-        'Actualizaciones semanales',
-        'Soporte por email'
-      ],
-      popular: false,
-      color: 'from-blue-500 to-blue-600'
-    },
-    {
-      id: 'premium',
-      name: 'Premium (Acceso Completo)',
-      price: null,
-      description: 'Para profesionales que buscan análisis avanzado',
-      features: [
-        'Todo lo del plan Básico',
-        'Acceso completo a base de datos de jugadores',
-        'Búsqueda avanzada y filtros',
-        'Comparaciones y análisis',
-        'Radar charts y métricas avanzadas',
-        'Acceso a red de scouts',
-        'Comparador de scouts',
-        'Reportes personalizados',
-        'Soporte prioritario 24/7'
-      ],
-      popular: true,
-      color: 'from-green-500 to-green-600',
-      requiresApproval: true
-    },
-    {
       id: 'scout',
       name: 'Scout',
       price: { monthly: 20, yearly: 17 },
@@ -74,6 +37,43 @@ export default function HomePage() {
       popular: false,
       color: 'from-emerald-500 to-emerald-600',
       isScoutPlan: true
+    },
+    {
+      id: 'basic',
+      name: 'Member Basic',
+      price: { monthly: 20, yearly: 17 },
+      description: 'Acceso esencial para descubrir talentos',
+      features: [
+        'Acceso a sección Wonderkids',
+        'Acceso a sección Torneos',
+        'Perfiles detallados de jugadores jóvenes',
+        'Información de competiciones y eventos',
+        'Estadísticas de rendimiento',
+        'Actualizaciones semanales',
+        'Soporte por email'
+      ],
+      popular: false,
+      color: 'from-blue-500 to-blue-600'
+    },
+    {
+      id: 'premium',
+      name: 'Member Pro',
+      price: null,
+      description: 'Para profesionales que buscan análisis avanzado',
+      features: [
+        'Todo lo del plan Básico',
+        'Acceso completo a base de datos de jugadores',
+        'Búsqueda avanzada y filtros',
+        'Comparaciones y análisis',
+        'Radar charts y métricas avanzadas',
+        'Acceso a red de scouts',
+        'Comparador de scouts',
+        'Reportes personalizados',
+        'Soporte prioritario 24/7'
+      ],
+      popular: true,
+      color: 'from-green-500 to-green-600',
+      requiresApproval: true
     }
   ]
 
