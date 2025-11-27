@@ -333,9 +333,9 @@ export const DASHBOARD_CATEGORY_GROUPS: CategoryGroup[] = [
     ]
   },
 
-  // PLAY MODE
+  // IN PLAY
   {
-    groupName: 'PLAY MODE',
+    groupName: 'IN PLAY',
     categories: [
       { key: 'transition', label: 'Transition' },
       { key: 'keeping_the_ball', label: 'Keeping the Ball' },
@@ -346,6 +346,13 @@ export const DASHBOARD_CATEGORY_GROUPS: CategoryGroup[] = [
       { key: 'ball_recovery', label: 'Ball Recovery' },
       { key: 'defensive_shape', label: 'Defensive Shape' },
       { key: 'goal_saving', label: 'Goal Saving' },
+    ]
+  },
+
+  // PLAY MODE
+  {
+    groupName: 'PLAY MODE',
+    categories: [
       { key: 'positional_att_tendency', label: 'Positional Att Tendency' },
       { key: 'positional_att_dominance', label: 'Positional Att Dominance' },
       { key: 'direct_att_tendency', label: 'Direct Att Tendency' },

@@ -31,6 +31,7 @@ model Usuario {
   twitter          String?
   profileCompleted Boolean           @default(false)
   subscription     Json?
+  dashboardPreferences Json?         // Preferencias del dashboard (categorías seleccionadas, etc.)
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
   onDemandMessages     OnDemandMessage[]

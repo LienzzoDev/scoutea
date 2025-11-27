@@ -47,6 +47,7 @@ export default function MemberDashboard() {
     handleSearch,
     handleTabChange,
     handleCategoryToggle,
+    resetCategories,
     applyFilters,
     clearFilters,
     handleSort,
@@ -118,6 +119,7 @@ export default function MemberDashboard() {
           categories={AVAILABLE_CATEGORIES}
           selectedCategories={selectedCategories}
           onCategoryToggle={handleCategoryToggle}
+          onReset={resetCategories}
           minCategories={1}
           storageKey="dashboard-selected-categories"
         />

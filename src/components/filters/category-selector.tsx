@@ -1,6 +1,6 @@
 'use client'
 
-import { Settings, ChevronDown, X, Check } from 'lucide-react'
+import { Settings, ChevronDown, X, Check, RotateCcw } from 'lucide-react'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -21,6 +21,7 @@ interface CategorySelectorProps {
   categories: Category[] | CategoryGroup[]
   selectedCategories: string[]
   onCategoryToggle: (categoryKey: string) => void
+  onReset?: () => void
   minCategories?: number
   maxCategories?: number
   storageKey: string
@@ -31,6 +32,7 @@ export default function CategorySelector({
   categories,
   selectedCategories,
   onCategoryToggle,
+  onReset,
   minCategories = 1,
   maxCategories,
   storageKey: _storageKey
@@ -126,14 +128,26 @@ export default function CategorySelector({
             ({selectedCategories.length} selected)
           </span>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() =>setShowSelector(false)}
-          className="border-[#e7e7e7] text-[#6d6d6d]">
-          Hide Options
-          <ChevronDown className="w-4 h-4 ml-2 transition-transform rotate-180" />
-        </Button>
+        <div className="flex items-center gap-2">
+          {onReset && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onReset}
+              className="border-[#e7e7e7] text-[#6d6d6d] hover:border-[#8c1a10] hover:text-[#8c1a10]">
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Reset
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>setShowSelector(false)}
+            className="border-[#e7e7e7] text-[#6d6d6d]">
+            Hide Options
+            <ChevronDown className="w-4 h-4 ml-2 transition-transform rotate-180" />
+          </Button>
+        </div>
       </div>
 
       {/* 📋 CATEGORÍAS SELECCIONADAS ACTUALMENTE */}

@@ -5,13 +5,21 @@ import type { PlayerFilters, Category } from '@/types/dashboard';
 
 import { useInfiniteDashboardScroll } from './member/useInfiniteDashboardScroll';
 import { usePlayerList } from './player/usePlayerList';
+import { useUserPreferences } from './useUserPreferences';
 
 export const useDashboardStateInfinite = () => {
+  // Hook para preferencias del usuario (guardadas en DB)
+  const {
+    selectedCategories,
+    setSelectedCategories,
+    resetToDefaults: resetCategories,
+    loading: preferencesLoading
+  } = useUserPreferences();
+
   // Estados básicos
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(['position', 'age', 'team']);
   const [activeFilters, setActiveFilters] = useState<PlayerFilters>({});
   const [selectedNationalities, setSelectedNationalities] = useState<string[]>([]);
   const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
@@ -144,12 +152,11 @@ export const useDashboardStateInfinite = () => {
   }, [])
 
   const handleCategoryToggle = useCallback((categoryId: string) => {
-    setSelectedCategories(prev =>
-      prev.includes(categoryId)
-        ? prev.filter(id => id !== categoryId)
-        : [categoryId, ...prev]
-    )
-  }, [])
+    const newCategories = selectedCategories.includes(categoryId)
+      ? selectedCategories.filter(id => id !== categoryId)
+      : [categoryId, ...selectedCategories]
+    setSelectedCategories(newCategories)
+  }, [selectedCategories, setSelectedCategories])
 
   const applyFilters = useCallback((filters: Record<string, unknown>) => {
     setActiveFilters(filters)
@@ -192,7 +199,7 @@ export const useDashboardStateInfinite = () => {
     sortOrder,
 
     // Datos derivados
-    loading,
+    loading: loading || preferencesLoading,
     error: playerListError,
     filteredPlayers,
     tabCounts,
@@ -206,6 +213,7 @@ export const useDashboardStateInfinite = () => {
     handleSearch,
     handleTabChange,
     handleCategoryToggle,
+    resetCategories,
     applyFilters,
     clearFilters,
     handleSort,
