@@ -172,8 +172,31 @@ export class PlayerService {
         return null;
       }
 
+      // Calculate average report rating
+      const reportsAggregation = await prisma.reporte.aggregate({
+        _avg: {
+          rating: true
+        },
+        where: {
+          id_player: playerId,
+          rating: {
+            not: null,
+            gt: 0
+          }
+        }
+      });
+
+      const averageReportRating = reportsAggregation._avg.rating 
+        ? parseFloat(reportsAggregation._avg.rating.toFixed(1)) 
+        : null;
+
       // Transform Prisma result to Player type using mapper
-      return this.mapPrismaToPlayer(player);
+      const mappedPlayer = this.mapPrismaToPlayer(player);
+      
+      // Add calculated average rating
+      mappedPlayer.average_report_rating = averageReportRating;
+
+      return mappedPlayer;
     } catch (error) {
       console.error('Error fetching player by ID:', error);
       // Return null on database error

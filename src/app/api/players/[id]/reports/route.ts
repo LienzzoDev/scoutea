@@ -7,7 +7,15 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: playerId } = await params;
+    const { id: playerIdStr } = await params;
+    const playerId = parseInt(playerIdStr, 10);
+
+    if (isNaN(playerId)) {
+      return NextResponse.json(
+        { error: "Invalid player ID" },
+        { status: 400 }
+      );
+    }
 
     // Buscar directamente en la tabla Reporte por id_player
     const directReports = await prisma.reporte.findMany({

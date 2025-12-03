@@ -68,8 +68,7 @@ export class RadarCalculationService {
 
     // If no radar metrics exist, try to calculate from player stats
     const playerStats = await prisma.playerStats3m.findFirst({
-      where: { playerId: playerIdNum },
-      orderBy: { updatedAt: 'desc' }
+      where: { id_player: playerIdNum }
     })
 
     if (playerStats) {

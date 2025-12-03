@@ -7,11 +7,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: playerId } = await params;
+    const { id: playerIdStr } = await params;
+    const playerId = parseInt(playerIdStr, 10);
 
-    if (!playerId) {
+    if (isNaN(playerId)) {
       return NextResponse.json(
-        { error: 'Player ID is required' },
+        { error: 'Invalid player ID' },
         { status: 400 }
       );
     }

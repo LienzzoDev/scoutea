@@ -11,7 +11,20 @@ export async function GET(
   const radarService = new RadarCalculationService(prisma);
 
   try {
-    const { id: playerId } = await params;
+    const { id: playerIdStr } = await params;
+    const playerId = parseInt(playerIdStr, 10);
+
+    if (isNaN(playerId)) {
+      return NextResponse.json(
+        { 
+          __error: 'Invalid player ID',
+          _playerId: playerIdStr,
+          message: 'Player ID must be a valid number'
+        },
+        { status: 400 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const period = searchParams.get('period') || '2023-24';
     
@@ -28,7 +41,7 @@ export async function GET(
 
     // Verify player exists
     const player = await prisma.jugador.findUnique({
-      where: { id___player: playerId },
+      where: { id_player: playerId },
       select: {
         player_name: true,
         position_player: true,

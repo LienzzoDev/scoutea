@@ -7,10 +7,12 @@ import { Input } from '@/components/ui/input'
 
 interface RangeFilterProps {
   label: string
-  minValue?: number
-  maxValue?: number
+  minValue?: number | undefined
+  maxValue?: number | undefined
   onRangeChange: (min?: number, max?: number) =>void
   placeholder?: string
+  minPlaceholder?: string
+  maxPlaceholder?: string
   step?: string
   suffix?: string
 }
@@ -21,6 +23,8 @@ export default function RangeFilter({
   maxValue,
   onRangeChange,
   placeholder = "Select range...",
+  minPlaceholder = "Mín",
+  maxPlaceholder = "Máx",
   step = "1",
   suffix = ""
 }: RangeFilterProps) {
@@ -125,14 +129,14 @@ export default function RangeFilter({
                 <Input
                   type="number"
                   step={step}
-                  placeholder="Mín"
+                  placeholder={minPlaceholder}
                   value={localMin}
                   onChange={(e) => setLocalMin(e.target.value)}
                   className="flex-1" />
                 <Input
                   type="number"
                   step={step}
-                  placeholder="Máx"
+                  placeholder={maxPlaceholder}
                   value={localMax}
                   onChange={(e) => setLocalMax(e.target.value)}
                   className="flex-1" />

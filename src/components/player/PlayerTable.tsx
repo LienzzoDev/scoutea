@@ -179,12 +179,11 @@ export default function PlayerTable({
           </div>
         </div>
 
-        {/* Columna fija - Actions */}
         <div className={`w-20 p-4 text-center border-l flex-shrink-0 ${
           darkMode ? 'border-slate-700' : 'border-[#e7e7e7]'
         }`}>
           <h4 className={`font-semibold text-sm ${darkMode ? 'text-slate-300' : 'text-[#6d6d6d]'}`}>
-            Actions
+            Favorites
           </h4>
         </div>
       </div>
@@ -317,7 +316,7 @@ export default function PlayerTable({
                         /* Columna de Equipo - mostrar escudo */
                         <div className="flex flex-col items-center justify-center gap-2">
                           <TeamBadge
-                            teamName={player.team_name || undefined}
+                            teamName={player.team_name || ""}
                             size="lg"
                           />
                           <p className={`font-medium text-xs text-center ${
@@ -352,8 +351,8 @@ export default function PlayerTable({
               darkMode ? 'border-slate-700' : 'border-[#e7e7e7]'
             }`}>
               <BookmarkButton
-                entityId={player.id_player}
-                isBookmarked={isInList(player.id_player)}
+                entityId={String(player.id_player)}
+                isBookmarked={isInList(String(player.id_player))}
                 onToggle={async (playerId) => {
                   if (isInList(playerId)) {
                     await removeFromList(playerId);

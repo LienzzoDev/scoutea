@@ -71,14 +71,7 @@ export default function PlayerReports({ player }: PlayerReportsProps) {
     return reports.filter(report => report.type === selectedFilter);
   }, [selectedFilter, reports]);
 
-  // Calcular rating promedio (nota: los reportes reales no tienen rating aún, usar 0)
-  const averageRating = useMemo(() => {
-    if (filteredReports.length === 0) return 0;
-    const reportsWithRating = filteredReports.filter(r => 'rating' in r && r.rating);
-    if (reportsWithRating.length === 0) return 0;
-    const sum = reportsWithRating.reduce((acc: number, report: any) => acc + (report.rating || 0), 0);
-    return (sum / reportsWithRating.length).toFixed(1);
-  }, [filteredReports]);
+
 
   if (loading) {
     return (
@@ -122,25 +115,7 @@ export default function PlayerReports({ player }: PlayerReportsProps) {
         })}
       </div>
 
-      {/* Overall Rating */}
-      <div className="flex items-center justify-center gap-2 mb-8">
-        <span className="text-2xl font-bold text-[#2e3138]">{averageRating}</span>
-        <div className="flex gap-1">
-          {[...Array(5)].map((_, i) => (
-            <div
-              key={i}
-              className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                i < Math.floor(parseFloat(averageRating)) ? 'bg-[#8c1a10]' : 'bg-gray-300'
-              }`}
-            >
-              <span className="text-white text-xs">⚽</span>
-            </div>
-          ))}
-        </div>
-        <span className="text-sm text-[#6d6d6d] ml-2">
-          ({filteredReports.length} reporte{filteredReports.length !== 1 ? 's' : ''})
-        </span>
-      </div>
+
 
       {/* Reports Grid */}
       {filteredReports.length === 0 ? (

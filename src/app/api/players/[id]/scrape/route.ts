@@ -181,12 +181,18 @@ export async function POST(
 
     console.log('🔍 Iniciando API de scraping...')
 
-    const { id: playerId } = await params
+    const { id: playerIdStr } = await params
+    const playerId = parseInt(playerIdStr, 10)
+
+    if (isNaN(playerId)) {
+      return NextResponse.json({ __error: 'Invalid player ID' }, { status: 400 })
+    }
+
     console.log('📝 Player ID:', playerId)
 
     // Obtener el jugador de la base de datos
     const player = await prisma.jugador.findUnique({
-      where: { id___player: playerId },
+      where: { id_player: playerId },
       select: {
         id_player: true,
         player_name: true,

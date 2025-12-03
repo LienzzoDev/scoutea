@@ -135,7 +135,16 @@ export default function PlanSelector({ plans }: PlanSelectorProps) {
               <p className="text-[#6d6d6d] mb-4">{plan.description}</p>
 
               <div className="mb-4">
-                {plan.price ? (
+                {plan.isScoutPlan ? (
+                  <div className="text-center py-2">
+                    <p className="text-lg font-semibold text-[#8c1a10]">
+                      Acceso por Aprobación
+                    </p>
+                    <p className="text-sm text-[#6d6d6d] mt-1">
+                      Sin coste inicial
+                    </p>
+                  </div>
+                ) : plan.price ? (
                   <>
                     <div className="flex items-baseline justify-center">
                       <span className="text-4xl font-bold text-[#8c1a10]">

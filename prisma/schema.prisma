@@ -337,6 +337,7 @@ model Reporte {
   form_potential              String?   // Evaluación de potencial por el scout
   roi                         Float?    // Return on investment estimado
   profit                      Float?    // Beneficio estimado
+  rating                      Float?    // Valoración del jugador (1-5)
 
   // ===== SNAPSHOT HISTÓRICO (al momento del reporte) =====
   // Estos campos capturan el estado del jugador CUANDO se hizo el reporte
@@ -1730,6 +1731,33 @@ model LeagueCorrection {
   @@index([national_tier])
   @@index([country])
   @@map("league_corrections")
+}
+
+model NationalityCorrection {
+  id                String   @id @default(cuid())
+  original_name     String   @unique  // Nacionalidad original (ej: "España")
+  corrected_name    String             // Nacionalidad corregida (ej: "Spain")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  created_by        String?            // Usuario que creó la regla
+
+  @@index([original_name])
+  @@index([corrected_name])
+  @@map("nationality_corrections")
+}
+
+model CompetitionCorrection {
+  id                String   @id @default(cuid())
+  original_name     String   @unique  // Competición original (ej: "UEFA Champions League")
+  corrected_name    String             // Competición corregida (ej: "Champions League")
+  country           String?            // País de la competición (opcional)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  created_by        String?            // Usuario que creó la regla
+
+  @@index([original_name])
+  @@index([corrected_name])
+  @@map("competition_corrections")
 }
 
 // ============================================================================

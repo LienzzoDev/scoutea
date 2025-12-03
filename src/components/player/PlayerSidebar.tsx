@@ -156,7 +156,7 @@ export default function PlayerSidebar({ player }: PlayerSidebarProps) {
             variant="outline"
             className="w-full border-[#8c1a10] text-[#8c1a10] hover:bg-[#8c1a10] hover:text-white bg-transparent flex items-center justify-center gap-2"
           >
-            Transfer market
+            www.transfermarkt.com
             <span className="ml-2">↗</span>
           </Button>
         </a>
@@ -166,7 +166,7 @@ export default function PlayerSidebar({ player }: PlayerSidebarProps) {
           className="w-full border-gray-300 text-gray-400 cursor-not-allowed bg-transparent flex items-center justify-center gap-2"
           disabled
         >
-          Transfer market
+          www.transfermarkt.com
           <span className="ml-2">↗</span>
         </Button>
       )}
@@ -210,6 +210,28 @@ export default function PlayerSidebar({ player }: PlayerSidebarProps) {
                   <> | Rank {player.player_ranking}</>
                 )}
               </span>
+            </div>
+          </div>
+        )}
+
+        {/* Average Report Rating */}
+        {player.average_report_rating && player.average_report_rating > 0 && (
+          <div className="text-center pt-2 border-t border-gray-100 w-full mt-2">
+            <p className="text-sm text-[#6d6d6d] mb-1">Report Rating</p>
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-lg font-bold text-[#2e3138]">{player.average_report_rating}</span>
+              <div className="flex gap-0.5">
+                {[...Array(5)].map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-3 h-3 rounded-full flex items-center justify-center ${
+                      i < Math.floor(player.average_report_rating || 0) ? 'bg-[#8c1a10]' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span className="text-white text-[8px]">⚽</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}

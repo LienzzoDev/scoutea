@@ -76,9 +76,15 @@ export class PlayerStatsService {
     period: StatsPeriod
   ): Promise<PlayerStatsData | null> {
     try {
+      const playerIdInt = parseInt(playerId, 10)
+      if (isNaN(playerIdInt)) {
+        console.error(`Invalid player ID format: ${playerId}`)
+        return null
+      }
+
       const table = getPrismaTableByPeriod(period)
       const stats = await table.findUnique({
-        where: { id_player: playerId }
+        where: { id_player: playerIdInt }
       })
 
       if (!stats) {
@@ -142,9 +148,15 @@ export class PlayerStatsService {
     period: StatsPeriod
   ): Promise<Record<string, PlayerStatsByField>> {
     try {
+      const playerIdInt = parseInt(playerId, 10)
+      if (isNaN(playerIdInt)) {
+        console.error(`Invalid player ID format: ${playerId}`)
+        return {}
+      }
+
       const table = getPrismaTableByPeriod(period)
       const stats = await table.findUnique({
-        where: { id_player: playerId }
+        where: { id_player: playerIdInt }
       })
 
       if (!stats) {

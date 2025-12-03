@@ -11,6 +11,11 @@ interface FilterOptions {
   teams: string[];
   competitions: string[];
   ages: string[];
+  stats?: {
+    age: { min: number; max: number };
+    rating: { min: number; max: number };
+    value: { min: number; max: number };
+  } | undefined;
 }
 
 interface PlayerFiltersProps {

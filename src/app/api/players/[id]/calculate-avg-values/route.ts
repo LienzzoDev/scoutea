@@ -7,7 +7,15 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: playerId } = await params;
+    const { id: playerIdStr } = await params;
+    const playerId = parseInt(playerIdStr, 10);
+
+    if (isNaN(playerId)) {
+      return NextResponse.json(
+        { error: "Invalid player ID" },
+        { status: 400 }
+      );
+    }
 
     // Obtener el jugador actual
     const player = await prisma.jugador.findUnique({
@@ -176,7 +184,7 @@ export async function POST(
     }
 
     // Actualizar el jugador con los valores calculados
-    const updatedPlayer = await prisma.jugador.update({
+    await prisma.jugador.update({
       where: { id_player: playerId },
       data: {
         position_value: positionValue,

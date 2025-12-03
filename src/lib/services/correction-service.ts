@@ -66,6 +66,58 @@ export class CorrectionService {
   }
 
   /**
+   * Apply nationality correction if a rule exists
+   * @param nationality - Original nationality name
+   * @returns Corrected nationality or original if no correction found
+   */
+  static async applyNationalityCorrection(
+    nationality: string | null | undefined
+  ): Promise<string | null> {
+    if (!nationality) return null
+
+    const trimmedName = nationality.trim()
+    if (!trimmedName) return null
+
+    try {
+      const correction = await prisma.nationalityCorrection.findUnique({
+        where: { original_name: trimmedName },
+        select: { corrected_name: true }
+      })
+
+      return correction ? correction.corrected_name : trimmedName
+    } catch (error) {
+      console.error('Error applying nationality correction:', error)
+      return trimmedName
+    }
+  }
+
+  /**
+   * Apply competition correction if a rule exists
+   * @param competition - Original competition name
+   * @returns Corrected competition or original if no correction found
+   */
+  static async applyCompetitionCorrection(
+    competition: string | null | undefined
+  ): Promise<string | null> {
+    if (!competition) return null
+
+    const trimmedName = competition.trim()
+    if (!trimmedName) return null
+
+    try {
+      const correction = await prisma.competitionCorrection.findUnique({
+        where: { original_name: trimmedName },
+        select: { corrected_name: true }
+      })
+
+      return correction ? correction.corrected_name : trimmedName
+    } catch (error) {
+      console.error('Error applying competition correction:', error)
+      return trimmedName
+    }
+  }
+
+  /**
    * Apply all corrections to player data
    * @param data - Partial player data that may contain team_name and/or national_tier
    * @returns Corrected data object
@@ -75,6 +127,10 @@ export class CorrectionService {
     national_tier?: string | null
     rename_national_tier?: string | null
     country?: string | null
+    nationality_1?: string | null
+    nationality_2?: string | null
+    nationality_3?: string | null
+    competition?: string | null
     [key: string]: any
   }): Promise<typeof data> {
     const correctedData = { ...data }
@@ -98,6 +154,44 @@ export class CorrectionService {
         correctedData.rename_national_tier =
           leagueCorrection.rename_national_tier
         correctedData.country = leagueCorrection.country
+      }
+    }
+
+    // Apply nationality corrections
+    if (data.nationality_1) {
+      const correctedNationality = await this.applyNationalityCorrection(
+        data.nationality_1
+      )
+      if (correctedNationality) {
+        correctedData.nationality_1 = correctedNationality
+      }
+    }
+
+    if (data.nationality_2) {
+      const correctedNationality = await this.applyNationalityCorrection(
+        data.nationality_2
+      )
+      if (correctedNationality) {
+        correctedData.nationality_2 = correctedNationality
+      }
+    }
+
+    if (data.nationality_3) {
+      const correctedNationality = await this.applyNationalityCorrection(
+        data.nationality_3
+      )
+      if (correctedNationality) {
+        correctedData.nationality_3 = correctedNationality
+      }
+    }
+
+    // Apply competition correction
+    if (data.competition) {
+      const correctedCompetition = await this.applyCompetitionCorrection(
+        data.competition
+      )
+      if (correctedCompetition) {
+        correctedData.competition = correctedCompetition
       }
     }
 
