@@ -101,12 +101,15 @@ export default function PlayerBeeswarm({ playerId }: PlayerBeeswarmProps) {
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
               Período
             </label>
-            <Select defaultValue="period">
+            <Select defaultValue="1y">
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Seleccionar período..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="period">Period</SelectItem>
+                <SelectItem value="3m">3 meses</SelectItem>
+                <SelectItem value="6m">6 meses</SelectItem>
+                <SelectItem value="1y">1 año</SelectItem>
+                <SelectItem value="2y">2 años</SelectItem>
               </SelectContent>
             </Select>
           </div>

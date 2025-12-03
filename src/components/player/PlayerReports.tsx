@@ -29,14 +29,14 @@ interface PlayerReportsProps {
 }
 
 const REPORT_TYPES = [
-  { key: 'all', label: 'Todos los reportes', icon: Filter },
-  { key: 'video', label: 'Video Reporte', icon: Video },
-  { key: 'written', label: 'Scouteo (escrito)', icon: FileText },
+  { key: 'written', label: 'Scoutea', icon: FileText },
   { key: 'social', label: 'Redes sociales', icon: Share2 },
+  { key: 'video', label: 'Video', icon: Video },
+  { key: 'web', label: 'Web', icon: Filter },
 ] as const;
 
 export default function PlayerReports({ player }: PlayerReportsProps) {
-  const [selectedFilter, setSelectedFilter] = useState<string>('all');
+  const [selectedFilter, setSelectedFilter] = useState<string>('written');
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -91,7 +91,7 @@ export default function PlayerReports({ player }: PlayerReportsProps) {
         {REPORT_TYPES.map((type) => {
           const Icon = type.icon;
           const isActive = selectedFilter === type.key;
-          const count = type.key === 'all' ? reports.length : reports.filter(r => r.type === type.key).length;
+          const count = reports.filter(r => r.type === type.key).length;
           
           return (
             <button

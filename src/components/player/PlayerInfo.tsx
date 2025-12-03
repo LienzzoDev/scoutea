@@ -69,9 +69,9 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
               {player.trfm_value_change_percent !== null && player.trfm_value_change_percent !== undefined && (
                 <Badge className={`text-white text-xs px-1 py-0 ${
                   player.trfm_value_change_percent > 0
-                    ? 'bg-[#3cc500]'
-                    : player.trfm_value_change_percent < 0
                     ? 'bg-red-500'
+                    : player.trfm_value_change_percent < 0
+                    ? 'bg-[#3cc500]'
                     : 'bg-gray-500'
                 }`}>
                   {formatPercentageChange(player.trfm_value_change_percent).arrow}
@@ -99,7 +99,7 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
                 </div>
                 {avgValues.position_value_percent !== null && avgValues.position_value_percent !== undefined && Math.abs(avgValues.position_value_percent) < 1000 && (
                   <div className={`text-xs ${
-                    avgValues.position_value_percent > 0 ? 'text-[#3cc500]' : avgValues.position_value_percent < 0 ? 'text-red-500' : 'text-gray-500'
+                    avgValues.position_value_percent > 0 ? 'text-red-500' : avgValues.position_value_percent < 0 ? 'text-[#3cc500]' : 'text-gray-500'
                   }`}>
                     ({avgValues.position_value_percent > 0 ? '+' : ''}{avgValues.position_value_percent.toFixed(1)}%)
                   </div>
@@ -108,9 +108,9 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
               {avgValues.position_value_percent !== null && avgValues.position_value_percent !== undefined && Math.abs(avgValues.position_value_percent) < 1000 && (
                 <Badge className={`text-white text-xs px-1 py-0 ${
                   avgValues.position_value_percent > 0
-                    ? 'bg-[#3cc500]'
-                    : avgValues.position_value_percent < 0
                     ? 'bg-red-500'
+                    : avgValues.position_value_percent < 0
+                    ? 'bg-[#3cc500]'
                     : 'bg-gray-500'
                 }`}>
                   {avgValues.position_value_percent > 0 ? '▲' : avgValues.position_value_percent < 0 ? '▼' : '●'}
@@ -152,7 +152,7 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
                 </div>
                 {avgValues.nationality_value_percent !== null && avgValues.nationality_value_percent !== undefined && Math.abs(avgValues.nationality_value_percent) < 1000 && (
                   <div className={`text-xs ${
-                    avgValues.nationality_value_percent > 0 ? 'text-[#3cc500]' : avgValues.nationality_value_percent < 0 ? 'text-red-500' : 'text-gray-500'
+                    avgValues.nationality_value_percent > 0 ? 'text-red-500' : avgValues.nationality_value_percent < 0 ? 'text-[#3cc500]' : 'text-gray-500'
                   }`}>
                     ({avgValues.nationality_value_percent > 0 ? '+' : ''}{avgValues.nationality_value_percent.toFixed(1)}%)
                   </div>
@@ -161,9 +161,9 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
               {avgValues.nationality_value_percent !== null && avgValues.nationality_value_percent !== undefined && Math.abs(avgValues.nationality_value_percent) < 1000 && (
                 <Badge className={`text-white text-xs px-1 py-0 ${
                   avgValues.nationality_value_percent > 0
-                    ? 'bg-[#3cc500]'
-                    : avgValues.nationality_value_percent < 0
                     ? 'bg-red-500'
+                    : avgValues.nationality_value_percent < 0
+                    ? 'bg-[#3cc500]'
                     : 'bg-gray-500'
                 }`}>
                   {avgValues.nationality_value_percent > 0 ? '▲' : avgValues.nationality_value_percent < 0 ? '▼' : '●'}
@@ -226,7 +226,7 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
                 </div>
                 {avgValues.team_competition_value_percent !== null && avgValues.team_competition_value_percent !== undefined && Math.abs(avgValues.team_competition_value_percent) < 1000 && (
                   <div className={`text-xs ${
-                    avgValues.team_competition_value_percent > 0 ? 'text-[#3cc500]' : avgValues.team_competition_value_percent < 0 ? 'text-red-500' : 'text-gray-500'
+                    avgValues.team_competition_value_percent > 0 ? 'text-red-500' : avgValues.team_competition_value_percent < 0 ? 'text-[#3cc500]' : 'text-gray-500'
                   }`}>
                     ({avgValues.team_competition_value_percent > 0 ? '+' : ''}{avgValues.team_competition_value_percent.toFixed(1)}%)
                   </div>
@@ -235,9 +235,9 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
               {avgValues.team_competition_value_percent !== null && avgValues.team_competition_value_percent !== undefined && Math.abs(avgValues.team_competition_value_percent) < 1000 && (
                 <Badge className={`text-white text-xs px-1 py-0 ${
                   avgValues.team_competition_value_percent > 0
-                    ? 'bg-[#3cc500]'
+                    ? 'bg-[#3cc500]' // Inverted
                     : avgValues.team_competition_value_percent < 0
-                    ? 'bg-red-500'
+                    ? 'bg-red-500' // Inverted
                     : 'bg-gray-500'
                 }`}>
                   {avgValues.team_competition_value_percent > 0 ? '▲' : avgValues.team_competition_value_percent < 0 ? '▼' : '●'}
@@ -273,7 +273,7 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
                     </div>
                     {avgValues.owner_club_value_percent !== null && avgValues.owner_club_value_percent !== undefined && Math.abs(avgValues.owner_club_value_percent) < 1000 && (
                       <div className={`text-xs ${
-                        avgValues.owner_club_value_percent > 0 ? 'text-[#3cc500]' : avgValues.owner_club_value_percent < 0 ? 'text-red-500' : 'text-gray-500'
+                        avgValues.owner_club_value_percent > 0 ? 'text-red-500' : avgValues.owner_club_value_percent < 0 ? 'text-[#3cc500]' : 'text-gray-500'
                       }`}>
                         ({avgValues.owner_club_value_percent > 0 ? '+' : ''}{avgValues.owner_club_value_percent.toFixed(1)}%)
                       </div>
@@ -282,9 +282,9 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
                   {avgValues.owner_club_value_percent !== null && avgValues.owner_club_value_percent !== undefined && Math.abs(avgValues.owner_club_value_percent) < 1000 && (
                     <Badge className={`text-white text-xs px-1 py-0 ${
                       avgValues.owner_club_value_percent > 0
-                        ? 'bg-[#3cc500]'
+                        ? 'bg-[#3cc500]' // Inverted
                         : avgValues.owner_club_value_percent < 0
-                        ? 'bg-red-500'
+                        ? 'bg-red-500' // Inverted
                         : 'bg-gray-500'
                     }`}>
                       {avgValues.owner_club_value_percent > 0 ? '▲' : avgValues.owner_club_value_percent < 0 ? '▼' : '●'}
@@ -328,7 +328,7 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
                 </div>
                 {avgValues.team_competition_value_percent !== null && avgValues.team_competition_value_percent !== undefined && Math.abs(avgValues.team_competition_value_percent) < 1000 && (
                   <div className={`text-xs ${
-                    avgValues.team_competition_value_percent > 0 ? 'text-[#3cc500]' : avgValues.team_competition_value_percent < 0 ? 'text-red-500' : 'text-gray-500'
+                    avgValues.team_competition_value_percent > 0 ? 'text-red-500' : avgValues.team_competition_value_percent < 0 ? 'text-[#3cc500]' : 'text-gray-500'
                   }`}>
                     ({avgValues.team_competition_value_percent > 0 ? '+' : ''}{avgValues.team_competition_value_percent.toFixed(1)}%)
                   </div>
@@ -374,7 +374,7 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
                 </div>
                 {avgValues.competition_level_value_percent !== null && avgValues.competition_level_value_percent !== undefined && Math.abs(avgValues.competition_level_value_percent) < 1000 && (
                   <div className={`text-xs ${
-                    avgValues.competition_level_value_percent > 0 ? 'text-[#3cc500]' : avgValues.competition_level_value_percent < 0 ? 'text-red-500' : 'text-gray-500'
+                    avgValues.competition_level_value_percent > 0 ? 'text-red-500' : avgValues.competition_level_value_percent < 0 ? 'text-[#3cc500]' : 'text-gray-500'
                   }`}>
                     ({avgValues.competition_level_value_percent > 0 ? '+' : ''}{avgValues.competition_level_value_percent.toFixed(1)}%)
                   </div>
@@ -383,9 +383,9 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
               {avgValues.competition_level_value_percent !== null && avgValues.competition_level_value_percent !== undefined && Math.abs(avgValues.competition_level_value_percent) < 1000 && (
                 <Badge className={`text-white text-xs px-1 py-0 ${
                   avgValues.competition_level_value_percent > 0
-                    ? 'bg-[#3cc500]'
-                    : avgValues.competition_level_value_percent < 0
                     ? 'bg-red-500'
+                    : avgValues.competition_level_value_percent < 0
+                    ? 'bg-[#3cc500]'
                     : 'bg-gray-500'
                 }`}>
                   {avgValues.competition_level_value_percent > 0 ? '▲' : avgValues.competition_level_value_percent < 0 ? '▼' : '●'}
