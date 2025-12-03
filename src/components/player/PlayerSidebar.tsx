@@ -173,44 +173,49 @@ export default function PlayerSidebar({ player }: PlayerSidebarProps) {
 
       {/* Rating & Market Value */}
       <div className="flex flex-col items-center space-y-3">
+        {/* Level, Elo, Ranking */}
+        {(player.player_rating || player.player_ranking) && (
+          <div className="w-full grid grid-cols-3 gap-2 text-center border-b border-gray-100 pb-3">
+            {/* Level */}
+            <div className="flex flex-col items-center">
+              <span className="text-xs text-[#6d6d6d] uppercase">Nivel</span>
+              <span className={`text-xl font-bold ${
+                (player.player_rating || 0) >= 90 ? 'text-[#3cc500]' :
+                (player.player_rating || 0) >= 70 ? 'text-blue-500' :
+                (player.player_rating || 0) >= 50 ? 'text-yellow-500' :
+                'text-red-500'
+              }`}>
+                {(player.player_rating || 0) >= 90 ? 'A' :
+                 (player.player_rating || 0) >= 70 ? 'B' :
+                 (player.player_rating || 0) >= 50 ? 'C' : 'D'}
+              </span>
+            </div>
+
+            {/* Elo */}
+            <div className="flex flex-col items-center border-l border-r border-gray-100">
+              <span className="text-xs text-[#6d6d6d] uppercase">Elo</span>
+              <span className="text-xl font-bold text-[#2e3138]">
+                {player.player_rating ? (player.player_rating / 10).toFixed(1) : '-'}
+              </span>
+            </div>
+
+            {/* Ranking */}
+            <div className="flex flex-col items-center">
+              <span className="text-xs text-[#6d6d6d] uppercase">Ranking</span>
+              <span className="text-xl font-bold text-[#2e3138]">
+                {player.player_ranking ? `#${player.player_ranking}` : '-'}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Market Value */}
         {player.player_trfm_value && (
-          <div className="text-center">
+          <div className="text-center pt-1">
             <p className="text-2xl font-bold text-[#8c1a10]">
               {formatMoney(player.player_trfm_value)}
             </p>
             <p className="text-xs text-[#6d6d6d]">Market Value</p>
-          </div>
-        )}
-
-        {/* Player Rating & Ranking */}
-        {(player.player_rating || player.player_ranking) && (
-          <div className="text-center">
-            <p className="text-sm text-[#6d6d6d] mb-1">Player Rank</p>
-            <div className="flex items-center gap-2">
-              {player.player_rating && player.player_rating >= 70 && (
-                <div className={`w-2 h-2 rounded-full ${
-                  player.player_rating >= 90 ? 'bg-[#3cc500]' :
-                  player.player_rating >= 80 ? 'bg-blue-500' :
-                  player.player_rating >= 70 ? 'bg-yellow-500' :
-                  'bg-gray-500'
-                }`}></div>
-              )}
-              <span className="text-sm font-medium">
-                {player.player_rating && (
-                  <>
-                    {player.player_rating >= 90 ? 'A' :
-                     player.player_rating >= 80 ? 'B' :
-                     player.player_rating >= 70 ? 'C' :
-                     player.player_rating >= 60 ? 'D' : 'E'
-                    } ({(player.player_rating / 10).toFixed(2)})
-                  </>
-                )}
-                {player.player_ranking && (
-                  <> | Rank {player.player_ranking}</>
-                )}
-              </span>
-            </div>
           </div>
         )}
 
