@@ -1,6 +1,6 @@
 "use client";
 
-import { Facebook, Twitter, Linkedin, Send } from "lucide-react";
+import { Facebook, Twitter, Linkedin, Send, Instagram } from "lucide-react";
 import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ export default function PlayerSidebar({ player }: PlayerSidebarProps) {
   const validProfilePhoto = getValidImageUrl(player.photo_coverage);
 
   return (
-    <div className="w-80 bg-white rounded-lg p-6 space-y-4 self-start">
+    <div className="w-80 bg-white rounded-lg p-6 space-y-4 self-start relative">
       {/* Player Card */}
       <div className="relative">
         {validGalleryPhoto ? (
@@ -68,81 +68,11 @@ export default function PlayerSidebar({ player }: PlayerSidebarProps) {
           <span className="text-sm font-medium">{player.player_name || "Player Name"}
           </span>
         </div>
+
+
       </div>
 
-      {/* Social Media - Solo mostrar si hay al menos una red social */}
-      {(player.facebook_profile ||
-        player.twitter_profile ||
-        player.linkedin_profile ||
-        player.telegram_profile ||
-        player.instagram_profile) && (
-        <div>
-          <p className="text-[#6d6d6d] text-sm mb-3">On social media</p>
-          <div className="flex gap-3">
-            {/* Facebook - Solo mostrar si hay datos */}
-            {player.facebook_profile && (
-              <a
-                href={player.facebook_profile}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:opacity-80 transition-opacity"
-              >
-                <Facebook className="w-5 h-5 text-[#6d6d6d] hover:text-[#1877f2]" />
-              </a>
-            )}
 
-            {/* Twitter - Solo mostrar si hay datos */}
-            {player.twitter_profile && (
-              <a
-                href={player.twitter_profile}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:opacity-80 transition-opacity"
-              >
-                <Twitter className="w-5 h-5 text-[#6d6d6d] hover:text-[#1da1f2]" />
-              </a>
-            )}
-
-            {/* LinkedIn - Solo mostrar si hay datos */}
-            {player.linkedin_profile && (
-              <a
-                href={player.linkedin_profile}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:opacity-80 transition-opacity"
-              >
-                <Linkedin className="w-5 h-5 text-[#6d6d6d] hover:text-[#0077b5]" />
-              </a>
-            )}
-
-            {/* Telegram - Solo mostrar si hay datos */}
-            {player.telegram_profile && (
-              <a
-                href={player.telegram_profile}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:opacity-80 transition-opacity"
-              >
-                <Send className="w-5 h-5 text-[#6d6d6d] hover:text-[#0088cc]" />
-              </a>
-            )}
-
-            {/* Instagram - Solo mostrar si hay datos */}
-            {player.instagram_profile && (
-              <a
-                href={player.instagram_profile}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:opacity-80 transition-opacity"
-              >
-                <div className="w-5 h-5 bg-gradient-to-r from-[#f09433] to-[#e6683c] to-[#dc2743] to-[#cc2366] to-[#bc1888] rounded-sm flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">P</span>
-                </div>
-              </a>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Transfer Market Button */}
       {player.url_trfm ? (
@@ -150,7 +80,7 @@ export default function PlayerSidebar({ player }: PlayerSidebarProps) {
           href={player.url_trfm}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full"
+          className="w-full mt-4 block"
         >
           <Button
             variant="outline"
@@ -241,6 +171,75 @@ export default function PlayerSidebar({ player }: PlayerSidebarProps) {
           </div>
         )}
       </div>
+
+      {/* Social Media - Bottom Right of Card */}
+      {(player.facebook_profile ||
+        player.twitter_profile ||
+        player.linkedin_profile ||
+        player.telegram_profile ||
+        player.instagram_profile) && (
+        <div className="absolute bottom-2 right-2 flex items-center gap-2">
+          {/* Facebook */}
+          {player.facebook_profile && (
+            <a
+              href={player.facebook_profile}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity"
+            >
+              <Facebook className="w-5 h-5 text-[#6d6d6d] hover:text-[#1877f2]" />
+            </a>
+          )}
+
+          {/* Twitter */}
+          {player.twitter_profile && (
+            <a
+              href={player.twitter_profile}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity"
+            >
+              <Twitter className="w-5 h-5 text-[#6d6d6d] hover:text-[#1da1f2]" />
+            </a>
+          )}
+
+          {/* LinkedIn */}
+          {player.linkedin_profile && (
+            <a
+              href={player.linkedin_profile}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity"
+            >
+              <Linkedin className="w-5 h-5 text-[#6d6d6d] hover:text-[#0077b5]" />
+            </a>
+          )}
+
+          {/* Telegram */}
+          {player.telegram_profile && (
+            <a
+              href={player.telegram_profile}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity"
+            >
+              <Send className="w-5 h-5 text-[#6d6d6d] hover:text-[#0088cc]" />
+            </a>
+          )}
+
+          {/* Instagram */}
+          {player.instagram_profile && (
+            <a
+              href={player.instagram_profile}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity"
+            >
+              <Instagram className="w-5 h-5 text-[#6d6d6d] hover:text-[#E1306C]" />
+            </a>
+          )}
+        </div>
+      )}
     </div>
   );
 }
