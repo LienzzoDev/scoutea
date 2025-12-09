@@ -69,23 +69,23 @@ export default function DashboardHeader() {
               <a href="/admin/jugadores" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
                 Jugadores
               </a>
-              <a href="/admin/scouts" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
-                Scouts
-              </a>
               <a href="/admin/equipos" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
                 Equipos
               </a>
               <a href="/admin/competiciones" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
                 Competiciones
               </a>
-              <a href="/admin/torneos" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
-                Torneos
+              <a href="/admin/correcciones" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
+                Correcciones
               </a>
               <a href="/admin/reportes" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
                 Reportes
               </a>
-              <a href="/admin/correcciones" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
-                Correcciones
+              <a href="/admin/scouts" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
+                Scouts
+              </a>
+              <a href="/admin/torneos" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
+                Torneos
               </a>
               <a href="/admin/jobs" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
                 Jobs
@@ -217,23 +217,23 @@ export default function DashboardHeader() {
             <a href="/admin/jugadores" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
               Jugadores
             </a>
-            <a href="/admin/scouts" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
-              Scouts
-            </a>
             <a href="/admin/equipos" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
               Equipos
             </a>
             <a href="/admin/competiciones" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
               Competiciones
             </a>
-            <a href="/admin/torneos" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
-              Torneos
+            <a href="/admin/correcciones" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
+              Correcciones
             </a>
             <a href="/admin/reportes" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
               Reportes
             </a>
-            <a href="/admin/correcciones" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
-              Correcciones
+            <a href="/admin/scouts" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
+              Scouts
+            </a>
+            <a href="/admin/torneos" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
+              Torneos
             </a>
             <a href="/admin/jobs" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
               Jobs
