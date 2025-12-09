@@ -78,6 +78,12 @@ export async function GET(request: NextRequest) {
     if (country) {
       where.country = country
     }
+    
+    // Filtro open to work
+    const openToWork = searchParams.get('openToWork')
+    if (openToWork === 'true') {
+      where.open_to_work = true
+    }
 
     // 📋 SELECT OPTIMIZADO PARA LISTA (campos esenciales para mostrar)
     const listSelect = {

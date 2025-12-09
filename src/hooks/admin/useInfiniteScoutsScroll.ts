@@ -20,6 +20,7 @@ interface UseInfiniteScoutsScrollParams {
   search?: string
   nationality?: string
   country?: string
+  openToWork?: boolean | null
   limit?: number
 }
 
@@ -38,6 +39,7 @@ export function useInfiniteScoutsScroll({
   search = '',
   nationality = '',
   country = '',
+  openToWork = null,
   limit = 50
 }: UseInfiniteScoutsScrollParams = {}): UseInfiniteScoutsScrollReturn {
   const {
@@ -52,7 +54,12 @@ export function useInfiniteScoutsScroll({
   } = useInfiniteScroll<Scout, UseInfiniteScoutsScrollParams>({
     apiEndpoint: '/api/admin/scouts',
     getItemId: (scout) => scout.id_scout,
-    filters: { search, nationality, country },
+    filters: { 
+      search, 
+      nationality, 
+      country,
+      openToWork: openToWork ? 'true' : undefined 
+    },
     limit,
     rootMargin: '100px' // Empezar a cargar 100px antes de llegar al final
   })

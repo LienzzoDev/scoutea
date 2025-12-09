@@ -16,6 +16,7 @@ export class JobOfferService {
     return {
       id: jobOffer.id,
       title: jobOffer.title,
+      category: jobOffer.category,
       description: jobOffer.description,
       short_description: jobOffer.short_description,
       team_id: jobOffer.team_id,
@@ -25,6 +26,8 @@ export class JobOfferService {
         logo_url: jobOffer.team.logo_url,
         team_country: jobOffer.team.team_country,
       } : null,
+      club_name: jobOffer.club_name,
+      custom_logo_url: jobOffer.custom_logo_url,
       location: jobOffer.location,
       remote_allowed: jobOffer.remote_allowed,
       position_type: jobOffer.position_type,
@@ -172,12 +175,20 @@ export class JobOfferService {
    * Actualiza una oferta de trabajo existente
    */
   static async updateJobOffer(id: string, data: Partial<CreateJobOfferInput>): Promise<JobOffer> {
+    // Filtrar undefined para evitar problemas con exactOptionalPropertyTypes
+    // Filtrar undefined para evitar problemas con exactOptionalPropertyTypes
+    const cleanData = Object.fromEntries(
+      Object.entries(data).filter(([_, v]) => v !== undefined)
+    ) as any
+
+    // Manejar conversión de fecha si existe
+    if (data.expires_at) {
+      cleanData.expires_at = new Date(data.expires_at)
+    }
+
     const jobOffer = await prisma.jobOffer.update({
       where: { id },
-      data: {
-        ...data,
-        expires_at: data.expires_at ? new Date(data.expires_at) : undefined,
-      },
+      data: cleanData,
       include: {
         team: {
           select: {
@@ -234,8 +245,6 @@ export class JobOfferService {
    * Obtiene ofertas publicadas y no expiradas (para scouts)
    */
   static async getPublishedJobOffers(filters: Omit<JobOfferFilters, 'status'> = {}): Promise<JobOffersResponse> {
-    const now = new Date()
-
     return this.getJobOffers({
       ...filters,
       status: 'published',

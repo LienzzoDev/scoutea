@@ -1,11 +1,13 @@
 'use client'
 
-import { Search, RefreshCw, Download } from 'lucide-react'
+import { RefreshCw, Download, Plus, Search } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
 
 import AdminColumnSelector from '@/components/admin/AdminColumnSelector'
 import AdminScoutTable from '@/components/admin/AdminScoutTable'
+import CreateScoutDialog from '@/components/admin/CreateScoutDialog'
+import ScoutFilters, { ScoutFiltersState } from '@/components/admin/ScoutFilters'
 import DashboardHeader from '@/components/layout/dashboard-header'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,22 +20,17 @@ export default function ScoutsPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
   const _router = useRouter()
 
-  // Columnas ocultas - por defecto ninguna (se muestran todas)
+  // Columnas ocultas
   const [hiddenColumns, setHiddenColumns] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('admin-scout-hidden-columns')
       if (saved) {
-        try {
-          return JSON.parse(saved)
-        } catch (e) {
-          console.error('Error parsing saved hidden columns:', e)
-        }
+        try { return JSON.parse(saved) } catch (e) { console.error(e) }
       }
     }
-    return [] // Por defecto, ninguna columna está oculta
+    return []
   })
 
-  // Guardar en localStorage cuando cambien las columnas ocultas
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('admin-scout-hidden-columns', JSON.stringify(hiddenColumns))
@@ -41,30 +38,23 @@ export default function ScoutsPage() {
   }, [hiddenColumns])
 
   const handleColumnToggle = (columnKey: string) => {
-    setHiddenColumns(prev => {
-      if (prev.includes(columnKey)) {
-        return prev.filter(key => key !== columnKey)
-      } else {
-        return [...prev, columnKey]
-      }
-    })
+    setHiddenColumns(prev => prev.includes(columnKey) ? prev.filter(key => key !== columnKey) : [...prev, columnKey])
   }
 
-  const handleSelectAll = () => {
-    setHiddenColumns([])
-  }
+  // Filtros
+  const [filters, setFilters] = useState<ScoutFiltersState>({
+    search: '',
+    nationality: 'all',
+    country: 'all',
+    openToWork: null
+  })
 
-  const handleDeselectAll = () => {
-    setHiddenColumns([])
-  }
+  // Dialog state
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
 
-  // Estado para búsqueda
-  const [searchTerm, setSearchTerm] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
-
-  // Ref para preservar posición del scroll
+  // Ref para scroll
   const previousScoutsCount = useRef(0)
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const observerTarget = useRef<HTMLDivElement>(null)
 
   // Hook de infinite scroll
   const {
@@ -73,14 +63,24 @@ export default function ScoutsPage() {
     error,
     hasMore,
     totalCount,
-    observerTarget,
+    observerTarget: setObserverTarget,
     refresh
   } = useInfiniteScoutsScroll({
-    search: debouncedSearch,
+    search: filters.search,
+    nationality: filters.nationality === 'all' ? '' : filters.nationality,
+    country: filters.country === 'all' ? '' : filters.country,
+    openToWork: filters.openToWork,
     limit: 50
   })
 
-  // Preservar posición del scroll cuando se cargan nuevos scouts
+  // Conectar observer ref
+  useEffect(() => {
+    if (observerTarget.current) {
+      setObserverTarget(observerTarget.current)
+    }
+  }, [setObserverTarget, loading])
+
+  // Preservar scroll
   useEffect(() => {
     if (filteredScouts.length > previousScoutsCount.current && !loading) {
       previousScoutsCount.current = filteredScouts.length
@@ -89,37 +89,18 @@ export default function ScoutsPage() {
     }
   }, [filteredScouts.length, loading])
 
-  // Debounce del search term
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm)
-    }, 300)
-
-    return () => clearTimeout(timer)
-  }, [searchTerm])
-
-  const handleSearch = (term: string) => {
-    setSearchTerm(term)
-  }
-
-  // Función para exportar a CSV
+  // Exportar CSV
   const [isExporting, setIsExporting] = useState(false)
-
   const handleExportCSV = async () => {
     try {
       setIsExporting(true)
-
-      // Construir URL con filtros actuales
       const params = new URLSearchParams()
-      if (debouncedSearch) {
-        params.append('search', debouncedSearch)
-      }
+      if (filters.search) params.append('search', filters.search)
+      if (filters.nationality !== 'all') params.append('nationality', filters.nationality)
+      if (filters.country !== 'all') params.append('country', filters.country)
+      if (filters.openToWork !== null) params.append('openToWork', String(filters.openToWork))
 
-      const url = `/api/admin/scouts/export?${params.toString()}`
-
-      // Abrir en nueva ventana para descargar
-      window.open(url, '_blank')
-
+      window.open(`/api/admin/scouts/export?${params.toString()}`, '_blank')
     } catch (error) {
       console.error('Error exporting CSV:', error)
       alert('Error al exportar el archivo CSV')
@@ -128,21 +109,16 @@ export default function ScoutsPage() {
     }
   }
 
-  // Si no está cargado, mostrar loading
-  if (!isLoaded) {
-    return <LoadingPage />
-  }
-
-  // Si no está autenticado, mostrar nada (ya se está redirigiendo)
-  if (!isSignedIn) {
-    return null
-  }
+  if (!isLoaded) return <LoadingPage />
+  if (!isSignedIn) return null
 
   return (
     <>
       <DashboardHeader />
       <main className='px-6 py-8 max-w-full mx-auto'>
-        <div className='flex items-center justify-between mb-8'>
+        
+        {/* Header & Actions */}
+        <div className='flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-8'>
           <div>
             <h1 className='text-3xl font-bold text-[#D6DDE6]'>Scouts</h1>
             {totalCount !== null && (
@@ -151,100 +127,107 @@ export default function ScoutsPage() {
               </p>
             )}
           </div>
-        </div>
 
-      <div className='mb-6 flex flex-wrap items-center gap-4'>
-        <Button
-          variant='outline'
-          className='border-slate-700 bg-[#131921] text-white hover:bg-slate-700'
-          onClick={refresh}
-          disabled={loading}
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Refrescar Lista
-        </Button>
-        <Button
-          variant='outline'
-          className='border-green-700 bg-green-900/20 text-green-400 hover:bg-green-900/40'
-          onClick={handleExportCSV}
-          disabled={isExporting}
-        >
-          <Download className={`h-4 w-4 mr-2 ${isExporting ? 'animate-bounce' : ''}`} />
-          {isExporting ? 'Exportando...' : 'Exportar CSV'}
-        </Button>
-      </div>
+          <div className='flex flex-wrap items-center gap-3'>
+             <Button
+              onClick={() => setShowCreateDialog(true)}
+              className='bg-[#FF5733] hover:bg-[#E64A2B] text-white'
+            >
+              <Plus className='h-4 w-4 mr-2' />
+              Nuevo Scout
+            </Button>
 
-      <div className='mb-6'>
-        <div className='relative max-w-md'>
-          <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400' />
-          <Input
-            placeholder='Buscar scouts...'
-            value={searchTerm}
-            onChange={e => handleSearch(e.target.value)}
-            className='pl-10 bg-[#131921] border-slate-700 text-white placeholder:text-slate-400'
-          />
-        </div>
-      </div>
-
-      {error && (
-        <div className='mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg'>
-          <p className='text-red-400'>
-            Error: {error.message || 'Error desconocido'}
-          </p>
-        </div>
-      )}
-
-      <AdminColumnSelector
-        hiddenColumns={hiddenColumns}
-        onColumnToggle={handleColumnToggle}
-        onSelectAll={handleSelectAll}
-        onDeselectAll={handleDeselectAll}
-        minColumns={1}
-      />
-
-      {/* Mostrar loading inicial o tabla */}
-      {filteredScouts.length === 0 && loading ? (
-        <div className='flex items-center justify-center py-12'>
-          <div className='flex items-center gap-2 text-slate-400'>
-            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF5733]'></div>
-            <span>Cargando scouts...</span>
+            <Button
+              variant='outline'
+              className='border-slate-700 bg-[#131921] text-white hover:bg-slate-700'
+              onClick={refresh}
+              disabled={loading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refrescar
+            </Button>
+            
+            <Button
+              variant='outline'
+              className='border-green-700 bg-green-900/20 text-green-400 hover:bg-green-900/40'
+              onClick={handleExportCSV}
+              disabled={isExporting}
+            >
+              <Download className={`h-4 w-4 mr-2 ${isExporting ? 'animate-bounce' : ''}`} />
+              {isExporting ? 'Exportando...' : 'Exportar CSV'}
+            </Button>
           </div>
         </div>
-      ) : filteredScouts.length === 0 && !loading ? (
-        <div className='text-center py-12'>
-          <p className='text-lg text-slate-400'>No se encontraron scouts</p>
-        </div>
-      ) : (
-        <EditableCellProvider>
-          <div className='mb-4'>
-            <AdminScoutTable
-              scouts={filteredScouts as any}
-              hiddenColumns={hiddenColumns}
-            />
-          </div>
 
-          {/* Infinite Scroll Observer */}
-          <div
-            ref={observerTarget}
-            className='py-8 flex justify-center items-center'
-            style={{ minHeight: '100px' }}
-          >
-            {loading && hasMore && (
-              <div className='flex items-center gap-2 text-slate-400'>
-                <div className='animate-spin rounded-full h-5 w-5 border-b-2 border-[#FF5733]'></div>
-                <span>Cargando más scouts...</span>
-              </div>
-            )}
-            {!loading && hasMore && filteredScouts.length > 0 && (
-              <p className='text-slate-500 text-sm'>Desplázate hacia abajo para cargar más</p>
-            )}
-            {!loading && !hasMore && filteredScouts.length > 0 && (
-              <p className='text-slate-500 text-sm'>✓ Todos los scouts cargados ({totalCount})</p>
-            )}
+        {/* Filters */}
+        <ScoutFilters 
+          onFilterChange={setFilters} 
+          initialFilters={filters}
+          className="mb-6 p-4 bg-[#1a2332]/50 rounded-lg border border-slate-700/50"
+        />
+
+        {error && (
+          <div className='mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg'>
+            <p className='text-red-400'>Error: {error.message || 'Error desconocido'}</p>
           </div>
-        </EditableCellProvider>
-      )}
+        )}
+
+        <AdminColumnSelector
+          hiddenColumns={hiddenColumns}
+          onColumnToggle={handleColumnToggle}
+          onSelectAll={() => setHiddenColumns([])}
+          onDeselectAll={() => setHiddenColumns([])}
+          minColumns={1}
+        />
+
+        {/* Table Content */}
+        {filteredScouts.length === 0 && loading ? (
+          <div className='flex items-center justify-center py-12'>
+            <div className='flex items-center gap-2 text-slate-400'>
+              <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF5733]'></div>
+              <span>Cargando scouts...</span>
+            </div>
+          </div>
+        ) : filteredScouts.length === 0 && !loading ? (
+          <div className='text-center py-12'>
+            <p className='text-lg text-slate-400'>No se encontraron scouts con los filtros actuales</p>
+          </div>
+        ) : (
+          <EditableCellProvider>
+            <div className='mb-4'>
+              <AdminScoutTable
+                scouts={filteredScouts as any}
+                hiddenColumns={hiddenColumns}
+              />
+            </div>
+
+            <div
+              ref={observerTarget}
+              className='py-8 flex justify-center items-center'
+              style={{ minHeight: '100px' }}
+            >
+              {loading && hasMore && (
+                <div className='flex items-center gap-2 text-slate-400'>
+                  <div className='animate-spin rounded-full h-5 w-5 border-b-2 border-[#FF5733]'></div>
+                  <span>Cargando más scouts...</span>
+                </div>
+              )}
+              {!loading && hasMore && filteredScouts.length > 0 && (
+                <p className='text-slate-500 text-sm'>Desplázate hacia abajo para cargar más</p>
+              )}
+              {!loading && !hasMore && filteredScouts.length > 0 && (
+                <p className='text-slate-500 text-sm'>✓ Todos los scouts cargados ({totalCount})</p>
+              )}
+            </div>
+          </EditableCellProvider>
+        )}
       </main>
+
+      <CreateScoutDialog 
+        open={showCreateDialog} 
+        onOpenChange={setShowCreateDialog}
+        onSuccess={refresh}
+      />
     </>
   )
 }

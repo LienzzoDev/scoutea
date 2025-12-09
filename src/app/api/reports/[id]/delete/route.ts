@@ -8,7 +8,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { userId } = await auth()
+    const { userId, sessionClaims } = await auth()
     
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
@@ -34,8 +34,12 @@ export async function DELETE(
       return NextResponse.json({ error: 'Reporte no encontrado' }, { status: 404 })
     }
 
-    // Verificar que el reporte pertenece al usuario autenticado
-    if (report.scout?.clerkId !== userId) {
+    // Verificar permisos: dueño del reporte o ADMIN
+    const userRole = (sessionClaims?.public_metadata as { role?: string })?.role
+    const isOwner = report.scout?.clerkId === userId
+    const isAdmin = userRole === 'admin'
+
+    if (!isOwner && !isAdmin) {
       return NextResponse.json({ error: 'No tienes permiso para eliminar este reporte' }, { status: 403 })
     }
 

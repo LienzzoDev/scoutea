@@ -3,10 +3,13 @@ import { z } from 'zod'
 // Schema para crear una oferta de trabajo
 export const createJobOfferSchema = z.object({
   title: z.string().min(5, 'El título debe tener al menos 5 caracteres').max(200, 'El título es demasiado largo'),
+  category: z.string().max(100, 'La categoría es demasiado larga').optional(),
   description: z.string().min(50, 'La descripción debe tener al menos 50 caracteres'),
   short_description: z.string().max(500, 'La descripción corta es demasiado larga').optional(),
 
   team_id: z.string().optional(),
+  club_name: z.string().max(100, 'El nombre del club es demasiado largo').optional(),
+  custom_logo_url: z.string().url('La URL del logo debe ser válida').optional().or(z.literal('')),
   location: z.string().max(200, 'La ubicación es demasiado larga').optional(),
   remote_allowed: z.boolean().default(false),
 

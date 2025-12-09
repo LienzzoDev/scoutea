@@ -1,6 +1,7 @@
 export interface JobOffer {
   id: string
   title: string
+  category?: string | null
   description: string
   short_description?: string | null
 
@@ -12,6 +13,8 @@ export interface JobOffer {
     logo_url?: string | null
     team_country?: string | null
   } | null
+  club_name?: string | null
+  custom_logo_url?: string | null
   location?: string | null
   remote_allowed: boolean
 
@@ -83,9 +86,12 @@ export type SalaryPeriod = 'monthly' | 'yearly'
 // Form types
 export interface CreateJobOfferInput {
   title: string
+  category?: string
   description: string
   short_description?: string
   team_id?: string
+  club_name?: string
+  custom_logo_url?: string
   location?: string
   remote_allowed?: boolean
   position_type: string

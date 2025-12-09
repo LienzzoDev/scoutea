@@ -1962,12 +1962,15 @@ model JobOffer {
 
   // Información básica
   title            String
+  category         String?   // Descripción breve de la categoría/puesto
   description      String    @db.Text
   short_description String?  @db.Text // Breve descripción para listados
 
   // Ubicación y equipo
   team_id          String?
   team             Equipo?   @relation("TeamJobOffers", fields: [team_id], references: [id_team], onDelete: SetNull)
+  club_name        String?   // Nombre manual del club/selección si no está en BD
+  custom_logo_url  String?   // Logo manual si no es de un equipo de BD
   location         String?   // Ciudad o ubicación específica
   remote_allowed   Boolean   @default(false)
 

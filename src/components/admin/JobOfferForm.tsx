@@ -27,6 +27,7 @@ export function JobOfferForm({ jobOffer, mode }: JobOfferFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [teams, setTeams] = useState<Team[]>([])
   const [loadingTeams, setLoadingTeams] = useState(true)
+  const [useManualClub, setUseManualClub] = useState(false)
   const [teamSearch, setTeamSearch] = useState('')
   const [showTeamDropdown, setShowTeamDropdown] = useState(false)
 
@@ -37,21 +38,21 @@ export function JobOfferForm({ jobOffer, mode }: JobOfferFormProps) {
     watch,
     formState: { errors },
   } = useForm<CreateJobOfferInput>({
-    resolver: zodResolver(createJobOfferSchema),
+    resolver: zodResolver(createJobOfferSchema) as any,
     defaultValues: jobOffer ? {
       title: jobOffer.title,
+      category: jobOffer.category || undefined,
       description: jobOffer.description,
       short_description: jobOffer.short_description || undefined,
       team_id: jobOffer.team_id || undefined,
+      club_name: jobOffer.club_name || undefined,
+      custom_logo_url: jobOffer.custom_logo_url || undefined,
       location: jobOffer.location || undefined,
-      remote_allowed: jobOffer.remote_allowed,
+      remote_allowed: jobOffer.remote_allowed ?? false,
       position_type: jobOffer.position_type,
       contract_type: jobOffer.contract_type,
       experience_level: jobOffer.experience_level,
-      salary_min: jobOffer.salary_min || undefined,
-      salary_max: jobOffer.salary_max || undefined,
-      salary_currency: jobOffer.salary_currency || 'EUR',
-      salary_period: jobOffer.salary_period || undefined,
+      // Salario legacy (oculto en UI pero mantenemos tipos)
       requirements: jobOffer.requirements || undefined,
       responsibilities: jobOffer.responsibilities || undefined,
       benefits: jobOffer.benefits || undefined,
@@ -59,13 +60,23 @@ export function JobOfferForm({ jobOffer, mode }: JobOfferFormProps) {
       expires_at: jobOffer.expires_at ? new Date(jobOffer.expires_at).toISOString().split('T')[0] : undefined,
       contact_email: jobOffer.contact_email || undefined,
       contact_phone: jobOffer.contact_phone || undefined,
-      application_url: jobOffer.application_url || undefined,
+      application_url: jobOffer.application_url || '',
     } : {
+      title: '',
+      description: '',
       status: 'draft',
       salary_currency: 'EUR',
       remote_allowed: false,
+      application_url: '',
     },
   })
+
+  // Detectar si estamos en modo manual al cargar (si hay nombre de club pero no ID de equipo)
+  useEffect(() => {
+    if (jobOffer && jobOffer.club_name && !jobOffer.team_id) {
+      setUseManualClub(true)
+    }
+  }, [jobOffer])
 
   const teamId = watch('team_id')
   const selectedTeam = teams.find(t => t.id_team === teamId)
@@ -117,9 +128,18 @@ export function JobOfferForm({ jobOffer, mode }: JobOfferFormProps) {
       const url = mode === 'create' ? '/api/admin/jobs' : `/api/admin/jobs/${jobOffer?.id}`
       const method = mode === 'create' ? 'POST' : 'PUT'
 
+      // Limpiar datos según el modo
+      const cleanData = { ...data }
+      if (useManualClub) {
+        cleanData.team_id = undefined
+      } else {
+        cleanData.club_name = undefined
+        cleanData.custom_logo_url = undefined
+      }
+
       // Agregar valores por defecto para campos que no están en el formulario
       const payload = {
-        ...data,
+        ...cleanData,
         position_type: data.position_type || 'Scout',
         contract_type: data.contract_type || 'Full-time',
         experience_level: data.experience_level || 'Senior',
@@ -174,23 +194,34 @@ export function JobOfferForm({ jobOffer, mode }: JobOfferFormProps) {
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="title" className="text-gray-300 mb-2 block">Título *</Label>
+            <Label htmlFor="title" className="text-gray-300 mb-2 block">Puesto (Título) *</Label>
             <Input
               id="title"
               {...register('title')}
               className="bg-[#1a2332] border-slate-600 text-white"
-              placeholder="Ej: Scout Senior - La Liga"
+              placeholder="Ej: Scout Senior"
             />
             {errors.title && <p className="text-red-400 text-sm mt-1">{errors.title.message}</p>}
           </div>
 
           <div>
-            <Label htmlFor="description" className="text-gray-300 mb-2 block">Descripción *</Label>
+             <Label htmlFor="category" className="text-gray-300 mb-2 block">Categoría (Descripción breve)</Label>
+             <Input
+               id="category"
+               {...register('category')}
+               className="bg-[#1a2332] border-slate-600 text-white"
+               placeholder="Ej: Análisis Táctico, Scouting Juvenil..."
+             />
+             {errors.category && <p className="text-red-400 text-sm mt-1">{errors.category.message}</p>}
+           </div>
+
+          <div>
+            <Label htmlFor="description" className="text-gray-300 mb-2 block">Descripción Detallada *</Label>
             <Textarea
               id="description"
               {...register('description')}
               className="bg-[#1a2332] border-slate-600 text-white"
-              placeholder="Descripción de la oferta..."
+              placeholder="Descripción completa de la oferta..."
               rows={6}
             />
             {errors.description && <p className="text-red-400 text-sm mt-1">{errors.description.message}</p>}
@@ -200,56 +231,94 @@ export function JobOfferForm({ jobOffer, mode }: JobOfferFormProps) {
 
       {/* Ubicación y equipo */}
       <div className="bg-[#131921] p-6 rounded-lg border border-slate-700">
-        <h2 className="text-xl font-semibold text-[#D6DDE6] mb-4">Ubicación y equipo</h2>
+        <h2 className="text-xl font-semibold text-[#D6DDE6] mb-4">Club y Ubicación</h2>
+
+        <div className="mb-4 flex items-center gap-2">
+           <input
+             type="checkbox"
+             id="manual_club"
+             checked={useManualClub}
+             onChange={(e) => setUseManualClub(e.target.checked)}
+             className="rounded border-slate-600"
+           />
+           <Label htmlFor="manual_club" className="text-gray-300 cursor-pointer">
+             Ingresar Club/Selección manualmente (si no está en base de datos)
+           </Label>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="relative">
-            <Label htmlFor="team_search" className="text-gray-300 mb-2 block">Equipo</Label>
+          {!useManualClub ? (
             <div className="relative">
-              <Input
-                id="team_search"
-                type="text"
-                value={teamSearch}
-                onChange={(e) => {
-                  setTeamSearch(e.target.value)
-                  setShowTeamDropdown(true)
-                }}
-                onFocus={() => setShowTeamDropdown(true)}
-                className="bg-[#1a2332] border-slate-600 text-white pr-10"
-                placeholder={loadingTeams ? "Cargando..." : "Buscar equipo..."}
-                disabled={loadingTeams}
-              />
-              {teamId && (
-                <button
-                  type="button"
-                  onClick={() => handleTeamSelect(null)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
-            {showTeamDropdown && teamSearch && filteredTeams.length > 0 && (
-              <div className="team-dropdown absolute z-50 w-full mt-1 bg-[#1a2332] border border-slate-600 rounded-md shadow-lg max-h-60 overflow-auto">
-                {filteredTeams.slice(0, 50).map((team) => (
+              <Label htmlFor="team_search" className="text-gray-300 mb-2 block">Equipo (Base de Datos)</Label>
+              <div className="relative">
+                <Input
+                  id="team_search"
+                  type="text"
+                  value={teamSearch}
+                  onChange={(e) => {
+                    setTeamSearch(e.target.value)
+                    setShowTeamDropdown(true)
+                  }}
+                  onFocus={() => setShowTeamDropdown(true)}
+                  className="bg-[#1a2332] border-slate-600 text-white pr-10"
+                  placeholder={loadingTeams ? "Cargando..." : "Buscar equipo..."}
+                  disabled={loadingTeams}
+                />
+                {teamId && (
                   <button
-                    key={team.id_team}
                     type="button"
-                    onClick={() => handleTeamSelect(team)}
-                    className="w-full text-left px-4 py-2 text-white hover:bg-[#2a3442] transition-colors"
+                    onClick={() => handleTeamSelect(null)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
                   >
-                    {team.team_name}
+                    ✕
                   </button>
-                ))}
-                {filteredTeams.length > 50 && (
-                  <div className="px-4 py-2 text-gray-400 text-sm">
-                    Mostrando 50 de {filteredTeams.length} equipos. Refina tu búsqueda.
-                  </div>
                 )}
               </div>
-            )}
-          </div>
+
+              {showTeamDropdown && teamSearch && filteredTeams.length > 0 && (
+                <div className="team-dropdown absolute z-50 w-full mt-1 bg-[#1a2332] border border-slate-600 rounded-md shadow-lg max-h-60 overflow-auto">
+                  {filteredTeams.slice(0, 50).map((team) => (
+                    <button
+                      key={team.id_team}
+                      type="button"
+                      onClick={() => handleTeamSelect(team)}
+                      className="w-full text-left px-4 py-2 text-white hover:bg-[#2a3442] transition-colors"
+                    >
+                      {team.team_name}
+                    </button>
+                  ))}
+                  {filteredTeams.length > 50 && (
+                    <div className="px-4 py-2 text-gray-400 text-sm">
+                      Mostrando 50 de {filteredTeams.length} equipos. Refina tu búsqueda.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+                <div>
+                    <Label htmlFor="club_name" className="text-gray-300 mb-2 block">Nombre del Club/Selección *</Label>
+                    <Input
+                    id="club_name"
+                    {...register('club_name')}
+                    className="bg-[#1a2332] border-slate-600 text-white"
+                    placeholder="Ej: Selección Española, Club Deportivo..."
+                    />
+                    {errors.club_name && <p className="text-red-400 text-sm mt-1">{errors.club_name.message}</p>}
+                </div>
+                <div>
+                    <Label htmlFor="custom_logo_url" className="text-gray-300 mb-2 block">URL del Escudo/Bandera</Label>
+                    <Input
+                    id="custom_logo_url"
+                    {...register('custom_logo_url')}
+                    className="bg-[#1a2332] border-slate-600 text-white"
+                    placeholder="https://ejemplo.com/logo.png"
+                    />
+                     {errors.custom_logo_url && <p className="text-red-400 text-sm mt-1">{errors.custom_logo_url.message}</p>}
+                </div>
+            </>
+          )}
 
           <div>
             <Label htmlFor="location" className="text-gray-300 mb-2 block">Ubicación</Label>
@@ -257,11 +326,11 @@ export function JobOfferForm({ jobOffer, mode }: JobOfferFormProps) {
               id="location"
               {...register('location')}
               className="bg-[#1a2332] border-slate-600 text-white"
-              placeholder="Madrid, España"
+              placeholder="Madrid, España (o 'Remoto')"
             />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 md:col-span-2">
             <input
               type="checkbox"
               id="remote_allowed"

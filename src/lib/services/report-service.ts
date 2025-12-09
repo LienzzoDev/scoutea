@@ -62,6 +62,7 @@ export interface SearchReportsOptions {
     on_loan?: boolean
     date_from?: Date
     date_to?: Date
+    includeOrphans?: boolean
   }
 }
 
@@ -85,10 +86,14 @@ export class ReportService {
 
     const skip = (page - 1) * limit
 
-    // Build where clause - Only include reports with valid player references
-    const where: any = {
-      id_player: { not: null },
-      player: { isNot: null }
+    // Build where clause
+    const where: any = {}
+
+    // Only exclude invalid player references if includeOrphans is explicitly false or undefined
+    // For admin views, we might want to see everything
+    if (!options.filters?.includeOrphans) {
+      where.id_player = { not: null }
+      where.player = { isNot: null }
     }
 
     // Direct report filters

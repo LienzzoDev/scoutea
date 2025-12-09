@@ -21,11 +21,10 @@ interface NationalityCorrection {
   corrected_name: string
 }
 
-interface LeagueCorrection {
+interface TeamCorrection {
   id: string
-  national_tier: string
-  rename_national_tier: string
-  country: string
+  original_name: string
+  corrected_name: string
 }
 
 interface CompetitionCorrection {
@@ -35,7 +34,7 @@ interface CompetitionCorrection {
   country?: string | null
 }
 
-type TabType = 'nationalities' | 'leagues' | 'competitions'
+type TabType = 'nationalities' | 'teams' | 'competitions'
 
 export default function CorreccionesPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
@@ -50,11 +49,11 @@ export default function CorreccionesPage() {
   const [editingNationality, setEditingNationality] = useState<string | null>(null)
   const [editNationalityData, setEditNationalityData] = useState<Partial<NationalityCorrection>>({})
 
-  // Estado para correcciones de ligas
-  const [leagueCorrections, setLeagueCorrections] = useState<LeagueCorrection[]>([])
-  const [leagueSearch, setLeagueSearch] = useState('')
-  const [editingLeague, setEditingLeague] = useState<string | null>(null)
-  const [editLeagueData, setEditLeagueData] = useState<Partial<LeagueCorrection>>({})
+  // Estado para correcciones de equipos
+  const [teamCorrections, setTeamCorrections] = useState<TeamCorrection[]>([])
+  const [teamSearch, setTeamSearch] = useState('')
+  const [editingTeam, setEditingTeam] = useState<string | null>(null)
+  const [editTeamData, setEditTeamData] = useState<Partial<TeamCorrection>>({})
 
   // Estado para correcciones de competiciones
   const [competitionCorrections, setCompetitionCorrections] = useState<CompetitionCorrection[]>([])
@@ -65,7 +64,7 @@ export default function CorreccionesPage() {
   // Estado para nuevo registro
   const [showNewForm, setShowNewForm] = useState(false)
   const [newNationalityData, setNewNationalityData] = useState({ original_name: '', corrected_name: '' })
-  const [newLeagueData, setNewLeagueData] = useState({ national_tier: '', rename_national_tier: '', country: '' })
+  const [newTeamData, setNewTeamData] = useState({ original_name: '', corrected_name: '' })
   const [newCompetitionData, setNewCompetitionData] = useState({ original_name: '', corrected_name: '', country: '' })
 
   // Cargar correcciones de nacionalidades
@@ -83,14 +82,14 @@ export default function CorreccionesPage() {
     }
   }
 
-  // Cargar correcciones de ligas
-  const loadLeagueCorrections = async () => {
+  // Cargar correcciones de equipos
+  const loadTeamCorrections = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/admin/corrections/leagues?search=${leagueSearch}`)
-      if (!response.ok) throw new Error('Error al cargar correcciones de ligas')
+      const response = await fetch(`/api/admin/corrections/teams?search=${teamSearch}`)
+      if (!response.ok) throw new Error('Error al cargar correcciones de equipos')
       const data = await response.json()
-      setLeagueCorrections(data.corrections)
+      setTeamCorrections(data.corrections)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
@@ -117,13 +116,13 @@ export default function CorreccionesPage() {
     if (isLoaded && isSignedIn) {
       if (activeTab === 'nationalities') {
         loadNationalityCorrections()
-      } else if (activeTab === 'leagues') {
-        loadLeagueCorrections()
+      } else if (activeTab === 'teams') {
+        loadTeamCorrections()
       } else {
         loadCompetitionCorrections()
       }
     }
-  }, [isLoaded, isSignedIn, activeTab, nationalitySearch, leagueSearch, competitionSearch])
+  }, [isLoaded, isSignedIn, activeTab, nationalitySearch, teamSearch, competitionSearch])
 
   // Crear nueva corrección de nacionalidad
   const handleCreateNationality = async () => {
@@ -145,21 +144,21 @@ export default function CorreccionesPage() {
     }
   }
 
-  // Crear nueva corrección de liga
-  const handleCreateLeague = async () => {
+  // Crear nueva corrección de equipo
+  const handleCreateTeam = async () => {
     try {
-      const response = await fetch('/api/admin/corrections/leagues', {
+      const response = await fetch('/api/admin/corrections/teams', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newLeagueData)
+        body: JSON.stringify(newTeamData)
       })
       if (!response.ok) {
         const data = await response.json()
         throw new Error(data.__error || 'Error al crear')
       }
-      setNewLeagueData({ national_tier: '', rename_national_tier: '', country: '' })
+      setNewTeamData({ original_name: '', corrected_name: '' })
       setShowNewForm(false)
-      loadLeagueCorrections()
+      loadTeamCorrections()
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Error al crear')
     }
@@ -201,17 +200,17 @@ export default function CorreccionesPage() {
     }
   }
 
-  // Actualizar corrección de liga
-  const handleUpdateLeague = async (id: string) => {
+  // Actualizar corrección de equipo
+  const handleUpdateTeam = async (id: string) => {
     try {
-      const response = await fetch(`/api/admin/corrections/leagues/${id}`, {
+      const response = await fetch(`/api/admin/corrections/teams/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editLeagueData)
+        body: JSON.stringify(editTeamData)
       })
       if (!response.ok) throw new Error('Error al actualizar')
-      setEditingLeague(null)
-      loadLeagueCorrections()
+      setEditingTeam(null)
+      loadTeamCorrections()
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Error al actualizar')
     }
@@ -245,13 +244,13 @@ export default function CorreccionesPage() {
     }
   }
 
-  // Eliminar corrección de liga
-  const handleDeleteLeague = async (id: string) => {
+  // Eliminar corrección de equipo
+  const handleDeleteTeam = async (id: string) => {
     if (!confirm('¿Estás seguro de eliminar esta corrección?')) return
     try {
-      const response = await fetch(`/api/admin/corrections/leagues/${id}`, { method: 'DELETE' })
+      const response = await fetch(`/api/admin/corrections/teams/${id}`, { method: 'DELETE' })
       if (!response.ok) throw new Error('Error al eliminar')
-      loadLeagueCorrections()
+      loadTeamCorrections()
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Error al eliminar')
     }
@@ -302,13 +301,13 @@ export default function CorreccionesPage() {
 
   const getCurrentSearch = () => {
     if (activeTab === 'nationalities') return nationalitySearch
-    if (activeTab === 'leagues') return leagueSearch
+    if (activeTab === 'teams') return teamSearch
     return competitionSearch
   }
 
   const setCurrentSearch = (value: string) => {
     if (activeTab === 'nationalities') setNationalitySearch(value)
-    else if (activeTab === 'leagues') setLeagueSearch(value)
+    else if (activeTab === 'teams') setTeamSearch(value)
     else setCompetitionSearch(value)
   }
 
@@ -318,7 +317,7 @@ export default function CorreccionesPage() {
         <div>
           <h1 className='text-3xl font-bold text-[#D6DDE6]'>Reglas de Corrección</h1>
           <p className='text-sm text-slate-400 mt-1'>
-            Define reglas para normalizar nombres de nacionalidades, ligas y competiciones
+            Define reglas para normalizar nombres de nacionalidades, equipos y competiciones
           </p>
         </div>
         <div className='flex gap-3'>
@@ -353,14 +352,14 @@ export default function CorreccionesPage() {
             Nacionalidad
           </button>
           <button
-            onClick={() => setActiveTab('leagues')}
+            onClick={() => setActiveTab('teams')}
             className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-              activeTab === 'leagues'
+              activeTab === 'teams'
                 ? 'border-[#FF5733] text-[#FF5733]'
                 : 'border-transparent text-slate-400 hover:text-slate-300'
             }`}
           >
-            Ligas
+            Equipos
           </button>
           <button
             onClick={() => setActiveTab('competitions')}
@@ -397,7 +396,7 @@ export default function CorreccionesPage() {
         <DialogContent className='bg-[#1a2332] border-slate-700 text-white'>
           <DialogHeader>
             <DialogTitle className='text-xl font-bold text-white'>
-              Nueva Regla de {activeTab === 'nationalities' ? 'Nacionalidad' : activeTab === 'leagues' ? 'Liga' : 'Competición'}
+              Nueva Regla de {activeTab === 'nationalities' ? 'Nacionalidad' : activeTab === 'teams' ? 'Equipo' : 'Competición'}
             </DialogTitle>
             <DialogDescription className='text-slate-400'>
               Crea una nueva regla de corrección para normalizar nombres
@@ -433,37 +432,30 @@ export default function CorreccionesPage() {
                 </Button>
               </div>
             </div>
-          ) : activeTab === 'leagues' ? (
+          ) : activeTab === 'teams' ? (
             <div className='space-y-4 mt-4'>
               <div>
-                <label className='text-sm text-slate-300 mb-2 block'>National Tier</label>
+                <label htmlFor='new-team-original' className='text-sm text-slate-300 mb-2 block'>Nombre Original</label>
                 <Input
-                  placeholder='Ej: LaLiga'
-                  value={newLeagueData.national_tier}
-                  onChange={e => setNewLeagueData({ ...newLeagueData, national_tier: e.target.value })}
+                  id='new-team-original'
+                  placeholder='Ej: Real Mdrid'
+                  value={newTeamData.original_name}
+                  onChange={e => setNewTeamData({ ...newTeamData, original_name: e.target.value })}
                   className='bg-[#131921] border-slate-700 text-white'
                 />
               </div>
               <div>
-                <label className='text-sm text-slate-300 mb-2 block'>Rename National Tier</label>
+                <label htmlFor='new-team-corrected' className='text-sm text-slate-300 mb-2 block'>Nombre Corregido</label>
                 <Input
-                  placeholder='Ej: La Liga'
-                  value={newLeagueData.rename_national_tier}
-                  onChange={e => setNewLeagueData({ ...newLeagueData, rename_national_tier: e.target.value })}
-                  className='bg-[#131921] border-slate-700 text-white'
-                />
-              </div>
-              <div>
-                <label className='text-sm text-slate-300 mb-2 block'>Country</label>
-                <Input
-                  placeholder='Ej: Spain'
-                  value={newLeagueData.country}
-                  onChange={e => setNewLeagueData({ ...newLeagueData, country: e.target.value })}
+                  id='new-team-corrected'
+                  placeholder='Ej: Real Madrid'
+                  value={newTeamData.corrected_name}
+                  onChange={e => setNewTeamData({ ...newTeamData, corrected_name: e.target.value })}
                   className='bg-[#131921] border-slate-700 text-white'
                 />
               </div>
               <div className='flex gap-2 pt-4'>
-                <Button onClick={handleCreateLeague} className='bg-[#FF5733] hover:bg-[#E64A2B] flex-1'>
+                <Button onClick={handleCreateTeam} className='bg-[#FF5733] hover:bg-[#E64A2B] flex-1'>
                   <Check className='h-4 w-4 mr-2' />
                   Crear Regla
                 </Button>
@@ -613,60 +605,48 @@ export default function CorreccionesPage() {
             </div>
           )}
         </div>
-      ) : activeTab === 'leagues' ? (
+      ) : activeTab === 'teams' ? (
         <div className='rounded-lg border border-slate-700 bg-[#131921] overflow-hidden'>
           <table className='w-full'>
             <thead className='bg-[#1a2332] border-b border-slate-700'>
               <tr>
-                <th className='p-4 text-left text-sm font-semibold text-slate-300'>National Tier</th>
-                <th className='p-4 text-left text-sm font-semibold text-slate-300'>Rename National Tier</th>
-                <th className='p-4 text-left text-sm font-semibold text-slate-300'>Country</th>
+                <th className='p-4 text-left text-sm font-semibold text-slate-300'>Nombre Original</th>
+                <th className='p-4 text-left text-sm font-semibold text-slate-300'>Nombre Corregido</th>
                 <th className='p-4 text-center text-sm font-semibold text-slate-300 w-32'>Acciones</th>
               </tr>
             </thead>
             <tbody className='divide-y divide-slate-700'>
-              {leagueCorrections.map(correction => (
+              {teamCorrections.map(correction => (
                 <tr key={correction.id} className='hover:bg-slate-700/30'>
                   <td className='p-4'>
-                    {editingLeague === correction.id ? (
+                    {editingTeam === correction.id ? (
                       <Input
-                        value={editLeagueData.national_tier || correction.national_tier}
-                        onChange={e => setEditLeagueData({ ...editLeagueData, national_tier: e.target.value })}
+                        value={editTeamData.original_name || correction.original_name}
+                        onChange={e => setEditTeamData({ ...editTeamData, original_name: e.target.value })}
                         className='bg-[#0a0f16] border-slate-600 text-white text-sm'
                       />
                     ) : (
-                      <span className='text-sm text-white'>{correction.national_tier}</span>
+                      <span className='text-sm text-white'>{correction.original_name}</span>
                     )}
                   </td>
                   <td className='p-4'>
-                    {editingLeague === correction.id ? (
+                    {editingTeam === correction.id ? (
                       <Input
-                        value={editLeagueData.rename_national_tier || correction.rename_national_tier}
-                        onChange={e => setEditLeagueData({ ...editLeagueData, rename_national_tier: e.target.value })}
+                        value={editTeamData.corrected_name || correction.corrected_name}
+                        onChange={e => setEditTeamData({ ...editTeamData, corrected_name: e.target.value })}
                         className='bg-[#0a0f16] border-slate-600 text-white text-sm'
                       />
                     ) : (
-                      <span className='text-sm text-white font-medium'>{correction.rename_national_tier}</span>
-                    )}
-                  </td>
-                  <td className='p-4'>
-                    {editingLeague === correction.id ? (
-                      <Input
-                        value={editLeagueData.country || correction.country}
-                        onChange={e => setEditLeagueData({ ...editLeagueData, country: e.target.value })}
-                        className='bg-[#0a0f16] border-slate-600 text-white text-sm'
-                      />
-                    ) : (
-                      <span className='text-sm text-slate-300'>{correction.country}</span>
+                      <span className='text-sm text-white font-medium'>{correction.corrected_name}</span>
                     )}
                   </td>
                   <td className='p-4'>
                     <div className='flex items-center justify-center gap-2'>
-                      {editingLeague === correction.id ? (
+                      {editingTeam === correction.id ? (
                         <>
                           <Button
                             size='sm'
-                            onClick={() => handleUpdateLeague(correction.id)}
+                            onClick={() => handleUpdateTeam(correction.id)}
                             className='bg-green-600 hover:bg-green-700'
                           >
                             <Check className='h-3 w-3' />
@@ -674,7 +654,7 @@ export default function CorreccionesPage() {
                           <Button
                             size='sm'
                             variant='outline'
-                            onClick={() => setEditingLeague(null)}
+                            onClick={() => setEditingTeam(null)}
                             className='border-slate-600'
                           >
                             <X className='h-3 w-3' />
@@ -686,8 +666,8 @@ export default function CorreccionesPage() {
                             size='sm'
                             variant='outline'
                             onClick={() => {
-                              setEditingLeague(correction.id)
-                              setEditLeagueData(correction)
+                              setEditingTeam(correction.id)
+                              setEditTeamData(correction)
                             }}
                             className='border-slate-600'
                           >
@@ -696,7 +676,7 @@ export default function CorreccionesPage() {
                           <Button
                             size='sm'
                             variant='outline'
-                            onClick={() => handleDeleteLeague(correction.id)}
+                            onClick={() => handleDeleteTeam(correction.id)}
                             className='border-red-700 text-red-400 hover:bg-red-900/20'
                           >
                             <Trash2 className='h-3 w-3' />
@@ -709,9 +689,9 @@ export default function CorreccionesPage() {
               ))}
             </tbody>
           </table>
-          {leagueCorrections.length === 0 && (
+          {teamCorrections.length === 0 && (
             <div className='text-center py-8 text-slate-400'>
-              No hay reglas de corrección para ligas
+              No hay reglas de corrección para equipos
             </div>
           )}
         </div>
