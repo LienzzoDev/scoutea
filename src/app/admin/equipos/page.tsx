@@ -49,6 +49,11 @@ export default function EquiposPage() {
   // Categorías para mostrar en la tabla
   const categories = useMemo(() => [
     {
+      key: 'id_team',
+      label: 'ID',
+      getValue: (team: Team) => team.displayId ?? team.id_team,
+    },
+    {
       key: 'correct_team_name',
       label: 'Nombre Corregido',
       getValue: (team: Team) => team.correct_team_name,
@@ -314,7 +319,7 @@ export default function EquiposPage() {
             sortBy={sortBy}
             sortOrder={sortOrder}
             onSort={handleSort}
-            loading={loading}
+            loading={teams.length === 0 && loading}
             darkMode={true}
             onEdit={(teamId) => router.push(`/admin/equipos/${teamId}/editar`)}
             onDelete={(teamId) => setShowDeleteConfirm(teamId)}

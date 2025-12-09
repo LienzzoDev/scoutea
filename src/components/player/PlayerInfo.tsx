@@ -2,8 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { usePlayerAvgValues } from "@/hooks/player/usePlayerAvgValues";
-import { formatMoney } from "@/lib/utils/format-money";
-import { formatValue, formatPercentageChange, formatAbsoluteChange } from "@/lib/utils/market-value-formatter";
+import { formatMoneyFull } from "@/lib/utils/format-money";
 import type { Player } from "@/types/player";
 
 interface PlayerInfoProps {
@@ -46,35 +45,29 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
             </span>
           </div>
           <div className="flex justify-between items-center py-3 bg-gray-50 rounded-lg px-4 mb-2">
-            <span className="text-[#6d6d6d] text-sm">Valor de Mercado:</span>
+            <span className="text-[#6d6d6d] text-sm">Avg Value by Age:</span>
             <div className="flex items-center gap-2">
               <div className="text-right">
                 <div className="font-medium text-[#2e3138]">
-                  {formatValue(player.player_trfm_value)}
+                  {avgLoading ? "Calculando..." : avgValues.age_value ? formatMoneyFull(avgValues.age_value) : "Por calcular"}
                 </div>
-                {(() => {
-                  const percentChange = formatPercentageChange(player.trfm_value_change_percent);
-                  const absoluteChange = formatAbsoluteChange(player.player_trfm_value, player.previous_trfm_value);
-
-                  if (!percentChange.isNeutral && percentChange.text && absoluteChange.text) {
-                    return (
-                      <div className={`text-xs ${absoluteChange.color}`}>
-                        {absoluteChange.text} ({percentChange.text})
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
+                {avgValues.age_value_percent !== null && avgValues.age_value_percent !== undefined && Math.abs(avgValues.age_value_percent) < 1000 && (
+                  <div className={`text-xs ${
+                    avgValues.age_value_percent > 0 ? 'text-red-500' : avgValues.age_value_percent < 0 ? 'text-[#3cc500]' : 'text-gray-500'
+                  }`}>
+                    ({avgValues.age_value_percent > 0 ? '+' : ''}{avgValues.age_value_percent.toFixed(1)}%)
+                  </div>
+                )}
               </div>
-              {player.trfm_value_change_percent !== null && player.trfm_value_change_percent !== undefined && (
+              {avgValues.age_value_percent !== null && avgValues.age_value_percent !== undefined && Math.abs(avgValues.age_value_percent) < 1000 && (
                 <Badge className={`text-white text-xs px-1 py-0 ${
-                  player.trfm_value_change_percent > 0
+                  avgValues.age_value_percent > 0
                     ? 'bg-red-500'
-                    : player.trfm_value_change_percent < 0
+                    : avgValues.age_value_percent < 0
                     ? 'bg-[#3cc500]'
                     : 'bg-gray-500'
                 }`}>
-                  {formatPercentageChange(player.trfm_value_change_percent).arrow}
+                  {avgValues.age_value_percent > 0 ? '▲' : avgValues.age_value_percent < 0 ? '▼' : '●'}
                 </Badge>
               )}
             </div>
@@ -91,11 +84,11 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
             </span>
           </div>
           <div className="flex justify-between items-center py-3 bg-gray-50 rounded-lg px-4 mb-2">
-            <span className="text-[#6d6d6d] text-sm">Avg Value:</span>
+            <span className="text-[#6d6d6d] text-sm">Avg Value by Position:</span>
             <div className="flex items-center gap-2">
               <div className="text-right">
                 <div className="font-medium text-[#2e3138]">
-                  {avgLoading ? "Calculando..." : avgValues.position_value ? formatMoney(avgValues.position_value) : "Por calcular"}
+                  {avgLoading ? "Calculando..." : avgValues.position_value ? formatMoneyFull(avgValues.position_value) : "Por calcular"}
                 </div>
                 {avgValues.position_value_percent !== null && avgValues.position_value_percent !== undefined && Math.abs(avgValues.position_value_percent) < 1000 && (
                   <div className={`text-xs ${
@@ -138,17 +131,17 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
 
           {/* Sección: Nacionalidad */}
           <div className="flex justify-between items-center py-3 bg-gray-50 rounded-lg px-4 mb-2">
-            <span className="text-[#6d6d6d] text-sm">Nacionalidad 1:</span>
+            <span className="text-[#6d6d6d] text-sm">Nacionalidad:</span>
             <span className="font-medium text-[#2e3138]">
               {getDisplayValue(player.correct_nationality_1, player.nationality_1)}
             </span>
           </div>
           <div className="flex justify-between items-center py-3 bg-gray-50 rounded-lg px-4 mb-2">
-            <span className="text-[#6d6d6d] text-sm">Avg Value:</span>
+            <span className="text-[#6d6d6d] text-sm">Avg Value by Nationality:</span>
             <div className="flex items-center gap-2">
               <div className="text-right">
                 <div className="font-medium text-[#2e3138]">
-                  {avgLoading ? "Calculando..." : avgValues.nationality_value ? formatMoney(avgValues.nationality_value) : "Por calcular"}
+                  {avgLoading ? "Calculando..." : avgValues.nationality_value ? formatMoneyFull(avgValues.nationality_value) : "Por calcular"}
                 </div>
                 {avgValues.nationality_value_percent !== null && avgValues.nationality_value_percent !== undefined && Math.abs(avgValues.nationality_value_percent) < 1000 && (
                   <div className={`text-xs ${
@@ -172,13 +165,13 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
             </div>
           </div>
           <div className="flex justify-between items-center py-3 bg-gray-50 rounded-lg px-4 mb-2">
-            <span className="text-[#6d6d6d] text-sm">Nacionalidad 2:</span>
+            <span className="text-[#6d6d6d] text-sm">Segunda nacionalidad:</span>
             <span className="font-medium text-[#2e3138]">
               {getDisplayValue(player.correct_nationality_2, player.nationality_2, "No aplica")}
             </span>
           </div>
           <div className="flex justify-between items-center py-3 bg-gray-50 rounded-lg px-4 mb-2">
-            <span className="text-[#6d6d6d] text-sm">Internacional:</span>
+            <span className="text-[#6d6d6d] text-sm">Nivel nacional:</span>
             <span className="font-medium text-[#2e3138]">
               {getDisplayValue(player.correct_national_tier, player.national_tier)}
             </span>
@@ -218,11 +211,11 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
             </span>
           </div>
           <div className="flex justify-between items-center py-3 bg-gray-50 rounded-lg px-4 mb-2">
-            <span className="text-[#6d6d6d] text-sm">Avg Value:</span>
+            <span className="text-[#6d6d6d] text-sm">Avg Value by Team:</span>
             <div className="flex items-center gap-2">
               <div className="text-right">
                 <div className="font-medium text-[#2e3138]">
-                  {avgLoading ? "Calculando..." : avgValues.team_competition_value ? formatMoney(avgValues.team_competition_value) : "Por calcular"}
+                  {avgLoading ? "Calculando..." : avgValues.team_competition_value ? formatMoneyFull(avgValues.team_competition_value) : "Por calcular"}
                 </div>
                 {avgValues.team_competition_value_percent !== null && avgValues.team_competition_value_percent !== undefined && Math.abs(avgValues.team_competition_value_percent) < 1000 && (
                   <div className={`text-xs ${
@@ -269,7 +262,7 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
                 <div className="flex items-center gap-2">
                   <div className="text-right">
                     <div className="font-medium text-[#2e3138]">
-                      {avgLoading ? "Calculando..." : avgValues.owner_club_value ? formatMoney(avgValues.owner_club_value) : "Por calcular"}
+                      {avgLoading ? "Calculando..." : avgValues.owner_club_value ? formatMoneyFull(avgValues.owner_club_value) : "Por calcular"}
                     </div>
                     {avgValues.owner_club_value_percent !== null && avgValues.owner_club_value_percent !== undefined && Math.abs(avgValues.owner_club_value_percent) < 1000 && (
                       <div className={`text-xs ${
@@ -320,11 +313,11 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
             </span>
           </div>
           <div className="flex justify-between items-center py-3 bg-gray-50 rounded-lg px-4 mb-2">
-            <span className="text-[#6d6d6d] text-sm">Avg Value:</span>
+            <span className="text-[#6d6d6d] text-sm">Avg Value by competition:</span>
             <div className="flex items-center gap-2">
               <div className="text-right">
                 <div className="font-medium text-[#2e3138]">
-                  {avgLoading ? "Calculando..." : avgValues.team_competition_value ? formatMoney(avgValues.team_competition_value) : "Por calcular"}
+                  {avgLoading ? "Calculando..." : avgValues.team_competition_value ? formatMoneyFull(avgValues.team_competition_value) : "Por calcular"}
                 </div>
                 {avgValues.team_competition_value_percent !== null && avgValues.team_competition_value_percent !== undefined && Math.abs(avgValues.team_competition_value_percent) < 1000 && (
                   <div className={`text-xs ${
@@ -366,11 +359,11 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
             </span>
           </div>
           <div className="flex justify-between items-center py-3 bg-gray-50 rounded-lg px-4 mb-2">
-            <span className="text-[#6d6d6d] text-sm">Avg Value:</span>
+            <span className="text-[#6d6d6d] text-sm">Avg Value by competition level:</span>
             <div className="flex items-center gap-2">
               <div className="text-right">
                 <div className="font-medium text-[#2e3138]">
-                  {avgLoading ? "Calculando..." : avgValues.competition_level_value ? formatMoney(avgValues.competition_level_value) : "Por calcular"}
+                  {avgLoading ? "Calculando..." : avgValues.competition_level_value ? formatMoneyFull(avgValues.competition_level_value) : "Por calcular"}
                 </div>
                 {avgValues.competition_level_value_percent !== null && avgValues.competition_level_value_percent !== undefined && Math.abs(avgValues.competition_level_value_percent) < 1000 && (
                   <div className={`text-xs ${
@@ -397,20 +390,7 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
           {/* Espacio entre secciones */}
           <div className="h-4"></div>
 
-          {/* Sección: Rating */}
-          <div className="flex justify-between items-center py-3 bg-gray-50 rounded-lg px-4 mb-2">
-            <span className="text-[#6d6d6d] text-sm">Rating del Jugador:</span>
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-[#2e3138]">
-                {player.player_rating ? `${player.player_rating}/100` : "Por evaluar"}
-              </span>
-              {player.player_rating && player.player_rating >= 80 && (
-                <Badge className="bg-[#3cc500] text-white text-xs px-1 py-0">
-                  ⭐
-                </Badge>
-              )}
-            </div>
-          </div>
+
         </div>
       </div>
     </div>

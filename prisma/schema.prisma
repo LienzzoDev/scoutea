@@ -218,6 +218,7 @@ model Jugador {
 
 model Equipo {
   id_team              String     @id @default(cuid())
+  displayId            Int        @unique @default(autoincrement())
   team_name            String
   correct_team_name    String?
   team_country         String?

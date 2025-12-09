@@ -72,3 +72,21 @@ export function formatMoneyCompact(value: number | string | null | undefined): s
 
   return '€0';
 }
+
+/**
+ * Format money with full digits (e.g. €1,500,000)
+ */
+export function formatMoneyFull(value: number | string | null | undefined): string {
+  if (value === null || value === undefined) return 'N/A';
+
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+
+  if (isNaN(numValue)) return 'N/A';
+
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(numValue);
+}

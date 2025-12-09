@@ -159,6 +159,14 @@ export default function EditableCell({
       }
     }
 
+    // Formatear ELO
+    if (fieldName.includes('elo')) {
+      const num = Number(value);
+      if (!isNaN(num)) {
+        return num.toFixed(2);
+      }
+    }
+
     return value.toString();
   };
 

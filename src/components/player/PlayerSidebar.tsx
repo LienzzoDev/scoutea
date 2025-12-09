@@ -4,7 +4,7 @@ import { Facebook, Twitter, Linkedin, Send, Instagram } from "lucide-react";
 import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
-import { formatMoney } from "@/lib/utils/format-money";
+import { formatMoneyFull } from "@/lib/utils/format-money";
 import { getValidImageUrl } from "@/lib/utils/image-utils";
 import type { Player } from "@/types/player";
 
@@ -143,7 +143,7 @@ export default function PlayerSidebar({ player }: PlayerSidebarProps) {
         {player.player_trfm_value && (
           <div className="text-center pt-1">
             <p className="text-2xl font-bold text-[#8c1a10]">
-              {formatMoney(player.player_trfm_value)}
+              {formatMoneyFull(player.player_trfm_value)}
             </p>
             <p className="text-xs text-[#6d6d6d]">Market Value</p>
           </div>

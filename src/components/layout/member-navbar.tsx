@@ -131,7 +131,10 @@ export default function MemberNavbar() {
       <div className="flex items-center justify-between max-w-7xl mx-auto">
         {/* Logo and Search */}
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
+          <div 
+            className="flex items-center gap-2 cursor-pointer" 
+            onClick={() => _router.push('/member/dashboard')}
+          >
             <img src="/logo-member.svg" alt="Scouted Logo" className="h-10 w-auto" />
           </div>
 

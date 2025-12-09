@@ -131,7 +131,12 @@ export function useInfiniteScroll<T = any, F = Record<string, any>>({
     // Throttle: esperar tiempo configurado entre cargas
     const now = Date.now()
     if (now - lastLoadTime.current < throttleMs) {
-      console.log('⏳ Throttled, too soon')
+      console.log('⏳ Throttled, too soon. Retrying in', throttleMs, 'ms')
+      setTimeout(() => {
+        if (hasMore && !loadingRef.current) {
+          loadMore()
+        }
+      }, throttleMs)
       return
     }
 

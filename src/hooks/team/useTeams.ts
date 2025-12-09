@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 
 export interface Team {
   id_team: string;
+  displayId?: number;
   team_name: string;
   correct_team_name?: string | null;
   team_country?: string | null;

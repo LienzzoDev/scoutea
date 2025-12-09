@@ -337,11 +337,15 @@ export default function CompeticionesPage() {
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1F2937] border-slate-600">
-                      {countries.map((country) => (
-                        <SelectItem key={country} value={country} className="text-white hover:bg-slate-700 focus:bg-slate-700">
-                          {country}
-                        </SelectItem>
-                      ))}
+                      {countries.map((country: any) => {
+                        const countryName = typeof country === 'string' ? country : country.name
+                        const countryKey = typeof country === 'string' ? country : country.id || country.name
+                        return (
+                          <SelectItem key={countryKey} value={countryName} className="text-white hover:bg-slate-700 focus:bg-slate-700">
+                            {countryName}
+                          </SelectItem>
+                        )
+                      })}
                     </SelectContent>
                   </Select>
                 </div>

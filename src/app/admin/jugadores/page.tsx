@@ -4,7 +4,7 @@ import { Search, Globe, Plus, RefreshCw, Download } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useRef, useCallback } from 'react'
 
-import AdminColumnSelector from '@/components/admin/AdminColumnSelector'
+import AdminColumnSelector, { ADMIN_COLUMN_GROUPS } from '@/components/admin/AdminColumnSelector'
 import AdminPlayerFilters, {
   type PlayerFilters,
   DEFAULT_FILTERS
@@ -39,12 +39,56 @@ export default function JugadoresPage() {
     return [] // Por defecto, ninguna columna está oculta (se muestran todas)
   })
 
-  // Guardar en localStorage cuando cambien las columnas ocultas
+  // Cargar preferencias del servidor al iniciar
+  useEffect(() => {
+    const loadPreferences = async () => {
+      if (!isSignedIn) return
+
+      try {
+        const response = await fetch('/api/user/preferences')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.preferences?.hiddenColumns) {
+            setHiddenColumns(data.preferences.hiddenColumns)
+            // Actualizar localStorage también para mantener sincronía
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('admin-player-hidden-columns', JSON.stringify(data.preferences.hiddenColumns))
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error loading preferences:', error)
+      }
+    }
+
+    loadPreferences()
+  }, [isSignedIn])
+
+  // Guardar en localStorage y en DB cuando cambien las columnas ocultas
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('admin-player-hidden-columns', JSON.stringify(hiddenColumns))
     }
-  }, [hiddenColumns])
+
+    // Debounce para guardar en DB
+    const timer = setTimeout(async () => {
+      if (!isSignedIn) return
+
+      try {
+        await fetch('/api/user/preferences', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ hiddenColumns })
+        })
+      } catch (error) {
+        console.error('Error saving preferences:', error)
+      }
+    }, 1000) // Esperar 1 segundo de inactividad antes de guardar
+
+    return () => clearTimeout(timer)
+  }, [hiddenColumns, isSignedIn])
 
   const handleColumnToggle = (columnKey: string) => {
     setHiddenColumns(prev => {
@@ -64,9 +108,9 @@ export default function JugadoresPage() {
   }
 
   const handleDeselectAll = () => {
-    // Ocultar todas (todas ocultas) - aunque esto no tiene mucho sentido
-    // Por ahora dejamos que oculte todas excepto las mínimas requeridas
-    setHiddenColumns([])
+    // Ocultar todas las columnas
+    const allColumnKeys = ADMIN_COLUMN_GROUPS.flatMap(group => group.columns.map(col => col.key))
+    setHiddenColumns(allColumnKeys)
   }
 
   // Estado para búsqueda

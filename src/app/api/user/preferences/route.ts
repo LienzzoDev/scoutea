@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db'
 
 interface DashboardPreferences {
   selectedCategories?: string[]
+  hiddenColumns?: string[]
 }
 
 /**
@@ -30,13 +31,15 @@ export async function GET() {
       // Usuario no existe, devolver preferencias por defecto
       return NextResponse.json({
         preferences: {
-          selectedCategories: ['position', 'age', 'team']
+          selectedCategories: ['position', 'age', 'team'],
+          hiddenColumns: []
         }
       })
     }
 
     const preferences = (user.dashboardPreferences as DashboardPreferences) || {
-      selectedCategories: ['position', 'age', 'team']
+      selectedCategories: ['position', 'age', 'team'],
+      hiddenColumns: []
     }
 
     return NextResponse.json({ preferences })
@@ -65,12 +68,20 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { selectedCategories } = body
+    const { selectedCategories, hiddenColumns } = body
 
     // Validar que selectedCategories sea un array de strings
     if (selectedCategories && !Array.isArray(selectedCategories)) {
       return NextResponse.json(
         { error: 'selectedCategories must be an array' },
+        { status: 400 }
+      )
+    }
+
+    // Validar que hiddenColumns sea un array de strings
+    if (hiddenColumns && !Array.isArray(hiddenColumns)) {
+      return NextResponse.json(
+        { error: 'hiddenColumns must be an array' },
         { status: 400 }
       )
     }
@@ -93,7 +104,8 @@ export async function PUT(request: NextRequest) {
     const currentPreferences = (existingUser.dashboardPreferences as DashboardPreferences) || {}
     const newPreferences: DashboardPreferences = {
       ...currentPreferences,
-      ...(selectedCategories !== undefined && { selectedCategories })
+      ...(selectedCategories !== undefined && { selectedCategories }),
+      ...(hiddenColumns !== undefined && { hiddenColumns })
     }
 
     // Actualizar preferencias

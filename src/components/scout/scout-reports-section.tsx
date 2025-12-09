@@ -630,9 +630,9 @@ export default function ScoutReportsSection({
           {filteredReports.map((report) => (
             <div key={report.id} className="bg-white rounded-xl border border-[#e7e7e7] p-4 break-inside-avoid relative">
               {/* Action Buttons */}
-              {!readOnly && (
+              {/* Action Buttons - Removed as per request */}
+              {/* {!readOnly && (
                 <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
-                  {/* Edit Button */}
                   <Link href={`/scout/reports/${report.id}/edit`}>
                     <button
                       className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -642,7 +642,6 @@ export default function ScoutReportsSection({
                     </button>
                   </Link>
 
-                  {/* Delete Button */}
                   <button
                     onClick={() => handleDeleteReport(report.id, report.playerName)}
                     disabled={deletingReportId === report.id}
@@ -656,7 +655,7 @@ export default function ScoutReportsSection({
                     )}
                   </button>
                 </div>
-              )}
+              )} */}
 
               {/* Header */}
               <div className={`flex items-center justify-between mb-3 ${!readOnly ? 'pr-16' : ''}`}>

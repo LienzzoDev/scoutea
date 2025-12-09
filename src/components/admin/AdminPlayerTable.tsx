@@ -451,6 +451,14 @@ const AdminPlayerTable = memo(function AdminPlayerTable({ players, hiddenColumns
       return value ? 'Sí' : 'No';
     }
 
+    // Formatear ELO (asegurar que sea número)
+    if (key.includes('elo')) {
+      const num = Number(value);
+      if (!isNaN(num)) {
+        return num.toFixed(2);
+      }
+    }
+
     if (typeof value === 'number') {
       // Formatear valores monetarios
       if (key.includes('value') && key.includes('trfm')) {

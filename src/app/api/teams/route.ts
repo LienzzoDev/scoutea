@@ -73,11 +73,13 @@ export async function GET(request: NextRequest) {
           id_team: cursor
         }
       } : {}),
-      orderBy: {
-        team_name: 'asc'
-      },
+      orderBy: [
+        { team_name: 'asc' },
+        { id_team: 'asc' } // Secondary sort for deterministic pagination
+      ],
       select: {
         id_team: true,
+        displayId: true,
         team_name: true,
         correct_team_name: true,
         team_country: true,

@@ -31,6 +31,7 @@ export async function POST(
         competition_level: true,
         owner_club: true,
         player_trfm_value: true,
+        age: true,
       },
     });
 
@@ -47,6 +48,7 @@ export async function POST(
     const competition = player.team_competition;
     const competitionLevel = player.competition_level;
     const ownerClub = player.owner_club;
+    const age = player.age;
 
     // Helper para normalizar valores a millones (si está en euros completos, dividir por 1M)
     const normalizeValue = (value: number): number => {
@@ -183,6 +185,26 @@ export async function POST(
       }
     }
 
+    // Calcular avg value para edad
+    let ageValue = null;
+    let ageValuePercent = null;
+    if (age && player.player_trfm_value) {
+      const agePlayers = await prisma.jugador.findMany({
+        where: {
+          age: age,
+          player_trfm_value: { not: null, gt: 0 },
+        },
+        select: { player_trfm_value: true },
+      });
+
+      if (agePlayers.length > 0) {
+        const normalizedValues = agePlayers.map(p => normalizeValue(p.player_trfm_value || 0));
+        const avgValue = normalizedValues.reduce((sum, val) => sum + val, 0) / normalizedValues.length;
+        ageValue = avgValue;
+        ageValuePercent = ((normalizeValue(player.player_trfm_value) - avgValue) / avgValue) * 100;
+      }
+    }
+
     // Actualizar el jugador con los valores calculados
     await prisma.jugador.update({
       where: { id_player: playerId },
@@ -199,6 +221,8 @@ export async function POST(
         competition_level_value_percent: competitionLevelValuePercent,
         owner_club_value: ownerClubValue,
         owner_club_value_percent: ownerClubValuePercent,
+        age_value: ageValue,
+        age_value_percent: ageValuePercent,
       },
     });
 
@@ -217,6 +241,8 @@ export async function POST(
         competition_level_value_percent: competitionLevelValuePercent,
         owner_club_value: ownerClubValue,
         owner_club_value_percent: ownerClubValuePercent,
+        age_value: ageValue,
+        age_value_percent: ageValuePercent,
       },
     });
   } catch (error) {

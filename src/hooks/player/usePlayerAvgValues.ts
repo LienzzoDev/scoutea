@@ -15,6 +15,8 @@ interface AvgValues {
   competition_level_value_percent?: number | null;
   owner_club_value?: number | null;
   owner_club_value_percent?: number | null;
+  age_value?: number | null;
+  age_value_percent?: number | null;
 }
 
 export function usePlayerAvgValues(player: Player) {
@@ -31,6 +33,8 @@ export function usePlayerAvgValues(player: Player) {
     competition_level_value_percent: player.competition_level_value_percent,
     owner_club_value: player.owner_club_value,
     owner_club_value_percent: player.owner_club_value_percent,
+    age_value: player.age_value,
+    age_value_percent: player.age_value_percent,
   });
   const [loading, setLoading] = useState(false);
 

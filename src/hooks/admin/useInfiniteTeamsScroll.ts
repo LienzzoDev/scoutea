@@ -4,6 +4,8 @@
  * ✅ REFACTORIZADO: Usa el hook genérico useInfiniteScroll
  */
 
+import { useMemo, useCallback } from 'react'
+
 import type { Team } from '@/hooks/team/useTeams'
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll'
 
@@ -34,6 +36,16 @@ export function useInfiniteTeamsScroll(
     limit = 50
   } = options
 
+  // Memoizar filtros para evitar re-renders innecesarios
+  const filters = useMemo(() => ({
+    search,
+    country,
+    competition
+  }), [search, country, competition])
+
+  // Memoizar getItemId para que sea estable
+  const getItemId = useCallback((team: Team) => team.id_team, [])
+
   const {
     items: teams,
     loading,
@@ -44,8 +56,8 @@ export function useInfiniteTeamsScroll(
     refresh
   } = useInfiniteScroll<Team, UseInfiniteTeamsScrollOptions>({
     apiEndpoint: '/api/teams',
-    getItemId: (team) => team.id_team,
-    filters: { search, country, competition },
+    getItemId,
+    filters,
     limit,
     rootMargin: '200px'
   })

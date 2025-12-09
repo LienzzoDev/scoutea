@@ -22,6 +22,7 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
   const [showAvg, setShowAvg] = useState(true);
   const [showNorm, setShowNorm] = useState(false);
   const [showRaw, setShowRaw] = useState(true);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
   // Use the custom hook
   const { data, filterOptions, loading, error, getFilteredData } = usePlayerLollipop(selectedMetric);
@@ -63,13 +64,18 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
     stats.max = stats.min + 1;
   }
 
+
+
   return (
     <div className="bg-white p-6">
       {/* Lollipop Header */}
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
+        <div 
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+        >
           <h3 className="text-xl font-bold text-[#8c1a10]">PALETA</h3>
-          <div className="w-5 h-5 text-[#8c1a10] text-xl">▼</div>
+          <div className={`w-5 h-5 text-[#8c1a10] text-xl transition-transform duration-200 ${isFiltersOpen ? 'rotate-180' : ''}`}>▼</div>
           {loading && (
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#8c1a10]"></div>
           )}
@@ -88,7 +94,8 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
       </div>
 
       {/* Filters and Options */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 mb-8">
+      {isFiltersOpen && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 mb-8">
         {/* Left Column - Display Options */}
         <div className="space-y-4">
           <div>
@@ -315,7 +322,8 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
             </div>
           </div>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Lollipop Chart */}
       <div className="border-2 border-[#8c1a10] rounded-lg p-6">
