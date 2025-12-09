@@ -15,7 +15,7 @@ export interface RadarComparisonData {
 }
 
 export class RadarCalculationService {
-  static async calculatePlayerRadar(playerId: string): Promise<RadarComparisonData> {
+  static async calculatePlayerRadar(playerId: string, type: 'general' | 'attacking' | 'defending' | 'goalkeeping' = 'general'): Promise<RadarComparisonData> {
     const playerIdNum = parseInt(playerId, 10)
 
     // Get player info
@@ -31,10 +31,12 @@ export class RadarCalculationService {
       throw new Error(`Player with ID ${playerId} not found`)
     }
 
+    /* // OLD LOGIC - Disabling database metrics cache for now to force dynamic calculation based on type
     // Get radar metrics from database
     const radarMetrics = await prisma.radarMetrics.findMany({
       where: {
-        playerId: playerIdNum
+        playerId: playerIdNum,
+        // We might want to add a 'type' column to RadarMetrics in the future
       },
       orderBy: {
         calculatedAt: 'desc'
@@ -43,28 +45,9 @@ export class RadarCalculationService {
 
     // If we have metrics in the database, use them
     if (radarMetrics.length > 0) {
-      // Group by category and get the most recent for each
-      const latestByCategory = new Map<string, typeof radarMetrics[0]>()
-      for (const metric of radarMetrics) {
-        if (!latestByCategory.has(metric.category)) {
-          latestByCategory.set(metric.category, metric)
-        }
-      }
-
-      const metrics: RadarMetric[] = Array.from(latestByCategory.values()).map(m => ({
-        name: m.category,
-        value: m.playerValue,
-        percentile: m.percentile ?? 50,
-        category: m.category
-      }))
-
-      return {
-        playerId,
-        playerName: player.player_name,
-        metrics,
-        overallRating: player.player_rating ?? 75
-      }
-    }
+      // ... (existing logic adaptable if we added 'type' to DB)
+    } 
+    */
 
     // If no radar metrics exist, try to calculate from player stats
     const playerStats = await prisma.playerStats3m.findFirst({
@@ -72,8 +55,8 @@ export class RadarCalculationService {
     })
 
     if (playerStats) {
-      // Calculate metrics based on player stats
-      const metrics = this.calculateMetricsFromStats(playerStats)
+      // Calculate metrics based on player stats and type
+      const metrics = this.calculateMetricsFromStats(playerStats, type)
       return {
         playerId,
         playerName: player.player_name,
@@ -91,8 +74,25 @@ export class RadarCalculationService {
     }
   }
 
-  private static calculateMetricsFromStats(stats: any): RadarMetric[] {
+  private static calculateMetricsFromStats(stats: any, type: 'general' | 'attacking' | 'defending' | 'goalkeeping'): RadarMetric[] {
     const metrics: RadarMetric[] = []
+
+    if (type === 'general') {
+       return this.calculateGeneralMetrics(stats);
+    } else if (type === 'attacking') {
+       return this.calculateAttackingMetrics(stats);
+    } else if (type === 'defending') {
+       return this.calculateDefendingMetrics(stats);
+    } else if (type === 'goalkeeping') {
+       return this.calculateGoalkeepingMetrics(stats);
+    }
+
+    return metrics;
+  }
+
+  private static calculateGeneralMetrics(stats: any): RadarMetric[] {
+    const metrics: RadarMetric[] = [];
+
 
     // Offensive Transition
     if (stats.successfulDribblesPerc !== null || stats.keyPassesAccurate !== null) {
@@ -214,6 +214,93 @@ export class RadarCalculationService {
     return metrics
   }
 
+  private static calculateAttackingMetrics(stats: any): RadarMetric[] {
+    const metrics: RadarMetric[] = [];
+
+    // Goals
+    const goalsVal = stats.goals_p90_3m_norm ? Number(stats.goals_p90_3m_norm) : 50;
+    metrics.push({ name: 'Goles', value: goalsVal, percentile: goalsVal, category: 'Goles' });
+
+    // Assists
+    const assistsVal = stats.assists_p90_3m_norm ? Number(stats.assists_p90_3m_norm) : 50;
+    metrics.push({ name: 'Asistencias', value: assistsVal, percentile: assistsVal, category: 'Asistencias' });
+
+    // Shots
+    const shotsVal = stats.shots_p90_3m_norm ? Number(stats.shots_p90_3m_norm) : 50;
+    metrics.push({ name: 'Tiros', value: shotsVal, percentile: shotsVal, category: 'Tiros' });
+
+    // Crosses
+    const crossesVal = stats.crosses_p90_3m_norm ? Number(stats.crosses_p90_3m_norm) : 50;
+    metrics.push({ name: 'Centros', value: crossesVal, percentile: crossesVal, category: 'Centros' });
+
+    // Offensive Duels
+    const offDuelsVal = stats.off_duels_won_percent_3m_norm ? Number(stats.off_duels_won_percent_3m_norm) : 50;
+    metrics.push({ name: 'Duelos Ofensivos', value: offDuelsVal, percentile: offDuelsVal, category: 'Duelos Ofensivos' });
+
+    // Progressive Runs (approximated from dribbles if not exact match, using forward passes as proxy for now or specific column if exists)
+    // Using Effectiveness as a proxy for general offensive efficiency
+    const effVal = stats.effectiveness_percent_3m_norm ? Number(stats.effectiveness_percent_3m_norm) : 50;
+    metrics.push({ name: 'Efectividad', value: effVal, percentile: effVal, category: 'Efectividad' });
+
+    return metrics;
+  }
+
+  private static calculateDefendingMetrics(stats: any): RadarMetric[] {
+    const metrics: RadarMetric[] = [];
+
+    // Tackles
+    const tacklesVal = stats.tackles_p90_3m_norm ? Number(stats.tackles_p90_3m_norm) : 50;
+    metrics.push({ name: 'Entradas', value: tacklesVal, percentile: tacklesVal, category: 'Entradas' });
+
+    // Interceptions
+    const interceptionsVal = stats.interceptions_p90_3m_norm ? Number(stats.interceptions_p90_3m_norm) : 50;
+    metrics.push({ name: 'Intercepciones', value: interceptionsVal, percentile: interceptionsVal, category: 'Intercepciones' });
+
+    // Aerial Duels
+    const aerialsVal = stats.aerials_duels_won_percent_3m_norm ? Number(stats.aerials_duels_won_percent_3m_norm) : 50;
+    metrics.push({ name: 'Duelos Aéreos', value: aerialsVal, percentile: aerialsVal, category: 'Duelos Aéreos' });
+
+    // Defensive Duels
+    const defDuelsVal = stats.def_duels_won_percent_3m_norm ? Number(stats.def_duels_won_percent_3m_norm) : 50;
+    metrics.push({ name: 'Duelos Defensivos', value: defDuelsVal, percentile: defDuelsVal, category: 'Duelos Defensivos' });
+
+    // Recoveries (using fouls as a negative proxy or ball recovery level if available, checking stats first)
+    // Using 'stats_evo' as a placeholder for consistency/form for now, or just generic rating
+    // Better: Blocked shots / Clearances proxy -> using 'conceded_goals_p90_3m_norm_neg' (goals prevented/low conceded)
+    const prevGoalsVal = stats.prevented_goals_p90_3m_norm ? Number(stats.prevented_goals_p90_3m_norm) : 50;
+    metrics.push({ name: 'Goles Prevenidos', value: prevGoalsVal, percentile: prevGoalsVal, category: 'Goles Prevenidos' });
+
+    return metrics;
+  }
+
+  private static calculateGoalkeepingMetrics(stats: any): RadarMetric[] {
+    const metrics: RadarMetric[] = [];
+
+    // Save Rate
+    const saveRateVal = stats.save_rate_percent_3m_norm ? Number(stats.save_rate_percent_3m_norm) : 50;
+    metrics.push({ name: '% Paradas', value: saveRateVal, percentile: saveRateVal, category: '% Paradas' });
+
+    // Clean Sheets
+    const cleanSheetsVal = stats.clean_sheets_percent_3m_norm ? Number(stats.clean_sheets_percent_3m_norm) : 50;
+    metrics.push({ name: 'Porterías a Cero', value: cleanSheetsVal, percentile: cleanSheetsVal, category: 'Porterías a Cero' });
+
+    // Prevented Goals
+    const prevGoalsVal = stats.prevented_goals_p90_3m_norm ? Number(stats.prevented_goals_p90_3m_norm) : 50;
+    metrics.push({ name: 'Goles Prevenidos', value: prevGoalsVal, percentile: prevGoalsVal, category: 'Goles Prevenidos' });
+
+    // Conceded Goals (Negative is good, so we use the negative norm if available or invert logic)
+    // Using 'conceded_goals_p90_3m_norm_neg' if it exists or doing 100 - norm
+    const concededVal = stats.conceded_goals_p90_3m_norm_neg ? Number(stats.conceded_goals_p90_3m_norm_neg) : 
+                        (stats.conceded_goals_p90_3m_norm ? 100 - Number(stats.conceded_goals_p90_3m_norm) : 50);
+    metrics.push({ name: 'Goles Concedidos', value: concededVal, percentile: concededVal, category: 'Goles Concedidos' });
+
+    // Passes (Distribution)
+    const passesVal = stats.accurate_passes_percent_3m_norm ? Number(stats.accurate_passes_percent_3m_norm) : 50;
+    metrics.push({ name: 'Distribución', value: passesVal, percentile: passesVal, category: 'Distribución' });
+
+    return metrics;
+  }
+
   private static normalizeValue(value: number): number {
     // Normalize to 0-100 scale
     return Math.min(100, Math.max(0, Math.round(value)))
@@ -223,7 +310,8 @@ export class RadarCalculationService {
     const comparisons: RadarComparisonData[] = []
 
     for (const playerId of playerIds) {
-      const data = await this.calculatePlayerRadar(playerId)
+      const data = await this.calculatePlayerRadar(playerId) // Compare uses default 'general' for now
+
       comparisons.push(data)
     }
 

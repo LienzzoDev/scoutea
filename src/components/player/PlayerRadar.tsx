@@ -13,7 +13,7 @@ interface PlayerRadarProps {
 }
 
 // Custom tooltip component for enhanced information display
-const CustomTooltip = ({ active, payload, label }: unknown) => {
+const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
@@ -43,7 +43,7 @@ const CustomTooltip = ({ active, payload, label }: unknown) => {
 
 export default function PlayerRadar({ playerId }: PlayerRadarProps) {
   // Use the custom hook instead of direct API calls
-  const { radarData, filterOptions, loading, error, applyFilters } = usePlayerRadar(playerId);
+  const { radarData, filterOptions, loading, error, applyFilters, changeRadarType, currentType } = usePlayerRadar(playerId);
   
   // Filter states
   const [selectedPosition, setSelectedPosition] = useState<string>('');
@@ -54,7 +54,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
   const [ratingMin, setRatingMin] = useState<string>('');
   const [ratingMax, setRatingMax] = useState<string>('');
   const [showMax, setShowMax] = useState(false);
-  const [showMin, setShowMin] = useState(false);
+  // Min removed as per requirement
   const [showAvg, setShowAvg] = useState(true);
   const [_showPercentiles, _setShowPercentiles] = useState(true);
   const [showRaw, setShowRaw] = useState(false);
@@ -77,23 +77,33 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
     applyFilters(filters);
   }, [selectedPosition, selectedNationality, selectedCompetition, ageMin, ageMax, ratingMin, ratingMax, applyFilters]);
 
-  // Define the 9 tactical categories in proper order
-  const categoryOrder = [
-    'Balón Parado Def.',
-    'Evitación',
-    'Recuperación',
-    'Transición Def.',
-    'Balón Parado Of.',
-    'Mantenimiento',
-    'Progresión',
-    'Finalización',
-    'Transición Of.'
-  ];
+  // Define category order based on radar type
+  const getCategoryOrder = (type: string) => {
+    switch (type) {
+      case 'attacking':
+        return ['Goles', 'Asistencias', 'Tiros', 'Centros', 'Duelos Ofensivos', 'Efectividad'];
+      case 'defending':
+        return ['Entradas', 'Intercepciones', 'Duelos Aéreos', 'Duelos Defensivos', 'Goles Prevenidos'];
+      case 'goalkeeping':
+        return ['% Paradas', 'Porterías a Cero', 'Goles Prevenidos', 'Goles Concedidos', 'Distribución'];
+      case 'general':
+      default:
+        return [
+          'Balón Parado Def.', 'Evitación', 'Recuperación', 'Transición Def.', 
+          'Balón Parado Of.', 'Mantenimiento', 'Progresión', 'Finalización', 'Transición Of.'
+        ];
+    }
+  };
+
+  const categoryOrder = getCategoryOrder(currentType);
 
   // Sort radar data according to the defined category order
   const sortedRadarData = [...radarData].sort((a, b) => {
     const indexA = categoryOrder.indexOf(a.category);
     const indexB = categoryOrder.indexOf(b.category);
+    // Handle items not in order list (put them at end)
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
     return indexA - indexB;
   });
 
@@ -111,7 +121,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
       Average: showAvg ? (showRaw ? (item.comparisonAverage || 50) : comparisonPercentile) : undefined,
       // Max/Min layers
       Max: showMax ? (showRaw ? (item.maxValue || 100) : 100) : undefined,
-      Min: showMin ? (showRaw ? (item.minValue || 0) : 0) : undefined,
+      // Min layer removed
       // Display data for tooltips
       playerValue: item.playerValue,
       percentile: item.percentile || 50,
@@ -194,6 +204,13 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
         <div 
           className="flex items-center gap-2 cursor-pointer"
           onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              setIsFiltersOpen(!isFiltersOpen);
+            }
+          }}
+          role="button"
+          tabIndex={0}
         >
           <h3 className="text-xl font-bold text-[#8c1a10]">RADAR</h3>
           <div className={`w-5 h-5 text-[#8c1a10] text-xl transition-transform duration-200 ${isFiltersOpen ? 'rotate-180' : ''}`}>▼</div>
@@ -226,7 +243,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
               Período
             </label>
             <Select defaultValue="1y">
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full" id="period-select" aria-label="Seleccionar período">
                 <SelectValue placeholder="Seleccionar período" />
               </SelectTrigger>
               <SelectContent>
@@ -234,6 +251,23 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
                 <SelectItem value="6m">6 meses</SelectItem>
                 <SelectItem value="1y">1 año</SelectItem>
                 <SelectItem value="2y">2 años</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[#2e3138] mb-2">
+              Tipo de Radar
+            </label>
+            <Select value={currentType} onValueChange={(val) => changeRadarType(val)}>
+              <SelectTrigger className="w-full" aria-label="Seleccionar tipo de radar">
+                <SelectValue placeholder="Seleccionar tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="general">General</SelectItem>
+                <SelectItem value="goalkeeping">Portero (Goalkeeping)</SelectItem>
+                <SelectItem value="defending">Defensivo</SelectItem>
+                <SelectItem value="attacking">Ofensivo</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -253,7 +287,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
                   onChange={() => setShowRaw(false)}
                 />
                 <label htmlFor="percentiles" className="text-sm text-[#2e3138]">
-                  Percentiles (0-100)
+                  Valores Normalizados
                 </label>
               </div>
               <div className="flex items-center gap-2">
@@ -301,18 +335,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
                   Máximo
                 </label>
               </div>
-              <div className="flex items-center gap-2">
-                <input 
-                  type="checkbox" 
-                  id="min" 
-                  className="rounded" 
-                  checked={showMin}
-                  onChange={(e) => setShowMin(e.target.checked)}
-                />
-                <label htmlFor="min" className="text-sm text-[#2e3138]">
-                  Mínimo
-                </label>
-              </div>
+              {/* Min option removed */}
             </div>
           </div>
         </div>
@@ -323,12 +346,12 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
               Posición
             </label>
-            <Select value={selectedPosition || undefined} onValueChange={setSelectedPosition}>
-              <SelectTrigger className="w-full">
+            <Select value={selectedPosition} onValueChange={setSelectedPosition}>
+              <SelectTrigger className="w-full" aria-label="Seleccionar posición">
                 <SelectValue placeholder="Todas las Posiciones" />
               </SelectTrigger>
               <SelectContent>
-                {filterOptions?.positions.map(pos => (
+                {filterOptions?.positions.map((pos: { value: string; label: string; count: number }) => (
                   <SelectItem key={pos.value} value={pos.value}>
                     {pos.label} ({pos.count})
                   </SelectItem>
@@ -340,12 +363,12 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
               Nacionalidad
             </label>
-            <Select value={selectedNationality || undefined} onValueChange={setSelectedNationality}>
-              <SelectTrigger className="w-full">
+            <Select value={selectedNationality} onValueChange={setSelectedNationality}>
+              <SelectTrigger className="w-full" aria-label="Seleccionar nacionalidad">
                 <SelectValue placeholder="Todas las Nacionalidades" />
               </SelectTrigger>
               <SelectContent>
-                {filterOptions?.nationalities.map(nat => (
+                {filterOptions?.nationalities.map((nat: { value: string; label: string; count: number }) => (
                   <SelectItem key={nat.value} value={nat.value}>
                     {nat.label} ({nat.count})
                   </SelectItem>
@@ -357,12 +380,12 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
               Competición
             </label>
-            <Select value={selectedCompetition || undefined} onValueChange={setSelectedCompetition}>
-              <SelectTrigger className="w-full">
+            <Select value={selectedCompetition} onValueChange={setSelectedCompetition}>
+              <SelectTrigger className="w-full" aria-label="Seleccionar competición">
                 <SelectValue placeholder="Todas las Competiciones" />
               </SelectTrigger>
               <SelectContent>
-                {filterOptions?.competitions.map(comp => (
+                {filterOptions?.competitions.map((comp: { value: string; label: string; count: number }) => (
                   <SelectItem key={comp.value} value={comp.value}>
                     {comp.label} ({comp.count})
                   </SelectItem>
@@ -373,11 +396,12 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
           
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-sm font-medium text-[#2e3138] mb-2">
+              <label htmlFor="ageMin" className="block text-sm font-medium text-[#2e3138] mb-2">
                 Edad Mín
               </label>
               <input 
                 type="number" 
+                id="ageMin"
                 className="w-full p-2 border border-gray-300 rounded-md bg-white"
                 placeholder="16"
                 min="16"
@@ -387,11 +411,12 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#2e3138] mb-2">
+              <label htmlFor="ageMax" className="block text-sm font-medium text-[#2e3138] mb-2">
                 Edad Máx
               </label>
               <input 
                 type="number" 
+                id="ageMax"
                 className="w-full p-2 border border-gray-300 rounded-md bg-white"
                 placeholder="45"
                 min="16"
@@ -404,11 +429,12 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-sm font-medium text-[#2e3138] mb-2">
+              <label htmlFor="ratingMin" className="block text-sm font-medium text-[#2e3138] mb-2">
                 Rating Mín
               </label>
               <input 
                 type="number" 
+                id="ratingMin"
                 className="w-full p-2 border border-gray-300 rounded-md bg-white"
                 placeholder="50"
                 min="50"
@@ -419,11 +445,12 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#2e3138] mb-2">
+              <label htmlFor="ratingMax" className="block text-sm font-medium text-[#2e3138] mb-2">
                 Rating Máx
               </label>
               <input 
                 type="number" 
+                id="ratingMax"
                 className="w-full p-2 border border-gray-300 rounded-md bg-white"
                 placeholder="100"
                 min="50"
@@ -494,16 +521,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
                     strokeDasharray="2 2"
                   />
                 )}
-                {showMin && (
-                  <Radar
-                    name="Mínimo"
-                    dataKey="Min"
-                    stroke="#ef4444"
-                    fill="transparent"
-                    strokeWidth={1}
-                    strokeDasharray="2 2"
-                  />
-                )}
+                {/* Min Radar removed */}
                 <Legend 
                   wrapperStyle={{ 
                     paddingTop: '20px',

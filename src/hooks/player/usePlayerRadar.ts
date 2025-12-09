@@ -10,6 +10,7 @@ export interface RadarData {
   totalPlayers?: number;
   maxValue?: number;
   minValue?: number;
+  dataCompleteness?: number;
 }
 
 export interface RadarFilters {
@@ -22,12 +23,23 @@ export interface RadarFilters {
   ratingMax?: string;
 }
 
+interface FilterOption {
+  value: string;
+  label: string;
+  count: number;
+}
+
 export const usePlayerRadar = (playerId: string) => {
   const [baseData, setBaseData] = useState<RadarData[]>([]);
   const [radarData, setRadarData] = useState<RadarData[]>([]);
-  const [filterOptions, setFilterOptions] = useState<any>(null);
+  const [filterOptions, setFilterOptions] = useState<{ 
+    positions: FilterOption[], 
+    nationalities: FilterOption[], 
+    competitions: FilterOption[] 
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentType, setCurrentType] = useState<string>('general');
   
   // Use ref to always have access to the latest baseData
   const baseDataRef = useRef<RadarData[]>([]);
@@ -36,7 +48,7 @@ export const usePlayerRadar = (playerId: string) => {
   const applyFiltersRef = useRef<((filters: RadarFilters) => Promise<void>) | null>(null);
 
   // Load base data and initial comparison data
-  const loadInitialData = useCallback(async () => {
+  const loadInitialData = useCallback(async (type: string = 'general') => {
     if (!playerId) return;
     
     setLoading(true);
@@ -47,8 +59,8 @@ export const usePlayerRadar = (playerId: string) => {
       
       // Load base radar data, comparison data (no filters), and filter options in parallel
       const [radarResponse, comparisonResponse, filtersResponse] = await Promise.all([
-        fetch(`/api/players/${playerId}/radar`),
-        fetch(`/api/players/${playerId}/radar/compare`), // No filters = all players
+        fetch(`/api/players/${playerId}/radar?type=${type}`),
+        fetch(`/api/players/${playerId}/radar/compare?type=${type}`), // No filters = all players
         fetch('/api/players/radar/filters')
       ]);
       
@@ -73,9 +85,9 @@ export const usePlayerRadar = (playerId: string) => {
               return {
                 category: baseCategory.category,
                 playerValue: baseCategory.playerValue,
-                basePercentile: baseCategory.percentile,
+                basePercentile: baseCategory.percentile || 50,
                 comparisonAverage: comparisonCategory?.comparisonAverage || 50,
-                percentile: comparisonCategory?.percentile || baseCategory.percentile,
+                percentile: comparisonCategory?.percentile || baseCategory.percentile || 50,
                 rank: comparisonCategory?.rank || 1,
                 totalPlayers: comparisonCategory?.totalPlayers || 1,
                 maxValue: comparisonCategory?.maxValue || 100,
@@ -85,19 +97,21 @@ export const usePlayerRadar = (playerId: string) => {
             setRadarData(mergedData);
           } else {
             // Fallback to base data with defaults
-            const dataWithDefaults = baseRadarData.map(item => ({
+            // Fallback to base data with defaults
+            const dataWithDefaults = baseRadarData.map((item: RadarData) => ({
               ...item,
               comparisonAverage: 50,
-              basePercentile: item.percentile
+              basePercentile: item.percentile || 50
             }));
             setRadarData(dataWithDefaults);
           }
         } else {
           // Fallback to base data with defaults
-          const dataWithDefaults = baseRadarData.map(item => ({
+          // Fallback to base data with defaults
+          const dataWithDefaults = baseRadarData.map((item: RadarData) => ({
             ...item,
             comparisonAverage: 50,
-            basePercentile: item.percentile
+            basePercentile: item.percentile || 50
           }));
           setRadarData(dataWithDefaults);
         }
@@ -140,7 +154,7 @@ export const usePlayerRadar = (playerId: string) => {
         }
       });
       
-      const endpoint = `/api/players/${playerId}/radar/compare?${params}`;
+      const endpoint = `/api/players/${playerId}/radar/compare?${params}&type=${currentType}`;
       console.log('🔍 usePlayerRadar: Fetching comparison from:', endpoint);
       console.log('🔍 usePlayerRadar: Filters being applied:', filters);
       
@@ -161,7 +175,7 @@ export const usePlayerRadar = (playerId: string) => {
               category: baseCategory.category,
               // PLAYER VALUES NEVER CHANGE - always from base data
               playerValue: baseCategory.playerValue,
-              basePercentile: baseCategory.percentile, // Original percentile without filters
+              basePercentile: baseCategory.percentile || 50, // Original percentile without filters
               // COMPARISON DATA - changes with filters
               comparisonAverage: comparisonCategory?.comparisonAverage || 50,
               percentile: comparisonCategory?.percentile || baseCategory.percentile,
@@ -177,10 +191,10 @@ export const usePlayerRadar = (playerId: string) => {
           setRadarData(mergedData);
         } else {
           console.warn('⚠️ usePlayerRadar: No comparisonData in response, using base data with defaults');
-          const dataWithDefaults = currentBaseData.map(item => ({
+          const dataWithDefaults = currentBaseData.map((item: RadarData) => ({
             ...item,
             comparisonAverage: 50,
-            basePercentile: item.percentile
+            basePercentile: item.percentile || 50
           }));
           setRadarData(dataWithDefaults);
         }
@@ -189,21 +203,21 @@ export const usePlayerRadar = (playerId: string) => {
         const dataWithDefaults = currentBaseData.map(item => ({
           ...item,
           comparisonAverage: 50,
-          basePercentile: item.percentile
+          basePercentile: item.percentile || 50
         }));
         setRadarData(dataWithDefaults);
       }
       
     } catch (err) {
       console.error('❌ usePlayerRadar: Error applying filters:', err);
-      const dataWithDefaults = currentBaseData.map(item => ({
+      const dataWithDefaults = currentBaseData.map((item: RadarData) => ({
         ...item,
         comparisonAverage: 50,
-        basePercentile: item.percentile
+        basePercentile: item.percentile || 50
       }));
       setRadarData(dataWithDefaults);
     }
-  }, [playerId]);
+  }, [playerId, currentType]); // currentType is used via currentBaseData logic or we can add it if needed, but the implementation uses ref for baseData. actually wait, applyFilters DOES use currentType for the API call now.
 
   // Update the ref whenever the implementation changes
   applyFiltersRef.current = applyFiltersImpl;
@@ -217,8 +231,12 @@ export const usePlayerRadar = (playerId: string) => {
 
   // Load initial data when playerId changes
   useEffect(() => {
-    loadInitialData();
-  }, [loadInitialData]);
+    loadInitialData(currentType);
+  }, [loadInitialData, currentType]);
+
+  const changeRadarType = useCallback((type: string) => {
+    setCurrentType(type);
+  }, []);
 
   return {
     radarData,
@@ -226,6 +244,8 @@ export const usePlayerRadar = (playerId: string) => {
     loading,
     error,
     applyFilters,
+    changeRadarType,
+    currentType,
     hasData: baseData.length > 0
   };
 };

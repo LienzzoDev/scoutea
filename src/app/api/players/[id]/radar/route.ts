@@ -13,6 +13,7 @@ export async function GET(
   try {
     const { searchParams } = new URL(request.url);
     const period = searchParams.get('period') || '2023-24';
+    const type = (searchParams.get('type') as 'general' | 'attacking' | 'defending' | 'goalkeeping') || 'general';
 
     console.log('🔍 Radar API: Loading radar data for player:', playerIdNum);
 
@@ -56,7 +57,7 @@ export async function GET(
     console.log('✅ Radar API: Player found:', player.player_name);
 
     // Use the static method from RadarCalculationService
-    const radarData = await RadarCalculationService.calculatePlayerRadar(playerIdParam);
+    const radarData = await RadarCalculationService.calculatePlayerRadar(playerIdParam, type);
     console.log('✅ Radar API: Radar data calculated:', radarData);
 
     // Format response for the frontend
