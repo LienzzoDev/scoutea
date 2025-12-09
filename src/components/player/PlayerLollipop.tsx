@@ -29,10 +29,13 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
 
   // Available metrics
   const metrics = [
-    { value: 'player_rating', label: 'Rating General' },
-    { value: 'age', label: 'Edad' },
-    { value: 'player_trfm_value', label: 'Valor TRFM' },
-    { value: 'height', label: 'Altura' },
+    { value: 'clean_sheets_percentage', label: 'Clean Sheets %' },
+    { value: 'save_rate', label: 'Save Rate %' },
+    { value: 'aer_duels_won_percentage', label: 'Aer Duels Won %' },
+    { value: 'def_duels_won_percentage', label: 'Def Duels Won %' },
+    { value: 'off_duels_won_percentage', label: 'Off Duels Won %' },
+    { value: 'pass_accuracy', label: 'Accurate Passes %' },
+    { value: 'effectiveness', label: 'Effectiveness %' },
   ];
 
   // Get filtered data

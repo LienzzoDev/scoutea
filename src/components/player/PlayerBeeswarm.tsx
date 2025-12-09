@@ -28,10 +28,15 @@ export default function PlayerBeeswarm({ playerId }: PlayerBeeswarmProps) {
 
   // Available metrics
   const metrics = [
-    { value: 'player_rating', label: 'Rating General' },
-    { value: 'age', label: 'Edad' },
-    { value: 'player_trfm_value', label: 'Valor TRFM' },
-    { value: 'height', label: 'Altura' },
+    { value: 'prevented_goals', label: 'Prevented Goals' },
+    { value: 'tackles', label: 'Tackles' },
+    { value: 'interceptions', label: 'Interceptions' },
+    { value: 'passes', label: 'Passes' },
+    { value: 'forward_passes', label: 'Forward Passes' },
+    { value: 'crosses', label: 'Crosses' },
+    { value: 'assists', label: 'Assists' },
+    { value: 'shots', label: 'Shots' },
+    { value: 'goals', label: 'Goals' },
   ];
 
   // Get filtered data

@@ -81,17 +81,14 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
   const getCategoryOrder = (type: string) => {
     switch (type) {
       case 'attacking':
-        return ['Goles', 'Asistencias', 'Tiros', 'Centros', 'Duelos Ofensivos', 'Efectividad'];
+        return ['Goals', 'Assists', 'Shots', 'Crosses', 'Off Duels', 'Off Duels Won %', 'Effectiveness %', 'Forward Passes', 'Accurate Passes %'];
       case 'defending':
-        return ['Entradas', 'Intercepciones', 'Duelos Aéreos', 'Duelos Defensivos', 'Goles Prevenidos'];
+        return ['Tackles', 'Interceptions', 'Fouls', 'Yellow Cards', 'Red Cards', 'Def Duels', 'Def Duels Won %', 'Aer Duels', 'Aer Duels Won %'];
       case 'goalkeeping':
-        return ['% Paradas', 'Porterías a Cero', 'Goles Prevenidos', 'Goles Concedidos', 'Distribución'];
-      case 'general':
+        return ['Conceded Goals', 'Prevented Goals', 'Shots Against', 'Clean Sheets %', 'Save Rate %', 'Def Duels', 'Def Duels Won %', 'Aer Duels', 'Aer Duels Won %'];
       default:
-        return [
-          'Balón Parado Def.', 'Evitación', 'Recuperación', 'Transición Def.', 
-          'Balón Parado Of.', 'Mantenimiento', 'Progresión', 'Finalización', 'Transición Of.'
-        ];
+        // Default to attacking if unknown
+        return ['Goals', 'Assists', 'Shots', 'Crosses', 'Off Duels', 'Off Duels Won %', 'Effectiveness %', 'Forward Passes', 'Accurate Passes %'];
     }
   };
 
@@ -264,10 +261,9 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
                 <SelectValue placeholder="Seleccionar tipo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="general">General</SelectItem>
-                <SelectItem value="goalkeeping">Portero (Goalkeeping)</SelectItem>
-                <SelectItem value="defending">Defensivo</SelectItem>
-                <SelectItem value="attacking">Ofensivo</SelectItem>
+                <SelectItem value="attacking">Attacking</SelectItem>
+                <SelectItem value="defending">Defending</SelectItem>
+                <SelectItem value="goalkeeping">Goalkeeping</SelectItem>
               </SelectContent>
             </Select>
           </div>

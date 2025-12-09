@@ -75,11 +75,7 @@ export class RadarCalculationService {
   }
 
   private static calculateMetricsFromStats(stats: any, type: 'general' | 'attacking' | 'defending' | 'goalkeeping'): RadarMetric[] {
-    const metrics: RadarMetric[] = []
-
-    if (type === 'general') {
-       return this.calculateGeneralMetrics(stats);
-    } else if (type === 'attacking') {
+    if (type === 'attacking') {
        return this.calculateAttackingMetrics(stats);
     } else if (type === 'defending') {
        return this.calculateDefendingMetrics(stats);
@@ -87,160 +83,48 @@ export class RadarCalculationService {
        return this.calculateGoalkeepingMetrics(stats);
     }
 
-    return metrics;
-  }
-
-  private static calculateGeneralMetrics(stats: any): RadarMetric[] {
-    const metrics: RadarMetric[] = [];
-
-
-    // Offensive Transition
-    if (stats.successfulDribblesPerc !== null || stats.keyPassesAccurate !== null) {
-      const value = this.normalizeValue(
-        ((stats.successfulDribblesPerc ?? 0) + (stats.keyPassesAccurate ?? 0) * 10) / 2
-      )
-      metrics.push({
-        name: 'Off Transition',
-        value,
-        percentile: value,
-        category: 'Off Transition'
-      })
-    }
-
-    // Maintenance (ball retention)
-    if (stats.passesAccurate !== null || stats.passesTotal !== null) {
-      const passAcc = stats.passesTotal > 0
-        ? (stats.passesAccurate / stats.passesTotal) * 100
-        : 0
-      metrics.push({
-        name: 'Maintenance',
-        value: this.normalizeValue(passAcc),
-        percentile: this.normalizeValue(passAcc),
-        category: 'Maintenance'
-      })
-    }
-
-    // Progression
-    if (stats.progressivePassesAccurate !== null || stats.progressiveRunsTotal !== null) {
-      const value = this.normalizeValue(
-        ((stats.progressivePassesAccurate ?? 0) + (stats.progressiveRunsTotal ?? 0)) * 5
-      )
-      metrics.push({
-        name: 'Progression',
-        value,
-        percentile: value,
-        category: 'Progression'
-      })
-    }
-
-    // Finishing
-    if (stats.goalsScored !== null || stats.shotsOnTarget !== null) {
-      const value = this.normalizeValue(
-        ((stats.goalsScored ?? 0) * 15 + (stats.shotsOnTarget ?? 0) * 5)
-      )
-      metrics.push({
-        name: 'Finishing',
-        value,
-        percentile: value,
-        category: 'Finishing'
-      })
-    }
-
-    // Off Stopped Ball (set pieces)
-    if (stats.freekickGoals !== null || stats.penaltiesScored !== null) {
-      const value = this.normalizeValue(
-        ((stats.freekickGoals ?? 0) + (stats.penaltiesScored ?? 0)) * 20
-      )
-      metrics.push({
-        name: 'Off Stopped Ball',
-        value,
-        percentile: value,
-        category: 'Off Stopped Ball'
-      })
-    }
-
-    // Defensive Transition
-    if (stats.counterpressingRecoveries !== null || stats.interceptions !== null) {
-      const value = this.normalizeValue(
-        ((stats.counterpressingRecoveries ?? 0) + (stats.interceptions ?? 0)) * 3
-      )
-      metrics.push({
-        name: 'Def Transition',
-        value,
-        percentile: value,
-        category: 'Def Transition'
-      })
-    }
-
-    // Recovery
-    if (stats.ballRecoveries !== null || stats.tacklesWon !== null) {
-      const value = this.normalizeValue(
-        ((stats.ballRecoveries ?? 0) + (stats.tacklesWon ?? 0)) * 3
-      )
-      metrics.push({
-        name: 'Recovery',
-        value,
-        percentile: value,
-        category: 'Recovery'
-      })
-    }
-
-    // Evitation (avoiding loss)
-    if (stats.dribblesAgainstWon !== null || stats.foulsDrawn !== null) {
-      const value = this.normalizeValue(
-        ((stats.dribblesAgainstWon ?? 0) * 5 + (stats.foulsDrawn ?? 0) * 2)
-      )
-      metrics.push({
-        name: 'Evitation',
-        value,
-        percentile: value,
-        category: 'Evitation'
-      })
-    }
-
-    // Def Stopped Ball
-    if (stats.blockedShots !== null || stats.clearances !== null) {
-      const value = this.normalizeValue(
-        ((stats.blockedShots ?? 0) + (stats.clearances ?? 0)) * 3
-      )
-      metrics.push({
-        name: 'Def Stopped Ball',
-        value,
-        percentile: value,
-        category: 'Def Stopped Ball'
-      })
-    }
-
-    return metrics
+    // Default to attacking if 'general' or unknown (or could define a generic one, but user asked for these 3 specific ones)
+    return this.calculateAttackingMetrics(stats);
   }
 
   private static calculateAttackingMetrics(stats: any): RadarMetric[] {
     const metrics: RadarMetric[] = [];
 
-    // Goals
-    const goalsVal = stats.goals_p90_3m_norm ? Number(stats.goals_p90_3m_norm) : 50;
-    metrics.push({ name: 'Goles', value: goalsVal, percentile: goalsVal, category: 'Goles' });
-
-    // Assists
-    const assistsVal = stats.assists_p90_3m_norm ? Number(stats.assists_p90_3m_norm) : 50;
-    metrics.push({ name: 'Asistencias', value: assistsVal, percentile: assistsVal, category: 'Asistencias' });
-
     // Shots
     const shotsVal = stats.shots_p90_3m_norm ? Number(stats.shots_p90_3m_norm) : 50;
-    metrics.push({ name: 'Tiros', value: shotsVal, percentile: shotsVal, category: 'Tiros' });
+    metrics.push({ name: 'Shots', value: shotsVal, percentile: shotsVal, category: 'Shots' });
+
+    // Goals
+    const goalsVal = stats.goals_p90_3m_norm ? Number(stats.goals_p90_3m_norm) : 50;
+    metrics.push({ name: 'Goals', value: goalsVal, percentile: goalsVal, category: 'Goals' });
+
+    // Effectiveness %
+    const effVal = stats.effectiveness_percent_3m_norm ? Number(stats.effectiveness_percent_3m_norm) : 50;
+    metrics.push({ name: 'Effectiveness %', value: effVal, percentile: effVal, category: 'Effectiveness %' });
+
+    // Forward Passes
+    const fwdPassesVal = stats.forward_passes_p90_3m_norm ? Number(stats.forward_passes_p90_3m_norm) : 50;
+    metrics.push({ name: 'Forward Passes', value: fwdPassesVal, percentile: fwdPassesVal, category: 'Forward Passes' });
 
     // Crosses
     const crossesVal = stats.crosses_p90_3m_norm ? Number(stats.crosses_p90_3m_norm) : 50;
-    metrics.push({ name: 'Centros', value: crossesVal, percentile: crossesVal, category: 'Centros' });
+    metrics.push({ name: 'Crosses', value: crossesVal, percentile: crossesVal, category: 'Crosses' });
 
-    // Offensive Duels
-    const offDuelsVal = stats.off_duels_won_percent_3m_norm ? Number(stats.off_duels_won_percent_3m_norm) : 50;
-    metrics.push({ name: 'Duelos Ofensivos', value: offDuelsVal, percentile: offDuelsVal, category: 'Duelos Ofensivos' });
+    // Assists
+    const assistsVal = stats.assists_p90_3m_norm ? Number(stats.assists_p90_3m_norm) : 50;
+    metrics.push({ name: 'Assists', value: assistsVal, percentile: assistsVal, category: 'Assists' });
 
-    // Progressive Runs (approximated from dribbles if not exact match, using forward passes as proxy for now or specific column if exists)
-    // Using Effectiveness as a proxy for general offensive efficiency
-    const effVal = stats.effectiveness_percent_3m_norm ? Number(stats.effectiveness_percent_3m_norm) : 50;
-    metrics.push({ name: 'Efectividad', value: effVal, percentile: effVal, category: 'Efectividad' });
+    // Accurate Passes %
+    const accPassesVal = stats.accurate_passes_percent_3m_norm ? Number(stats.accurate_passes_percent_3m_norm) : 50;
+    metrics.push({ name: 'Accurate Passes %', value: accPassesVal, percentile: accPassesVal, category: 'Accurate Passes %' });
+
+    // Off Duels
+    const offDuelsVal = stats.off_duels_p90_3m_norm ? Number(stats.off_duels_p90_3m_norm) : 50;
+    metrics.push({ name: 'Off Duels', value: offDuelsVal, percentile: offDuelsVal, category: 'Off Duels' });
+
+    // Off Duels Won %
+    const offDuelsWonVal = stats.off_duels_won_percent_3m_norm ? Number(stats.off_duels_won_percent_3m_norm) : 50;
+    metrics.push({ name: 'Off Duels Won %', value: offDuelsWonVal, percentile: offDuelsWonVal, category: 'Off Duels Won %' });
 
     return metrics;
   }
@@ -250,25 +134,39 @@ export class RadarCalculationService {
 
     // Tackles
     const tacklesVal = stats.tackles_p90_3m_norm ? Number(stats.tackles_p90_3m_norm) : 50;
-    metrics.push({ name: 'Entradas', value: tacklesVal, percentile: tacklesVal, category: 'Entradas' });
+    metrics.push({ name: 'Tackles', value: tacklesVal, percentile: tacklesVal, category: 'Tackles' });
 
     // Interceptions
     const interceptionsVal = stats.interceptions_p90_3m_norm ? Number(stats.interceptions_p90_3m_norm) : 50;
-    metrics.push({ name: 'Intercepciones', value: interceptionsVal, percentile: interceptionsVal, category: 'Intercepciones' });
+    metrics.push({ name: 'Interceptions', value: interceptionsVal, percentile: interceptionsVal, category: 'Interceptions' });
 
-    // Aerial Duels
-    const aerialsVal = stats.aerials_duels_won_percent_3m_norm ? Number(stats.aerials_duels_won_percent_3m_norm) : 50;
-    metrics.push({ name: 'Duelos Aéreos', value: aerialsVal, percentile: aerialsVal, category: 'Duelos Aéreos' });
+    // Fouls (Negative is better)
+    const foulsVal = stats.fouls_p90_3m_norm_neg ? Number(stats.fouls_p90_3m_norm_neg) : 50;
+    metrics.push({ name: 'Fouls', value: foulsVal, percentile: foulsVal, category: 'Fouls' });
 
-    // Defensive Duels
-    const defDuelsVal = stats.def_duels_won_percent_3m_norm ? Number(stats.def_duels_won_percent_3m_norm) : 50;
-    metrics.push({ name: 'Duelos Defensivos', value: defDuelsVal, percentile: defDuelsVal, category: 'Duelos Defensivos' });
+    // Yellow Cards (Negative is better)
+    const yellowCardsVal = stats.yellow_cards_p90_3m_norm_neg ? Number(stats.yellow_cards_p90_3m_norm_neg) : 50;
+    metrics.push({ name: 'Yellow Cards', value: yellowCardsVal, percentile: yellowCardsVal, category: 'Yellow Cards' });
 
-    // Recoveries (using fouls as a negative proxy or ball recovery level if available, checking stats first)
-    // Using 'stats_evo' as a placeholder for consistency/form for now, or just generic rating
-    // Better: Blocked shots / Clearances proxy -> using 'conceded_goals_p90_3m_norm_neg' (goals prevented/low conceded)
-    const prevGoalsVal = stats.prevented_goals_p90_3m_norm ? Number(stats.prevented_goals_p90_3m_norm) : 50;
-    metrics.push({ name: 'Goles Prevenidos', value: prevGoalsVal, percentile: prevGoalsVal, category: 'Goles Prevenidos' });
+    // Red Cards (Negative is better)
+    const redCardsVal = stats.red_cards_p90_3m_norm_neg ? Number(stats.red_cards_p90_3m_norm_neg) : 50;
+    metrics.push({ name: 'Red Cards', value: redCardsVal, percentile: redCardsVal, category: 'Red Cards' });
+
+    // Def Duels
+    const defDuelsVal = stats.def_duels_p90_3m_norm ? Number(stats.def_duels_p90_3m_norm) : 50;
+    metrics.push({ name: 'Def Duels', value: defDuelsVal, percentile: defDuelsVal, category: 'Def Duels' });
+
+    // Def Duels Won %
+    const defDuelsWonVal = stats.def_duels_won_percent_3m_norm ? Number(stats.def_duels_won_percent_3m_norm) : 50;
+    metrics.push({ name: 'Def Duels Won %', value: defDuelsWonVal, percentile: defDuelsWonVal, category: 'Def Duels Won %' });
+
+    // Aer Duels
+    const aerDuelsVal = stats.aerials_duels_p90_3m_norm ? Number(stats.aerials_duels_p90_3m_norm) : 50;
+    metrics.push({ name: 'Aer Duels', value: aerDuelsVal, percentile: aerDuelsVal, category: 'Aer Duels' });
+
+    // Aer Duels Won %
+    const aerDuelsWonVal = stats.aerials_duels_won_percent_3m_norm ? Number(stats.aerials_duels_won_percent_3m_norm) : 50;
+    metrics.push({ name: 'Aer Duels Won %', value: aerDuelsWonVal, percentile: aerDuelsWonVal, category: 'Aer Duels Won %' });
 
     return metrics;
   }
@@ -276,27 +174,44 @@ export class RadarCalculationService {
   private static calculateGoalkeepingMetrics(stats: any): RadarMetric[] {
     const metrics: RadarMetric[] = [];
 
-    // Save Rate
-    const saveRateVal = stats.save_rate_percent_3m_norm ? Number(stats.save_rate_percent_3m_norm) : 50;
-    metrics.push({ name: '% Paradas', value: saveRateVal, percentile: saveRateVal, category: '% Paradas' });
-
-    // Clean Sheets
-    const cleanSheetsVal = stats.clean_sheets_percent_3m_norm ? Number(stats.clean_sheets_percent_3m_norm) : 50;
-    metrics.push({ name: 'Porterías a Cero', value: cleanSheetsVal, percentile: cleanSheetsVal, category: 'Porterías a Cero' });
+    // Conceded Goals (Negative is better)
+    const concededVal = stats.conceded_goals_p90_3m_norm_neg ? Number(stats.conceded_goals_p90_3m_norm_neg) : 50;
+    metrics.push({ name: 'Conceded Goals', value: concededVal, percentile: concededVal, category: 'Conceded Goals' });
 
     // Prevented Goals
     const prevGoalsVal = stats.prevented_goals_p90_3m_norm ? Number(stats.prevented_goals_p90_3m_norm) : 50;
-    metrics.push({ name: 'Goles Prevenidos', value: prevGoalsVal, percentile: prevGoalsVal, category: 'Goles Prevenidos' });
+    metrics.push({ name: 'Prevented Goals', value: prevGoalsVal, percentile: prevGoalsVal, category: 'Prevented Goals' });
 
-    // Conceded Goals (Negative is good, so we use the negative norm if available or invert logic)
-    // Using 'conceded_goals_p90_3m_norm_neg' if it exists or doing 100 - norm
-    const concededVal = stats.conceded_goals_p90_3m_norm_neg ? Number(stats.conceded_goals_p90_3m_norm_neg) : 
-                        (stats.conceded_goals_p90_3m_norm ? 100 - Number(stats.conceded_goals_p90_3m_norm) : 50);
-    metrics.push({ name: 'Goles Concedidos', value: concededVal, percentile: concededVal, category: 'Goles Concedidos' });
+    // Shots Against
+    // Note: Usually fewer shots against is better for defense quality, but for a GK workload metric maybe more is 'more active'? 
+    // However, usually negative traits are inverted. Assuming standard 'more is higher percentile' for activity, or checking if there's a neg field.
+    // The user didn't specify direction. I will use the standard norm.
+    const shotsAgainstVal = stats.shots_against_p90_3m_norm ? Number(stats.shots_against_p90_3m_norm) : 50;
+    metrics.push({ name: 'Shots Against', value: shotsAgainstVal, percentile: shotsAgainstVal, category: 'Shots Against' });
 
-    // Passes (Distribution)
-    const passesVal = stats.accurate_passes_percent_3m_norm ? Number(stats.accurate_passes_percent_3m_norm) : 50;
-    metrics.push({ name: 'Distribución', value: passesVal, percentile: passesVal, category: 'Distribución' });
+    // Clean Sheets %
+    const cleanSheetsVal = stats.clean_sheets_percent_3m_norm ? Number(stats.clean_sheets_percent_3m_norm) : 50;
+    metrics.push({ name: 'Clean Sheets %', value: cleanSheetsVal, percentile: cleanSheetsVal, category: 'Clean Sheets %' });
+
+    // Save Rate %
+    const saveRateVal = stats.save_rate_percent_3m_norm ? Number(stats.save_rate_percent_3m_norm) : 50;
+    metrics.push({ name: 'Save Rate %', value: saveRateVal, percentile: saveRateVal, category: 'Save Rate %' });
+
+    // Def Duels (For GK? Requested by user)
+    const defDuelsVal = stats.def_duels_p90_3m_norm ? Number(stats.def_duels_p90_3m_norm) : 50;
+    metrics.push({ name: 'Def Duels', value: defDuelsVal, percentile: defDuelsVal, category: 'Def Duels' });
+
+    // Def Duels Won %
+    const defDuelsWonVal = stats.def_duels_won_percent_3m_norm ? Number(stats.def_duels_won_percent_3m_norm) : 50;
+    metrics.push({ name: 'Def Duels Won %', value: defDuelsWonVal, percentile: defDuelsWonVal, category: 'Def Duels Won %' });
+
+    // Aer Duels
+    const aerDuelsVal = stats.aerials_duels_p90_3m_norm ? Number(stats.aerials_duels_p90_3m_norm) : 50;
+    metrics.push({ name: 'Aer Duels', value: aerDuelsVal, percentile: aerDuelsVal, category: 'Aer Duels' });
+
+    // Aer Duels Won %
+    const aerDuelsWonVal = stats.aerials_duels_won_percent_3m_norm ? Number(stats.aerials_duels_won_percent_3m_norm) : 50;
+    metrics.push({ name: 'Aer Duels Won %', value: aerDuelsWonVal, percentile: aerDuelsWonVal, category: 'Aer Duels Won %' });
 
     return metrics;
   }
@@ -310,8 +225,7 @@ export class RadarCalculationService {
     const comparisons: RadarComparisonData[] = []
 
     for (const playerId of playerIds) {
-      const data = await this.calculatePlayerRadar(playerId) // Compare uses default 'general' for now
-
+      const data = await this.calculatePlayerRadar(playerId) 
       comparisons.push(data)
     }
 

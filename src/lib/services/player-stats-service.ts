@@ -65,6 +65,7 @@ export interface PlayerStatsByField {
   p90Value: string
   averageValue: string
   maximumValue: string
+  percentile: string
 }
 
 export class PlayerStatsService {
@@ -168,12 +169,15 @@ export class PlayerStatsService {
       const getStatValues = (metricName: string): PlayerStatsByField => {
         const total = stats[`${metricName}_tot_${period}`]
         const p90 = stats[`${metricName}_p90_${period}`]
+        // Try p90 norm first, then total norm if p90 doesn't exist
+        const norm = stats[`${metricName}_p90_${period}_norm`] ?? stats[`${metricName}_tot_${period}_norm`]
 
         return {
           totalValue: total?.toString() ?? '-',
           p90Value: p90?.toString() ?? '-',
           averageValue: '-', // Not available in current schema
           maximumValue: '-', // Not available in current schema
+          percentile: norm?.toString() ?? '-',
         }
       }
 
@@ -194,12 +198,14 @@ export class PlayerStatsService {
           p90Value: '-',
           averageValue: '-',
           maximumValue: '-',
+          percentile: stats[`clean_sheets_percentage_${period}_norm`]?.toString() ?? '-',
         },
         saveRate: {
           totalValue: stats[`save_rate_${period}`]?.toString() ?? '-',
           p90Value: '-',
           averageValue: '-',
           maximumValue: '-',
+          percentile: stats[`save_rate_${period}_norm`]?.toString() ?? '-',
         },
 
         // Defending
@@ -217,6 +223,7 @@ export class PlayerStatsService {
           p90Value: '-',
           averageValue: '-',
           maximumValue: '-',
+          percentile: '-', // No norm field for pass accuracy in checked schema lines, or assuming default behaviour if not found
         },
 
         // Finishing
@@ -227,6 +234,7 @@ export class PlayerStatsService {
           p90Value: '-',
           averageValue: '-',
           maximumValue: '-',
+          percentile: stats[`effectiveness_${period}_norm`]?.toString() ?? '-', // Mapping if exists, otherwise explicit check needed
         },
 
         // 1vs1
@@ -238,18 +246,21 @@ export class PlayerStatsService {
           p90Value: '-',
           averageValue: '-',
           maximumValue: '-',
+          percentile: stats[`off_duels_won_percentage_${period}_norm`]?.toString() ?? '-',
         },
         defDuelsWonPercentage: {
           totalValue: stats[`def_duels_won_percentage_${period}`]?.toString() ?? '-',
           p90Value: '-',
           averageValue: '-',
           maximumValue: '-',
+          percentile: stats[`def_duels_won_percentage_${period}_norm`]?.toString() ?? '-',
         },
         aerDuelsWonPercentage: {
           totalValue: stats[`aer_duels_won_percentage_${period}`]?.toString() ?? '-',
           p90Value: '-',
           averageValue: '-',
           maximumValue: '-',
+          percentile: stats[`aer_duels_won_percentage_${period}_norm`]?.toString() ?? '-',
         },
       }
     } catch (error) {

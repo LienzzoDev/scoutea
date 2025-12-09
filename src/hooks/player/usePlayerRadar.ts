@@ -39,7 +39,7 @@ export const usePlayerRadar = (playerId: string) => {
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentType, setCurrentType] = useState<string>('general');
+  const [currentType, setCurrentType] = useState<string>('attacking');
   
   // Use ref to always have access to the latest baseData
   const baseDataRef = useRef<RadarData[]>([]);

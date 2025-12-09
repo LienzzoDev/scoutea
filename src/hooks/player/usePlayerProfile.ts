@@ -176,7 +176,7 @@ export const usePlayerProfile = (playerId: string) => {
 
   const getStatValue = (
     metricName: string,
-    field: 'totalValue' | 'p90Value' | 'averageValue' | 'maximumValue'
+    field: 'totalValue' | 'p90Value' | 'averageValue' | 'maximumValue' | 'percentile'
   ): string => {
     const stat = periodStats[metricName];
     if (!stat) return '-';
