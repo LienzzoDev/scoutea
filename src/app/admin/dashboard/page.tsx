@@ -2,13 +2,8 @@
 
 import { useAuth } from '@clerk/nextjs'
 import {
-  Users,
-  TrendingUp,
   AlertTriangle,
-  Clock,
   RefreshCw,
-  BarChart3,
-  Activity,
   CheckCircle2,
   Trash2
 } from "lucide-react"
@@ -16,18 +11,44 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState, useCallback } from 'react'
 
 import { ApprovalDashboard } from "@/components/admin/ApprovalDashboard"
+import { GrowthChart } from "@/components/admin/dashboard/GrowthChart"
+import { StatsBlock } from "@/components/admin/dashboard/StatsBlock"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { usePlayers } from "@/hooks/player/usePlayers"
+
+// Interface for new stats structure
+interface DashboardStats {
+  players: {
+    total: number
+    lastScraping: string | null
+    erroneousUrls: number
+    missingTrfmUrls: number
+  }
+  teams: {
+    total: number
+    lastScraping: string | null
+    erroneousUrls: number
+    missingTrfmUrls: number
+  }
+  evolution: {
+    reports: { month: string; count: number }[]
+    scouts: { month: string; count: number }[]
+  }
+}
+
+const INITIAL_STATS: DashboardStats = {
+  players: { total: 0, lastScraping: null, erroneousUrls: 0, missingTrfmUrls: 0 },
+  teams: { total: 0, lastScraping: null, erroneousUrls: 0, missingTrfmUrls: 0 },
+  evolution: { reports: [], scouts: [] }
+}
 
 export default function DashboardPage() {
   const { isSignedIn, isLoaded } = useAuth()
@@ -39,76 +60,39 @@ export default function DashboardPage() {
   const [deleteStatus, setDeleteStatus] = useState<'idle' | 'deleting' | 'completed' | 'error'>('idle')
   const [confirmText, setConfirmText] = useState('')
 
-  // Hook para obtener datos reales de jugadores
-  const { players, loading, error, searchPlayers } = usePlayers()
+  // 📊 ESTADÍSTICAS DEL DASHBOARD
+  const [stats, setStats] = useState<DashboardStats>(INITIAL_STATS)
+  const [statsLoading, setStatsLoading] = useState(true)
+  const [_statsError, setStatsError] = useState<string | null>(null)
 
-  // 📊 CALCULAR ESTADÍSTICAS OPTIMIZADAS CON DATOS REALES
-  const [adminStats, setAdminStats] = useState({
-    totalJugadores: 0,
-    jugadoresRecientes: 0,
-    jugadoresConRating: 0,
-    porcentajeConRating: 0,
-    promedioRating: 0
-  })
-
-  // 🚀 FUNCIÓN PARA OBTENER ESTADÍSTICAS DE LA API OPTIMIZADA
-  const loadAdminStats = useCallback(async () => {
+  // 🚀 CARGAR DATOS
+  const loadDashboardStats = useCallback(async () => {
     try {
-      console.log('📊 Loading admin statistics from optimized API...')
-      const response = await fetch('/api/players/stats')
+      setStatsLoading(true)
+      console.log('📊 Loading dashboard analytics...')
+      const response = await fetch('/api/admin/dashboard/stats')
 
       if (response.ok) {
-        const stats = await response.json()
-
-        // 📊 USAR ESTADÍSTICAS REALES DE LA API
-        const totalJugadores = stats.totalPlayers || 0
-
-        // Calcular jugadores recientes solo de los jugadores cargados (muestra)
-        const jugadoresRecientes = players.filter(player => {
-          const fechaCreacion = new Date(player.createdAt)
-          const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000)
-          return fechaCreacion > hace24h
-        }).length
-
-        // Estimar jugadores con rating basado en la muestra cargada
-        const jugadoresConRatingMuestra = players.filter(player =>
-          player.player_rating && player.player_rating > 0
-        ).length
-
-        const porcentajeMuestra = players.length > 0
-          ? (jugadoresConRatingMuestra / players.length) * 100
-          : 0
-
-        // Estimar total de jugadores con rating
-        const jugadoresConRatingEstimado = Math.round((totalJugadores * porcentajeMuestra) / 100)
-
-        setAdminStats({
-          totalJugadores,
-          jugadoresRecientes,
-          jugadoresConRating: jugadoresConRatingEstimado,
-          porcentajeConRating: Math.round(porcentajeMuestra),
-          promedioRating: stats.averageRating || 0
-        })
-
-        console.log('✅ Admin stats updated:', {
-          totalJugadores,
-          jugadoresRecientes,
-          porcentajeConRating: Math.round(porcentajeMuestra),
-          jugadoresConRatingEstimado,
-          promedioRating: stats.averageRating
-        })
+        const data = await response.json()
+        setStats(data)
+        console.log('✅ Dashboard stats loaded:', data)
+      } else {
+        throw new Error('Failed to fetch stats')
       }
-    } catch (_error) {
-      console.error('❌ Error loading admin stats:', error)
+    } catch (error) {
+      console.error('❌ Error loading dashboard stats:', error)
+      setStatsError('Error al cargar estadísticas')
+    } finally {
+      setStatsLoading(false)
     }
-  }, [players])
+  }, [])
 
-  // 🔄 ACTUALIZAR ESTADÍSTICAS CUANDO CAMBIEN LOS JUGADORES
+  // 🔄 CARGAR AL INICIO
   useEffect(() => {
-    if (players.length > 0) {
-      loadAdminStats()
+    if (isSignedIn) {
+      loadDashboardStats()
     }
-  }, [players, loadAdminStats])
+  }, [isSignedIn, loadDashboardStats])
 
   // 🚀 PROCESO DE SCRAPING OPTIMIZADO
   const iniciarScraping = async () => {
@@ -116,34 +100,16 @@ export default function DashboardPage() {
     console.log('🚀 Starting optimized scraping process...')
 
     try {
-      // 📊 REFRESCAR ESTADÍSTICAS USANDO LA API OPTIMIZADA
-      const refreshStats = fetch('/api/players/stats', { method: 'POST' })
-        .then(res => res.ok ? res.json() : null)
-        .catch(() => null)
-
       // 🔄 SIMULAR PROCESO DE SCRAPING (en producción sería real)
-      const scrapingProcess = new Promise(resolve => setTimeout(resolve, 3000))
-
-      // 🚀 EJECUTAR EN PARALELO
-      await Promise.all([refreshStats, scrapingProcess])
+      await new Promise(resolve => setTimeout(resolve, 3000))
 
       // 📊 RECARGAR DATOS ACTUALIZADOS
-      await Promise.all([
-        searchPlayers({
-          page: 1,
-          limit: 50,
-          sortBy: 'createdAt',
-          sortOrder: 'desc'
-        }),
-        loadAdminStats()
-      ])
+      await loadDashboardStats()
 
       setScrapingStatus('completed')
       console.log('✅ Scraping process completed successfully')
-
-      // Resetear estado después de 2 segundos
       setTimeout(() => setScrapingStatus('idle'), 2000)
-    } catch (_error) {
+    } catch (error) {
       console.error('❌ Error in scraping process:', error)
       setScrapingStatus('error')
       setTimeout(() => setScrapingStatus('idle'), 3000)
@@ -161,28 +127,19 @@ export default function DashboardPage() {
       })
 
       if (response.ok) {
-        const result = await response.json()
-        console.log('✅ Jugadores eliminados:', result)
-
         setDeleteStatus('completed')
+        await loadDashboardStats() // Recargar estadísticas
 
-        // Recargar estadísticas
-        await loadAdminStats()
-
-        // Cerrar diálogo y resetear estado después de 2 segundos
         setTimeout(() => {
           setShowDeleteDialog(false)
           setConfirmText('')
           setDeleteStatus('idle')
         }, 2000)
       } else {
-        const error = await response.json()
-        console.error('❌ Error eliminando jugadores:', error)
         setDeleteStatus('error')
         setTimeout(() => setDeleteStatus('idle'), 3000)
       }
     } catch (_error) {
-      console.error('❌ Error en la petición de eliminación:', _error)
       setDeleteStatus('error')
       setTimeout(() => setDeleteStatus('idle'), 3000)
     }
@@ -195,410 +152,150 @@ export default function DashboardPage() {
     }
   }, [isLoaded, isSignedIn, _router, hasRedirected])
 
-  // 🚀 CARGAR DATOS OPTIMIZADOS AL MONTAR EL COMPONENTE
-  useEffect(() => {
-    if (isSignedIn) {
-      console.log('🚀 Loading admin dashboard data with optimized APIs...')
-
-      // 📊 CARGAR ESTADÍSTICAS Y JUGADORES EN PARALELO
-      Promise.all([
-        // Cargar estadísticas usando la nueva API optimizada
-        fetch('/api/players/stats')
-          .then(res => res.ok ? res.json() : null)
-          .catch(() => null),
-
-        // Cargar jugadores recientes para métricas
-        searchPlayers({
-          page: 1,
-          limit: 100, // Aumentado para obtener más datos para métricas
-          sortBy: 'createdAt',
-          sortOrder: 'desc'
-        })
-      ]).then(([stats]) => {
-        if (stats) {
-          console.log('✅ Admin stats loaded:', stats)
-        }
-      }).catch(error => {
-        console.error('❌ Error loading admin dashboard data:', error)
-      })
-    }
-  }, [isSignedIn, searchPlayers])
-
-  // Si no está cargado, mostrar loading
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen bg-[#080F17] flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-[#D6DDE6] text-xl">Cargando...</div>
-        </div>
-      </div>
-    )
-  }
-
-  // Si no está autenticado, mostrar nada (ya se está redirigiendo)
-  if (!isSignedIn) {
-    return null
-  }
+  if (!isLoaded) return <div className="min-h-screen bg-[#080F17] flex items-center justify-center text-[#D6DDE6]">Cargando...</div>
+  if (!isSignedIn) return null
 
   return (
-      <main className="px-6 py-8 max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-[#D6DDE6]">Dashboard</h1>
+    <main className="px-6 py-8 max-w-7xl mx-auto space-y-8">
+      <h1 className="text-3xl font-bold text-[#D6DDE6]">Dashboard</h1>
 
-      {/* Update Data Section */}
-      <Card className="mb-8 bg-[#131921] border-slate-700">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
+      {/* 📊 INDICADORES PRINCIPALES (BLOQUE 1) */}
+      <section>
+        <h2 className="text-xl font-semibold mb-4 text-[#D6DDE6]">Indicadores Principales</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <StatsBlock 
+            title="Jugadores" 
+            total={stats.players.total}
+            lastScraping={stats.players.lastScraping}
+            erroneousUrls={stats.players.erroneousUrls}
+            missingTrfmUrls={stats.players.missingTrfmUrls}
+            loading={statsLoading}
+          />
+          <StatsBlock 
+            title="Equipos" 
+            total={stats.teams.total}
+            lastScraping={stats.teams.lastScraping}
+            erroneousUrls={stats.teams.erroneousUrls}
+            missingTrfmUrls={stats.teams.missingTrfmUrls}
+            loading={statsLoading}
+          />
+        </div>
+      </section>
+
+      {/* 📈 EVOLUCIÓN DE DATOS (BLOQUE 2) */}
+      <section>
+        <h2 className="text-xl font-semibold mb-4 text-[#D6DDE6]">Evolución de Datos</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <GrowthChart 
+            title="Crecimiento de Reportes" 
+            data={stats.evolution.reports} 
+            type="reports"
+            loading={statsLoading}
+          />
+          <GrowthChart 
+            title="Crecimiento de Scouts" 
+            data={stats.evolution.scouts} 
+            type="scouts"
+            loading={statsLoading}
+          />
+        </div>
+      </section>
+
+      {/* 🛠️ ACCIONES RÁPIDAS */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Update Data */}
+        <Card className="bg-[#131921] border-slate-700">
+          <CardContent className="p-6 flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold mb-2 text-[#D6DDE6]">Actualizar datos</h2>
-              <p className="text-gray-400">
-                {scrapingStatus === 'running'
-                  ? 'Procesando datos de jugadores...'
-                  : 'Revisar la información de todos los jugadores y actualizarla'
-                }
-              </p>
+              <h2 className="text-lg font-semibold mb-1 text-[#D6DDE6]">Actualizar Datos</h2>
+              <p className="text-sm text-gray-400">Ejecutar scraping manual</p>
             </div>
             <Button
               onClick={iniciarScraping}
               disabled={scrapingStatus === 'running'}
-              className="bg-[#FF5733] hover:bg-[#E64A2B] text-white px-6"
+              className="bg-[#FF5733] hover:bg-[#E64A2B] text-white"
             >
-              {scrapingStatus === 'running' ? (
-                <div className="flex items-center space-x-2">
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                  <span>Procesando...</span>
-                </div>
-              ) : scrapingStatus === 'completed' ? (
-                <div className="flex items-center space-x-2">
-                  <Activity className="h-4 w-4 text-green-400" />
-                  <span>Completado</span>
-                </div>
-              ) : scrapingStatus === 'error' ? (
-                <div className="flex items-center space-x-2">
-                  <AlertTriangle className="h-4 w-4 text-red-400" />
-                  <span>Error</span>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-2">
-                  <RefreshCw className="h-4 w-4" />
-                  <span>Iniciar proceso</span>
-                </div>
-              )}
+              <RefreshCw className={`h-4 w-4 mr-2 ${scrapingStatus === 'running' ? 'animate-spin' : ''}`} />
+              {scrapingStatus === 'running' ? 'Procesando...' : 'Actualizar'}
             </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Delete All Players Section - ZONA PELIGROSA */}
-      <Card className="mb-8 bg-[#1a0a0a] border-red-900">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
+        {/* Approvals */}
+        <Card className="bg-[#131921] border-slate-700">
+          <CardContent className="p-6 flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold mb-2 text-red-400 flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5" />
-                Zona Peligrosa
-              </h2>
-              <p className="text-gray-400">
-                Eliminar TODOS los jugadores de la base de datos de forma permanente
-              </p>
-            </div>
-            <Button
-              onClick={() => setShowDeleteDialog(true)}
-              variant="destructive"
-              className="bg-red-600 hover:bg-red-700 text-white px-6"
-            >
-              <div className="flex items-center space-x-2">
-                <Trash2 className="h-4 w-4" />
-                <span>Eliminar Todos los Jugadores</span>
-              </div>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Pending Approvals Section */}
-      <Card className="mb-8 bg-[#131921] border-slate-700">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold mb-2 text-[#D6DDE6]">Aprobaciones Pendientes</h2>
-              <p className="text-gray-400">
-                Revisar y aprobar reportes creados por scouts
-              </p>
+              <h2 className="text-lg font-semibold mb-1 text-[#D6DDE6]">Aprobaciones</h2>
+              <p className="text-sm text-gray-400">Ver reportes pendientes</p>
             </div>
             <Button
               onClick={() => setShowApprovalsDialog(true)}
-              className="bg-[#FF5733] hover:bg-[#E64A2B] text-white px-6"
+              className="bg-[#FF5733] hover:bg-[#E64A2B] text-white"
             >
-              <div className="flex items-center space-x-2">
-                <CheckCircle2 className="h-4 w-4" />
-                <span>Ver Reportes Pendientes</span>
-              </div>
+              <CheckCircle2 className="h-4 w-4 mr-2" />
+              Ver Pendientes
             </Button>
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* ⚠️ ZONA PELIGROSA */}
+      <Card className="bg-[#1a0a0a] border-red-900 border-dashed">
+        <CardContent className="p-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold mb-1 text-red-400 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" /> Zona Peligrosa
+            </h2>
+            <p className="text-sm text-gray-400">Eliminar todos los jugadores</p>
           </div>
+          <Button
+            onClick={() => setShowDeleteDialog(true)}
+            variant="destructive"
+            className="bg-red-900/50 hover:bg-red-700 text-red-200 border border-red-800"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Eliminar Todo
+          </Button>
         </CardContent>
       </Card>
 
-      {/* Key Indicators */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4 text-[#D6DDE6]">Indicadores principales</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-[#131921] border-slate-700">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2 mb-2">
-                <Users className="h-5 w-5 text-blue-400" />
-                <h3 className="text-sm text-gray-400">Total jugadores</h3>
-              </div>
-              <div className="text-3xl font-bold mb-1 text-[#D6DDE6]">
-                {loading ? '...' : adminStats.totalJugadores.toLocaleString()}
-              </div>
-              <div className="text-sm text-green-400">
-                +{adminStats.jugadoresRecientes} en 24h
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-[#131921] border-slate-700">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2 mb-2">
-                <Clock className="h-5 w-5 text-yellow-400" />
-                <h3 className="text-sm text-gray-400">Último Scraping</h3>
-              </div>
-              <div className="text-3xl font-bold mb-1 text-[#D6DDE6]">
-                {scrapingStatus === 'completed' ? 'Hace 2s' : 'N/A'}
-              </div>
-              <div className="text-sm text-gray-400">
-                {scrapingStatus === 'running' ? 'En progreso...' : 'Sin actividad'}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-[#131921] border-slate-700">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2 mb-2">
-                <BarChart3 className="h-5 w-5 text-green-400" />
-                <h3 className="text-sm text-gray-400">Con atributos</h3>
-              </div>
-              <div className="text-3xl font-bold mb-1 text-[#D6DDE6]">
-                {loading ? '...' : adminStats.jugadoresConRating.toLocaleString()}
-              </div>
-              <div className="text-sm text-green-400">
-                {adminStats.porcentajeConRating}% del total
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-[#131921] border-slate-700">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2 mb-2">
-                <TrendingUp className="h-5 w-5 text-purple-400" />
-                <h3 className="text-sm text-gray-400">Tasa de éxito</h3>
-              </div>
-              <div className="text-3xl font-bold mb-1 text-[#D6DDE6]">
-                {loading ? '...' : `${adminStats.porcentajeConRating}%`}
-              </div>
-              <div className="text-sm text-green-400">
-                +{Math.max(0, adminStats.porcentajeConRating - 80)}% vs objetivo
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Charts Section */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4 text-[#D6DDE6]">Evolución de los datos</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="bg-[#131921] border-slate-700">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-[#D6DDE6]">Porcentaje de scraping válido</h3>
-                <div className="text-sm text-green-400">
-                  +{Math.max(0, adminStats.porcentajeConRating - 80)}%
-                </div>
-              </div>
-              <div className="text-4xl font-bold mb-6 text-[#D6DDE6]">
-                {loading ? '...' : `${adminStats.porcentajeConRating}%`}
-              </div>
-              <div className="h-32 relative">
-                <svg className="w-full h-full" viewBox="0 0 400 120">
-                  <defs>
-                    <linearGradient id="gradient1" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#f97316" stopOpacity="0.8" />
-                      <stop offset="100%" stopColor="#f97316" stopOpacity="0.1" />
-                    </linearGradient>
-                  </defs>
-                  <path
-                    d={`M0,${120 - adminStats.porcentajeConRating * 1.2} Q50,${120 - adminStats.porcentajeConRating * 1.1} 100,${120 - adminStats.porcentajeConRating * 1.0} T200,${120 - adminStats.porcentajeConRating * 0.9} T300,${120 - adminStats.porcentajeConRating * 0.8} T400,${120 - adminStats.porcentajeConRating * 0.7}`}
-                    stroke="#f97316"
-                    strokeWidth="2"
-                    fill="none"
-                  />
-                  <path
-                    d={`M0,${120 - adminStats.porcentajeConRating * 1.2} Q50,${120 - adminStats.porcentajeConRating * 1.1} 100,${120 - adminStats.porcentajeConRating * 1.0} T200,${120 - adminStats.porcentajeConRating * 0.9} T300,${120 - adminStats.porcentajeConRating * 0.8} T400,${120 - adminStats.porcentajeConRating * 0.7} L400,120 L0,120 Z`}
-                    fill="url(#gradient1)"
-                  />
-                </svg>
-                <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-400 px-2">
-                  <span>Ene</span>
-                  <span>Feb</span>
-                  <span>Mar</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-[#131921] border-slate-700">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-[#D6DDE6]">Crecimiento de jugadores</h3>
-                <div className="text-sm text-green-400">
-                  +{adminStats.jugadoresRecientes} este mes
-                </div>
-              </div>
-              <div className="text-4xl font-bold mb-6 text-[#D6DDE6]">
-                {loading ? '...' : adminStats.jugadoresRecientes}
-              </div>
-              <div className="h-32 relative">
-                <svg className="w-full h-full" viewBox="0 0 400 120">
-                  <defs>
-                    <linearGradient id="gradient2" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#f97316" stopOpacity="0.8" />
-                      <stop offset="100%" stopColor="#f97316" stopOpacity="0.1" />
-                    </linearGradient>
-                  </defs>
-                  <path
-                    d={`M0,${120 - Math.min(adminStats.jugadoresRecientes * 2, 100)} Q50,${120 - Math.min(adminStats.jugadoresRecientes * 1.8, 90)} 100,${120 - Math.min(adminStats.jugadoresRecientes * 1.6, 80)} T200,${120 - Math.min(adminStats.jugadoresRecientes * 1.4, 70)} T300,${120 - Math.min(adminStats.jugadoresRecientes * 1.2, 60)} T400,${120 - Math.min(adminStats.jugadoresRecientes * 1.0, 50)}`}
-                    stroke="#f97316"
-                    strokeWidth="2"
-                    fill="none"
-                  />
-                  <path
-                    d={`M0,${120 - Math.min(adminStats.jugadoresRecientes * 2, 100)} Q50,${120 - Math.min(adminStats.jugadoresRecientes * 1.8, 90)} 100,${120 - Math.min(adminStats.jugadoresRecientes * 1.6, 80)} T200,${120 - Math.min(adminStats.jugadoresRecientes * 1.4, 70)} T300,${120 - Math.min(adminStats.jugadoresRecientes * 1.2, 60)} T400,${120 - Math.min(adminStats.jugadoresRecientes * 1.0, 50)} L400,120 L0,120 Z`}
-                    fill="url(#gradient2)"
-                  />
-                </svg>
-                <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-400 px-2">
-                  <span>Ene</span>
-                  <span>Feb</span>
-                  <span>Mar</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Error State */}
-      {error && (
-        <div className="mt-8 p-4 bg-red-900/20 border border-red-700 rounded-lg">
-          <p className="text-red-400">Error: {typeof error === 'string' ? error : error?.message || 'Error desconocido'}</p>
-          <Button
-            onClick={() =>searchPlayers({
-              page: 1,
-              limit: 100,
-              sortBy: 'createdAt',
-              sortOrder: 'desc'
-            })}
-            variant="outline" className="mt-2 border-red-700 text-red-400 hover:bg-red-900/20">
-            Reintentar
-          </Button>
-        </div>
-      )}
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={showDeleteDialog} onOpenChange={(open) => {
-        setShowDeleteDialog(open)
-        if (!open) {
-          setConfirmText('')
-          setDeleteStatus('idle')
-        }
-      }}>
-        <DialogContent className="bg-[#080F17] border-red-900">
+      {/* Dialogs */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="bg-[#080F17] border-red-900 text-slate-300">
           <DialogHeader>
-            <DialogTitle className="text-2xl text-red-400 flex items-center gap-2">
-              <AlertTriangle className="h-6 w-6" />
-              ⚠️ ADVERTENCIA: Acción Irreversible
+            <DialogTitle className="text-red-400 flex items-center gap-2">
+              <AlertTriangle /> Acción Irreversible
             </DialogTitle>
           </DialogHeader>
-
-          <div className="text-slate-300 space-y-3">
-            <p className="font-semibold">Estás a punto de eliminar TODOS los jugadores ({adminStats.totalJugadores.toLocaleString()}) de la base de datos.</p>
-            <p className="text-red-300">Esta acción NO se puede deshacer y perderás:</p>
-            <ul className="list-disc list-inside ml-4 text-slate-400">
-              <li>Todos los datos de jugadores</li>
-              <li>Todas las estadísticas calculadas</li>
-              <li>Todas las relaciones con reportes</li>
-            </ul>
-            <p className="text-slate-300">Para confirmar, escribe <span className="font-mono bg-red-900/30 px-2 py-1 rounded text-red-300">ELIMINAR TODO</span> en el campo de abajo:</p>
-          </div>
-
-          <div className="my-4">
-            <Input
-              value={confirmText}
+          <div className="space-y-4">
+            <p>Escribe <span className="font-mono text-red-400">ELIMINAR TODO</span> para confirmar.</p>
+            <Input 
+              value={confirmText} 
               onChange={(e) => setConfirmText(e.target.value)}
-              placeholder="Escribe ELIMINAR TODO"
-              className="bg-[#131921] border-slate-700 text-white"
-              disabled={deleteStatus === 'deleting'}
+              className="bg-[#131921] border-red-900/50"
             />
           </div>
-
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowDeleteDialog(false)
-                setConfirmText('')
-                setDeleteStatus('idle')
-              }}
-              disabled={deleteStatus === 'deleting'}
-              className="border-slate-700 text-slate-300 hover:bg-slate-800"
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="destructive"
+            <Button variant="ghost" onClick={() => setShowDeleteDialog(false)}>Cancelar</Button>
+            <Button 
+              variant="destructive" 
               onClick={eliminarTodosJugadores}
               disabled={confirmText !== 'ELIMINAR TODO' || deleteStatus === 'deleting'}
-              className="bg-red-600 hover:bg-red-700"
             >
-              {deleteStatus === 'deleting' ? (
-                <div className="flex items-center space-x-2">
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                  <span>Eliminando...</span>
-                </div>
-              ) : deleteStatus === 'completed' ? (
-                <div className="flex items-center space-x-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span>Eliminado</span>
-                </div>
-              ) : deleteStatus === 'error' ? (
-                <div className="flex items-center space-x-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  <span>Error</span>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-2">
-                  <Trash2 className="h-4 w-4" />
-                  <span>Confirmar Eliminación</span>
-                </div>
-              )}
+              {deleteStatus === 'deleting' ? 'Eliminando...' : 'Confirmar'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Approvals Dialog */}
       <Dialog open={showApprovalsDialog} onOpenChange={setShowApprovalsDialog}>
         <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto bg-[#080F17] border-slate-700">
           <DialogHeader>
-            <DialogTitle className="text-2xl text-[#D6DDE6]">Reportes Pendientes de Aprobación</DialogTitle>
-            <DialogDescription className="text-slate-400">
-              Revisa y aprueba reportes creados por scouts
-            </DialogDescription>
+            <DialogTitle className="text-[#D6DDE6]">Reportes Pendientes</DialogTitle>
           </DialogHeader>
           <ApprovalDashboard />
         </DialogContent>
       </Dialog>
-      </main>
+    </main>
   )
 }
