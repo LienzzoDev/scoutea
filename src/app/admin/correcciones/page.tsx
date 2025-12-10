@@ -1,3 +1,5 @@
+'use client'
+
 import { Check, Edit, Plus, Search, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 
