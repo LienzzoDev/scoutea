@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 
 export interface Competition {
@@ -39,7 +40,9 @@ export interface SearchCompetitionsOptions {
   search?: string;
   country?: string;
   confederation?: string;
+  tier?: number;
 }
+
 
 export class CompetitionService {
   static async getAllCompetitions(): Promise<Competition[]> {
@@ -154,8 +157,8 @@ export class CompetitionService {
     const cursor = options.cursor;
     const limit = options.limit || 50;
 
-    const where: any = {};
-    const orConditions: any[] = [];
+    const where: Prisma.CompetitionWhereInput = {};
+    const orConditions: Prisma.CompetitionWhereInput[] = [];
 
     // Build OR conditions for search
     if (options.search) {
@@ -178,6 +181,11 @@ export class CompetitionService {
         { competition_confederation: { contains: options.confederation, mode: 'insensitive' } },
         { confederation: { contains: options.confederation, mode: 'insensitive' } } // Legacy
       );
+    }
+
+    // Add tier filter
+    if (options.tier !== undefined) {
+      where.competition_tier = options.tier;
     }
 
     // Only add OR if we have conditions
@@ -335,7 +343,7 @@ export class CompetitionService {
     }>
   ) {
     // Build update data object, only including defined values
-    const updateData: any = {};
+    const updateData: Prisma.CompetitionUpdateInput = {};
     if (data.competition_name !== undefined) {
       updateData.competition_name = data.competition_name;
       updateData.name = data.competition_name; // Keep legacy in sync

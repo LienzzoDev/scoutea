@@ -1,7 +1,5 @@
-'use client'
-
-import { Plus, Search, Trash2, Edit, Check, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Check, Edit, Plus, Search, Trash2, X } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -68,7 +66,8 @@ export default function CorreccionesPage() {
   const [newCompetitionData, setNewCompetitionData] = useState({ original_name: '', corrected_name: '', country: '' })
 
   // Cargar correcciones de nacionalidades
-  const loadNationalityCorrections = async () => {
+  // Cargar correcciones de nacionalidades
+  const loadNationalityCorrections = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/admin/corrections/nationalities?search=${nationalitySearch}`)
@@ -80,10 +79,11 @@ export default function CorreccionesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [nationalitySearch])
 
   // Cargar correcciones de equipos
-  const loadTeamCorrections = async () => {
+  // Cargar correcciones de equipos
+  const loadTeamCorrections = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/admin/corrections/teams?search=${teamSearch}`)
@@ -95,10 +95,11 @@ export default function CorreccionesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [teamSearch])
 
   // Cargar correcciones de competiciones
-  const loadCompetitionCorrections = async () => {
+  // Cargar correcciones de competiciones
+  const loadCompetitionCorrections = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/admin/corrections/competitions?search=${competitionSearch}`)
@@ -110,7 +111,7 @@ export default function CorreccionesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [competitionSearch])
 
   useEffect(() => {
     if (isLoaded && isSignedIn) {
@@ -122,7 +123,7 @@ export default function CorreccionesPage() {
         loadCompetitionCorrections()
       }
     }
-  }, [isLoaded, isSignedIn, activeTab, nationalitySearch, teamSearch, competitionSearch])
+  }, [isLoaded, isSignedIn, activeTab, loadNationalityCorrections, loadTeamCorrections, loadCompetitionCorrections])
 
   // Crear nueva corrección de nacionalidad
   const handleCreateNationality = async () => {
@@ -405,8 +406,9 @@ export default function CorreccionesPage() {
           {activeTab === 'nationalities' ? (
             <div className='space-y-4 mt-4'>
               <div>
-                <label className='text-sm text-slate-300 mb-2 block'>Nombre Original</label>
+                <label htmlFor="nat-orig" className='text-sm text-slate-300 mb-2 block'>Nombre Original</label>
                 <Input
+                  id="nat-orig"
                   placeholder='Ej: España'
                   value={newNationalityData.original_name}
                   onChange={e => setNewNationalityData({ ...newNationalityData, original_name: e.target.value })}
@@ -414,8 +416,9 @@ export default function CorreccionesPage() {
                 />
               </div>
               <div>
-                <label className='text-sm text-slate-300 mb-2 block'>Nombre Corregido</label>
+                <label htmlFor="nat-corr" className='text-sm text-slate-300 mb-2 block'>Nombre Corregido</label>
                 <Input
+                  id="nat-corr"
                   placeholder='Ej: Spain'
                   value={newNationalityData.corrected_name}
                   onChange={e => setNewNationalityData({ ...newNationalityData, corrected_name: e.target.value })}
@@ -467,8 +470,9 @@ export default function CorreccionesPage() {
           ) : (
             <div className='space-y-4 mt-4'>
               <div>
-                <label className='text-sm text-slate-300 mb-2 block'>Nombre Original</label>
+                <label htmlFor="comp-orig" className='text-sm text-slate-300 mb-2 block'>Nombre Original</label>
                 <Input
+                  id="comp-orig"
                   placeholder='Ej: UEFA Champions League'
                   value={newCompetitionData.original_name}
                   onChange={e => setNewCompetitionData({ ...newCompetitionData, original_name: e.target.value })}
@@ -476,8 +480,9 @@ export default function CorreccionesPage() {
                 />
               </div>
               <div>
-                <label className='text-sm text-slate-300 mb-2 block'>Nombre Corregido</label>
+                <label htmlFor="comp-corr" className='text-sm text-slate-300 mb-2 block'>Nombre Corregido</label>
                 <Input
+                  id="comp-corr"
                   placeholder='Ej: Champions League'
                   value={newCompetitionData.corrected_name}
                   onChange={e => setNewCompetitionData({ ...newCompetitionData, corrected_name: e.target.value })}
@@ -485,8 +490,9 @@ export default function CorreccionesPage() {
                 />
               </div>
               <div>
-                <label className='text-sm text-slate-300 mb-2 block'>País (opcional)</label>
+                <label htmlFor="comp-country" className='text-sm text-slate-300 mb-2 block'>País (opcional)</label>
                 <Input
+                  id="comp-country"
                   placeholder='Ej: Europe'
                   value={newCompetitionData.country}
                   onChange={e => setNewCompetitionData({ ...newCompetitionData, country: e.target.value })}

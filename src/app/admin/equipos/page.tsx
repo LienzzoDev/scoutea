@@ -1,8 +1,8 @@
 'use client'
 
-import { Search, Globe, Plus, RefreshCw } from "lucide-react"
+import { Globe, Plus, RefreshCw, Search } from "lucide-react"
 import { useRouter } from 'next/navigation'
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import ImportTeamsButton from "@/components/admin/ImportTeamsButton"
 import TeamTable from "@/components/team/TeamTable"
@@ -54,11 +54,6 @@ export default function EquiposPage() {
       getValue: (team: Team) => team.displayId ?? team.id_team,
     },
     {
-      key: 'correct_team_name',
-      label: 'Nombre Corregido',
-      getValue: (team: Team) => team.correct_team_name,
-    },
-    {
       key: 'team_country',
       label: 'País del Equipo',
       getValue: (team: Team) => team.team_country,
@@ -95,11 +90,6 @@ export default function EquiposPage() {
       key: 'competition',
       label: 'Competición',
       getValue: (team: Team) => team.competition,
-    },
-    {
-      key: 'correct_competition',
-      label: 'Competición Corregida',
-      getValue: (team: Team) => team.correct_competition,
     },
     {
       key: 'competition_country',
@@ -194,8 +184,8 @@ export default function EquiposPage() {
     // Ordenar en cliente
     if (sortBy && sortBy !== 'team_name') { // team_name ya viene ordenado del backend
       return [...teams].sort((a, b) => {
-        let aValue: any = a[sortBy as keyof typeof a];
-        let bValue: any = b[sortBy as keyof typeof b];
+        let aValue: string | number | null | undefined = a[sortBy as keyof Team];
+        let bValue: string | number | null | undefined = b[sortBy as keyof Team];
 
         // Manejar valores null/undefined
         if (aValue === null || aValue === undefined) aValue = '';
@@ -279,6 +269,7 @@ export default function EquiposPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 bg-[#131921] border-slate-700 text-white placeholder:text-slate-400"
+            aria-label="Buscar equipos"
           />
         </div>
         <div className="text-sm text-slate-400">
@@ -349,8 +340,20 @@ export default function EquiposPage() {
 
       {/* Modal de confirmación de eliminación */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowDeleteConfirm(null)} />
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-confirm-title"
+        >
+          <div 
+            className="absolute inset-0 bg-black/50" 
+            onClick={() => setShowDeleteConfirm(null)}
+            onKeyDown={(e) => { if (e.key === 'Escape') setShowDeleteConfirm(null); }}
+            role="button"
+            tabIndex={0}
+            aria-label="Cerrar modal"
+          />
           <div className="relative bg-[#131921] border border-slate-700 rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold text-[#D6DDE6] mb-4">Confirmar eliminación</h3>
             <p className="text-slate-300 mb-6">

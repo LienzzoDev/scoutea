@@ -11,7 +11,7 @@ interface UseInfiniteCompetitionsScrollOptions {
   search?: string
   country?: string
   confederation?: string
-  tier?: number
+  tier?: number | undefined
   limit?: number
 }
 
@@ -44,7 +44,7 @@ export function useInfiniteCompetitionsScroll(
     totalCount,
     observerTarget,
     refresh
-  } = useInfiniteScroll<Competition, Record<string, any>>({
+  } = useInfiniteScroll<Competition, Record<string, unknown>>({
     apiEndpoint: '/api/competitions',
     getItemId: (competition) => competition.id_competition,
     filters: { search, country, confederation, tier },

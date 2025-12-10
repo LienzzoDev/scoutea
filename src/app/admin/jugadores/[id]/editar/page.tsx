@@ -1,17 +1,18 @@
 "use client"
 
-import { ChevronLeft, Edit, Settings, Save, Search } from "lucide-react"
-import { useRouter, useParams } from "next/navigation"
-import { useState, useEffect, FormEvent } from "react"
+import { ChevronLeft, Edit, Save, Search, Settings } from "lucide-react"
+import { useParams, useRouter } from "next/navigation"
+import { FormEvent, useEffect, useState } from "react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { LoadingPage } from "@/components/ui/loading-spinner"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 import { usePlayers } from "@/hooks/player/usePlayers"
+import { type Team } from "@/hooks/team/useTeams"
 import { CrearJugadorData } from "@/types/player"
 
 // Posiciones disponibles (Mismo que en crear)
@@ -49,7 +50,7 @@ export default function EditarJugadorPage() {
 
   // Estado de búsqueda (Mismo que crear)
   const [searchingTeam, setSearchingTeam] = useState(false)
-  const [teamSearchResults, setTeamSearchResults] = useState<any[]>([])
+  const [teamSearchResults, setTeamSearchResults] = useState<Team[]>([])
 
   // Estado de la UI
   const [saving, setSaving] = useState(false)
@@ -58,7 +59,7 @@ export default function EditarJugadorPage() {
   // Estado para scraping
   const [urlTrfm, setUrlTrfm] = useState('')
   const [scraping, setScraping] = useState(false)
-  const [scrapingResult, setScrapingResult] = useState<any>(null)
+  const [scrapingResult, setScrapingResult] = useState<unknown>(null)
 
   // Cargar datos del jugador
   useEffect(() => {
@@ -82,7 +83,7 @@ export default function EditarJugadorPage() {
             national_tier: playerData.national_tier || '',
             on_loan: playerData.on_loan || false,
             url_instagram: playerData.url_instagram || '',
-            url_secondary: playerData.url_image || '' // Asumiendo url_secondary mapea a url_image o similar si existe
+            url_secondary: playerData.url_secondary || ''
           })
           // Pre-llenar URL de scraping si existe
           if (playerData.url_trfm_advisor) {
@@ -95,7 +96,7 @@ export default function EditarJugadorPage() {
     if (isSignedIn) {
       loadPlayer()
     }
-  }, [params.id, isSignedIn])
+  }, [params.id, isSignedIn, getPlayer])
 
   // Buscar equipos
   const searchTeams = async (query: string) => {
@@ -352,9 +353,9 @@ export default function EditarJugadorPage() {
                 className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
               />
               <p className="text-xs text-slate-400">
-                Ingresa la URL del perfil del jugador en Transfermarkt y haz clic en "Hacer Scraping" para actualizar sus datos.
+                Ingresa la URL del perfil del jugador en Transfermarkt y haz clic en &quot;Hacer Scraping&quot; para actualizar sus datos.
               </p>
-              {scrapingResult && (
+              {!!scrapingResult && (
                 <div className="mt-3 p-3 bg-green-900/20 border border-green-700 rounded text-sm text-green-300">
                   ✅ Datos actualizados exitosamente desde Transfermarkt
                 </div>
@@ -395,7 +396,7 @@ export default function EditarJugadorPage() {
                     value={formData.posicion || ''}
                     onValueChange={(value) => handleInputChange('posicion', value)}
                   >
-                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                    <SelectTrigger id="posicion" className="bg-slate-800 border-slate-700 text-white">
                       <SelectValue placeholder="Seleccionar posición" />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-800 border-slate-700">
@@ -460,17 +461,18 @@ export default function EditarJugadorPage() {
                 {teamSearchResults.length > 0 && (
                   <div className="mt-2 bg-slate-800 border border-slate-700 rounded-lg max-h-48 overflow-y-auto">
                     {teamSearchResults.map((team) => (
-                      <div
+                      <button
+                        type="button"
                         key={team.id_team}
                         onClick={() => {
                           handleInputChange('equipo', team.team_name)
                           setTeamSearchResults([])
                         }}
-                        className="p-3 hover:bg-slate-700 cursor-pointer border-b border-slate-700 last:border-b-0"
+                        className="w-full text-left p-3 hover:bg-slate-700 cursor-pointer border-b border-slate-700 last:border-b-0 focus:outline-none focus:bg-slate-700"
                       >
                         <p className="text-white font-medium">{team.team_name}</p>
                         <p className="text-sm text-slate-400">{team.competition} • {team.team_country}</p>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}

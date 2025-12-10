@@ -75,7 +75,7 @@ export default function ImportAllPeriodsButton() {
       timestamp: new Date().toLocaleTimeString(),
       type,
       message,
-      period
+      ...(period !== undefined ? { period } : {})
     }]);
   };
 
@@ -435,10 +435,15 @@ export default function ImportAllPeriodsButton() {
           <div
             className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
             onClick={() => setShowLogs(false)}
+            onKeyDown={(e) => { if (e.key === 'Escape') setShowLogs(false); }}
+            role="button"
+            tabIndex={0}
           >
             <div
-              className="bg-[#0a0e14] border border-slate-700 rounded-lg w-full max-w-4xl max-h-[80vh] flex flex-col shadow-2xl"
+              className="bg-[#0a0e14] border border-slate-700 rounded-lg w-full max-w-4xl max-h-[80vh] flex flex-col shadow-2xl cursor-default"
               onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+              role="presentation"
             >
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-slate-700">
@@ -451,7 +456,7 @@ export default function ImportAllPeriodsButton() {
                   {/* Filtros */}
                   <select
                     value={logFilter}
-                    onChange={(e) => setLogFilter(e.target.value as any)}
+                    onChange={(e) => setLogFilter(e.target.value as 'all' | 'error' | 'success' | 'info')}
                     className="bg-slate-800 text-slate-300 text-sm px-3 py-1.5 rounded border border-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-600"
                   >
                     <option value="all">Todos</option>

@@ -14,23 +14,25 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
 
     // Support both old (page-based) and new (cursor-based) pagination
-    const page = searchParams.get('page')
+    // const page = searchParams.get('page') // Unused
     const cursor = searchParams.get('cursor') || undefined
     const limit = parseInt(searchParams.get('limit') || '50')
     const search = searchParams.get('search') || undefined
     const country = searchParams.get('country') || undefined
     const country_id = searchParams.get('country_id') || undefined
-    const tier = searchParams.get('tier') || undefined
+    const tierParam = searchParams.get('tier')
+    const tier = tierParam ? parseInt(tierParam) : undefined
     const confederation = searchParams.get('confederation') || undefined
 
     // If page is provided, we're using old pagination - convert to cursor
     // For now, just use cursor-based and ignore page
     const options = {
-      cursor,
+      ...(cursor && { cursor }), // Use conditional spread to avoid exactOptionalPropertyTypes issue with undefined
       limit,
-      search,
-      country: country || country_id,
-      confederation
+      ...(search && { search }),
+      ...(country || country_id ? { country: country || country_id } : {}),
+      ...(confederation && { confederation }),
+      ...(tier !== undefined && { tier })
     }
 
     console.log('🔍 API: Calling searchCompetitions with options:', options)

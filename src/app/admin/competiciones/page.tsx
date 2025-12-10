@@ -1,8 +1,8 @@
 'use client'
 
-import { Search, Filter, Plus, RefreshCw, Globe } from "lucide-react"
+import { Filter, Globe, Plus, RefreshCw, Search } from "lucide-react"
 import { useRouter } from 'next/navigation'
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import ImportCompetitionsButton from "@/components/admin/ImportCompetitionsButton"
 import CompetitionTable from "@/components/competition/CompetitionTable"
@@ -31,7 +31,7 @@ export default function CompeticionesPage() {
   const [confederationFilter, setConfederationFilter] = useState('')
 
   // Estados para opciones de filtros
-  const [countries, setCountries] = useState<string[]>([])
+  const [countries, setCountries] = useState<(string | { name: string; id?: string })[]>([])
   const [confederations, setConfederations] = useState<string[]>([])
 
   // Debounce del search term
@@ -56,9 +56,13 @@ export default function CompeticionesPage() {
     search: debouncedSearch,
     country: countryFilter,
     confederation: confederationFilter,
-    tier: tierFilter,
+    ...(tierFilter !== undefined && { tier: tierFilter }),
     limit: 50
   })
+
+  const handleSearch = () => {
+    setDebouncedSearch(searchTerm)
+  }
 
   // Cargar opciones de filtros
   useEffect(() => {
@@ -213,8 +217,8 @@ export default function CompeticionesPage() {
     if (!Array.isArray(competitions)) return [];
 
     return [...competitions].sort((a, b) => {
-      let aValue: any = a[sortBy as keyof typeof a];
-      let bValue: any = b[sortBy as keyof typeof b];
+      let aValue: string | number | Date | null | undefined = a[sortBy as keyof Competition];
+      let bValue: string | number | Date | null | undefined = b[sortBy as keyof Competition];
 
       // Manejar valores null/undefined
       if (aValue === null || aValue === undefined) aValue = '';
@@ -326,38 +330,38 @@ export default function CompeticionesPage() {
             {showFilters && (
               <div className="mt-4 pt-4 border-t border-slate-700 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label htmlFor="country-select" className="block text-sm font-medium text-gray-300 mb-2">
                     País
                   </label>
                   <Select
-                    value={countryFilter || undefined}
+                    value={countryFilter || ''}
                     onValueChange={(value) => handleFilterChange('country', value)}
                   >
-                    <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white hover:bg-[#2D3748] focus:ring-[#8C1A10]">
+                    <SelectTrigger id="country-select" className="w-full bg-[#1F2937] border-slate-600 text-white hover:bg-[#2D3748] focus:ring-[#8C1A10]">
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#1F2937] border-slate-600">
-                      {countries.map((country: any) => {
-                        const countryName = typeof country === 'string' ? country : country.name
-                        const countryKey = typeof country === 'string' ? country : country.id || country.name
-                        return (
-                          <SelectItem key={countryKey} value={countryName} className="text-white hover:bg-slate-700 focus:bg-slate-700">
-                            {countryName}
-                          </SelectItem>
-                        )
-                      })}
-                    </SelectContent>
+                      <SelectContent className="bg-[#1F2937] border-slate-600">
+                        {countries.map((country) => {
+                          const countryName = typeof country === 'string' ? country : country.name
+                          const countryKey = typeof country === 'string' ? country : country.id || country.name
+                          return (
+                            <SelectItem key={countryKey} value={countryName} className="text-white hover:bg-slate-700 focus:bg-slate-700">
+                              {countryName}
+                            </SelectItem>
+                          )
+                        })}
+                      </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label htmlFor="tier-select" className="block text-sm font-medium text-gray-300 mb-2">
                     Tier
                   </label>
                   <Select
-                    value={tierFilter?.toString() || undefined}
+                    value={tierFilter ? tierFilter.toString() : ''}
                     onValueChange={(value) => handleFilterChange('tier', value)}
                   >
-                    <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white hover:bg-[#2D3748] focus:ring-[#8C1A10]">
+                    <SelectTrigger id="tier-select" className="w-full bg-[#1F2937] border-slate-600 text-white hover:bg-[#2D3748] focus:ring-[#8C1A10]">
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1F2937] border-slate-600">
@@ -370,14 +374,14 @@ export default function CompeticionesPage() {
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label htmlFor="confederation-select" className="block text-sm font-medium text-gray-300 mb-2">
                     Confederación
                   </label>
                   <Select
-                    value={confederationFilter || undefined}
+                    value={confederationFilter || ''}
                     onValueChange={(value) => handleFilterChange('confederation', value)}
                   >
-                    <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white hover:bg-[#2D3748] focus:ring-[#8C1A10]">
+                    <SelectTrigger id="confederation-select" className="w-full bg-[#1F2937] border-slate-600 text-white hover:bg-[#2D3748] focus:ring-[#8C1A10]">
                       <SelectValue placeholder="Todas" />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1F2937] border-slate-600">
@@ -457,27 +461,7 @@ export default function CompeticionesPage() {
         )}
 
         {/* Note: Removed old pagination - now using infinite scroll */}
-        {false && (
-          <div className="mt-6 flex justify-center">
-            <div className="flex space-x-2">
-              <Button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                variant="outline" className="border-slate-600 text-gray-300 hover:bg-slate-700">
-                Anterior
-              </Button>
-              <span className="flex items-center px-4 py-2 text-sm text-gray-400">
-                Página {currentPage} de {totalPages}
-              </span>
-              <Button
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-                variant="outline" className="border-slate-600 text-gray-300 hover:bg-slate-700">
-                Siguiente
-              </Button>
-            </div>
-          </div>
-        )}
+        {/* Note: using infinite scroll interactions instead */ }
 
         {/* Modal de confirmación de eliminación */}
         {showDeleteConfirm && (

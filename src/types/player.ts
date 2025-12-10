@@ -31,6 +31,7 @@ export interface Player {
   foot?: string | null;
   correct_foot?: string | null;
   height?: number | null;
+  weight?: number | null;
   correct_height?: number | null;
   nationality_1?: string | null;
   correct_nationality_1?: string | null;
@@ -103,21 +104,21 @@ export interface Player {
 
 export interface CrearJugadorData {
   nombre: string;
-  posicion?: string; // Ahora es opcional
+  posicion?: string | undefined; // Ahora es opcional
   equipo: string;
   fecha_nacimiento: string; // Cambiado de edad a fecha de nacimiento
-  nationality?: string;
-  nationality_2?: string; // Segunda nacionalidad
-  height?: number;
-  weight?: number;
+  nationality?: string | undefined;
+  nationality_2?: string | undefined; // Segunda nacionalidad
+  height?: number | undefined;
+  weight?: number | undefined;
   // Nuevos campos
-  player_trfm_value?: number; // Valor de mercado
-  on_loan?: boolean; // Cedido
-  owner_club?: string; // Club propietario
-  national_tier?: string; // National tier
-  contract_end?: string; // Fin de contrato
-  url_instagram?: string; // URL de Instagram
-  url_secondary?: string; // URL secundaria
+  player_trfm_value?: number | undefined; // Valor de mercado
+  on_loan?: boolean | undefined; // Cedido
+  owner_club?: string | undefined; // Club propietario
+  national_tier?: string | undefined; // National tier
+  contract_end?: string | undefined; // Fin de contrato
+  url_instagram?: string | undefined; // URL de Instagram
+  url_secondary?: string | undefined; // URL secundaria
 }
 
 export interface PlayerStats {

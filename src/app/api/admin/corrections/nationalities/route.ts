@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server'
+import { Prisma } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/db'
 
-// GET: Obtener todas las correcciones de nacionalidades
+// GET: Obtener todas las correcciones de nacionalidad
 export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth()
@@ -14,11 +15,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search') || ''
 
-    const where = search
+    const where: Prisma.NationalityCorrectionWhereInput = search
       ? {
           OR: [
-            { original_name: { contains: search, mode: 'insensitive' as const } },
-            { corrected_name: { contains: search, mode: 'insensitive' as const } },
+            { original_name: { contains: search, mode: 'insensitive' } },
+            { corrected_name: { contains: search, mode: 'insensitive' } },
           ]
         }
       : {}
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching nationality corrections:', error)
     return NextResponse.json(
-      { __error: 'Error al obtener las correcciones de nacionalidades' },
+      { __error: 'Error al obtener las correcciones de nacionalidad' },
       { status: 500 }
     )
   }
@@ -65,11 +66,12 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({ correction }, { status: 201 })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error creating nationality correction:', error)
+    const e = error as { code?: string }
 
     // Handle unique constraint violation
-    if (error.code === 'P2002') {
+    if (e.code === 'P2002') {
       return NextResponse.json(
         { __error: 'Ya existe una corrección para esta nacionalidad' },
         { status: 409 }

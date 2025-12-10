@@ -307,7 +307,7 @@ export default function ImportTeamsButton() {
               {/* Filtros */}
               <select
                 value={logFilter}
-                onChange={(e) => setLogFilter(e.target.value as any)}
+                onChange={(e) => setLogFilter(e.target.value as 'all' | 'error' | 'success' | 'info')}
                 className="bg-slate-800 text-slate-300 text-xs px-2 py-1 rounded border border-slate-600"
               >
                 <option value="all">Todos</option>
