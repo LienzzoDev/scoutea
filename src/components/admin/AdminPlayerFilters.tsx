@@ -1,7 +1,5 @@
-'use client'
-
 import { ChevronDown, ChevronUp, Filter, RotateCcw, X } from 'lucide-react'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,6 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+
+import { PLAYER_POSITIONS } from '@/constants/player-positions'
 
 // Tipos para los filtros
 export interface PlayerFilters {
@@ -63,22 +63,12 @@ interface AdminPlayerFiltersProps {
   onReset: () => void
 }
 
+
 // Opciones estáticas de posiciones
-const POSITION_OPTIONS = [
-  { value: 'GK', label: 'Portero (GK)' },
-  { value: 'CB', label: 'Central (CB)' },
-  { value: 'LB', label: 'Lateral Izquierdo (LB)' },
-  { value: 'RB', label: 'Lateral Derecho (RB)' },
-  { value: 'DM', label: 'Mediocentro Defensivo (DM)' },
-  { value: 'CM', label: 'Centrocampista (CM)' },
-  { value: 'AM', label: 'Mediapunta (AM)' },
-  { value: 'LM', label: 'Interior Izquierdo (LM)' },
-  { value: 'RM', label: 'Interior Derecho (RM)' },
-  { value: 'LW', label: 'Extremo Izquierdo (LW)' },
-  { value: 'RW', label: 'Extremo Derecho (RW)' },
-  { value: 'CF', label: 'Delantero Centro (CF)' },
-  { value: 'SS', label: 'Segunda Punta (SS)' },
-]
+const POSITION_OPTIONS = PLAYER_POSITIONS.map(pos => ({
+  value: pos,
+  label: pos
+}))
 
 const FOOT_OPTIONS = [
   { value: 'right', label: 'Diestro' },
@@ -131,6 +121,31 @@ export default function AdminPlayerFilters({
       loadFilterOptions()
     }
   }, [isExpanded, loadFilterOptions])
+
+  // Optimización de listas largas para evitar crashes del navegador (Renderizar miles de items en Select es costoso)
+  const visibleNationalities = useMemo(() => {
+    let list = (filterOptions.nationalities || []).slice(0, 200)
+    if (filters.nationality && filters.nationality !== 'all' && !list.includes(filters.nationality)) {
+      list = [filters.nationality, ...list]
+    }
+    return list
+  }, [filterOptions.nationalities, filters.nationality])
+
+  const visibleTeams = useMemo(() => {
+    let list = (filterOptions.teams || []).slice(0, 200)
+    if (filters.team && filters.team !== 'all' && !list.includes(filters.team)) {
+      list = [filters.team, ...list]
+    }
+    return list
+  }, [filterOptions.teams, filters.team])
+
+  const visibleCompetitions = useMemo(() => {
+    let list = (filterOptions.competitions || []).slice(0, 200)
+    if (filters.competition && filters.competition !== 'all' && !list.includes(filters.competition)) {
+      list = [filters.competition, ...list]
+    }
+    return list
+  }, [filterOptions.competitions, filters.competition])
 
   const handleFilterChange = (key: keyof PlayerFilters, value: string) => {
     onFiltersChange({
@@ -220,7 +235,7 @@ export default function AdminPlayerFilters({
                   <SelectItem value="all" className="text-white hover:bg-slate-700">
                     Todas
                   </SelectItem>
-                  {filterOptions.nationalities.map((nat) => (
+                  {visibleNationalities.map((nat) => (
                     <SelectItem
                       key={nat}
                       value={nat}
@@ -229,6 +244,11 @@ export default function AdminPlayerFilters({
                       {nat}
                     </SelectItem>
                   ))}
+                  {filterOptions.nationalities.length > visibleNationalities.length && (
+                    <div className="px-2 py-2 text-xs text-slate-500 text-center border-t border-slate-700">
+                      Mostrando primeros 200. Usa búsqueda para más.
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -282,7 +302,7 @@ export default function AdminPlayerFilters({
                   <SelectItem value="all" className="text-white hover:bg-slate-700">
                     Todos
                   </SelectItem>
-                  {filterOptions.teams.map((team) => (
+                  {visibleTeams.map((team) => (
                     <SelectItem
                       key={team}
                       value={team}
@@ -291,6 +311,11 @@ export default function AdminPlayerFilters({
                       {team}
                     </SelectItem>
                   ))}
+                  {filterOptions.teams.length > visibleTeams.length && (
+                    <div className="px-2 py-2 text-xs text-slate-500 text-center border-t border-slate-700">
+                      Mostrando primeros 200. Usa búsqueda para más.
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -313,7 +338,7 @@ export default function AdminPlayerFilters({
                   <SelectItem value="all" className="text-white hover:bg-slate-700">
                     Todas
                   </SelectItem>
-                  {filterOptions.competitions.map((comp) => (
+                  {visibleCompetitions.map((comp) => (
                     <SelectItem
                       key={comp}
                       value={comp}
@@ -322,6 +347,11 @@ export default function AdminPlayerFilters({
                       {comp}
                     </SelectItem>
                   ))}
+                  {filterOptions.competitions.length > visibleCompetitions.length && (
+                    <div className="px-2 py-2 text-xs text-slate-500 text-center border-t border-slate-700">
+                      Mostrando primeros 200. Usa búsqueda para más.
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>

@@ -2,6 +2,7 @@
 
 import { useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
+
 import { useState, useEffect } from "react"
 
 import { MediaUpload } from "@/components/scout/media-upload"
@@ -12,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { SearchableSelect } from "@/components/ui/searchable-select"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { PLAYER_POSITIONS } from '@/constants/player-positions'
 import { useToast } from "@/hooks/use-toast"
 
 interface Player {
@@ -102,7 +104,7 @@ export function UnifiedReportForm() {
 
   // Convertir players a formato SearchableOption con información adicional
   const playerOptions = players.map(player => ({
-    value: player.id_player,
+    value: String(player.id_player),
     label: player.player_name,
     description: `${player.position_player || 'N/A'} • ${player.team_name || 'N/A'} • ${player.nationality_1 || 'N/A'}${player.age ? ` • ${player.age} años` : ''}`,
     isOwnPlayer: player.is_own_player,
@@ -152,7 +154,8 @@ export function UnifiedReportForm() {
 
   const handlePlayerChange = (option: { value: string; label: string; description?: string } | null) => {
     if (option) {
-      const player = players.find(p => p.id_player === option.value)
+      // Comparación flexible (string vs number)
+      const player = players.find(p => String(p.id_player) === option.value)
       setSelectedPlayer(player || null)
       setIsCreatingNewPlayer(false)
     } else {
@@ -162,7 +165,7 @@ export function UnifiedReportForm() {
 
   // Auto-fill form with test data (Admin only)
   const handleAutoFillTestData = () => {
-    const timestamp = Date.now()
+    // const timestamp = Date.now() // Unused
     const randomNum = Math.floor(Math.random() * 1000)
 
     // Switch to "Create New Player" mode
@@ -170,6 +173,7 @@ export function UnifiedReportForm() {
     setSelectedPlayer(null)
 
     // Fill new player data
+    // Use fallback strings to satisfy TypeScript that random selections are not undefined
     setNewPlayerData({
       playerName: `Test Player ${randomNum}`,
       dateOfBirth: {
@@ -177,12 +181,12 @@ export function UnifiedReportForm() {
         month: String(Math.floor(Math.random() * 12) + 1),
         year: String(1995 + Math.floor(Math.random() * 10))
       },
-      position: ['goalkeeper', 'defender', 'midfielder', 'forward'][Math.floor(Math.random() * 4)],
+      position: PLAYER_POSITIONS[Math.floor(Math.random() * PLAYER_POSITIONS.length)] || 'Midfield',
       height: String(170 + Math.floor(Math.random() * 20)),
-      foot: ['Left', 'Right', 'Both'][Math.floor(Math.random() * 3)],
-      team: ['Real Madrid', 'Barcelona', 'Manchester United', 'Bayern Munich', 'PSG'][Math.floor(Math.random() * 5)],
-      teamCountry: ['Spain', 'England', 'Germany', 'France'][Math.floor(Math.random() * 4)],
-      nationality1: ['spanish', 'english', 'german', 'italian', 'french'][Math.floor(Math.random() * 5)],
+      foot: (['Left', 'Right', 'Both'][Math.floor(Math.random() * 3)] || 'Right'),
+      team: (['Real Madrid', 'Barcelona', 'Manchester United', 'Bayern Munich', 'PSG'][Math.floor(Math.random() * 5)] || 'Unknown FC'),
+      teamCountry: (['Spain', 'England', 'Germany', 'France'][Math.floor(Math.random() * 4)] || 'Spain'),
+      nationality1: (['spanish', 'english', 'german', 'italian', 'french'][Math.floor(Math.random() * 5)] || 'spanish'),
       nationality2: '',
       nationalTier: '',
       agency: 'Test Agency',
@@ -302,7 +306,7 @@ export function UnifiedReportForm() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            playerId: selectedPlayer.id_player,
+            playerId: String(selectedPlayer.id_player),
             reportText: reportData.reportText || null,
             urlReport: reportData.urlReport || null,
             urlVideo: reportData.urlVideo || null,
@@ -523,10 +527,11 @@ export function UnifiedReportForm() {
                         <SelectValue placeholder="Select position" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="goalkeeper">Goalkeeper</SelectItem>
-                        <SelectItem value="defender">Defender</SelectItem>
-                        <SelectItem value="midfielder">Midfielder</SelectItem>
-                        <SelectItem value="forward">Forward</SelectItem>
+                        {PLAYER_POSITIONS.map((pos) => (
+                          <SelectItem key={pos} value={pos}>
+                            {pos}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>

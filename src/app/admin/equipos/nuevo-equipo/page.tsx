@@ -33,8 +33,6 @@ export default function NuevoEquipoPage() {
     competition: '',                  // → competition (String?)
     correct_competition: '',          // → correct_competition (String?)
     competition_country: '',          // → competition_country (String?)
-    competition_tier: '',             // → competition_tier (String?)
-    competition_confederation: '',    // → competition_confederation (String?)
 
     // Valores y Rating
     team_trfm_value: '',              // → team_trfm_value (Float?)
@@ -91,8 +89,6 @@ export default function NuevoEquipoPage() {
         competition: formData.competition || null,
         correct_competition: formData.correct_competition || null,
         competition_country: formData.competition_country || null,
-        competition_tier: formData.competition_tier || null,
-        competition_confederation: formData.competition_confederation || null,
         team_trfm_value: formData.team_trfm_value ? parseFloat(formData.team_trfm_value) : null,
         team_rating: formData.team_rating ? parseFloat(formData.team_rating) : null,
         team_elo: formData.team_elo ? parseFloat(formData.team_elo) : null,
@@ -170,11 +166,11 @@ export default function NuevoEquipoPage() {
         <div className="space-y-8">
           {/* Información Básica */}
           <div className="bg-[#131921] rounded-lg p-6 border border-slate-700">
-            <h2 className="text-lg font-semibold text-[#D6DDE6] mb-4">Información Básica</h2>
+            <h2 className="text-lg font-semibold text-[#D6DDE6] mb-4">Información Básica <span className="text-xs font-normal text-slate-400 ml-2">(<span className="text-red-500">*</span> obligatorio)</span></h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Nombre del Equipo - Buscador */}
               <div className="md:col-span-2">
-                <Label htmlFor="team_name" className="text-slate-300 mb-2 block">Nombre del Equipo *</Label>
+                <Label htmlFor="team_name" className="text-slate-300 mb-2 block">Nombre del Equipo <span className="text-red-500">*</span></Label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
@@ -312,22 +308,6 @@ export default function NuevoEquipoPage() {
                   value={formData.competition_country}
                   onChange={(e) => setFormData(prev => ({ ...prev, competition_country: e.target.value }))}
                   className="bg-[#080F17] border-slate-700 text-white" placeholder="España"/>
-              </div>
-              <div>
-                <Label htmlFor="competition_tier" className="text-slate-300 mb-2 block">Tier de Competición</Label>
-                <Input
-                  id="competition_tier"
-                  value={formData.competition_tier}
-                  onChange={(e) => setFormData(prev => ({ ...prev, competition_tier: e.target.value }))}
-                  className="bg-[#080F17] border-slate-700 text-white" placeholder="1"/>
-              </div>
-              <div>
-                <Label htmlFor="competition_confederation" className="text-slate-300 mb-2 block">Confederación</Label>
-                <Input
-                  id="competition_confederation"
-                  value={formData.competition_confederation}
-                  onChange={(e) => setFormData(prev => ({ ...prev, competition_confederation: e.target.value }))}
-                  className="bg-[#080F17] border-slate-700 text-white" placeholder="UEFA"/>
               </div>
             </div>
           </div>

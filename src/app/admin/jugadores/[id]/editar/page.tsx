@@ -238,7 +238,7 @@ export default function EditarJugadorPage() {
         national_tier: formData.national_tier,
         on_loan: formData.on_loan,
         url_instagram: formData.url_instagram,
-        url_image: formData.url_secondary, // Mapeo de url_secondary
+        url_secondary: formData.url_secondary,
         url_trfm_advisor: urlTrfm // Guardar también la URL de scraping
       }
 

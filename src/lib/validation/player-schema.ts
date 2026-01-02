@@ -6,6 +6,8 @@
 
 import { z } from 'zod'
 
+import { NATIONALITIES } from '@/constants/nationalities'
+
 // 🛡️ ENHANCED SECURITY PATTERNS
 const SECURITY_PATTERNS = {
   // SQL Injection patterns
@@ -107,12 +109,9 @@ const positionSchema = createSecureString(
 )
 
 // 🌍 VALIDACIÓN DE NACIONALIDAD - ENHANCED SECURITY
-const nationalitySchema = createSecureString(
-  2, 
-  50, 
-  /^[a-zA-ZÀ-ÿ\u0100-\u017F\s\-]+$/, 
-  'La nacionalidad solo puede contener letras, espacios y guiones'
-)
+const nationalitySchema = z.enum(NATIONALITIES, {
+  errorMap: () => ({ message: 'Nacionalidad no válida. Seleccione una de la lista estandarizada.' })
+});
 
 // ⚽ VALIDACIÓN DE NOMBRE DE EQUIPO - ENHANCED SECURITY
 const teamNameSchema = createSecureString(
@@ -122,14 +121,21 @@ const teamNameSchema = createSecureString(
   'El nombre del equipo solo puede contener letras, números, espacios, guiones, apostrofes, puntos y &'
 )
 
-// 📅 VALIDACIÓN DE FECHA
+// 📅 VALIDACIÓN DE FECHA - Acepta YYYY-MM-DD o ISO string
 const dateStringSchema = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha debe tener formato YYYY-MM-DD')
   .refine((date) => {
+    // Acepta formato YYYY-MM-DD o ISO string completo
     const parsedDate = new Date(date)
     return !isNaN(parsedDate.getTime())
   }, 'La fecha debe ser válida')
+  .transform((date) => {
+    // Normalizar a YYYY-MM-DD si viene como ISO
+    if (date.includes('T')) {
+      return date.split('T')[0]
+    }
+    return date
+  })
 
 // 🔗 VALIDACIÓN DE URL
 const urlSchema = z
@@ -196,14 +202,90 @@ export const PlayerCreateSchema = z.object({
   player_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'El color debe ser un código hexadecimal válido (ej: #FF5733)').optional()
 }).strict() // No permitir campos adicionales
 
+// 🔄 Schema flexible para nacionalidad (acepta valores de la lista o strings vacíos/null)
+const flexibleNationalitySchema = z.union([
+  z.enum(NATIONALITIES),
+  z.literal(''),
+  z.null()
+]).optional().transform(val => val === '' ? null : val)
+
+// 📅 Schema flexible para fechas (acepta null)
+const flexibleDateSchema = z.union([
+  dateStringSchema,
+  z.null(),
+  z.literal('')
+]).optional().transform(val => val === '' ? null : val)
+
+// 🔗 Schema flexible para URLs (acepta null o strings vacíos)
+const flexibleUrlSchema = z.union([
+  urlSchema,
+  z.null(),
+  z.literal('')
+]).optional().transform(val => val === '' ? null : val)
+
 /**
  * ✏️ ESQUEMA PARA ACTUALIZAR JUGADOR EXISTENTE
- * 
+ *
  * ✅ QUÉ VALIDA: Campos que se pueden actualizar (todos opcionales)
  * ✅ POR QUÉ: Permitir actualizaciones parciales sin requerir todos los campos
  * ✅ USO: En PUT /api/players/[id]
+ * ✅ NOTA: Más flexible que PlayerCreateSchema para aceptar datos del formulario de edición
  */
-export const PlayerUpdateSchema = PlayerCreateSchema.partial()
+export const PlayerUpdateSchema = z.object({
+  // 🆔 CAMPOS BÁSICOS
+  player_name: z.string().min(1).max(100).optional(),
+  complete_player_name: z.string().max(150).nullable().optional(),
+
+  // 👤 INFORMACIÓN PERSONAL
+  date_of_birth: flexibleDateSchema,
+  age: z.number().int().min(14).max(50).nullable().optional(),
+  nationality_1: flexibleNationalitySchema,
+  nationality_2: flexibleNationalitySchema,
+
+  // 🏃‍♂️ ATRIBUTOS FÍSICOS
+  height: z.number().int().min(140).max(230).nullable().optional(),
+  weight: z.number().int().min(40).max(150).nullable().optional(),
+  foot: z.enum(['Left', 'Right', 'Both']).nullable().optional(),
+  position_player: z.string().max(20).nullable().optional(),
+
+  // ⚽ INFORMACIÓN DE EQUIPO
+  team_name: z.string().max(100).nullable().optional(),
+  team_country: z.string().max(100).nullable().optional(),
+  team_competition: z.string().max(100).nullable().optional(),
+
+  // 📊 MÉTRICAS
+  player_rating: z.number().min(0).max(100).nullable().optional(),
+  player_elo: z.number().min(0).max(3000).nullable().optional(),
+  player_ranking: z.number().int().min(1).nullable().optional(),
+  player_trfm_value: z.number().min(0).nullable().optional(),
+
+  // 📄 CONTRATO
+  contract_end: flexibleDateSchema,
+  on_loan: z.boolean().nullable().optional(),
+  agency: z.string().max(100).nullable().optional(),
+  owner_club: z.string().max(100).nullable().optional(),
+  national_tier: z.string().max(100).nullable().optional(),
+
+  // 🔗 ENLACES
+  url_trfm: flexibleUrlSchema,
+  url_trfm_advisor: flexibleUrlSchema,
+  url_instagram: flexibleUrlSchema,
+  url_image: flexibleUrlSchema,
+  video: flexibleUrlSchema,
+
+  // 📝 NOTAS Y ORGANIZACIÓN
+  admin_notes: z.string().max(5000).nullable().optional(),
+  player_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).nullable().optional(),
+
+  // 🔗 IDs DE PLATAFORMAS EXTERNAS
+  wyscout_id_1: z.string().max(50).nullable().optional(),
+  wyscout_id_2: z.string().max(50).nullable().optional(),
+  wyscout_name_1: z.string().max(500).nullable().optional(),
+  wyscout_name_2: z.string().max(500).nullable().optional(),
+  wyscout_notes: z.string().max(500).nullable().optional(),
+  fmi_notes: z.string().max(500).nullable().optional(),
+  id_fmi: z.string().max(50).nullable().optional()
+}).passthrough() // Permitir campos adicionales que no están en el schema
 
 /**
  * 🔍 ESQUEMA PARA BÚSQUEDA Y FILTROS

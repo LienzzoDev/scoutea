@@ -8,11 +8,35 @@ interface Report {
   scout_id: string | null
   report_date: string | null
   report_type: string | null
-  createdAt: string
-  id_player: number | null
+  report_format: string | null
+  form_url_report: string | null
+  form_url_video: string | null
+  form_text_report: string | null
   form_potential: string | null
   roi: number | null
   profit: number | null
+  rating: number | null
+  // Snapshot histórico
+  initial_age: number | null
+  initial_player_trfm_value: number | null
+  initial_team: string | null
+  correct_initial_team: string | null
+  initial_team_elo: number | null
+  initial_team_level: string | null
+  initial_competition: string | null
+  initial_competition_country: string | null
+  initial_competition_elo: number | null
+  initial_competition_level: string | null
+  transfer_team_pts: number | null
+  transfer_competition_pts: number | null
+  // Campos de aprobación
+  approval_status: string | null
+  approved_by_admin_id: string | null
+  approval_date: string | null
+  rejection_reason: string | null
+  createdAt: string
+  updatedAt: string | null
+  id_player: number | null
   player?: {
     player_name: string
     position_player: string | null

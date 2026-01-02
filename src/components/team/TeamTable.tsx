@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpDown, ArrowUp, ArrowDown, Trash2 } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
 
@@ -454,6 +454,20 @@ export default function TeamTable({
               darkMode ? 'border-slate-700' : 'border-[#e7e7e7]'
             }`}>
               <div className="flex items-center justify-center gap-2">
+                {onEdit && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(team.id_team);
+                    }}
+                    title="Editar equipo"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                )}
                 {onDelete && (
                   <Button
                     variant="ghost"
@@ -463,6 +477,7 @@ export default function TeamTable({
                       e.stopPropagation();
                       onDelete(team.id_team);
                     }}
+                    title="Eliminar equipo"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

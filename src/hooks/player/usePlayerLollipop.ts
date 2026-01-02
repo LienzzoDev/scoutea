@@ -31,6 +31,20 @@ export interface LollipopFilters {
   limit?: number;
 }
 
+// Helper to normalize format (Title Case) - matching API logic
+const toTitleCase = (str: string) => {
+  return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+};
+
+const normalizePosition = (pos: string) => {
+  const normalized = toTitleCase(pos);
+  return normalized
+    .replace('Centre-back', 'Centre-Back')
+    .replace('Right-back', 'Right-Back')
+    .replace('Left-back', 'Left-Back')
+    .replace('Centre-forward', 'Centre-Forward');
+};
+
 export const usePlayerLollipop = (metric: string) => {
   const [data, setData] = useState<LollipopData[]>([]);
   const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null);
@@ -38,12 +52,12 @@ export const usePlayerLollipop = (metric: string) => {
   const [error, setError] = useState<string | null>(null);
 
   // Load data when metric changes
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (currentMetric: string) => {
     setLoading(true);
     setError(null);
     
     try {
-      console.log('🔍 usePlayerLollipop: Loading data for metric:', metric);
+      console.log('🔍 usePlayerLollipop: Loading data for metric:', currentMetric);
       
       // Load players data and filter options in parallel
       const [playersResponse, filtersResponse] = await Promise.all([
@@ -60,17 +74,17 @@ export const usePlayerLollipop = (metric: string) => {
           .map((player: any) => ({
             id: player.id_player,
             name: player.player_name,
-            value: player[metric] || 0,
-            position: player.position_player || 'Unknown',
+            value: player[currentMetric] || 0,
+            position: normalizePosition(player.position_player || 'Unknown'),
             age: player.age || 0,
             nationality: player.nationality_1 || 'Unknown',
             team: player.team_name || 'Unknown',
             rating: player.player_rating || 0,
             rank: 0 // Will be set after sorting
           }))
-          .filter(player => player.value > 0) // Only include players with valid values
-          .sort((a, b) => b.value - a.value) // Sort descending by value
-          .map((player, index) => ({ ...player, rank: index + 1 })); // Add rank
+          .filter((player: LollipopData) => player.value > 0) // Only include players with valid values
+          .sort((a: LollipopData, b: LollipopData) => b.value - a.value) // Sort descending by value
+          .map((player: LollipopData, index: number) => ({ ...player, rank: index + 1 })); // Add rank
         
         setData(lollipopData);
       } else {
@@ -90,12 +104,12 @@ export const usePlayerLollipop = (metric: string) => {
     } finally {
       setLoading(false);
     }
-  }, []); // Remove metric dependency to avoid recreation
+  }, []);
 
   // Load data when metric changes
   useEffect(() => {
-    loadData();
-  }, [metric]); // Depend on metric directly
+    loadData(metric);
+  }, [metric, loadData]);
 
   // Filter data function
   const getFilteredData = useCallback((filters: LollipopFilters) => {

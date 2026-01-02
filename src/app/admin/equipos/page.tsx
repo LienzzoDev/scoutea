@@ -46,6 +46,12 @@ export default function EquiposPage() {
     limit: 50
   })
 
+  // Forzar refresh al montar la página para obtener datos frescos
+  useEffect(() => {
+    refresh()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Categorías para mostrar en la tabla
   const categories = useMemo(() => [
     {

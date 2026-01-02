@@ -107,11 +107,14 @@ export const TeamCreateSchema = z.object({
     .max(100, 'Team name too long'),
   competition: z.string()
     .max(100, 'Competition name too long')
-    .optional(),
+    .nullable().optional(),
   country: z.string()
     .max(50, 'Country name too long')
-    .optional(),
-  logo_url: url.optional()
+    .nullable().optional(),
+  team_country: z.string()
+    .max(50, 'Country name too long')
+    .nullable().optional(),
+  logo_url: url.nullable().optional()
 })
 
 export const TeamUpdateSchema = TeamCreateSchema.partial().extend({

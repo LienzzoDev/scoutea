@@ -326,27 +326,39 @@ export class CompetitionService {
       competition_country: string;
       url_trfm: string;
       competition_confederation: string;
-      competition_tier: number;
-      competition_trfm_value: number;
-      competition_trfm_value_norm: number;
-      competition_rating: number;
-      competition_rating_norm: number;
-      competition_elo: number;
+      competition_tier: number | string;
+      competition_trfm_value: number | string;
+      competition_trfm_value_norm: number | string;
+      competition_rating: number | string;
+      competition_rating_norm: number | string;
+      competition_elo: number | string;
       competition_level: string;
       // Legacy
       name: string;
       short_name: string;
       country_id: string;
-      tier: number;
+      tier: number | string;
       confederation: string;
       season_format: string;
     }>
   ) {
+    // Helper to parse number or return null if empty/invalid
+    const parseNumberOrNull = (value: unknown): number | null => {
+      if (value === null || value === undefined || value === '') return null;
+      const parsed = typeof value === 'number' ? value : parseFloat(String(value));
+      return isNaN(parsed) ? null : parsed;
+    };
+
     // Build update data object, only including defined values
     const updateData: Prisma.CompetitionUpdateInput = {};
     if (data.competition_name !== undefined) {
       updateData.competition_name = data.competition_name;
       updateData.name = data.competition_name; // Keep legacy in sync
+    }
+    // Also handle legacy name field from edit forms
+    if (data.name !== undefined && data.competition_name === undefined) {
+      updateData.name = data.name;
+      updateData.competition_name = data.name; // Keep new field in sync
     }
     if (data.correct_competition_name !== undefined) updateData.correct_competition_name = data.correct_competition_name;
     if (data.competition_country !== undefined) updateData.competition_country = data.competition_country;
@@ -355,19 +367,37 @@ export class CompetitionService {
       updateData.competition_confederation = data.competition_confederation;
       updateData.confederation = data.competition_confederation; // Keep legacy in sync
     }
-    if (data.competition_tier !== undefined) {
-      updateData.competition_tier = data.competition_tier;
-      updateData.tier = data.competition_tier; // Keep legacy in sync
+    // Also handle legacy confederation field from edit forms
+    if (data.confederation !== undefined && data.competition_confederation === undefined) {
+      updateData.confederation = data.confederation;
+      updateData.competition_confederation = data.confederation; // Keep new field in sync
     }
-    if (data.competition_trfm_value !== undefined) updateData.competition_trfm_value = data.competition_trfm_value;
-    if (data.competition_trfm_value_norm !== undefined) updateData.competition_trfm_value_norm = data.competition_trfm_value_norm;
-    if (data.competition_rating !== undefined) updateData.competition_rating = data.competition_rating;
-    if (data.competition_rating_norm !== undefined) updateData.competition_rating_norm = data.competition_rating_norm;
-    if (data.competition_elo !== undefined) updateData.competition_elo = data.competition_elo;
-    if (data.competition_level !== undefined) updateData.competition_level = data.competition_level;
-    if (data.short_name !== undefined) updateData.short_name = data.short_name;
-    if (data.country_id !== undefined) updateData.country_id = data.country_id;
-    if (data.season_format !== undefined) updateData.season_format = data.season_format;
+    if (data.competition_tier !== undefined) {
+      const tierValue = parseNumberOrNull(data.competition_tier);
+      updateData.competition_tier = tierValue;
+      updateData.tier = tierValue; // Keep legacy in sync
+    }
+    // Also handle legacy tier field from edit forms
+    if (data.tier !== undefined && data.competition_tier === undefined) {
+      const tierValue = parseNumberOrNull(data.tier);
+      updateData.tier = tierValue;
+      updateData.competition_tier = tierValue; // Keep new field in sync
+    }
+    if (data.competition_trfm_value !== undefined) updateData.competition_trfm_value = parseNumberOrNull(data.competition_trfm_value);
+    if (data.competition_trfm_value_norm !== undefined) updateData.competition_trfm_value_norm = parseNumberOrNull(data.competition_trfm_value_norm);
+    if (data.competition_rating !== undefined) updateData.competition_rating = parseNumberOrNull(data.competition_rating);
+    if (data.competition_rating_norm !== undefined) updateData.competition_rating_norm = parseNumberOrNull(data.competition_rating_norm);
+    if (data.competition_elo !== undefined) updateData.competition_elo = parseNumberOrNull(data.competition_elo);
+    if (data.competition_level !== undefined) updateData.competition_level = data.competition_level || null;
+    if (data.short_name !== undefined) updateData.short_name = data.short_name || null;
+    // Only update country relation if it's a non-empty string to avoid FK constraint violation
+    if (data.country_id !== undefined && data.country_id !== '') {
+      updateData.country = { connect: { id: data.country_id } };
+    } else if (data.country_id === '') {
+      // If explicitly set to empty string, disconnect the relation
+      updateData.country = { disconnect: true };
+    }
+    if (data.season_format !== undefined) updateData.season_format = data.season_format || null;
 
     const competition = await prisma.competition.update({
       where: { id_competition: id },

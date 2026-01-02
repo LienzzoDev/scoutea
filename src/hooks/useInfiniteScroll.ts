@@ -163,9 +163,12 @@ export function useInfiniteScroll<T = any, F = Record<string, any>>({
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
         },
         // Next.js maneja cookies automáticamente en same-origin requests
         credentials: 'same-origin',
+        // Evitar caché del navegador para siempre obtener datos frescos
+        cache: 'no-store',
       })
 
       if (!response.ok) {
@@ -278,7 +281,11 @@ export function useInfiniteScroll<T = any, F = Record<string, any>>({
     setLoading(true)
     hasLoadedInitial.current = false
     loadingRef.current = false
-  }, [])
+    // Disparar recarga inmediatamente después de limpiar el estado
+    setTimeout(() => {
+      loadMore()
+    }, 0)
+  }, [loadMore])
 
   // Cleanup del observer
   useEffect(() => {

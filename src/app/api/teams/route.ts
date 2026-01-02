@@ -5,6 +5,10 @@ import { z } from 'zod'
 import { prisma } from '@/lib/db'
 import { TeamCreateSchema } from '@/lib/validation/api-schemas'
 
+// Forzar renderizado dinámico para evitar caché de Next.js
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export interface TeamFilters {
   team_name?: string
   team_country?: string
@@ -126,7 +130,8 @@ export async function GET(request: NextRequest) {
       total
     })
 
-    return NextResponse.json({
+    // Crear respuesta con headers de no-cache para evitar datos stale
+    const response = NextResponse.json({
       teams: teamsToReturn,
       hasMore,
       nextCursor,
@@ -138,6 +143,13 @@ export async function GET(request: NextRequest) {
         hasNext: hasMore
       }
     })
+
+    // Deshabilitar caché para siempre obtener datos frescos
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
+
+    return response
 
   } catch (error) {
     console.error('❌ Error searching teams:', error)
@@ -169,9 +181,10 @@ export async function POST(request: NextRequest) {
       validatedData = TeamCreateSchema.parse(body);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error('Validation error:', error);
         return NextResponse.json({
           error: 'Datos inválidos',
-          details: error.errors.map((err) => ({
+          details: (error.errors || []).map((err: any) => ({
             field: err.path.join('.'),
             message: err.message
           }))
@@ -184,22 +197,22 @@ export async function POST(request: NextRequest) {
     const team = await prisma.equipo.create({
       data: {
         team_name: validatedData.team_name,
-        correct_team_name: body.correct_team_name?.trim(),
-        team_country: validatedData.country,
-        url_trfm_advisor: body.url_trfm_advisor?.trim(),
-        url_trfm: body.url_trfm?.trim(),
-        owner_club: body.owner_club?.trim(),
-        owner_club_country: body.owner_club_country?.trim(),
-        pre_competition: body.pre_competition?.trim(),
-        competition: validatedData.competition,
-        correct_competition: body.correct_competition?.trim(),
-        competition_country: body.competition_country?.trim(),
+        correct_team_name: body.correct_team_name?.trim() || null,
+        team_country: validatedData.team_country || validatedData.country || null,
+        url_trfm_advisor: body.url_trfm_advisor?.trim() || null,
+        url_trfm: body.url_trfm?.trim() || null,
+        owner_club: body.owner_club?.trim() || null,
+        owner_club_country: body.owner_club_country?.trim() || null,
+        pre_competition: body.pre_competition?.trim() || null,
+        competition: validatedData.competition || null,
+        correct_competition: body.correct_competition?.trim() || null,
+        competition_country: body.competition_country?.trim() || null,
         team_trfm_value: body.team_trfm_value ? parseFloat(body.team_trfm_value) : null,
         team_trfm_value_norm: body.team_trfm_value_norm ? parseFloat(body.team_trfm_value_norm) : null,
         team_rating: body.team_rating ? parseFloat(body.team_rating) : null,
         team_rating_norm: body.team_rating_norm ? parseFloat(body.team_rating_norm) : null,
         team_elo: body.team_elo ? parseFloat(body.team_elo) : null,
-        team_level: body.team_level?.trim(),
+        team_level: body.team_level?.trim() || null,
       }
     })
 

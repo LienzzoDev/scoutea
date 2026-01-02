@@ -129,7 +129,7 @@ export class CorrectionService {
     country?: string | null
     nationality_1?: string | null
     nationality_2?: string | null
-    nationality_3?: string | null
+
     competition?: string | null
     [key: string]: any
   }): Promise<typeof data> {
@@ -176,12 +176,41 @@ export class CorrectionService {
       }
     }
 
-    if (data.nationality_3) {
-      const correctedNationality = await this.applyNationalityCorrection(
-        data.nationality_3
+
+
+    // Apply competition correction
+    if (data.competition) {
+      const correctedCompetition = await this.applyCompetitionCorrection(
+        data.competition
       )
-      if (correctedNationality) {
-        correctedData.nationality_3 = correctedNationality
+      if (correctedCompetition) {
+        correctedData.competition = correctedCompetition
+      }
+    }
+
+    return correctedData
+  }
+
+  /**
+   * Apply all corrections to team data
+   * @param data - Partial team data
+   * @returns Corrected data object
+   */
+  static async applyTeamCorrections(data: {
+    team_name?: string | null
+    competition?: string | null
+    team_country?: string | null
+    [key: string]: any
+  }): Promise<typeof data> {
+    const correctedData = { ...data }
+
+    // Apply team name correction
+    if (data.team_name) {
+      const correctedTeamName = await this.applyTeamNameCorrection(
+        data.team_name
+      )
+      if (correctedTeamName) {
+        correctedData.team_name = correctedTeamName
       }
     }
 

@@ -6,11 +6,6 @@ export async function GET() {
   try {
     // Obtener todas las opciones disponibles para filtros
     const players = await prisma.jugador.findMany({
-      where: {
-        atributos: {
-          isNot: null
-        }
-      },
       select: {
         position_player: true,
         nationality_1: true,
@@ -21,8 +16,63 @@ export async function GET() {
       }
     });
 
-    // Extraer opciones únicas
-    const positions = [...new Set(players.map(p => p.position_player).filter(Boolean))].sort();
+    const POSITION_ORDER = [
+      "Goalkeeper",
+      "Defender",
+      "Sweeper",
+      "Right-Back",
+      "Centre-Back",
+      "Left-Back",
+      "Midfield",
+      "Defensive Midfield",
+      "Right Midfield",
+      "Central Midfield",
+      "Left Midfield",
+      "Attacking Midfield",
+      "Attack",
+      "Second Striker",
+      "Right Winger",
+      "Centre-Forward",
+      "Left Winger"
+    ];
+
+    // Helper para normalizar formato (Title Case)
+    const toTitleCase = (str: string) => {
+      return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+    };
+
+    // Extraer opciones únicas y normalizar
+    const rawPositions = players
+      .map(p => p.position_player)
+      .filter(Boolean)
+      .map(p => {
+        // Normalizar casos específicos como "Centre-back" -> "Centre-Back"
+        const normalized = toTitleCase(p as string);
+        // Casos especiales con guiones
+        return normalized
+          .replace('Centre-back', 'Centre-Back')
+          .replace('Right-back', 'Right-Back')
+          .replace('Left-back', 'Left-Back')
+          .replace('Centre-forward', 'Centre-Forward');
+      });
+
+    const uniquePositions = [...new Set(rawPositions)];
+    
+    // Ordenar según la lista predefinida
+    const positions = uniquePositions.sort((a, b) => {
+      const indexA = POSITION_ORDER.indexOf(a);
+      const indexB = POSITION_ORDER.indexOf(b);
+      
+      // Si ambos están en la lista, ordenar por índice
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+      // Si solo A está en la lista, va antes
+      if (indexA !== -1) return -1;
+      // Si solo B está en la lista, va antes
+      if (indexB !== -1) return 1;
+      // Si ninguno está, alfabético
+      return a.localeCompare(b);
+    });
+
     const nationalities = [...new Set(players.map(p => p.nationality_1).filter(Boolean))].sort();
     const competitions = [...new Set(players.map(p => p.team_country).filter(Boolean))].sort();
     const teams = [...new Set(players.map(p => p.team_name).filter(Boolean))].sort();
@@ -43,9 +93,23 @@ export async function GET() {
 
     // Estadísticas por posición
     const positionStats = positions.map(position => {
-      const positionPlayers = players.filter(p => p.position_player === position);
-      const avgAge = positionPlayers.reduce((sum, p) => sum + (p.age || 0), 0) / positionPlayers.length;
-      const avgRating = positionPlayers.reduce((sum, p) => sum + (p.player_rating || 0), 0) / positionPlayers.length;
+      // Necesitamos normalizar también al filtrar para contar
+      const positionPlayers = players.filter(p => {
+        const rawPos = p.position_player;
+        if (!rawPos) return false;
+        
+        let normalized = toTitleCase(rawPos);
+        normalized = normalized
+          .replace('Centre-back', 'Centre-Back')
+          .replace('Right-back', 'Right-Back')
+          .replace('Left-back', 'Left-Back')
+          .replace('Centre-forward', 'Centre-Forward');
+          
+        return normalized === position;
+      });
+
+      const avgAge = positionPlayers.reduce((sum, p) => sum + (p.age || 0), 0) / (positionPlayers.length || 1);
+      const avgRating = positionPlayers.reduce((sum, p) => sum + (p.player_rating || 0), 0) / (positionPlayers.length || 1);
 
       return {
         position,
@@ -56,11 +120,14 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      positions: positions.map(pos => ({
-        value: pos,
-        label: pos,
-        count: players.filter(p => p.position_player === pos).length
-      })),
+      positions: positions.map(pos => {
+        const stats = positionStats.find(s => s.position === pos);
+        return {
+          value: pos,
+          label: pos,
+          count: stats?.count || 0
+        };
+      }),
       nationalities: nationalities.map(nat => ({
         value: nat,
         label: nat,

@@ -89,7 +89,7 @@ export const usePlayers = () => {
     }
   }, []);
 
-  const getPlayer = async (id: string): Promise<Player | null> => {
+  const getPlayer = useCallback(async (id: string): Promise<Player | null> => {
     setLoading(true);
     setError(null);
     
@@ -108,9 +108,9 @@ export const usePlayers = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const crearJugador = async (data: CrearJugadorData): Promise<Player | null> => {
+  const crearJugador = useCallback(async (data: CrearJugadorData): Promise<Player | null> => {
     setLoading(true);
     setError(null);
     
@@ -135,7 +135,7 @@ export const usePlayers = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   return {
     players,

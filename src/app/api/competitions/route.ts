@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { CompetitionService } from '@/lib/services/competition-service'
 
+// Forzar renderizado dinámico para evitar caché de Next.js
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth()
@@ -51,7 +55,14 @@ export async function GET(request: NextRequest) {
     };
 
     console.log('📤 API: Sending response')
-    return NextResponse.json(response)
+
+    // Crear respuesta con headers de no-cache
+    const jsonResponse = NextResponse.json(response)
+    jsonResponse.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+    jsonResponse.headers.set('Pragma', 'no-cache')
+    jsonResponse.headers.set('Expires', '0')
+
+    return jsonResponse
   } catch (error) {
     console.error('Error getting competitions:', error)
     if (error instanceof Error) {

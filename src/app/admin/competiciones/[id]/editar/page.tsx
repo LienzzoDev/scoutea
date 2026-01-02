@@ -25,12 +25,24 @@ export default function EditarCompeticionPage() {
   const competitionId = params.id as string
 
   const [formData, setFormData] = useState({
+    // Campos principales
     name: '',
+    correct_competition_name: '',
     short_name: '',
+    competition_country: '',
+    url_trfm: '',
+    // Clasificación
     country_id: '',
     tier: 1,
     confederation: '',
-    season_format: ''
+    season_format: '',
+    competition_level: '',
+    // Valores y métricas
+    competition_trfm_value: '',
+    competition_trfm_value_norm: '',
+    competition_rating: '',
+    competition_rating_norm: '',
+    competition_elo: ''
   })
 
   const [loading, setLoading] = useState(false)
@@ -63,19 +75,36 @@ export default function EditarCompeticionPage() {
 
       setLoadingData(true)
       try {
-        const response = await fetch(`/api/competitions/${competitionId}`)
+        const response = await fetch(`/api/competitions/${competitionId}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache',
+          },
+        })
         if (!response.ok) {
           throw new Error('Error al cargar competición')
         }
 
         const data = await response.json()
         setFormData({
-          name: data.name || '',
+          // Campos principales
+          name: data.competition_name || data.name || '',
+          correct_competition_name: data.correct_competition_name || '',
           short_name: data.short_name || '',
+          competition_country: data.competition_country || '',
+          url_trfm: data.url_trfm || '',
+          // Clasificación
           country_id: data.country_id || '',
-          tier: data.tier || 1,
-          confederation: data.confederation || '',
-          season_format: data.season_format || ''
+          tier: data.competition_tier || data.tier || 1,
+          confederation: data.competition_confederation || data.confederation || '',
+          season_format: data.season_format || '',
+          competition_level: data.competition_level || '',
+          // Valores y métricas
+          competition_trfm_value: data.competition_trfm_value?.toString() || '',
+          competition_trfm_value_norm: data.competition_trfm_value_norm?.toString() || '',
+          competition_rating: data.competition_rating?.toString() || '',
+          competition_rating_norm: data.competition_rating_norm?.toString() || '',
+          competition_elo: data.competition_elo?.toString() || ''
         })
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error desconocido')
@@ -96,8 +125,10 @@ export default function EditarCompeticionPage() {
       const response = await fetch(`/api/competitions/${competitionId}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
         },
+        cache: 'no-store',
         body: JSON.stringify(formData)
       })
 
@@ -106,7 +137,8 @@ export default function EditarCompeticionPage() {
         throw new Error(errorData.error || 'Error al actualizar competición')
       }
 
-      router.push('/admin/competiciones')
+      // Usar window.location.href para forzar recarga completa y evitar caché
+      window.location.href = '/admin/competiciones'
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
@@ -156,128 +188,286 @@ export default function EditarCompeticionPage() {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Información Principal */}
           <Card className="bg-[#131921] border-slate-700">
             <CardHeader>
-              <CardTitle className="text-[#D6DDE6]">Información de la Competición</CardTitle>
+              <CardTitle className="text-[#D6DDE6]">Información Principal</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Nombre */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Nombre */}
+                <div>
+                  <Label htmlFor="name" className="text-gray-300 mb-2 block">
+                    Nombre <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => handleChange('name', e.target.value)}
+                    placeholder="Ej: Premier League"
+                    required
+                    className="bg-[#1F2937] border-slate-600 text-white"
+                  />
+                </div>
+
+                {/* Nombre Corregido */}
+                <div>
+                  <Label htmlFor="correct_competition_name" className="text-gray-300 mb-2 block">
+                    Nombre Corregido
+                  </Label>
+                  <Input
+                    id="correct_competition_name"
+                    value={formData.correct_competition_name}
+                    onChange={(e) => handleChange('correct_competition_name', e.target.value)}
+                    placeholder="Ej: English Premier League"
+                    className="bg-[#1F2937] border-slate-600 text-white"
+                  />
+                </div>
+
+                {/* Nombre Corto */}
+                <div>
+                  <Label htmlFor="short_name" className="text-gray-300 mb-2 block">
+                    Nombre Corto
+                  </Label>
+                  <Input
+                    id="short_name"
+                    value={formData.short_name}
+                    onChange={(e) => handleChange('short_name', e.target.value)}
+                    placeholder="Ej: EPL"
+                    className="bg-[#1F2937] border-slate-600 text-white"
+                  />
+                </div>
+
+                {/* País de la Competición */}
+                <div>
+                  <Label htmlFor="competition_country" className="text-gray-300 mb-2 block">
+                    País de la Competición
+                  </Label>
+                  <Input
+                    id="competition_country"
+                    value={formData.competition_country}
+                    onChange={(e) => handleChange('competition_country', e.target.value)}
+                    placeholder="Ej: England"
+                    className="bg-[#1F2937] border-slate-600 text-white"
+                  />
+                </div>
+              </div>
+
+              {/* URL Transfermarkt */}
               <div>
-                <Label htmlFor="name" className="text-gray-300">
-                  Nombre <span className="text-red-500">*</span>
+                <Label htmlFor="url_trfm" className="text-gray-300 mb-2 block">
+                  URL Transfermarkt
                 </Label>
                 <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => handleChange('name', e.target.value)}
-                  placeholder="Ej: Premier League"
-                  required
+                  id="url_trfm"
+                  value={formData.url_trfm}
+                  onChange={(e) => handleChange('url_trfm', e.target.value)}
+                  placeholder="Ej: https://www.transfermarkt.com/..."
                   className="bg-[#1F2937] border-slate-600 text-white"
                 />
               </div>
+            </CardContent>
+          </Card>
 
-              {/* Nombre Corto */}
-              <div>
-                <Label htmlFor="short_name" className="text-gray-300">
-                  Nombre Corto
-                </Label>
-                <Input
-                  id="short_name"
-                  value={formData.short_name}
-                  onChange={(e) => handleChange('short_name', e.target.value)}
-                  placeholder="Ej: EPL"
-                  className="bg-[#1F2937] border-slate-600 text-white"
-                />
+          {/* Clasificación */}
+          <Card className="bg-[#131921] border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-[#D6DDE6]">Clasificación</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* País (relación) */}
+                <div>
+                  <Label htmlFor="country_id" className="text-gray-300 mb-2 block">
+                    País (Relación)
+                  </Label>
+                  <Select
+                    value={formData.country_id}
+                    onValueChange={(value) => handleChange('country_id', value)}
+                  >
+                    <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white">
+                      <SelectValue placeholder="Selecciona un país" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {countries.map((country) => (
+                        <SelectItem key={country.id} value={country.id}>
+                          {country.name} ({country.code})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Tier */}
+                <div>
+                  <Label htmlFor="tier" className="text-gray-300 mb-2 block">
+                    Tier <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    value={formData.tier.toString()}
+                    onValueChange={(value) => handleChange('tier', parseInt(value))}
+                    required
+                  >
+                    <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white">
+                      <SelectValue placeholder="Selecciona el tier" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5].map((tier) => (
+                        <SelectItem key={tier} value={tier.toString()}>
+                          Tier {tier}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Confederación */}
+                <div>
+                  <Label htmlFor="confederation" className="text-gray-300 mb-2 block">
+                    Confederación
+                  </Label>
+                  <Select
+                    value={formData.confederation}
+                    onValueChange={(value) => handleChange('confederation', value)}
+                  >
+                    <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white">
+                      <SelectValue placeholder="Selecciona una confederación" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="UEFA">UEFA</SelectItem>
+                      <SelectItem value="CONMEBOL">CONMEBOL</SelectItem>
+                      <SelectItem value="CONCACAF">CONCACAF</SelectItem>
+                      <SelectItem value="AFC">AFC</SelectItem>
+                      <SelectItem value="CAF">CAF</SelectItem>
+                      <SelectItem value="OFC">OFC</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Formato de Temporada */}
+                <div>
+                  <Label htmlFor="season_format" className="text-gray-300 mb-2 block">
+                    Formato de Temporada
+                  </Label>
+                  <Select
+                    value={formData.season_format}
+                    onValueChange={(value) => handleChange('season_format', value)}
+                  >
+                    <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white">
+                      <SelectValue placeholder="Selecciona el formato" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="League">Liga</SelectItem>
+                      <SelectItem value="Cup">Copa</SelectItem>
+                      <SelectItem value="Playoff">Playoff</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Nivel */}
+                <div>
+                  <Label htmlFor="competition_level" className="text-gray-300 mb-2 block">
+                    Nivel
+                  </Label>
+                  <Input
+                    id="competition_level"
+                    value={formData.competition_level}
+                    onChange={(e) => handleChange('competition_level', e.target.value)}
+                    placeholder="Ej: Elite, Top, Medium"
+                    className="bg-[#1F2937] border-slate-600 text-white"
+                  />
+                </div>
               </div>
+            </CardContent>
+          </Card>
 
-              {/* País */}
-              <div>
-                <Label htmlFor="country_id" className="text-gray-300">
-                  País <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  value={formData.country_id}
-                  onValueChange={(value) => handleChange('country_id', value)}
-                  required
-                >
-                  <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white">
-                    <SelectValue placeholder="Selecciona un país" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {countries.map((country) => (
-                      <SelectItem key={country.id} value={country.id}>
-                        {country.name} ({country.code})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          {/* Valores y Métricas */}
+          <Card className="bg-[#131921] border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-[#D6DDE6]">Valores y Métricas</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Valor Transfermarkt */}
+                <div>
+                  <Label htmlFor="competition_trfm_value" className="text-gray-300 mb-2 block">
+                    Valor Transfermarkt
+                  </Label>
+                  <Input
+                    id="competition_trfm_value"
+                    type="number"
+                    step="0.01"
+                    value={formData.competition_trfm_value}
+                    onChange={(e) => handleChange('competition_trfm_value', e.target.value)}
+                    placeholder="Ej: 1000000000"
+                    className="bg-[#1F2937] border-slate-600 text-white"
+                  />
+                </div>
 
-              {/* Tier */}
-              <div>
-                <Label htmlFor="tier" className="text-gray-300">
-                  Tier <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  value={formData.tier.toString()}
-                  onValueChange={(value) => handleChange('tier', parseInt(value))}
-                  required
-                >
-                  <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white">
-                    <SelectValue placeholder="Selecciona el tier" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5].map((tier) => (
-                      <SelectItem key={tier} value={tier.toString()}>
-                        Tier {tier}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                {/* Valor TM Normalizado */}
+                <div>
+                  <Label htmlFor="competition_trfm_value_norm" className="text-gray-300 mb-2 block">
+                    Valor TM Normalizado
+                  </Label>
+                  <Input
+                    id="competition_trfm_value_norm"
+                    type="number"
+                    step="0.01"
+                    value={formData.competition_trfm_value_norm}
+                    onChange={(e) => handleChange('competition_trfm_value_norm', e.target.value)}
+                    placeholder="Ej: 0.95"
+                    className="bg-[#1F2937] border-slate-600 text-white"
+                  />
+                </div>
 
-              {/* Confederación */}
-              <div>
-                <Label htmlFor="confederation" className="text-gray-300">
-                  Confederación
-                </Label>
-                <Select
-                  value={formData.confederation}
-                  onValueChange={(value) => handleChange('confederation', value)}
-                >
-                  <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white">
-                    <SelectValue placeholder="Selecciona una confederación" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="UEFA">UEFA</SelectItem>
-                    <SelectItem value="CONMEBOL">CONMEBOL</SelectItem>
-                    <SelectItem value="CONCACAF">CONCACAF</SelectItem>
-                    <SelectItem value="AFC">AFC</SelectItem>
-                    <SelectItem value="CAF">CAF</SelectItem>
-                    <SelectItem value="OFC">OFC</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                {/* Rating */}
+                <div>
+                  <Label htmlFor="competition_rating" className="text-gray-300 mb-2 block">
+                    Rating
+                  </Label>
+                  <Input
+                    id="competition_rating"
+                    type="number"
+                    step="0.1"
+                    value={formData.competition_rating}
+                    onChange={(e) => handleChange('competition_rating', e.target.value)}
+                    placeholder="Ej: 85.5"
+                    className="bg-[#1F2937] border-slate-600 text-white"
+                  />
+                </div>
 
-              {/* Formato de Temporada */}
-              <div>
-                <Label htmlFor="season_format" className="text-gray-300">
-                  Formato de Temporada
-                </Label>
-                <Select
-                  value={formData.season_format}
-                  onValueChange={(value) => handleChange('season_format', value)}
-                >
-                  <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white">
-                    <SelectValue placeholder="Selecciona el formato" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="League">Liga</SelectItem>
-                    <SelectItem value="Cup">Copa</SelectItem>
-                    <SelectItem value="Playoff">Playoff</SelectItem>
-                  </SelectContent>
-                </Select>
+                {/* Rating Normalizado */}
+                <div>
+                  <Label htmlFor="competition_rating_norm" className="text-gray-300 mb-2 block">
+                    Rating Normalizado
+                  </Label>
+                  <Input
+                    id="competition_rating_norm"
+                    type="number"
+                    step="0.01"
+                    value={formData.competition_rating_norm}
+                    onChange={(e) => handleChange('competition_rating_norm', e.target.value)}
+                    placeholder="Ej: 0.92"
+                    className="bg-[#1F2937] border-slate-600 text-white"
+                  />
+                </div>
+
+                {/* ELO */}
+                <div>
+                  <Label htmlFor="competition_elo" className="text-gray-300 mb-2 block">
+                    ELO
+                  </Label>
+                  <Input
+                    id="competition_elo"
+                    type="number"
+                    step="1"
+                    value={formData.competition_elo}
+                    onChange={(e) => handleChange('competition_elo', e.target.value)}
+                    placeholder="Ej: 1850"
+                    className="bg-[#1F2937] border-slate-600 text-white"
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>

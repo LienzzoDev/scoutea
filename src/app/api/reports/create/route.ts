@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { prisma } from '@/lib/db'
-import { generateReportId, generatePlayerId } from '@/lib/utils/id-generator'
+import { generateReportId } from '@/lib/utils/id-generator'
 import { ScoutReportCreateSchema } from '@/lib/validation/api-schemas'
 
 export async function POST(request: NextRequest) {
@@ -24,10 +24,10 @@ export async function POST(request: NextRequest) {
       console.log('Validated data:', JSON.stringify(validatedData, null, 2))
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.error('Validation errors:', error.errors)
+        console.error('Validation errors:', error)
         return NextResponse.json({
           error: 'Datos inválidos',
-          details: error.errors.map((err) => ({
+          details: (error.errors || []).map((err: any) => ({
             field: err.path.join('.'),
             message: err.message
           }))
@@ -58,14 +58,11 @@ export async function POST(request: NextRequest) {
 
     // Si no existe, crear el jugador con estado pending (requiere aprobación admin)
     if (!player) {
-      const playerId = await generatePlayerId(); // Generar ID secuencial: PLY-00020
-
       // Preparar datos con conversión de tipos
       const heightValue = validatedData.height ? Number(validatedData.height) : null
 
       player = await prisma.jugador.create({
         data: {
-          id_player: playerId, // ✅ Nuevo ID secuencial
           player_name: validatedData.playerName,
           date_of_birth: new Date(validatedData.dateOfBirth),
           position_player: validatedData.position || null,

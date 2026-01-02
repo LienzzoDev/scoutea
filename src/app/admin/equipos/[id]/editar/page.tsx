@@ -25,22 +25,20 @@ export default function EditarEquipoPage() {
     team_name: '',                    // → team_name (String, requerido)
     correct_team_name: '',            // → correct_team_name (String?)
     team_country: '',                 // → team_country (String?)
-    
+
     // URLs
     url_trfm_advisor: '',             // → url_trfm_advisor (String?)
     url_trfm: '',                     // → url_trfm (String?)
-    
+
     // Propietario
     owner_club: '',                   // → owner_club (String?)
     owner_club_country: '',           // → owner_club_country (String?)
-    
+
     // Competición
     competition: '',                  // → competition (String?)
     correct_competition: '',          // → correct_competition (String?)
     competition_country: '',          // → competition_country (String?)
-    competition_tier: '',             // → competition_tier (String?)
-    competition_confederation: '',    // → competition_confederation (String?)
-    
+
     // Valores y Rating
     team_trfm_value: '',              // → team_trfm_value (Float?)
     team_rating: '',                  // → team_rating (Float?)
@@ -60,22 +58,20 @@ export default function EditarEquipoPage() {
             team_name: teamData.team_name || '',
             correct_team_name: teamData.correct_team_name || '',
             team_country: teamData.team_country || '',
-            
+
             // URLs
             url_trfm_advisor: teamData.url_trfm_advisor || '',
             url_trfm: teamData.url_trfm || '',
-            
+
             // Propietario
             owner_club: teamData.owner_club || '',
             owner_club_country: teamData.owner_club_country || '',
-            
+
             // Competición
             competition: teamData.competition || '',
             correct_competition: teamData.correct_competition || '',
             competition_country: teamData.competition_country || '',
-            competition_tier: teamData.competition_tier || '',
-            competition_confederation: teamData.competition_confederation || '',
-            
+
             // Valores y Rating
             team_trfm_value: teamData.team_trfm_value?.toString() || '',
             team_rating: teamData.team_rating?.toString() || '',
@@ -144,8 +140,6 @@ export default function EditarEquipoPage() {
         competition: formData.competition || null,
         correct_competition: formData.correct_competition || null,
         competition_country: formData.competition_country || null,
-        competition_tier: formData.competition_tier || null,
-        competition_confederation: formData.competition_confederation || null,
         team_trfm_value: formData.team_trfm_value ? parseFloat(formData.team_trfm_value) : null,
         team_rating: formData.team_rating ? parseFloat(formData.team_rating) : null,
         team_elo: formData.team_elo ? parseFloat(formData.team_elo) : null,
@@ -162,12 +156,14 @@ export default function EditarEquipoPage() {
 
       if (response.ok) {
         alert('Equipo actualizado correctamente')
-        _router.push('/admin/equipos')
+        // Forzar recarga completa para que la tabla muestre los datos actualizados
+        window.location.href = '/admin/equipos'
       } else {
-        alert('Error al actualizar el equipo')
+        const errorData = await response.json().catch(() => ({}))
+        alert(`Error al actualizar el equipo: ${errorData.error || 'Error desconocido'}`)
       }
     } catch (_error) {
-      console.error('Error al guardar:', error)
+      console.error('Error al guardar:', _error)
       alert('Error al guardar los cambios')
     }
   }
@@ -355,22 +351,6 @@ export default function EditarEquipoPage() {
                   value={formData.competition_country}
                   onChange={(e) => setFormData(prev => ({ ...prev, competition_country: e.target.value }))}
                   className="bg-[#080F17] border-slate-700 text-white" placeholder="España"/>
-              </div>
-              <div>
-                <Label htmlFor="competition_tier" className="text-slate-300">Tier de Competición</Label>
-                <Input
-                  id="competition_tier"
-                  value={formData.competition_tier}
-                  onChange={(e) => setFormData(prev => ({ ...prev, competition_tier: e.target.value }))}
-                  className="bg-[#080F17] border-slate-700 text-white" placeholder="1"/>
-              </div>
-              <div>
-                <Label htmlFor="competition_confederation" className="text-slate-300">Confederación</Label>
-                <Input
-                  id="competition_confederation"
-                  value={formData.competition_confederation}
-                  onChange={(e) => setFormData(prev => ({ ...prev, competition_confederation: e.target.value }))}
-                  className="bg-[#080F17] border-slate-700 text-white" placeholder="UEFA"/>
               </div>
             </div>
           </div>

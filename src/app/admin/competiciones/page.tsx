@@ -60,6 +60,12 @@ export default function CompeticionesPage() {
     limit: 50
   })
 
+  // Forzar refresh al montar la página para obtener datos frescos
+  useEffect(() => {
+    refresh()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleSearch = () => {
     setDebouncedSearch(searchTerm)
   }
@@ -115,12 +121,17 @@ export default function CompeticionesPage() {
     }
   }
 
-  // Categorías para mostrar en la tabla
+  // Categorías para mostrar en la tabla - todos los campos de la base de datos
   const categories = useMemo(() => [
     {
       key: 'correct_competition_name',
       label: 'Nombre Corregido',
       getValue: (comp: Competition) => comp.correct_competition_name,
+    },
+    {
+      key: 'short_name',
+      label: 'Nombre Corto',
+      getValue: (comp: Competition) => comp.short_name,
     },
     {
       key: 'competition_country',
@@ -149,6 +160,11 @@ export default function CompeticionesPage() {
         if (!value || typeof value !== 'number') return 'N/A';
         return `Tier ${value}`;
       },
+    },
+    {
+      key: 'season_format',
+      label: 'Formato',
+      getValue: (comp: Competition) => comp.season_format,
     },
     {
       key: 'competition_trfm_value',
@@ -199,6 +215,24 @@ export default function CompeticionesPage() {
       key: 'competition_level',
       label: 'Nivel',
       getValue: (comp: Competition) => comp.competition_level,
+    },
+    {
+      key: 'createdAt',
+      label: 'Creado',
+      getValue: (comp: Competition) => comp.createdAt ? new Date(comp.createdAt).toISOString() : null,
+      format: (value: unknown) => {
+        if (!value) return 'N/A';
+        return new Date(value as string).toLocaleDateString('es-ES');
+      },
+    },
+    {
+      key: 'updatedAt',
+      label: 'Actualizado',
+      getValue: (comp: Competition) => comp.updatedAt ? new Date(comp.updatedAt).toISOString() : null,
+      format: (value: unknown) => {
+        if (!value) return 'N/A';
+        return new Date(value as string).toLocaleDateString('es-ES');
+      },
     },
   ], [])
 

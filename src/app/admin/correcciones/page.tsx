@@ -63,6 +63,14 @@ export default function CorreccionesPage() {
 
   // Estado para nuevo registro
   const [showNewForm, setShowNewForm] = useState(false)
+
+  // Estado para mostrar resultados de correcciones
+  const [showResultsModal, setShowResultsModal] = useState(false)
+  const [correctionResults, setCorrectionResults] = useState<{
+    success: boolean
+    players: { total: number; updated: number; errors: number }
+    teams: { total: number; updated: number; errors: number }
+  } | null>(null)
   const [newNationalityData, setNewNationalityData] = useState({ original_name: '', corrected_name: '' })
   const [newTeamData, setNewTeamData] = useState({ original_name: '', corrected_name: '' })
   const [newCompetitionData, setNewCompetitionData] = useState({ original_name: '', corrected_name: '', country: '' })
@@ -274,26 +282,38 @@ export default function CorreccionesPage() {
   // Aplicar todas las correcciones a jugadores existentes
   const handleApplyAllCorrections = async () => {
     if (!confirm('¿Estás seguro de aplicar todas las correcciones a los jugadores existentes? Este proceso puede tardar varios minutos.')) return
-    
+
     try {
       setLoading(true)
       setError(null)
-      
+
       const response = await fetch('/api/admin/corrections/apply-all', {
         method: 'POST'
       })
-      
+
       const data = await response.json()
-      
+
       if (!response.ok) {
         throw new Error(data.__error || 'Error al aplicar correcciones')
       }
-      
-      alert(`✅ Correcciones aplicadas exitosamente!\n\nJugadores procesados: ${data.stats.totalPlayers}\nJugadores actualizados: ${data.stats.updatedPlayers}\nErrores: ${data.stats.errors}`)
+
+      // Mostrar resultados en modal
+      setCorrectionResults({
+        success: true,
+        players: data.stats.players,
+        teams: data.stats.teams
+      })
+      setShowResultsModal(true)
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error desconocido'
       setError(errorMsg)
-      alert(`❌ Error: ${errorMsg}`)
+      // Mostrar error en modal también
+      setCorrectionResults({
+        success: false,
+        players: { total: 0, updated: 0, errors: 0 },
+        teams: { total: 0, updated: 0, errors: 0 }
+      })
+      setShowResultsModal(true)
     } finally {
       setLoading(false)
     }
@@ -510,6 +530,92 @@ export default function CorreccionesPage() {
                   Cancelar
                 </Button>
               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para mostrar resultados de correcciones */}
+      <Dialog open={showResultsModal} onOpenChange={setShowResultsModal}>
+        <DialogContent className='bg-[#1a2332] border-slate-700 text-white max-w-md'>
+          <DialogHeader>
+            <DialogTitle className='text-xl font-bold text-white flex items-center gap-2'>
+              {correctionResults?.success ? (
+                <>
+                  <Check className='h-6 w-6 text-green-500' />
+                  Correcciones Aplicadas
+                </>
+              ) : (
+                <>
+                  <X className='h-6 w-6 text-red-500' />
+                  Error al Aplicar Correcciones
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription className='text-slate-400'>
+              {correctionResults?.success
+                ? 'Las correcciones se han aplicado exitosamente a la base de datos.'
+                : 'Ocurrió un error durante el proceso de corrección.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {correctionResults?.success && (
+            <div className='space-y-4 mt-4'>
+              {/* Estadísticas de Jugadores */}
+              <div className='bg-[#131921] rounded-lg p-4 border border-slate-700'>
+                <h4 className='text-sm font-semibold text-slate-300 mb-3'>Jugadores</h4>
+                <div className='grid grid-cols-3 gap-4'>
+                  <div className='text-center'>
+                    <p className='text-2xl font-bold text-white'>{correctionResults.players.total}</p>
+                    <p className='text-xs text-slate-400'>Procesados</p>
+                  </div>
+                  <div className='text-center'>
+                    <p className='text-2xl font-bold text-green-500'>{correctionResults.players.updated}</p>
+                    <p className='text-xs text-slate-400'>Actualizados</p>
+                  </div>
+                  <div className='text-center'>
+                    <p className='text-2xl font-bold text-red-500'>{correctionResults.players.errors}</p>
+                    <p className='text-xs text-slate-400'>Errores</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Estadísticas de Equipos */}
+              <div className='bg-[#131921] rounded-lg p-4 border border-slate-700'>
+                <h4 className='text-sm font-semibold text-slate-300 mb-3'>Equipos</h4>
+                <div className='grid grid-cols-3 gap-4'>
+                  <div className='text-center'>
+                    <p className='text-2xl font-bold text-white'>{correctionResults.teams.total}</p>
+                    <p className='text-xs text-slate-400'>Procesados</p>
+                  </div>
+                  <div className='text-center'>
+                    <p className='text-2xl font-bold text-green-500'>{correctionResults.teams.updated}</p>
+                    <p className='text-xs text-slate-400'>Actualizados</p>
+                  </div>
+                  <div className='text-center'>
+                    <p className='text-2xl font-bold text-red-500'>{correctionResults.teams.errors}</p>
+                    <p className='text-xs text-slate-400'>Errores</p>
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                onClick={() => setShowResultsModal(false)}
+                className='w-full bg-[#FF5733] hover:bg-[#E64A2B]'
+              >
+                Cerrar
+              </Button>
+            </div>
+          )}
+
+          {!correctionResults?.success && (
+            <div className='mt-4'>
+              <Button
+                onClick={() => setShowResultsModal(false)}
+                className='w-full bg-slate-700 hover:bg-slate-600'
+              >
+                Cerrar
+              </Button>
             </div>
           )}
         </DialogContent>

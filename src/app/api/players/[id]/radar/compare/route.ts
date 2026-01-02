@@ -114,25 +114,34 @@ export async function GET(
     console.log('✅ Radar Compare API: Found comparison group:', comparisonPlayers.length, 'players');
 
     // Calculate averages for each category based on comparison group
+    const comparisonPlayerIds = comparisonPlayers.map(p => p.id_player);
+    const type = (searchParams.get('type') as any) || 'attacking';
+    
+    // Get real averages from service
+    const averageMetrics = await RadarCalculationService.calculateAverageMetrics(comparisonPlayerIds, type);
+
     const comparisonData = baseRadarData.metrics.map(metric => {
-      // Player value should NEVER change - it's always the same regardless of filters
+      // Player value should NEVER change
       const playerValue = metric.value;
       
-      // Generate comparison average based on the filtered group
-      // This simulates the average of the comparison group for this metric
-      const baseAverage = 50; // Base average for the metric
-      const groupVariation = (Math.random() - 0.5) * 30; // ±15 variation based on group
-      const comparisonAverage = Math.max(10, Math.min(90, baseAverage + groupVariation));
+      // Get real average for this category
+      const avgMetric = averageMetrics.find(m => m.category === metric.category);
+      // Fallback to 50 only if no data found (shouldn't happen if array not empty)
+      const comparisonAverage = avgMetric ? Math.round(avgMetric.value * 10) / 10 : 50;
       
-      // Calculate percentile based on how player compares to the group average
+      // Calculate percentile based on relative difference from group average
+      // Using standard distribution approximation:
+      // If player = average -> 50th percentile
+      // If player = average * 1.3 (+30%) -> 80th percentile approx
+      // If player = average * 0.7 (-30%) -> 20th percentile approx
       const percentile = playerValue > comparisonAverage 
-        ? Math.min(95, 50 + ((playerValue - comparisonAverage) / comparisonAverage) * 30)
-        : Math.max(5, 50 - ((comparisonAverage - playerValue) / comparisonAverage) * 30);
+        ? Math.min(95, 50 + ((playerValue - comparisonAverage) / (comparisonAverage || 1)) * 30)
+        : Math.max(5, 50 - ((comparisonAverage - playerValue) / (comparisonAverage || 1)) * 30);
 
       return {
         category: metric.category,
-        playerValue: playerValue, // This should NEVER change
-        comparisonAverage: Math.round(comparisonAverage * 10) / 10,
+        playerValue: playerValue,
+        comparisonAverage: comparisonAverage,
         percentile: Math.round(percentile),
         rank: Math.ceil((100 - percentile) / 100 * comparisonPlayers.length),
         totalPlayers: comparisonPlayers.length,

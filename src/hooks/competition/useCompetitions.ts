@@ -13,7 +13,12 @@ export const useCompetitions = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/competitions${query ? `?search=${query}` : ''}`);
+      const response = await fetch(`/api/competitions${query ? `?search=${query}` : ''}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
       if (!response.ok) {
         const errorText = await response.text();
         console.error('API Error:', response.status, errorText);
@@ -37,7 +42,12 @@ export const useCompetitions = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/competitions/${id}`);
+      const response = await fetch(`/api/competitions/${id}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
       if (!response.ok) throw new Error('Failed to fetch competition');
       return await response.json();
     } catch (err) {

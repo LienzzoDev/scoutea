@@ -2,13 +2,10 @@ import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/db'
-import { 
-  handleAPIError, 
-  extractErrorContext, 
-  requireAuth, 
-  requireParam,
-  ErrorResponses 
-} from '@/lib/errors'
+
+// Forzar renderizado dinámico para evitar caché de Next.js
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 // GET /api/teams/[id] - Obtener un equipo por ID
 export async function GET(
@@ -16,28 +13,50 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const context = extractErrorContext(request)
     const { userId } = await auth()
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'No autorizado. Debes iniciar sesión.' },
+        { status: 401 }
+      )
+    }
 
     // Get params
     const { id } = await params
 
-    // Validaciones usando nuevas funciones
-    requireAuth(userId, context)
-    requireParam(id, 'id', context)
+    if (!id) {
+      return NextResponse.json(
+        { error: 'ID de equipo requerido' },
+        { status: 400 }
+      )
+    }
 
     const team = await prisma.equipo.findUnique({
       where: { id_team: id }
     })
 
     if (!team) {
-      throw ErrorResponses.TEAM_NOT_FOUND
+      return NextResponse.json(
+        { error: 'Equipo no encontrado' },
+        { status: 404 }
+      )
     }
 
-    return NextResponse.json(team)
+    // Crear respuesta con headers de no-cache
+    const response = NextResponse.json(team)
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
 
-  } catch (_error) {
-    return handleAPIError(error, extractErrorContext(request))
+    return response
+
+  } catch (error) {
+    console.error('Error getting team:', error)
+    return NextResponse.json(
+      { error: 'Error interno del servidor' },
+      { status: 500 }
+    )
   }
 }
 
@@ -47,38 +66,61 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const context = extractErrorContext(request)
     const { userId } = await auth()
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'No autorizado. Debes iniciar sesión.' },
+        { status: 401 }
+      )
+    }
 
     // Get params
     const { id } = await params
 
-    // Validaciones usando nuevas funciones
-    requireAuth(userId, context)
-    requireParam(id, 'id', context)
+    if (!id) {
+      return NextResponse.json(
+        { error: 'ID de equipo requerido' },
+        { status: 400 }
+      )
+    }
 
     const body = await request.json()
+
+    // Helper function to handle string fields - trim if string, pass null explicitly
+    const trimOrNull = (value: unknown): string | null => {
+      if (value === null || value === undefined || value === '') return null
+      if (typeof value === 'string') return value.trim()
+      return null
+    }
+
+    // Helper function to handle number fields
+    const parseNumberOrNull = (value: unknown): number | null => {
+      if (value === null || value === undefined || value === '') return null
+      const parsed = typeof value === 'number' ? value : parseFloat(String(value))
+      return isNaN(parsed) ? null : parsed
+    }
 
     const team = await prisma.equipo.update({
       where: { id_team: id },
       data: {
-        team_name: body.team_name?.trim(),
-        correct_team_name: body.correct_team_name?.trim(),
-        team_country: body.team_country?.trim(),
-        url_trfm_advisor: body.url_trfm_advisor?.trim(),
-        url_trfm: body.url_trfm?.trim(),
-        owner_club: body.owner_club?.trim(),
-        owner_club_country: body.owner_club_country?.trim(),
-        pre_competition: body.pre_competition?.trim(),
-        competition: body.competition?.trim(),
-        correct_competition: body.correct_competition?.trim(),
-        competition_country: body.competition_country?.trim(),
-        team_trfm_value: body.team_trfm_value ? parseFloat(body.team_trfm_value) : undefined,
-        team_trfm_value_norm: body.team_trfm_value_norm ? parseFloat(body.team_trfm_value_norm) : undefined,
-        team_rating: body.team_rating ? parseFloat(body.team_rating) : undefined,
-        team_rating_norm: body.team_rating_norm ? parseFloat(body.team_rating_norm) : undefined,
-        team_elo: body.team_elo ? parseFloat(body.team_elo) : undefined,
-        team_level: body.team_level?.trim(),
+        team_name: body.team_name?.trim() || undefined, // team_name is required, don't set to null
+        correct_team_name: trimOrNull(body.correct_team_name),
+        team_country: trimOrNull(body.team_country),
+        url_trfm_advisor: trimOrNull(body.url_trfm_advisor),
+        url_trfm: trimOrNull(body.url_trfm),
+        owner_club: trimOrNull(body.owner_club),
+        owner_club_country: trimOrNull(body.owner_club_country),
+        pre_competition: trimOrNull(body.pre_competition),
+        competition: trimOrNull(body.competition),
+        correct_competition: trimOrNull(body.correct_competition),
+        competition_country: trimOrNull(body.competition_country),
+        team_trfm_value: parseNumberOrNull(body.team_trfm_value),
+        team_trfm_value_norm: parseNumberOrNull(body.team_trfm_value_norm),
+        team_rating: parseNumberOrNull(body.team_rating),
+        team_rating_norm: parseNumberOrNull(body.team_rating_norm),
+        team_elo: parseNumberOrNull(body.team_elo),
+        team_level: trimOrNull(body.team_level),
         updatedAt: new Date()
       }
     })
@@ -86,8 +128,12 @@ export async function PUT(
     console.log('✅ Equipo actualizado exitosamente:', team.team_name)
     return NextResponse.json(team)
 
-  } catch (_error) {
-    return handleAPIError(error, extractErrorContext(request))
+  } catch (error) {
+    console.error('Error updating team:', error)
+    return NextResponse.json(
+      { error: 'Error interno del servidor' },
+      { status: 500 }
+    )
   }
 }
 
@@ -97,23 +143,51 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const context = extractErrorContext(request)
     const { userId } = await auth()
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'No autorizado. Debes iniciar sesión.' },
+        { status: 401 }
+      )
+    }
 
     // Get params
     const { id } = await params
 
-    // Validaciones
-    requireAuth(userId, context)
-    requireParam(id, 'id', context)
+    if (!id) {
+      return NextResponse.json(
+        { error: 'ID de equipo requerido' },
+        { status: 400 }
+      )
+    }
 
     const body = await request.json()
 
+    // Fields that should be parsed as numbers
+    const numberFields = new Set([
+      'team_trfm_value', 'team_trfm_value_norm',
+      'team_rating', 'team_rating_norm',
+      'team_elo', 'founded_year'
+    ])
+
     // Construir objeto de actualización dinámicamente
-    const updateData: any = {}
+    const updateData: Record<string, unknown> = {}
     Object.entries(body).forEach(([key, value]) => {
       if (value !== undefined) {
-        updateData[key] = value
+        // Handle null values explicitly
+        if (value === null || value === '') {
+          updateData[key] = null
+        } else if (numberFields.has(key)) {
+          // Parse numbers
+          const parsed = typeof value === 'number' ? value : parseFloat(String(value))
+          updateData[key] = isNaN(parsed) ? null : parsed
+        } else if (typeof value === 'string') {
+          // Trim strings
+          updateData[key] = value.trim()
+        } else {
+          updateData[key] = value
+        }
       }
     })
 
@@ -128,8 +202,12 @@ export async function PATCH(
     console.log('✅ Campo de equipo actualizado:', id, Object.keys(body))
     return NextResponse.json(team)
 
-  } catch (_error) {
-    return handleAPIError(error, extractErrorContext(request))
+  } catch (error) {
+    console.error('Error patching team:', error)
+    return NextResponse.json(
+      { error: 'Error interno del servidor' },
+      { status: 500 }
+    )
   }
 }
 
@@ -139,15 +217,24 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const context = extractErrorContext(request)
     const { userId } = await auth()
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'No autorizado. Debes iniciar sesión.' },
+        { status: 401 }
+      )
+    }
 
     // Get params
     const { id } = await params
 
-    // Validaciones usando nuevas funciones
-    requireAuth(userId, context)
-    requireParam(id, 'id', context)
+    if (!id) {
+      return NextResponse.json(
+        { error: 'ID de equipo requerido' },
+        { status: 400 }
+      )
+    }
 
     await prisma.equipo.delete({
       where: { id_team: id }
@@ -156,7 +243,11 @@ export async function DELETE(
     console.log('✅ Equipo eliminado exitosamente:', id)
     return NextResponse.json({ success: true })
 
-  } catch (_error) {
-    return handleAPIError(error, extractErrorContext(request))
+  } catch (error) {
+    console.error('Error deleting team:', error)
+    return NextResponse.json(
+      { error: 'Error interno del servidor' },
+      { status: 500 }
+    )
   }
 }

@@ -367,10 +367,18 @@ export class PlayerService {
       // Clean up the data object to only include defined fields
       const updateData: any = {}
 
+      // Fields that should be converted to Date objects for Prisma
+      const dateFields = ['date_of_birth', 'contract_end', 'correct_date_of_birth', 'correct_contract_end', 'previous_trfm_value_date', 'trfm_value_last_updated']
+
       // Add all defined fields from data to updateData
       Object.entries(data).forEach(([key, value]) => {
         if (value !== undefined) {
-          updateData[key] = value
+          // Convert date strings to Date objects for Prisma
+          if (dateFields.includes(key) && value !== null && typeof value === 'string') {
+            updateData[key] = new Date(value)
+          } else {
+            updateData[key] = value
+          }
         }
       })
 

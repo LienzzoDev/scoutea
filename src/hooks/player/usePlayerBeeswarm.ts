@@ -29,6 +29,20 @@ export interface BeeswarmFilters {
   ageMax?: string;
 }
 
+// Helper to normalize format (Title Case) - matching API logic
+const toTitleCase = (str: string) => {
+  return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+};
+
+const normalizePosition = (pos: string) => {
+  const normalized = toTitleCase(pos);
+  return normalized
+    .replace('Centre-back', 'Centre-Back')
+    .replace('Right-back', 'Right-Back')
+    .replace('Left-back', 'Left-Back')
+    .replace('Centre-forward', 'Centre-Forward');
+};
+
 export const usePlayerBeeswarm = (metric: string) => {
   const [data, setData] = useState<BeeswarmData[]>([]);
   const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null);
@@ -58,7 +72,7 @@ export const usePlayerBeeswarm = (metric: string) => {
           id: player.id_player,
           name: player.player_name,
           value: player[currentMetric] || 0,
-          position: player.position_player || 'Unknown',
+          position: normalizePosition(player.position_player || 'Unknown'),
           age: player.age || 0,
           nationality: player.nationality_1 || 'Unknown',
           team: player.team_name || 'Unknown',
@@ -96,13 +110,9 @@ export const usePlayerBeeswarm = (metric: string) => {
     console.log('🔍 Applying filters:', filters);
 
     const filtered = data.filter(player => {
-      // Position filter - case insensitive and partial match
-      if (filters.position) {
-        const positionMatch = player.position?.toLowerCase().includes(filters.position.toLowerCase());
-        if (!positionMatch) {
-          console.log('❌ Position filter rejected:', player.name, player.position, 'vs', filters.position);
-          return false;
-        }
+      // Position filter - strict match with normalized values
+      if (filters.position && player.position !== filters.position) {
+        return false;
       }
 
       // Nationality filter - case insensitive and partial match

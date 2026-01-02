@@ -239,4 +239,56 @@ export class RadarCalculationService {
     if (index === -1) return 100
     return Math.round((index / sorted.length) * 100)
   }
+
+  static async calculateAverageMetrics(playerIds: number[], type: 'general' | 'attacking' | 'defending' | 'goalkeeping'): Promise<RadarMetric[]> {
+    if (playerIds.length === 0) return [];
+
+    // Get stats for all players in the group
+    // Optimization: fetch only the necessary columns? 
+    // Prisma types for findMany with raw 'where' are safe.
+    // However, calculateMetricsFromStats expects the full stats object (typed as 'any' currently).
+    const playersStats = await prisma.playerStats3m.findMany({
+      where: {
+        id_player: {
+          in: playerIds
+        }
+      }
+    });
+
+    if (playersStats.length === 0) return [];
+
+    // Calculate metrics for each player separately
+    const allMetrics: RadarMetric[][] = playersStats.map(stats => 
+      this.calculateMetricsFromStats(stats, type)
+    );
+
+    if (allMetrics.length === 0) return [];
+
+    // Group by category and calculate average
+    // We assume all metric arrays have the same categories in the same order
+    // But to be safe, we group by category name
+    const categoryMap = new Map<string, { sum: number, count: number, name: string }>();
+
+    for (const playerMetrics of allMetrics) {
+      for (const metric of playerMetrics) {
+        const current = categoryMap.get(metric.category) || { sum: 0, count: 0, name: metric.name };
+        current.sum += metric.value;
+        current.count += 1;
+        categoryMap.set(metric.category, current);
+      }
+    }
+
+    const averageMetrics: RadarMetric[] = [];
+    categoryMap.forEach((data, category) => {
+      const avg = data.count > 0 ? data.sum / data.count : 0;
+      averageMetrics.push({
+        name: data.name,
+        category: category,
+        value: avg,
+        percentile: avg // Using value as percentile for averages as they are normalized
+      });
+    });
+
+    return averageMetrics;
+  }
 }

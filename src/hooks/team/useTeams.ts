@@ -38,7 +38,10 @@ export const useTeams = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/teams${query ? `?search=${query}` : ''}`);
+      const response = await fetch(`/api/teams${query ? `?search=${query}` : ''}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
       if (!response.ok) {
         const errorText = await response.text();
         console.error('API Error:', response.status, errorText);
@@ -63,7 +66,10 @@ export const useTeams = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/teams/${id}`);
+      const response = await fetch(`/api/teams/${id}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
       if (!response.ok) throw new Error('Failed to fetch team');
       return await response.json();
     } catch (err) {
