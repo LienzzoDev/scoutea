@@ -1,10 +1,11 @@
 "use client"
 
-import { ArrowUpDown, ArrowUp, ArrowDown, Eye, Trash2, ExternalLink, X } from "lucide-react"
+import { ArrowUpDown, ArrowUp, ArrowDown, Eye, Trash2, X, Check, XCircle, Loader2, ExternalLink } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState, useMemo } from "react"
 
 import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 
 // Función para convertir URLs de YouTube a formato embebido
 function getYouTubeEmbedUrl(url: string): string | null {
@@ -31,6 +32,89 @@ function getYouTubeEmbedUrl(url: string): string | null {
     console.error('Error parsing video URL:', error)
     return url
   }
+}
+
+// Lista de dominios de redes sociales conocidas
+const SOCIAL_MEDIA_DOMAINS = [
+  'twitter.com',
+  'x.com',
+  'facebook.com',
+  'fb.com',
+  'instagram.com',
+  'tiktok.com',
+  'linkedin.com',
+  'threads.net',
+  'snapchat.com',
+  'pinterest.com',
+  'reddit.com',
+  'tumblr.com',
+  'whatsapp.com',
+  'telegram.org',
+  't.me',
+  'discord.com',
+  'discord.gg',
+  'twitch.tv',
+  'youtube.com',
+  'youtu.be',
+  'vimeo.com',
+  'dailymotion.com'
+]
+
+// Función para detectar si una URL es de red social
+function isSocialMediaUrl(url: string): boolean {
+  if (!url) return false
+  try {
+    const urlObj = new URL(url)
+    const hostname = urlObj.hostname.toLowerCase().replace('www.', '')
+    return SOCIAL_MEDIA_DOMAINS.some(domain => hostname === domain || hostname.endsWith('.' + domain))
+  } catch {
+    return false
+  }
+}
+
+// Tipos de reporte calculados
+type ReportContentType = 'scoutea' | 'video' | 'redes_sociales' | 'web'
+
+// Función para determinar el tipo de reporte basado en su contenido
+function getReportContentType(report: {
+  form_url_video?: string | null
+  form_url_report?: string | null
+  form_text_report?: string | null
+}): ReportContentType {
+  // 1. Si tiene video → tipo "video"
+  if (report.form_url_video && report.form_url_video.trim() !== '') {
+    return 'video'
+  }
+
+  // 2. Si tiene link a red social → tipo "redes_sociales"
+  if (report.form_url_report && report.form_url_report.trim() !== '') {
+    if (isSocialMediaUrl(report.form_url_report)) {
+      return 'redes_sociales'
+    }
+    // 3. Si tiene cualquier otro link → tipo "web"
+    return 'web'
+  }
+
+  // 4. Si no tiene video ni link (solo texto o imagen) → tipo "scoutea"
+  return 'scoutea'
+}
+
+// Función para obtener el badge de tipo de contenido
+function getContentTypeBadge(type: ReportContentType) {
+  const badges: Record<ReportContentType, { label: string; color: string; icon: string }> = {
+    'scoutea': { label: 'Scoutea', color: 'bg-emerald-900/50 text-emerald-300 border-emerald-700', icon: '📋' },
+    'video': { label: 'Video', color: 'bg-red-900/50 text-red-300 border-red-700', icon: '🎥' },
+    'redes_sociales': { label: 'Redes Sociales', color: 'bg-blue-900/50 text-blue-300 border-blue-700', icon: '📱' },
+    'web': { label: 'Web', color: 'bg-purple-900/50 text-purple-300 border-purple-700', icon: '🌐' }
+  }
+
+  const badge = badges[type]
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${badge.color}`}>
+      <span>{badge.icon}</span>
+      {badge.label}
+    </span>
+  )
 }
 
 interface Report {
@@ -101,9 +185,91 @@ export default function AdminReportTable({ reports, onDelete }: AdminReportTable
   const [selectedReport, setSelectedReport] = useState<Report | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
 
+  // Estados para aprobar/rechazar
+  const [showRejectModal, setShowRejectModal] = useState(false)
+  const [rejectReason, setRejectReason] = useState('')
+  const [isApproving, setIsApproving] = useState(false)
+  const [isRejecting, setIsRejecting] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
+
   const handleViewReport = (report: Report) => {
     setSelectedReport(report)
     setShowDetailModal(true)
+    setActionError(null)
+  }
+
+  const handleApprove = async () => {
+    if (!selectedReport) return
+
+    setIsApproving(true)
+    setActionError(null)
+
+    try {
+      const response = await fetch(`/api/admin/reports/${selectedReport.id_report}/approve`, {
+        method: 'POST'
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Error al aprobar el reporte')
+      }
+
+      // Actualizar el estado local del reporte
+      setSelectedReport({
+        ...selectedReport,
+        approval_status: 'approved'
+      })
+
+      // Refrescar la página para ver los cambios
+      router.refresh()
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Error desconocido')
+    } finally {
+      setIsApproving(false)
+    }
+  }
+
+  const handleReject = async () => {
+    if (!selectedReport) return
+
+    setIsRejecting(true)
+    setActionError(null)
+
+    try {
+      const response = await fetch(`/api/admin/reports/${selectedReport.id_report}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: rejectReason || undefined })
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Error al rechazar el reporte')
+      }
+
+      // Actualizar el estado local del reporte
+      setSelectedReport({
+        ...selectedReport,
+        approval_status: 'rejected'
+      })
+
+      // Cerrar modal de rechazo y limpiar
+      setShowRejectModal(false)
+      setRejectReason('')
+
+      // Refrescar la página para ver los cambios
+      router.refresh()
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Error desconocido')
+    } finally {
+      setIsRejecting(false)
+    }
+  }
+
+  const openRejectModal = () => {
+    setShowRejectModal(true)
+    setRejectReason('')
+    setActionError(null)
   }
 
   const handleSort = (field: SortField) => {
@@ -169,36 +335,19 @@ export default function AdminReportTable({ reports, onDelete }: AdminReportTable
     })
   }
 
-  const getStatusBadge = (status: string | null, type: 'status' | 'validation' | 'approval' = 'status') => {
+  const getStatusBadge = (status: string | null, _type: 'status' | 'validation' | 'approval' = 'status') => {
     if (!status) return <span className="text-slate-500 text-xs">N/A</span>
 
-    let statusColors: Record<string, string> = {}
-
-    if (type === 'approval') {
-      statusColors = {
-        'pending': 'bg-yellow-900/50 text-yellow-300 border-yellow-700',
-        'approved': 'bg-green-900/50 text-green-300 border-green-700',
-        'rejected': 'bg-red-900/50 text-red-300 border-red-700',
-      }
-    } else if (type === 'validation') {
-      statusColors = {
-        'validated': 'bg-green-900/50 text-green-300 border-green-700',
-        'pending': 'bg-yellow-900/50 text-yellow-300 border-yellow-700',
-        'invalid': 'bg-red-900/50 text-red-300 border-red-700',
-      }
-    } else {
-      statusColors = {
-        'pending': 'bg-yellow-900/50 text-yellow-300 border-yellow-700',
-        'approved': 'bg-green-900/50 text-green-300 border-green-700',
-        'rejected': 'bg-red-900/50 text-red-300 border-red-700',
-        'draft': 'bg-slate-700/50 text-slate-300 border-slate-600',
-      }
+    const statusConfig: Record<string, { color: string; label: string }> = {
+      'pending': { color: 'bg-yellow-900/50 text-yellow-300 border-yellow-700', label: 'Pendiente' },
+      'approved': { color: 'bg-green-900/50 text-green-300 border-green-700', label: 'Aprobado' },
+      'rejected': { color: 'bg-red-900/50 text-red-300 border-red-700', label: 'Rechazado' },
     }
 
-    const colorClass = statusColors[status.toLowerCase()] || 'bg-slate-700/50 text-slate-300 border-slate-600'
+    const config = statusConfig[status.toLowerCase()] || { color: 'bg-slate-700/50 text-slate-300 border-slate-600', label: status }
     return (
-      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${colorClass}`}>
-        {status}
+      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${config.color}`}>
+        {config.label}
       </span>
     )
   }
@@ -299,35 +448,11 @@ export default function AdminReportTable({ reports, onDelete }: AdminReportTable
               {/* Estado */}
               <th
                 className="p-3 text-left cursor-pointer hover:bg-slate-700/50 transition-colors"
-                onClick={() => handleSort('report_status')}
-              >
-                <div className="flex items-center gap-1 whitespace-nowrap">
-                  <span className={`font-semibold text-xs ${sortField === 'report_status' ? 'text-[#FF5733]' : 'text-slate-300'}`}>
-                    Estado
-                  </span>
-                  {renderSortIcon('report_status')}
-                </div>
-              </th>
-              {/* Validación */}
-              <th
-                className="p-3 text-left cursor-pointer hover:bg-slate-700/50 transition-colors"
-                onClick={() => handleSort('report_validation')}
-              >
-                <div className="flex items-center gap-1 whitespace-nowrap">
-                  <span className={`font-semibold text-xs ${sortField === 'report_validation' ? 'text-[#FF5733]' : 'text-slate-300'}`}>
-                    Validación
-                  </span>
-                  {renderSortIcon('report_validation')}
-                </div>
-              </th>
-              {/* Aprobación */}
-              <th
-                className="p-3 text-left cursor-pointer hover:bg-slate-700/50 transition-colors"
                 onClick={() => handleSort('approval_status')}
               >
                 <div className="flex items-center gap-1 whitespace-nowrap">
                   <span className={`font-semibold text-xs ${sortField === 'approval_status' ? 'text-[#FF5733]' : 'text-slate-300'}`}>
-                    Aprobación
+                    Estado
                   </span>
                   {renderSortIcon('approval_status')}
                 </div>
@@ -492,21 +617,11 @@ export default function AdminReportTable({ reports, onDelete }: AdminReportTable
                 </td>
                 {/* Estado */}
                 <td className="p-3">
-                  {getStatusBadge(report.report_status, 'status')}
-                </td>
-                {/* Validación */}
-                <td className="p-3">
-                  {getStatusBadge(report.report_validation, 'validation')}
-                </td>
-                {/* Aprobación */}
-                <td className="p-3">
                   {getStatusBadge(report.approval_status, 'approval')}
                 </td>
                 {/* Tipo */}
                 <td className="p-3">
-                  <span className="text-xs text-white whitespace-nowrap">
-                    {report.report_type || 'N/A'}
-                  </span>
+                  {getContentTypeBadge(getReportContentType(report))}
                 </td>
                 {/* Formato */}
                 <td className="p-3">
@@ -618,16 +733,21 @@ export default function AdminReportTable({ reports, onDelete }: AdminReportTable
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 flex-wrap">
                 {/* Type Badge */}
-                <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  selectedReport.form_url_video ? 'bg-red-100 text-red-700' :
-                  selectedReport.form_text_report ? 'bg-blue-100 text-blue-700' :
-                  selectedReport.form_url_report ? 'bg-green-100 text-green-700' :
-                  'bg-gray-100 text-gray-700'
-                }`}>
-                  {selectedReport.form_url_video ? '🎥 Video Reporte' :
-                   selectedReport.form_text_report ? '📝 Scouteo (escrito)' :
-                   selectedReport.form_url_report ? '🔗 Redes sociales' : '📋 Reporte'}
-                </div>
+                {(() => {
+                  const contentType = getReportContentType(selectedReport)
+                  const badgeConfig: Record<ReportContentType, { label: string; bgColor: string; textColor: string; icon: string }> = {
+                    'scoutea': { label: 'Scoutea', bgColor: 'bg-emerald-100', textColor: 'text-emerald-700', icon: '📋' },
+                    'video': { label: 'Video', bgColor: 'bg-red-100', textColor: 'text-red-700', icon: '🎥' },
+                    'redes_sociales': { label: 'Redes Sociales', bgColor: 'bg-blue-100', textColor: 'text-blue-700', icon: '📱' },
+                    'web': { label: 'Web', bgColor: 'bg-purple-100', textColor: 'text-purple-700', icon: '🌐' }
+                  }
+                  const config = badgeConfig[contentType]
+                  return (
+                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${config.bgColor} ${config.textColor}`}>
+                      {config.icon} {config.label}
+                    </div>
+                  )
+                })()}
                 {/* Approval Status Badge */}
                 {selectedReport.approval_status === 'pending' && (
                   <div className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-300">
@@ -815,26 +935,119 @@ export default function AdminReportTable({ reports, onDelete }: AdminReportTable
               </div>
             )}
 
+            {/* Error message */}
+            {actionError && (
+              <div className="bg-red-50 border border-red-200 p-3 rounded-lg mb-4">
+                <p className="text-sm text-red-700">{actionError}</p>
+              </div>
+            )}
+
             {/* Actions */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-              {selectedReport.id_player && (
+            <div className="flex flex-col sm:flex-row justify-between gap-3 pt-4 border-t border-gray-200">
+              {/* Botones de aprobar/rechazar si el reporte está pendiente */}
+              {selectedReport.approval_status === 'pending' && (
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleApprove}
+                    disabled={isApproving || isRejecting}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    {isApproving ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Check className="h-4 w-4 mr-2" />
+                    )}
+                    Aprobar
+                  </Button>
+                  <Button
+                    onClick={openRejectModal}
+                    disabled={isApproving || isRejecting}
+                    variant="outline"
+                    className="border-red-300 text-red-600 hover:bg-red-50"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Rechazar
+                  </Button>
+                </div>
+              )}
+
+              {/* Estado ya procesado */}
+              {selectedReport.approval_status !== 'pending' && (
+                <div className="flex items-center">
+                  <span className={`text-sm font-medium ${
+                    selectedReport.approval_status === 'approved' ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {selectedReport.approval_status === 'approved' ? '✓ Reporte Aprobado' : '✗ Reporte Rechazado'}
+                  </span>
+                </div>
+              )}
+
+              <div className="flex gap-2">
                 <Button
+                  onClick={() => setShowDetailModal(false)}
                   variant="outline"
                   className="border-gray-300 text-gray-700 hover:bg-gray-100"
-                  onClick={() => {
-                    setShowDetailModal(false)
-                    router.push(`/member/player/${selectedReport.id_player}`)
-                  }}
                 >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Ver Jugador
+                  Cerrar
                 </Button>
-              )}
-              <Button
-                onClick={() => setShowDetailModal(false)}
-                className="bg-[#8B0000] hover:bg-[#660000] text-white"
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de rechazo */}
+      {showRejectModal && selectedReport && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-[#2e3138]">Rechazar Reporte</h3>
+              <button
+                onClick={() => setShowRejectModal(false)}
+                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
               >
-                Cerrar
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-600 mb-4">
+              Opcionalmente, puedes incluir un mensaje para el scout explicando el motivo del rechazo.
+              Este mensaje será visible en sus notificaciones.
+            </p>
+
+            <Textarea
+              placeholder="Escribe el motivo del rechazo (opcional)..."
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              className="mb-4 min-h-[100px]"
+              maxLength={1000}
+            />
+
+            {actionError && (
+              <div className="bg-red-50 border border-red-200 p-3 rounded-lg mb-4">
+                <p className="text-sm text-red-700">{actionError}</p>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowRejectModal(false)}
+                disabled={isRejecting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleReject}
+                disabled={isRejecting}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                {isRejecting ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <XCircle className="h-4 w-4 mr-2" />
+                )}
+                Confirmar Rechazo
               </Button>
             </div>
           </div>

@@ -57,6 +57,32 @@ export interface ReportStats {
   reportsByMonth: { month: string; count: number }[]
 }
 
+// Lista de dominios de redes sociales conocidas para filtrado
+const SOCIAL_MEDIA_DOMAINS = [
+  'twitter.com',
+  'x.com',
+  'facebook.com',
+  'fb.com',
+  'instagram.com',
+  'tiktok.com',
+  'linkedin.com',
+  'threads.net',
+  'snapchat.com',
+  'pinterest.com',
+  'reddit.com',
+  'tumblr.com',
+  'whatsapp.com',
+  'telegram.org',
+  't.me',
+  'discord.com',
+  'discord.gg',
+  'twitch.tv',
+  'youtube.com',
+  'youtu.be',
+  'vimeo.com',
+  'dailymotion.com'
+]
+
 export interface SearchReportsOptions {
   page?: number
   limit?: number
@@ -65,8 +91,10 @@ export interface SearchReportsOptions {
   filters?: {
     report_status?: string
     report_validation?: string
+    approval_status?: string
     report_author?: string
     report_type?: string
+    content_type?: 'scoutea' | 'video' | 'redes_sociales' | 'web'
     id_player?: string
     player_name?: string
     team_name?: string
@@ -127,12 +155,52 @@ export class ReportService {
     if (filters.report_validation) {
       where.report_validation = filters.report_validation
     }
+    if (filters.approval_status) {
+      where.approval_status = filters.approval_status
+    }
     if (filters.report_author) {
       where.report_author = filters.report_author
     }
     if (filters.report_type) {
       where.report_type = filters.report_type
     }
+
+    // Content type filter (calculated based on content)
+    if (filters.content_type) {
+      switch (filters.content_type) {
+        case 'video':
+          // Has video URL
+          where.form_url_video = { not: null }
+          where.NOT = { form_url_video: '' }
+          break
+        case 'redes_sociales':
+          // Has URL that is a social media domain, but no video
+          where.OR = SOCIAL_MEDIA_DOMAINS.map(domain => ({
+            form_url_report: { contains: domain },
+            form_url_video: { equals: null }
+          }))
+          break
+        case 'web':
+          // Has URL but not social media and no video
+          where.form_url_report = { not: null }
+          where.NOT = [
+            { form_url_report: '' },
+            { form_url_video: { not: null } },
+            ...SOCIAL_MEDIA_DOMAINS.map(domain => ({
+              form_url_report: { contains: domain }
+            }))
+          ]
+          break
+        case 'scoutea':
+          // No video, no URL (only text/image)
+          where.AND = [
+            { OR: [{ form_url_video: null }, { form_url_video: '' }] },
+            { OR: [{ form_url_report: null }, { form_url_report: '' }] }
+          ]
+          break
+      }
+    }
+
     if (filters.id_player) {
       where.id_player = parseInt(filters.id_player)
     }

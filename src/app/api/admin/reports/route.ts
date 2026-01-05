@@ -25,32 +25,30 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    
-    // Parámetros de búsqueda
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '50')
+
+    // Parámetros de búsqueda - soportar cursor o page
+    const cursor = searchParams.get('cursor')
+    const limit = parseInt(searchParams.get('limit') || '20')
     const sortBy = searchParams.get('sortBy') || 'createdAt'
     const sortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc'
 
+    // Calcular página basada en cursor (cursor es el offset)
+    const page = cursor ? Math.floor(parseInt(cursor) / limit) + 1 : 1
+
     // Filtros
     const filters: any = {}
-    
+
     // Filtros de estado y tipo
-    if (searchParams.get('report_status')) filters.report_status = searchParams.get('report_status')
-    if (searchParams.get('report_validation')) filters.report_validation = searchParams.get('report_validation')
+    // El filtro 'report_status' ahora usa 'approval_status' (pendiente/aprobado/rechazado)
+    if (searchParams.get('report_status')) filters.approval_status = searchParams.get('report_status')
+    if (searchParams.get('approval_status')) filters.approval_status = searchParams.get('approval_status')
     if (searchParams.get('report_author')) filters.report_author = searchParams.get('report_author')
-    if (searchParams.get('report_type')) filters.report_type = searchParams.get('report_type')
-    
+    if (searchParams.get('report_type')) filters.content_type = searchParams.get('report_type')
+
     // Filtros de jugador/equipo
     if (searchParams.get('player_name')) filters.player_name = searchParams.get('player_name')
     if (searchParams.get('team_name')) filters.team_name = searchParams.get('team_name')
     if (searchParams.get('nationality_1')) filters.nationality_1 = searchParams.get('nationality_1')
-    
-    // Filtro de scout
-    if (searchParams.get('scout_name')) {
-      // Nota: ReportService necesita actualización para filtrar por nombre de scout si no lo soporta nativamente
-      // Pero por ahora pasamos lo que tenemos
-    }
 
     // Permitir ver reportes huérfanos en el panel de admin
     filters.includeOrphans = true
@@ -66,7 +64,18 @@ export async function GET(request: NextRequest) {
     // Usar el servicio existente que ya soporta paginación
     const result = await ReportService.searchReports(options)
 
-    return NextResponse.json(result)
+    // Calcular el siguiente cursor (offset)
+    const currentOffset = (page - 1) * limit
+    const nextOffset = currentOffset + result.reports.length
+    const hasMore = nextOffset < result.total
+
+    // Devolver en formato compatible con useInfiniteScroll
+    return NextResponse.json({
+      data: result.reports,
+      total: result.total,
+      hasMore,
+      nextCursor: hasMore ? String(nextOffset) : null
+    })
   } catch (error) {
     console.error('Error getting admin reports:', error)
     return NextResponse.json(

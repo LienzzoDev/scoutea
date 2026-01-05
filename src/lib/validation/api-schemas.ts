@@ -244,12 +244,12 @@ export const ScoutReportForExistingSchema = z.object({
 // Admin Report For Scout Schema (admin creates report on behalf of scout)
 export const AdminReportForScoutSchema = z.object({
   scoutId: nonEmptyString,
-  playerId: nonEmptyString,
+  playerId: z.union([z.string(), z.number()]).transform(val => String(val)),
   potential: z.number().int().min(1).max(10),
-  urlReport: url.nullable().optional(),
-  urlVideo: url.nullable().optional(),
+  urlReport: z.string().nullable().optional().transform(val => (!val || val === '') ? null : val),
+  urlVideo: z.string().nullable().optional().transform(val => (!val || val === '') ? null : val),
   reportText: z.string().max(10000).nullable().optional(),
-  imageUrl: url.nullable().optional()
+  imageUrl: z.string().nullable().optional().transform(val => (!val || val === '') ? null : val)
 })
 
 // Scout Player Add Schema (without report - requires admin approval)

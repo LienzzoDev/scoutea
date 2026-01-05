@@ -5,6 +5,7 @@ import { Search, ChevronDown, User, Shield, Users, BarChart3, Briefcase, Folder 
 import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 
+import ScoutNotifications from '@/components/scout/ScoutNotifications'
 import { Button } from "@/components/ui/button"
 import { TesterBadge } from '@/components/ui/tester-badge'
 import { getUserRole, isTester } from '@/lib/auth/user-role'
@@ -79,10 +80,13 @@ export default function ScoutNavbar() {
 
         {/* User Actions */}
         <div className="flex items-center gap-4">
-          
+
+          {/* Notificaciones */}
+          <ScoutNotifications />
+
           {/* Badge de Tester */}
           <TesterBadge />
-          
+
           {/* Dropdown para cambiar entre áreas - Visible para admin y tester */}
           {(isAdmin || isUserTester) && (
             <div className="relative" ref={areaDropdownRef}>

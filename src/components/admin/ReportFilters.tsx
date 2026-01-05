@@ -19,9 +19,8 @@ interface ReportFiltersProps {
 
 export interface ReportFiltersState {
   search: string // player name
-  status: string
-  validation: string
-  type: string
+  status: string // approval_status: pending/approved/rejected
+  type: string   // content type: scoutea/video/redes_sociales/web
 }
 
 export default function ReportFilters({ 
@@ -32,7 +31,6 @@ export default function ReportFilters({
   const [filters, setFilters] = useState<ReportFiltersState>({
     search: initialFilters?.search || '',
     status: initialFilters?.status || 'all',
-    validation: initialFilters?.validation || 'all',
     type: initialFilters?.type || 'all'
   })
 
@@ -52,10 +50,6 @@ export default function ReportFilters({
     setFilters(prev => ({ ...prev, status: value }))
   }
 
-  const handleValidationChange = (value: string) => {
-    setFilters(prev => ({ ...prev, validation: value }))
-  }
-
   const handleTypeChange = (value: string) => {
     setFilters(prev => ({ ...prev, type: value }))
   }
@@ -64,7 +58,6 @@ export default function ReportFilters({
     setFilters({
       search: '',
       status: 'all',
-      validation: 'all',
       type: 'all'
     })
   }
@@ -92,21 +85,6 @@ export default function ReportFilters({
               </SelectTrigger>
               <SelectContent className="bg-[#1a2332] border-slate-700 text-white">
                 <SelectItem value="all">Todos los estados</SelectItem>
-                <SelectItem value="draft">Borrador</SelectItem>
-                <SelectItem value="published">Publicado</SelectItem>
-                <SelectItem value="archived">Archivado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Validation Filter */}
-          <div className="min-w-[180px]">
-            <Select value={filters.validation} onValueChange={handleValidationChange}>
-              <SelectTrigger className="bg-[#131921] border-slate-700 text-white">
-                <SelectValue placeholder="Validación" />
-              </SelectTrigger>
-              <SelectContent className="bg-[#1a2332] border-slate-700 text-white">
-                <SelectItem value="all">Todas</SelectItem>
                 <SelectItem value="pending">Pendiente</SelectItem>
                 <SelectItem value="approved">Aprobado</SelectItem>
                 <SelectItem value="rejected">Rechazado</SelectItem>
@@ -122,16 +100,16 @@ export default function ReportFilters({
               </SelectTrigger>
               <SelectContent className="bg-[#1a2332] border-slate-700 text-white">
                 <SelectItem value="all">Todos los tipos</SelectItem>
-                <SelectItem value="match">Partido</SelectItem>
-                <SelectItem value="training">Entrenamiento</SelectItem>
-                <SelectItem value="video">Video</SelectItem>
-                <SelectItem value="live">En vivo</SelectItem>
+                <SelectItem value="scoutea">📋 Scoutea</SelectItem>
+                <SelectItem value="video">🎥 Video</SelectItem>
+                <SelectItem value="redes_sociales">📱 Redes Sociales</SelectItem>
+                <SelectItem value="web">🌐 Web</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Clear Filters */}
-          {(filters.search || filters.status !== 'all' || filters.validation !== 'all' || filters.type !== 'all') && (
+          {(filters.search || filters.status !== 'all' || filters.type !== 'all') && (
             <Button 
               variant="ghost" 
               onClick={clearFilters}

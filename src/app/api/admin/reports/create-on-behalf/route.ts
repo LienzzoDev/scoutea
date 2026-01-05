@@ -1,24 +1,19 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 
-import { getUserRole } from '@/lib/auth/user-role'
 import { prisma } from '@/lib/db'
 import { AdminReportForScoutSchema } from '@/lib/validation/api-schemas'
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth()
+    const { userId, sessionClaims } = await auth()
 
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    // Verificar que el usuario es admin
-    const user = await prisma.usuario.findUnique({
-      where: { clerkId: userId }
-    })
-
-    const userRole = getUserRole(user as any)
+    // Verificar que el usuario es admin usando sessionClaims de Clerk
+    const userRole = (sessionClaims?.public_metadata as { role?: string })?.role
     if (userRole !== 'admin') {
       return NextResponse.json({ error: 'Acceso denegado. Solo administradores pueden crear reportes en nombre de scouts.' }, { status: 403 })
     }
@@ -38,6 +33,12 @@ export async function POST(request: NextRequest) {
 
     const validatedData = validation.data;
 
+    // Convertir playerId a número (Prisma espera Int)
+    const playerIdInt = parseInt(validatedData.playerId, 10)
+    if (isNaN(playerIdInt)) {
+      return NextResponse.json({ error: 'ID de jugador inválido' }, { status: 400 })
+    }
+
     // Verificar que el scout existe
     const scout = await prisma.scout.findUnique({
       where: { id_scout: validatedData.scoutId },
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     // Verificar que el jugador existe
     const player = await prisma.jugador.findUnique({
-      where: { id_player: validatedData.playerId }
+      where: { id_player: playerIdInt }
     })
 
     if (!player) {
