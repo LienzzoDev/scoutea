@@ -1,12 +1,13 @@
 'use client'
 
-import { Filter, Video, FileText, Share2, Plus, X, Search, Trash2, ExternalLink, Edit } from 'lucide-react'
+import { Filter, Video, FileText, Share2, Plus, X, Search, Trash2, ExternalLink, Edit, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useMemo } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 
 // Función para convertir URLs de YouTube a formato embebido
@@ -115,6 +116,13 @@ export default function ScoutReportsSection({
   const [selectedPlayerData, setSelectedPlayerData] = useState<any>(null)
   const [loadingPlayerData, setLoadingPlayerData] = useState(false)
 
+  // Estado para modal de solicitud de edición/eliminación
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false)
+  const [requestType, setRequestType] = useState<'edit' | 'delete'>('edit')
+  const [requestReason, setRequestReason] = useState('')
+  const [selectedReportForRequest, setSelectedReportForRequest] = useState<Report | null>(null)
+  const [isSubmittingRequest, setIsSubmittingRequest] = useState(false)
+
   // Función para abrir el modal de video
   const openVideoModal = (report: Report) => {
     setSelectedVideoReport(report)
@@ -187,6 +195,80 @@ export default function ScoutReportsSection({
   const closePlayerModal = () => {
     setIsPlayerModalOpen(false)
     setSelectedPlayerData(null)
+  }
+
+  // Función para abrir el modal de solicitud
+  const openRequestModal = (report: Report, type: 'edit' | 'delete') => {
+    setSelectedReportForRequest(report)
+    setRequestType(type)
+    setRequestReason('')
+    setIsRequestModalOpen(true)
+  }
+
+  // Función para cerrar el modal de solicitud
+  const closeRequestModal = () => {
+    setIsRequestModalOpen(false)
+    setSelectedReportForRequest(null)
+    setRequestReason('')
+  }
+
+  // Función para enviar solicitud de edición/eliminación
+  const handleSubmitRequest = async () => {
+    if (!selectedReportForRequest || !requestReason.trim()) {
+      toast({
+        title: "Error",
+        description: "Por favor, proporciona una razón para la solicitud",
+        variant: "destructive"
+      })
+      return
+    }
+
+    if (requestReason.trim().length < 10) {
+      toast({
+        title: "Error",
+        description: "La razón debe tener al menos 10 caracteres",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setIsSubmittingRequest(true)
+
+    try {
+      const response = await fetch('/api/scout/report-requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          reportId: selectedReportForRequest.id,
+          requestType: requestType,
+          reason: requestReason.trim()
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Error al enviar la solicitud')
+      }
+
+      toast({
+        title: "Solicitud enviada",
+        description: `Tu solicitud de ${requestType === 'edit' ? 'edición' : 'eliminación'} ha sido enviada al administrador`
+      })
+
+      closeRequestModal()
+    } catch (error) {
+      console.error('Error submitting request:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al enviar la solicitud",
+        variant: "destructive"
+      })
+    } finally {
+      setIsSubmittingRequest(false)
+    }
   }
 
   // Función para eliminar reporte
@@ -629,33 +711,37 @@ export default function ScoutReportsSection({
         <div className="columns-1 md:columns-2 gap-6 space-y-6">
           {filteredReports.map((report) => (
             <div key={report.id} className="bg-white rounded-xl border border-[#e7e7e7] p-4 break-inside-avoid relative">
-              {/* Action Buttons */}
-              {/* Action Buttons - Removed as per request */}
-              {/* {!readOnly && (
+              {/* Action Buttons - Request Edit/Delete */}
+              {!readOnly && (
                 <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
-                  <Link href={`/scout/reports/${report.id}/edit`}>
+                  {/* If approval_status is 'pending', show direct edit link */}
+                  {report.approvalStatus === 'pending' ? (
+                    <Link
+                      href={`/scout/reports/${report.id}/edit`}
+                      className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
+                      title="Editar reporte (aprobado)"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Link>
+                  ) : (
                     <button
+                      onClick={() => openRequestModal(report, 'edit')}
                       className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Editar reporte"
+                      title="Solicitar edición"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
-                  </Link>
+                  )}
 
                   <button
-                    onClick={() => handleDeleteReport(report.id, report.playerName)}
-                    disabled={deletingReportId === report.id}
-                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Eliminar reporte"
+                    onClick={() => openRequestModal(report, 'delete')}
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Solicitar eliminación"
                   >
-                    {deletingReportId === report.id ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
-                    ) : (
-                      <Trash2 className="w-4 h-4" />
-                    )}
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
-              )} */}
+              )}
 
               {/* Header */}
               <div className={`flex items-center justify-between mb-3 ${!readOnly ? 'pr-16' : ''}`}>
@@ -681,10 +767,10 @@ export default function ScoutReportsSection({
                      report.type === 'written' ? '📝' :
                      report.type === 'social' ? '🔗' : '📋'}
                   </div>
-                  {/* Pending Status Badge */}
+                  {/* Pending Status Badge - Show when report is ready to edit */}
                   {report.approvalStatus === 'pending' && (
-                    <div className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-300">
-                      ⏳ Pendiente
+                    <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-300">
+                      ✅ Listo para editar
                     </div>
                   )}
                 </div>
@@ -1053,6 +1139,103 @@ export default function ScoutReportsSection({
                 <p className="text-[#6d6d6d]">No se pudieron cargar los datos del jugador</p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Request Edit/Delete Modal */}
+      {isRequestModalOpen && selectedReportForRequest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
+          <div className="relative bg-white rounded-xl p-6 max-w-lg w-full mx-4">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between mb-6 border-b pb-4">
+              <div>
+                <h3 className="text-xl font-bold text-[#000000]">
+                  {requestType === 'edit' ? 'Solicitar Edición' : 'Solicitar Eliminación'}
+                </h3>
+                <p className="text-sm text-[#6d6d6d] mt-1">
+                  Reporte de {selectedReportForRequest.playerName}
+                </p>
+              </div>
+              <button
+                onClick={closeRequestModal}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-[#6d6d6d]" />
+              </button>
+            </div>
+
+            {/* Request Type Info */}
+            <div className={`p-4 rounded-lg mb-4 ${
+              requestType === 'edit'
+                ? 'bg-blue-50 border border-blue-200'
+                : 'bg-red-50 border border-red-200'
+            }`}>
+              <div className="flex items-center gap-2">
+                {requestType === 'edit' ? (
+                  <>
+                    <Edit className="w-5 h-5 text-blue-600" />
+                    <span className="font-medium text-blue-700">Solicitud de Edición</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-5 h-5 text-red-600" />
+                    <span className="font-medium text-red-700">Solicitud de Eliminación</span>
+                  </>
+                )}
+              </div>
+              <p className="text-sm mt-2 text-gray-600">
+                {requestType === 'edit'
+                  ? 'Tu solicitud será revisada por un administrador. Si es aprobada, podrás editar el reporte.'
+                  : 'Tu solicitud será revisada por un administrador. Si es aprobada, el reporte será eliminado permanentemente.'}
+              </p>
+            </div>
+
+            {/* Reason Textarea */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Razón de la solicitud <span className="text-red-500">*</span>
+              </label>
+              <Textarea
+                placeholder={requestType === 'edit'
+                  ? 'Explica qué cambios deseas realizar y por qué...'
+                  : 'Explica por qué deseas eliminar este reporte...'}
+                value={requestReason}
+                onChange={(e) => setRequestReason(e.target.value)}
+                className="min-h-[120px] resize-none"
+                disabled={isSubmittingRequest}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Mínimo 10 caracteres ({requestReason.length}/10)
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={closeRequestModal}
+                disabled={isSubmittingRequest}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSubmitRequest}
+                disabled={isSubmittingRequest || requestReason.trim().length < 10}
+                className={requestType === 'edit'
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : 'bg-red-600 hover:bg-red-700 text-white'}
+              >
+                {isSubmittingRequest ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  `Enviar solicitud de ${requestType === 'edit' ? 'edición' : 'eliminación'}`
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       )}

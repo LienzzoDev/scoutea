@@ -221,19 +221,19 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Approvals */}
+        {/* Solicitudes */}
         <Card className="bg-[#131921] border-slate-700">
           <CardContent className="p-6 flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold mb-1 text-[#D6DDE6]">Aprobaciones</h2>
-              <p className="text-sm text-gray-400">Ver reportes pendientes</p>
+              <h2 className="text-lg font-semibold mb-1 text-[#D6DDE6]">Solicitudes</h2>
+              <p className="text-sm text-gray-400">Edición y eliminación de reportes</p>
             </div>
             <Button
               onClick={() => setShowApprovalsDialog(true)}
               className="bg-[#FF5733] hover:bg-[#E64A2B] text-white"
             >
               <CheckCircle2 className="h-4 w-4 mr-2" />
-              Ver Pendientes
+              Ver Solicitudes
             </Button>
           </CardContent>
         </Card>
@@ -291,7 +291,7 @@ export default function DashboardPage() {
       <Dialog open={showApprovalsDialog} onOpenChange={setShowApprovalsDialog}>
         <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto bg-[#080F17] border-slate-700">
           <DialogHeader>
-            <DialogTitle className="text-[#D6DDE6]">Reportes Pendientes</DialogTitle>
+            <DialogTitle className="text-[#D6DDE6]">Solicitudes de Edición/Eliminación</DialogTitle>
           </DialogHeader>
           <ApprovalDashboard />
         </DialogContent>

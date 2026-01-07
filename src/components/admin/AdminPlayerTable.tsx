@@ -24,6 +24,7 @@ const IMPORTANT_DUPLICATE_FIELDS = new Set([
 interface AdminPlayerTableProps {
   players: Player[];
   hiddenColumns: string[];
+  onPlayerUpdate?: (id: string | number, updates: Partial<Player>) => void;
 }
 
 type SortField = keyof Player | null;
@@ -287,7 +288,7 @@ const COLUMN_DEFINITIONS = [
   { key: 'video', label: 'Video', width: '100px' },
 ] as const;
 
-const AdminPlayerTable = memo(function AdminPlayerTable({ players, hiddenColumns }: AdminPlayerTableProps) {
+const AdminPlayerTable = memo(function AdminPlayerTable({ players, hiddenColumns, onPlayerUpdate }: AdminPlayerTableProps) {
   const router = useRouter();
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
@@ -371,8 +372,13 @@ const AdminPlayerTable = memo(function AdminPlayerTable({ players, hiddenColumns
         throw new Error('Error al actualizar el campo');
       }
 
-      // Recargar la página para mostrar los cambios
-      router.refresh();
+      // Actualizar el estado local inmediatamente
+      if (onPlayerUpdate) {
+        onPlayerUpdate(playerId, { [fieldName]: value } as Partial<Player>);
+      } else {
+        // Fallback: recargar la página si no hay callback
+        router.refresh();
+      }
 
       return true;
     } catch (error) {
@@ -677,17 +683,22 @@ const arePropsEqual = (
     return false
   }
 
-  // Comparar si los jugadores son los mismos (por IDs)
+  // Comparar si los jugadores son los mismos (por IDs y contenido)
   if (prevProps.players.length !== nextProps.players.length) {
     return false
   }
 
-  // Si la longitud es la misma, verificar si son los mismos jugadores
-  // (esto evita re-renders cuando se actualiza un jugador individual)
-  const prevIds = prevProps.players.map(p => p.id_player).join(',')
-  const nextIds = nextProps.players.map(p => p.id_player).join(',')
+  // Comparar players por referencia para detectar cambios en el array
+  if (prevProps.players !== nextProps.players) {
+    return false
+  }
 
-  return prevIds === nextIds
+  // Comparar onPlayerUpdate por referencia
+  if (prevProps.onPlayerUpdate !== nextProps.onPlayerUpdate) {
+    return false
+  }
+
+  return true
 }
 
 export default memo(AdminPlayerTable, arePropsEqual)

@@ -369,6 +369,7 @@ model Reporte {
   scout                       Scout?    @relation(fields: [scout_id], references: [id_scout])
   player                      Jugador?  @relation(fields: [id_player], references: [id_player])
   notifications               ScoutNotification[]
+  reportRequests              ReportRequest[]
 
   // ===== ÍNDICES OPTIMIZADOS =====
   @@index([report_status])
@@ -517,6 +518,7 @@ model Scout {
   scoutLists                         ScoutList[]
   reportes                           Reporte[]
   notifications                      ScoutNotification[]
+  reportRequests                     ReportRequest[]
 
   // NUEVA RELACIÓN NORMALIZADA
   nationalityCountry                 Country?    @relation("ScoutNationality", fields: [nationality_id], references: [id])
@@ -2089,4 +2091,41 @@ model ScoutNotification {
   @@index([type])
   @@index([createdAt(sort: Desc)])
   @@map("scout_notifications")
+}
+
+// Solicitudes de edición/eliminación de reportes por parte de scouts
+model ReportRequest {
+  id           String   @id @default(cuid())
+
+  // Scout solicitante
+  scout_id     String
+  scout        Scout    @relation(fields: [scout_id], references: [id_scout], onDelete: Cascade)
+
+  // Reporte asociado
+  report_id    String
+  report       Reporte  @relation(fields: [report_id], references: [id_report], onDelete: Cascade)
+
+  // Tipo de solicitud: "edit" o "delete"
+  request_type String   // "edit", "delete"
+
+  // Razón proporcionada por el scout
+  reason       String   @db.Text
+
+  // Estado de la solicitud: pending, approved, rejected
+  status       String   @default("pending")
+
+  // Respuesta del admin (opcional)
+  admin_response String? @db.Text
+
+  // Timestamps
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  resolved_at  DateTime?
+
+  @@index([scout_id])
+  @@index([report_id])
+  @@index([status])
+  @@index([request_type])
+  @@index([createdAt(sort: Desc)])
+  @@map("report_requests")
 }

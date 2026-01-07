@@ -43,6 +43,7 @@ interface UseInfinitePlayersScrollReturn {
   loadMore: () => void
   refresh: () => void
   observerTarget: (node: HTMLDivElement | null) => void
+  updatePlayer: (id: string | number, updates: Partial<Player>) => void
 }
 
 export function useInfinitePlayersScroll({
@@ -72,7 +73,8 @@ export function useInfinitePlayersScroll({
     totalCount,
     loadMore,
     refresh,
-    observerTarget
+    observerTarget,
+    updateItem
   } = useInfiniteScroll<Player, UseInfinitePlayersScrollParams>({
     apiEndpoint: '/api/admin/players',
     getItemId: (player) => String(player.id_player), // Convertir número a string para el hook
@@ -98,6 +100,11 @@ export function useInfinitePlayersScroll({
     rootMargin: '100px' // Empezar a cargar 100px antes de llegar al final
   })
 
+  // Wrapper para updateItem que acepta number o string
+  const updatePlayer = (id: string | number, updates: Partial<Player>) => {
+    updateItem(String(id), updates)
+  }
+
   return {
     players,
     loading,
@@ -106,6 +113,7 @@ export function useInfinitePlayersScroll({
     totalCount,
     loadMore,
     refresh,
-    observerTarget
+    observerTarget,
+    updatePlayer
   }
 }

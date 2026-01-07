@@ -67,6 +67,8 @@ export interface UseInfiniteScrollReturn<T> {
   refresh: () => void
   /** Función para cargar más items manualmente */
   loadMore: () => void
+  /** Función para actualizar un item en el estado local */
+  updateItem: (id: string, updates: Partial<T>) => void
 }
 
 /**
@@ -287,6 +289,15 @@ export function useInfiniteScroll<T = any, F = Record<string, any>>({
     }, 0)
   }, [loadMore])
 
+  /**
+   * Función para actualizar un item en el estado local
+   */
+  const updateItem = useCallback((id: string, updates: Partial<T>) => {
+    setItems((prev: T[]) => prev.map((item: T) =>
+      getItemId(item) === id ? { ...item, ...updates } : item
+    ))
+  }, [getItemId])
+
   // Cleanup del observer
   useEffect(() => {
     return () => {
@@ -304,7 +315,8 @@ export function useInfiniteScroll<T = any, F = Record<string, any>>({
     totalCount,
     observerTarget,
     refresh,
-    loadMore
+    loadMore,
+    updateItem
   }
 }
 

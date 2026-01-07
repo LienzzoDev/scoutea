@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { PlayerService } from '@/lib/services/player-service'
 import {
   PlayerSearchSchema,
-  PlayerCreateSchema
+  AdminPlayerCreateSchema
 } from '@/lib/validation/player-schema'
 import { checkRateLimit, RateLimitConfigs } from '@/lib/validation/rate-limiter'
 import { sanitizeRequest } from '@/lib/validation/request-sanitizer'
@@ -465,7 +465,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Player | 
     // 🛡️ ENHANCED REQUEST SANITIZATION AND VALIDATION FOR POST
     const sanitizationResult = await sanitizeRequest(
       request,
-      PlayerCreateSchema,
+      AdminPlayerCreateSchema,
       {
         requestId,
         userId

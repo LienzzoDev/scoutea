@@ -469,16 +469,33 @@ export class PlayerService {
     }
   }
 
-  static async createPlayer(data: Omit<Player, 'id' | 'id_player' | 'createdAt' | 'updatedAt'>): Promise<Player> {
+  static async createPlayer(data: Partial<Omit<Player, 'id' | 'id_player' | 'createdAt' | 'updatedAt'>> & { player_name: string }): Promise<Player> {
     try {
+      // Convert date strings to Date objects for Prisma DateTime fields
+      const dateOfBirth = data.date_of_birth
+        ? (typeof data.date_of_birth === 'string' ? new Date(data.date_of_birth) : data.date_of_birth)
+        : null;
+      const contractEnd = data.contract_end
+        ? (typeof data.contract_end === 'string' ? new Date(data.contract_end) : data.contract_end)
+        : null;
+
       const newPlayer = await prisma.jugador.create({
         data: {
           player_name: data.player_name,
-          position_player: data.position_player,
-          team_name: data.team_name,
-          age: data.age,
-          nationality_1: data.nationality_1,
-          player_rating: data.player_rating,
+          position_player: data.position_player || null,
+          team_name: data.team_name || null,
+          date_of_birth: dateOfBirth,
+          age: data.age || null,
+          nationality_1: data.nationality_1 || null,
+          nationality_2: data.nationality_2 || null,
+          height: data.height || null,
+          player_rating: data.player_rating || null,
+          player_trfm_value: data.player_trfm_value || null,
+          on_loan: data.on_loan || false,
+          owner_club: data.owner_club || null,
+          national_tier: data.national_tier || null,
+          contract_end: contractEnd,
+          url_instagram: data.url_instagram || null,
           createdAt: new Date(),
           updatedAt: new Date()
         }

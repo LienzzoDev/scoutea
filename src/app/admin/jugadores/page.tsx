@@ -133,7 +133,8 @@ export default function JugadoresPage() {
     hasMore,
     totalCount,
     observerTarget,
-    refresh
+    refresh,
+    updatePlayer
   } = useInfinitePlayersScroll({
     search: debouncedSearch,
     nationality: debouncedFilters.nationality,
@@ -341,6 +342,7 @@ export default function JugadoresPage() {
             <AdminPlayerTable
               players={filteredPlayers as any}
               hiddenColumns={hiddenColumns}
+              onPlayerUpdate={updatePlayer}
             />
           </div>
 

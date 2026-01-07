@@ -48,7 +48,7 @@ export class RateLimiter {
   private config: RateLimitConfig
   private cleanupInterval?: NodeJS.Timeout
 
-  constructor(_config: RateLimitConfig) {
+  constructor(config: RateLimitConfig) {
     this.config = config
     
     // Start cleanup interval (only on client side to avoid server-side intervals)
@@ -60,11 +60,11 @@ export class RateLimiter {
   /**
    * Check if request is allowed
    */
-  checkLimit(__request: NextRequest, userId?: string): RateLimitResult {
-    const _key = this.config.keyGenerator 
+  checkLimit(request: NextRequest, userId?: string): RateLimitResult {
+    const key = this.config.keyGenerator
       ? this.config.keyGenerator(request, userId)
       : this.defaultKeyGenerator(request, userId)
-    
+
     const now = Date.now()
     const entry = this.store.get(key)
 
@@ -130,15 +130,15 @@ export class RateLimiter {
   /**
    * Record a successful request (if configured to skip successful requests)
    */
-  recordSuccess(__request: NextRequest, userId?: string): void {
+  recordSuccess(request: NextRequest, userId?: string): void {
     if (!this.config.skipSuccessfulRequests) {
       return
     }
 
-    const _key = this.config.keyGenerator 
+    const key = this.config.keyGenerator
       ? this.config.keyGenerator(request, userId)
       : this.defaultKeyGenerator(request, userId)
-    
+
     const entry = this.store.get(key)
     if (entry && entry.count > 0) {
       entry.count--
@@ -149,15 +149,15 @@ export class RateLimiter {
   /**
    * Record a failed request (if configured to skip failed requests)
    */
-  recordFailure(__request: NextRequest, userId?: string): void {
+  recordFailure(request: NextRequest, userId?: string): void {
     if (!this.config.skipFailedRequests) {
       return
     }
 
-    const _key = this.config.keyGenerator 
+    const key = this.config.keyGenerator
       ? this.config.keyGenerator(request, userId)
       : this.defaultKeyGenerator(request, userId)
-    
+
     const entry = this.store.get(key)
     if (entry && entry.count > 0) {
       entry.count--
@@ -168,7 +168,7 @@ export class RateLimiter {
   /**
    * Default key generator
    */
-  private defaultKeyGenerator(__request: NextRequest, userId?: string): string {
+  private defaultKeyGenerator(request: NextRequest, userId?: string): string {
     if (userId) {
       return `user:${userId}:${request.nextUrl.pathname}`
     }
@@ -180,7 +180,7 @@ export class RateLimiter {
   /**
    * Get client IP address
    */
-  private getClientIP(_request: NextRequest): string {
+  private getClientIP(request: NextRequest): string {
     const forwarded = request.headers.get('x-forwarded-for')
     const realIP = request.headers.get('x-real-ip')
     
@@ -302,8 +302,8 @@ export class RateLimiterManager {
    * Check rate limit for a specific endpoint
    */
   checkLimit(
-    endpoint: string, 
-    __request: NextRequest, 
+    endpoint: string,
+    request: NextRequest,
     userId?: string,
     config?: Partial<RateLimitConfig>
   ): RateLimitResult {
@@ -410,7 +410,7 @@ export function resetRateLimiterManager(): void {
  */
 export function checkRateLimit(
   endpoint: string,
-  __request: NextRequest,
+  request: NextRequest,
   userId?: string,
   config?: Partial<RateLimitConfig>
 ): RateLimitResult {
@@ -426,7 +426,7 @@ export function createRateLimitMiddleware(
   config?: Partial<RateLimitConfig>
 ) {
   return function rateLimitMiddleware(
-    __request: NextRequest,
+    request: NextRequest,
     userId?: string
   ): RateLimitResult {
     return checkRateLimit(endpoint, request, userId, config)

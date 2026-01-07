@@ -202,6 +202,58 @@ export const PlayerCreateSchema = z.object({
   player_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'El color debe ser un código hexadecimal válido (ej: #FF5733)').optional()
 }).strict() // No permitir campos adicionales
 
+/**
+ * 🇪🇸 ESQUEMA PARA CREAR JUGADOR DESDE FORMULARIO ADMIN (CAMPOS EN ESPAÑOL)
+ *
+ * ✅ QUÉ VALIDA: Campos del formulario de admin con nombres en español
+ * ✅ POR QUÉ: El formulario de admin usa nombres de campos en español
+ * ✅ USO: En POST /api/players desde el panel de admin
+ * ✅ TRANSFORMACIÓN: Convierte campos español -> inglés
+ */
+export const AdminPlayerCreateSchema = z.object({
+  // 🆔 CAMPOS OBLIGATORIOS (español)
+  nombre: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(100),
+  equipo: z.string().min(1, 'El equipo es requerido').max(100),
+  fecha_nacimiento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido (YYYY-MM-DD)'),
+
+  // 👤 INFORMACIÓN PERSONAL (OPCIONAL)
+  posicion: z.string().max(20).optional(),
+  nationality: z.string().max(100).optional(),
+  nationality_2: z.string().max(100).optional(),
+
+  // 🏃‍♂️ ATRIBUTOS FÍSICOS (OPCIONAL)
+  height: z.number().int().min(140).max(230).optional(),
+  weight: z.number().int().min(40).max(150).optional(),
+
+  // 💰 INFORMACIÓN CONTRACTUAL (OPCIONAL)
+  player_trfm_value: z.number().min(0).optional(),
+  on_loan: z.boolean().optional(),
+  owner_club: z.string().max(100).optional(),
+  national_tier: z.string().max(100).optional(),
+  contract_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido').optional().or(z.literal('')),
+
+  // 🔗 ENLACES (OPCIONAL)
+  url_instagram: z.string().url().optional().or(z.literal('')),
+  url_secondary: z.string().url().optional().or(z.literal(''))
+}).transform(data => ({
+  // Transformar campos español -> inglés
+  player_name: data.nombre,
+  team_name: data.equipo,
+  date_of_birth: data.fecha_nacimiento,
+  position_player: data.posicion,
+  nationality_1: data.nationality,
+  nationality_2: data.nationality_2,
+  height: data.height,
+  weight: data.weight,
+  player_trfm_value: data.player_trfm_value,
+  on_loan: data.on_loan,
+  owner_club: data.owner_club,
+  national_tier: data.national_tier,
+  contract_end: data.contract_end || undefined,
+  url_instagram: data.url_instagram || undefined,
+  url_secondary: data.url_secondary || undefined
+}))
+
 // 🔄 Schema flexible para nacionalidad (acepta valores de la lista o strings vacíos/null)
 const flexibleNationalitySchema = z.union([
   z.enum(NATIONALITIES),

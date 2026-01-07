@@ -108,9 +108,18 @@ export async function PUT(
     }
 
     if (report.scout?.clerkId !== userId) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         success: false,
-        error: 'No tienes permiso para editar este reporte' 
+        error: 'No tienes permiso para editar este reporte'
+      }, { status: 403 })
+    }
+
+    // Check if the report has been approved for editing (approval_status === 'pending')
+    // If not approved and not already approved status, deny edit
+    if (report.approval_status !== 'pending' && report.approval_status !== 'approved') {
+      return NextResponse.json({
+        success: false,
+        error: 'Este reporte no está aprobado para edición. Solicita permiso al administrador.'
       }, { status: 403 })
     }
 
@@ -124,6 +133,8 @@ export async function PUT(
         form_url_video: body.urlVideo || null,
         // Nota: imageUrl no se guarda en Reporte - el modelo solo soporta text, url_report y url_video
         form_potential: body.potential ? body.potential.toString() : null,
+        // Reset approval_status back to 'approved' after editing is complete
+        approval_status: 'approved',
         updatedAt: new Date()
       }
     })

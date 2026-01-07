@@ -3,7 +3,7 @@
 import { useAuth } from "@clerk/nextjs"
 import { ChevronLeft, Edit, Settings, Save, Search } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useState, FormEvent } from "react"
+import { useState, FormEvent, useRef, useCallback, useEffect } from "react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -50,47 +50,75 @@ export default function NuevoJugadorPage() {
   const [scraping, setScraping] = useState(false)
   const [scrapingResult, setScrapingResult] = useState<any>(null)
 
-  // Buscar jugadores
-  const searchPlayers = async (query: string) => {
+  // Refs para debounce
+  const teamSearchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const playerSearchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Limpiar timeouts al desmontar
+  useEffect(() => {
+    return () => {
+      if (teamSearchTimeoutRef.current) clearTimeout(teamSearchTimeoutRef.current)
+      if (playerSearchTimeoutRef.current) clearTimeout(playerSearchTimeoutRef.current)
+    }
+  }, [])
+
+  // Buscar jugadores con debounce
+  const searchPlayersDebounced = useCallback((query: string) => {
+    if (playerSearchTimeoutRef.current) {
+      clearTimeout(playerSearchTimeoutRef.current)
+    }
+
     if (!query || query.length < 2) {
       setPlayerSearchResults([])
       setShowPlayerResults(false)
+      setSearchingPlayer(false)
       return
     }
 
     setSearchingPlayer(true)
     setShowPlayerResults(true)
-    try {
-      const response = await fetch(`/api/admin/players?search=${encodeURIComponent(query)}&limit=10`)
-      const data = await response.json()
-      setPlayerSearchResults(data.players || [])
-    } catch (error) {
-      console.error('Error searching players:', error)
-      setPlayerSearchResults([])
-    } finally {
-      setSearchingPlayer(false)
-    }
-  }
 
-  // Buscar equipos
-  const searchTeams = async (query: string) => {
+    playerSearchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/admin/players?search=${encodeURIComponent(query)}&limit=10`)
+        const data = await response.json()
+        setPlayerSearchResults(data.players || [])
+      } catch (error) {
+        console.error('Error searching players:', error)
+        setPlayerSearchResults([])
+      } finally {
+        setSearchingPlayer(false)
+      }
+    }, 300)
+  }, [])
+
+  // Buscar equipos con debounce (usando endpoint optimizado)
+  const searchTeamsDebounced = useCallback((query: string) => {
+    if (teamSearchTimeoutRef.current) {
+      clearTimeout(teamSearchTimeoutRef.current)
+    }
+
     if (!query || query.length < 2) {
       setTeamSearchResults([])
+      setSearchingTeam(false)
       return
     }
 
     setSearchingTeam(true)
-    try {
-      const response = await fetch(`/api/teams?search=${encodeURIComponent(query)}&limit=10`)
-      const data = await response.json()
-      setTeamSearchResults(data.teams || [])
-    } catch (error) {
-      console.error('Error searching teams:', error)
-      setTeamSearchResults([])
-    } finally {
-      setSearchingTeam(false)
-    }
-  }
+
+    teamSearchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/teams/simple?search=${encodeURIComponent(query)}&limit=10`)
+        const data = await response.json()
+        setTeamSearchResults(data.teams || [])
+      } catch (error) {
+        console.error('Error searching teams:', error)
+        setTeamSearchResults([])
+      } finally {
+        setSearchingTeam(false)
+      }
+    }, 300)
+  }, [])
 
   // Validar formulario
   const validateForm = (): boolean => {
@@ -343,7 +371,7 @@ export default function NuevoJugadorPage() {
                     value={formData.nombre}
                     onChange={(e) => {
                       handleInputChange('nombre', e.target.value)
-                      searchPlayers(e.target.value)
+                      searchPlayersDebounced(e.target.value)
                     }}
                     onFocus={() => {
                       if (formData.nombre && formData.nombre.length >= 2 && playerSearchResults.length > 0) {
@@ -442,7 +470,7 @@ export default function NuevoJugadorPage() {
                     value={formData.equipo}
                     onChange={(e) => {
                       handleInputChange('equipo', e.target.value)
-                      searchTeams(e.target.value)
+                      searchTeamsDebounced(e.target.value)
                     }}
                     placeholder="Buscar o escribir nombre del equipo"
                     className={`pl-10 bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 ${
