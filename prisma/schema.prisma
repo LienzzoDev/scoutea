@@ -128,6 +128,7 @@ model Jugador {
   photo_coverage                  String?
   gallery_photo                   String?
   url_trfm                        String?
+  url_trfm_broken                 Boolean             @default(false) // True si el link de url_trfm está roto (detectado en scraping)
   url_trfm_advisor                String?
   url_secondary                   String?
   url_instagram                   String?
@@ -225,6 +226,7 @@ model Equipo {
   team_country         String?
   url_trfm_advisor     String?
   url_trfm             String?
+  url_trfm_broken      Boolean    @default(false) // True si el link de url_trfm está roto (detectado en scraping)
   owner_club           String?
   owner_club_country   String?
   pre_competition      String?
@@ -243,6 +245,7 @@ model Equipo {
   stadium              String?
   website_url          String?
   logo_url             String?
+  fm_guide             String?    // URL de FM Guide
 
   // NOTAS ADMINISTRATIVAS
   admin_notes          String?    // Notas del administrador sobre el equipo
@@ -1584,6 +1587,7 @@ model Position {
 
 model Competition {
   id_competition                String        @id @default(cuid())
+  displayId                     Int           @unique @default(autoincrement())
   competition_name              String?
   correct_competition_name      String?
   competition_country           String?
@@ -1976,6 +1980,7 @@ model JobOffer {
   team             Equipo?   @relation("TeamJobOffers", fields: [team_id], references: [id_team], onDelete: SetNull)
   club_name        String?   // Nombre manual del club/selección si no está en BD
   custom_logo_url  String?   // Logo manual si no es de un equipo de BD
+  national_team    String?   // Selección nacional asociada (opcional)
   location         String?   // Ciudad o ubicación específica
   remote_allowed   Boolean   @default(false)
 

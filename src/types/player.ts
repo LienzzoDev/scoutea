@@ -15,6 +15,7 @@ export interface Player {
   average_report_rating?: number | null;
   url_trfm_advisor?: string | null;
   url_trfm?: string | null;
+  url_trfm_broken?: boolean | null;
   url_secondary?: string | null;
   url_instagram?: string | null;
   complete_player_name?: string | null;
@@ -110,7 +111,7 @@ export interface CrearJugadorData {
   nationality?: string | undefined;
   nationality_2?: string | undefined; // Segunda nacionalidad
   height?: number | undefined;
-  weight?: number | undefined;
+  foot?: string | undefined; // Lateralidad: 'left', 'right', 'both'
   // Nuevos campos
   player_trfm_value?: number | undefined; // Valor de mercado
   on_loan?: boolean | undefined; // Cedido

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 
 export interface Competition {
   id_competition: string;
+  displayId?: number | null;
   competition_name?: string | null;
   correct_competition_name?: string | null;
   competition_country?: string | null;
@@ -58,6 +59,7 @@ export class CompetitionService {
 
     return competitions.map(comp => ({
       id_competition: comp.id_competition,
+      displayId: comp.displayId,
       competition_name: comp.competition_name || comp.name,
       correct_competition_name: comp.correct_competition_name,
       competition_country: comp.competition_country,
@@ -96,6 +98,7 @@ export class CompetitionService {
 
     return {
       id_competition: competition.id_competition,
+      displayId: competition.displayId,
       competition_name: competition.competition_name || competition.name,
       correct_competition_name: competition.correct_competition_name,
       competition_country: competition.competition_country,
@@ -133,6 +136,7 @@ export class CompetitionService {
 
     return competitions.map(comp => ({
       id_competition: comp.id_competition,
+      displayId: comp.displayId,
       competition_name: comp.competition_name || comp.name,
       correct_competition_name: comp.correct_competition_name,
       competition_country: comp.competition_country,
@@ -228,6 +232,7 @@ export class CompetitionService {
       return {
         competitions: competitionsToReturn.map(comp => ({
           id_competition: comp.id_competition,
+          displayId: comp.displayId,
           competition_name: comp.competition_name || comp.name,
           correct_competition_name: comp.correct_competition_name,
           competition_country: comp.competition_country,

@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { NATIONALITIES } from '@/constants/nationalities'
 import { createJobOfferSchema, type CreateJobOfferInput } from '@/lib/validation/job-offer-schemas'
 import type { JobOffer } from '@/types/job-offer'
 
@@ -30,6 +30,9 @@ export function JobOfferForm({ jobOffer, mode }: JobOfferFormProps) {
   const [useManualClub, setUseManualClub] = useState(false)
   const [teamSearch, setTeamSearch] = useState('')
   const [showTeamDropdown, setShowTeamDropdown] = useState(false)
+  // Estado para campo Selecciones
+  const [selectionSearch, setSelectionSearch] = useState('')
+  const [showSelectionDropdown, setShowSelectionDropdown] = useState(false)
 
   const {
     register,
@@ -47,6 +50,7 @@ export function JobOfferForm({ jobOffer, mode }: JobOfferFormProps) {
       team_id: jobOffer.team_id || undefined,
       club_name: jobOffer.club_name || undefined,
       custom_logo_url: jobOffer.custom_logo_url || undefined,
+      national_team: jobOffer.national_team || undefined,
       location: jobOffer.location || undefined,
       remote_allowed: jobOffer.remote_allowed ?? false,
       position_type: jobOffer.position_type,
@@ -108,12 +112,22 @@ export function JobOfferForm({ jobOffer, mode }: JobOfferFormProps) {
     }
   }, [selectedTeam, teamSearch])
 
-  // Cerrar el dropdown al hacer clic fuera
+  // Inicializar selectionSearch con el valor existente
+  useEffect(() => {
+    if (jobOffer?.national_team && selectionSearch === '') {
+      setSelectionSearch(jobOffer.national_team)
+    }
+  }, [jobOffer?.national_team, selectionSearch])
+
+  // Cerrar los dropdowns al hacer clic fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement
       if (!target.closest('#team_search') && !target.closest('.team-dropdown')) {
         setShowTeamDropdown(false)
+      }
+      if (!target.closest('#selection_search') && !target.closest('.selection-dropdown')) {
+        setShowSelectionDropdown(false)
       }
     }
 
@@ -186,6 +200,31 @@ export function JobOfferForm({ jobOffer, mode }: JobOfferFormProps) {
     setShowTeamDropdown(false)
   }
 
+  // Filtrar selecciones basado en la búsqueda
+  const filteredSelections = NATIONALITIES.filter(nation =>
+    nation.toLowerCase().includes(selectionSearch.toLowerCase())
+  )
+
+  // Manejar la selección de selección nacional
+  const handleSelectionSelect = (selection: string | null) => {
+    if (selection) {
+      setValue('national_team', selection)
+      setSelectionSearch(selection)
+    } else {
+      setValue('national_team', undefined)
+      setSelectionSearch('')
+    }
+    setShowSelectionDropdown(false)
+  }
+
+  // Guardar texto libre cuando el usuario deja el campo
+  const handleSelectionBlur = () => {
+    // Solo guardar si hay texto y no se cerró con selección
+    if (selectionSearch.trim()) {
+      setValue('national_team', selectionSearch.trim())
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Información básica */}
@@ -205,7 +244,7 @@ export function JobOfferForm({ jobOffer, mode }: JobOfferFormProps) {
           </div>
 
           <div>
-             <Label htmlFor="category" className="text-gray-300 mb-2 block">Categoría (Descripción breve)</Label>
+             <Label htmlFor="category" className="text-gray-300 mb-2 block">Categoría</Label>
              <Input
                id="category"
                {...register('category')}
@@ -214,18 +253,6 @@ export function JobOfferForm({ jobOffer, mode }: JobOfferFormProps) {
              />
              {errors.category && <p className="text-red-400 text-sm mt-1">{errors.category.message}</p>}
            </div>
-
-          <div>
-            <Label htmlFor="description" className="text-gray-300 mb-2 block">Descripción Detallada *</Label>
-            <Textarea
-              id="description"
-              {...register('description')}
-              className="bg-[#1a2332] border-slate-600 text-white"
-              placeholder="Descripción completa de la oferta..."
-              rows={6}
-            />
-            {errors.description && <p className="text-red-400 text-sm mt-1">{errors.description.message}</p>}
-          </div>
         </div>
       </div>
 
@@ -319,6 +346,59 @@ export function JobOfferForm({ jobOffer, mode }: JobOfferFormProps) {
                 </div>
             </>
           )}
+
+          {/* Campo Selecciones - buscador con texto libre */}
+          <div className="relative">
+            <Label htmlFor="selection_search" className="text-gray-300 mb-2 block">Selección Nacional</Label>
+            <div className="relative">
+              <Input
+                id="selection_search"
+                type="text"
+                value={selectionSearch}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  setSelectionSearch(e.target.value)
+                  setShowSelectionDropdown(true)
+                }}
+                onFocus={() => setShowSelectionDropdown(true)}
+                onBlur={handleSelectionBlur}
+                className="bg-[#1a2332] border-slate-600 text-white pr-10"
+                placeholder="Ej: Spain, Argentina..."
+              />
+              {selectionSearch && (
+                <button
+                  type="button"
+                  onClick={() => handleSelectionSelect(null)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {showSelectionDropdown && selectionSearch && filteredSelections.length > 0 && (
+              <div className="selection-dropdown absolute z-50 w-full mt-1 bg-[#1a2332] border border-slate-600 rounded-md shadow-lg max-h-60 overflow-auto">
+                {filteredSelections.slice(0, 20).map((selection) => (
+                  <button
+                    key={selection}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault()
+                      handleSelectionSelect(selection)
+                    }}
+                    className="w-full text-left px-4 py-2 text-white hover:bg-[#2a3442] transition-colors"
+                  >
+                    {selection}
+                  </button>
+                ))}
+                {filteredSelections.length > 20 && (
+                  <div className="px-4 py-2 text-gray-400 text-sm">
+                    Mostrando 20 de {filteredSelections.length}. Refina tu búsqueda.
+                  </div>
+                )}
+              </div>
+            )}
+            <p className="text-gray-400 text-xs mt-1">Puedes escribir cualquier texto o seleccionar de la lista</p>
+          </div>
 
           <div>
             <Label htmlFor="location" className="text-gray-300 mb-2 block">Ubicación</Label>

@@ -124,16 +124,6 @@ export default function CompeticionesPage() {
   // Categorías para mostrar en la tabla - todos los campos de la base de datos
   const categories = useMemo(() => [
     {
-      key: 'correct_competition_name',
-      label: 'Nombre Corregido',
-      getValue: (comp: Competition) => comp.correct_competition_name,
-    },
-    {
-      key: 'short_name',
-      label: 'Nombre Corto',
-      getValue: (comp: Competition) => comp.short_name,
-    },
-    {
       key: 'competition_country',
       label: 'País',
       getValue: (comp: Competition) => comp.competition_country,
@@ -172,7 +162,7 @@ export default function CompeticionesPage() {
       getValue: (comp: Competition) => comp.competition_trfm_value,
       format: (value: unknown) => {
         if (!value || typeof value !== 'number') return 'N/A';
-        return `€${(value / 1000000).toFixed(1)}M`;
+        return `€${value.toLocaleString('es-ES')}`;
       },
     },
     {

@@ -10,6 +10,7 @@ export const createJobOfferSchema = z.object({
   team_id: z.string().optional(),
   club_name: z.string().max(100, 'El nombre del club es demasiado largo').optional(),
   custom_logo_url: z.string().url('La URL del logo debe ser válida').optional().or(z.literal('')),
+  national_team: z.string().max(100, 'El nombre de la selección es demasiado largo').optional(),
   location: z.string().max(200, 'La ubicación es demasiado larga').optional(),
   remote_allowed: z.boolean().default(false),
 

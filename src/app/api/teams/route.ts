@@ -46,6 +46,12 @@ export async function GET(request: NextRequest) {
     const country = searchParams.get('country') || ''
     const competition = searchParams.get('competition') || ''
 
+    // Filtros de datos vacíos/llenos
+    const teamName = searchParams.get('teamName')
+    const urlTrfmBroken = searchParams.get('urlTrfmBroken')
+    const urlTrfm = searchParams.get('urlTrfm')
+    const ownerClub = searchParams.get('ownerClub')
+
     console.log('📊 Teams API - Cursor pagination:', { cursor, limit, search, country, competition })
 
     // Construir filtros WHERE
@@ -63,6 +69,47 @@ export async function GET(request: NextRequest) {
 
     if (competition) {
       where.competition = { contains: competition, mode: 'insensitive' }
+    }
+
+    // 🎨 FILTROS DE DATOS VACÍOS/LLENOS (N/A)
+    // Helper para crear condición de vacío/lleno
+    const createEmptyFilter = (field: string, value: string | null) => {
+      if (!value || value === 'all') return null
+      if (value === 'has') {
+        return { [field]: { not: null } }
+      }
+      if (value === 'empty') {
+        return { [field]: null }
+      }
+      return null
+    }
+
+    // Helper para crear filtro booleano (broken/ok)
+    const createBooleanFilter = (field: string, value: string | null) => {
+      if (!value || value === 'all') return null
+      if (value === 'broken') {
+        return { [field]: true }
+      }
+      if (value === 'ok') {
+        return { [field]: false }
+      }
+      return null
+    }
+
+    // Aplicar filtros de vacío/lleno y booleanos
+    const emptyFilters = [
+      createEmptyFilter('team_name', teamName),
+      createBooleanFilter('url_trfm_broken', urlTrfmBroken),
+      createEmptyFilter('url_trfm', urlTrfm),
+      createEmptyFilter('owner_club', ownerClub)
+    ].filter(Boolean)
+
+    // Añadir filtros de vacío/lleno al where
+    if (emptyFilters.length > 0) {
+      if (!where.AND) {
+        where.AND = []
+      }
+      where.AND.push(...emptyFilters)
     }
 
     console.log('🔍 Teams API - WHERE filters:', JSON.stringify(where, null, 2))
@@ -89,6 +136,7 @@ export async function GET(request: NextRequest) {
         team_country: true,
         url_trfm_advisor: true,
         url_trfm: true,
+        url_trfm_broken: true,
         owner_club: true,
         owner_club_country: true,
         pre_competition: true,
@@ -106,6 +154,7 @@ export async function GET(request: NextRequest) {
         stadium: true,
         website_url: true,
         logo_url: true,
+        fm_guide: true,
         admin_notes: true,
         createdAt: true,
         updatedAt: true

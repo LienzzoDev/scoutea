@@ -2,7 +2,7 @@
 
 import { ArrowUpDown, ArrowUp, ArrowDown, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import type { Competition } from "@/lib/services/competition-service";
@@ -41,6 +41,53 @@ export default function CompetitionTable({
   const headerScrollRef = useRef<HTMLDivElement>(null);
   const rowScrollRefs = useRef<HTMLDivElement[]>([]);
 
+  // Calcular valores duplicados para competition_name y url_trfm
+  const duplicateValues = useMemo(() => {
+    const competitionNameCounts = new Map<string, number>();
+    const urlTrfmCounts = new Map<string, number>();
+
+    competitions.forEach(comp => {
+      // Contar competition_name
+      const name = comp.competition_name || comp.name;
+      if (name) {
+        const lowerName = name.toLowerCase();
+        competitionNameCounts.set(lowerName, (competitionNameCounts.get(lowerName) || 0) + 1);
+      }
+      // Contar url_trfm
+      if (comp.url_trfm) {
+        const lowerUrl = comp.url_trfm.toLowerCase();
+        urlTrfmCounts.set(lowerUrl, (urlTrfmCounts.get(lowerUrl) || 0) + 1);
+      }
+    });
+
+    return {
+      competitionNames: new Set(
+        Array.from(competitionNameCounts.entries())
+          .filter(([_, count]) => count > 1)
+          .map(([name]) => name)
+      ),
+      urlTrfms: new Set(
+        Array.from(urlTrfmCounts.entries())
+          .filter(([_, count]) => count > 1)
+          .map(([url]) => url)
+      )
+    };
+  }, [competitions]);
+
+  // Función para verificar si un valor está duplicado
+  const isDuplicate = (field: 'competition_name' | 'url_trfm', value: string | null | undefined): boolean => {
+    if (!value) return false;
+    const lowerValue = value.toLowerCase();
+    switch (field) {
+      case 'competition_name':
+        return duplicateValues.competitionNames.has(lowerValue);
+      case 'url_trfm':
+        return duplicateValues.urlTrfms.has(lowerValue);
+      default:
+        return false;
+    }
+  };
+
   // Función para manejar scroll sincronizado
   const handleScroll = (scrollLeft: number) => {
     if (headerScrollRef.current) {
@@ -75,9 +122,38 @@ export default function CompetitionTable({
           ? 'bg-[#1a2332] border-slate-700'
           : 'bg-[#f8f9fa] border-[#e7e7e7]'
       }`}>
+        {/* Columna fija - ID */}
+        <div
+          className={`w-24 p-4 border-r flex-shrink-0 cursor-pointer transition-colors sticky left-0 z-10 ${
+            darkMode
+              ? 'border-slate-700 hover:bg-slate-700/50 bg-[#1a2332]'
+              : 'border-[#e7e7e7] hover:bg-gray-50 bg-[#f8f9fa]'
+          }`}
+          onClick={() => onSort?.('id_competition')}
+        >
+          <div className="flex items-center gap-1">
+            <h4 className={`font-semibold text-sm ${
+              sortBy === 'id_competition'
+                ? (darkMode ? 'text-[#FF5733]' : 'text-[#8c1a10]')
+                : (darkMode ? 'text-slate-300' : 'text-[#6d6d6d]')
+            }`}>
+              ID
+            </h4>
+            {sortBy === 'id_competition' ? (
+              sortOrder === 'asc' ? (
+                <ArrowUp className={`w-3 h-3 ${darkMode ? 'text-[#FF5733]' : 'text-[#8c1a10]'}`} />
+              ) : (
+                <ArrowDown className={`w-3 h-3 ${darkMode ? 'text-[#FF5733]' : 'text-[#8c1a10]'}`} />
+              )
+            ) : (
+              <ArrowUpDown className={`w-3 h-3 ${darkMode ? 'text-slate-500' : 'text-gray-400'}`} />
+            )}
+          </div>
+        </div>
+
         {/* Columna fija - Competition Info */}
         <div
-          className={`w-80 p-4 border-r flex-shrink-0 cursor-pointer transition-colors ${
+          className={`w-64 p-4 border-r flex-shrink-0 cursor-pointer transition-colors ${
             darkMode
               ? 'border-slate-700 hover:bg-slate-700/50'
               : 'border-[#e7e7e7] hover:bg-gray-50'
@@ -177,6 +253,7 @@ export default function CompetitionTable({
       <div className={`divide-y ${darkMode ? 'divide-slate-700' : 'divide-[#e7e7e7]'}`}>
         {competitions.map((competition, index) => {
           const displayName = competition.competition_name || competition.name || 'Sin nombre';
+          const isNameDuplicate = isDuplicate('competition_name', displayName);
 
           return (
             <div
@@ -186,27 +263,22 @@ export default function CompetitionTable({
               }`}
               onClick={() => router.push(`/admin/competiciones/${competition.id_competition}`)}
             >
-              {/* Columna fija - Competition Info */}
-              <div className={`w-80 p-4 border-r flex-shrink-0 ${
+              {/* Columna fija - ID */}
+              <div className={`w-24 p-4 border-r flex-shrink-0 sticky left-0 z-10 ${
+                darkMode ? 'border-slate-700 bg-[#131921]' : 'border-[#e7e7e7] bg-white'
+              }`}>
+                <p className={`font-medium text-sm ${darkMode ? 'text-slate-300' : 'text-[#6d6d6d]'}`}>
+                  {competition.displayId ?? competition.id_competition.substring(0, 8) + '...'}
+                </p>
+              </div>
+
+              {/* Columna fija - Competition Info (solo nombre) */}
+              <div className={`w-64 p-4 border-r flex-shrink-0 ${
                 darkMode ? 'border-slate-700' : 'border-[#e7e7e7]'
               }`}>
-                <div className="flex items-center gap-4">
-                  <div>
-                    <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-[#000000]'}`}>
-                      {displayName}
-                    </h3>
-                    <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-[#6d6d6d]'}`}>
-                      {competition.correct_competition_name || competition.short_name || displayName}
-                    </p>
-                    {competition.competition_country && (
-                      <p className={`text-xs font-medium mt-1 ${
-                        darkMode ? 'text-[#FF5733]' : 'text-[#8c1a10]'
-                      }`}>
-                        {competition.competition_country}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                <h3 className={`${isNameDuplicate ? 'font-semibold' : 'font-normal'} ${darkMode ? 'text-white' : 'text-[#000000]'}`}>
+                  {displayName}
+                </h3>
               </div>
 
               {/* Valores scrolleables */}
@@ -245,6 +317,9 @@ export default function CompetitionTable({
                       formattedValue = String(formattedValue);
                     }
 
+                    // Verificar si url_trfm está duplicada
+                    const isUrlTrfmDuplicate = category.key === 'url_trfm' && isDuplicate('url_trfm', value as string | null | undefined);
+
                     return (
                       <div
                         key={`${competition.id_competition}-${category.key}`}
@@ -259,7 +334,9 @@ export default function CompetitionTable({
                               : "140px",
                         }}
                       >
-                        <p className={`font-medium break-words ${
+                        <p className={`break-words ${
+                          isUrlTrfmDuplicate ? 'font-semibold' : 'font-medium'
+                        } ${
                           darkMode ? 'text-white' : 'text-[#000000]'
                         }`}>
                           {formattedValue}

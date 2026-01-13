@@ -6,6 +6,8 @@
  * ✅ REFACTORIZADO: Usa el hook genérico useInfiniteScroll
  */
 
+import { useCallback } from 'react'
+
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll'
 
 interface Player {
@@ -31,6 +33,18 @@ interface UseInfinitePlayersScrollParams {
   ratingMax?: string
   heightMin?: string
   heightMax?: string
+  // Filtros de datos vacíos/llenos
+  playerColor?: string // 'all' | 'has' | 'empty'
+  playerName?: string // 'all' | 'has' | 'empty'
+  teamName?: string // 'all' | 'has' | 'empty'
+  wyscoutName1?: string // 'all' | 'has' | 'empty'
+  wyscoutId1?: string // 'all' | 'has' | 'empty'
+  wyscoutId2?: string // 'all' | 'has' | 'empty'
+  idFmi?: string // 'all' | 'has' | 'empty'
+  photoCoverage?: string // 'all' | 'has' | 'empty'
+  urlTrfmAdvisor?: string // 'all' | 'has' | 'empty'
+  urlTrfm?: string // 'all' | 'has' | 'empty'
+  urlInstagram?: string // 'all' | 'has' | 'empty'
   limit?: number
 }
 
@@ -63,6 +77,18 @@ export function useInfinitePlayersScroll({
   ratingMax = '',
   heightMin = '',
   heightMax = '',
+  // Filtros de datos vacíos/llenos
+  playerColor = 'all',
+  playerName = 'all',
+  teamName = 'all',
+  wyscoutName1 = 'all',
+  wyscoutId1 = 'all',
+  wyscoutId2 = 'all',
+  idFmi = 'all',
+  photoCoverage = 'all',
+  urlTrfmAdvisor = 'all',
+  urlTrfm = 'all',
+  urlInstagram = 'all',
   limit = 50
 }: UseInfinitePlayersScrollParams = {}): UseInfinitePlayersScrollReturn {
   const {
@@ -94,16 +120,28 @@ export function useInfinitePlayersScroll({
       ratingMin,
       ratingMax,
       heightMin,
-      heightMax
+      heightMax,
+      // Filtros de datos vacíos/llenos
+      playerColor,
+      playerName,
+      teamName,
+      wyscoutName1,
+      wyscoutId1,
+      wyscoutId2,
+      idFmi,
+      photoCoverage,
+      urlTrfmAdvisor,
+      urlTrfm,
+      urlInstagram
     },
     limit,
     rootMargin: '100px' // Empezar a cargar 100px antes de llegar al final
   })
 
-  // Wrapper para updateItem que acepta number o string
-  const updatePlayer = (id: string | number, updates: Partial<Player>) => {
+  // Wrapper para updateItem que acepta number o string (memoizado)
+  const updatePlayer = useCallback((id: string | number, updates: Partial<Player>) => {
     updateItem(String(id), updates)
-  }
+  }, [updateItem])
 
   return {
     players,

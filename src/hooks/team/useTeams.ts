@@ -8,6 +8,7 @@ export interface Team {
   team_country?: string | null;
   url_trfm_advisor?: string | null;
   url_trfm?: string | null;
+  url_trfm_broken?: boolean | null;
   owner_club?: string | null;
   owner_club_country?: string | null;
   pre_competition?: string | null;
@@ -26,6 +27,7 @@ export interface Team {
   stadium?: string | null;
   website_url?: string | null;
   logo_url?: string | null;
+  fm_guide?: string | null;
   admin_notes?: string | null;
 }
 

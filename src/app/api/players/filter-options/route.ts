@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
+import { PLAYER_POSITIONS } from '@/constants/player-positions'
 import { prisma } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
@@ -43,7 +44,6 @@ export async function GET() {
       nationalitiesResult,
       teamsResult,
       competitionsResult,
-      positionsResult,
       statsResult
     ] = await Promise.all([
       // Nacionalidades únicas
@@ -67,13 +67,6 @@ export async function GET() {
         distinct: ['team_competition'],
         orderBy: { team_competition: 'asc' }
       }),
-      // Posiciones únicas
-      prisma.jugador.findMany({
-        where: { approval_status: 'approved', is_visible: true, position_player: { not: null } },
-        select: { position_player: true },
-        distinct: ['position_player'],
-        orderBy: { position_player: 'asc' }
-      }),
       // Estadísticas min/max
       prisma.jugador.aggregate({
         _min: { age: true, player_rating: true, player_trfm_value: true },
@@ -95,9 +88,8 @@ export async function GET() {
       .map(r => r.team_competition)
       .filter((c): c is string => c !== null && c.trim() !== '')
 
-    const positions = positionsResult
-      .map(r => r.position_player)
-      .filter((p): p is string => p !== null && p.trim() !== '')
+    // Usar posiciones del constante para consistencia con admin
+    const positions = [...PLAYER_POSITIONS]
 
     const stats = {
       age: {

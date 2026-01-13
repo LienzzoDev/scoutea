@@ -81,7 +81,7 @@ export const PlayerCreateSchema = z.object({
     .max(120, 'Weight seems too high')
     .optional(),
   foot: z.enum(['Left', 'Right', 'Both']).optional(),
-  photo_coverage: url.optional()
+  photo_coverage: z.string().optional() // Texto indicando estado de cobertura de foto, no URL
 })
 
 export const PlayerUpdateSchema = PlayerCreateSchema.partial().extend({

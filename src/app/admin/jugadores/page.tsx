@@ -152,6 +152,18 @@ export default function JugadoresPage() {
     ratingMax: debouncedFilters.ratingMax,
     heightMin: debouncedFilters.heightMin,
     heightMax: debouncedFilters.heightMax,
+    // Filtros de datos vacíos/llenos
+    playerColor: debouncedFilters.playerColor,
+    playerName: debouncedFilters.playerName,
+    teamName: debouncedFilters.teamName,
+    wyscoutName1: debouncedFilters.wyscoutName1,
+    wyscoutId1: debouncedFilters.wyscoutId1,
+    wyscoutId2: debouncedFilters.wyscoutId2,
+    idFmi: debouncedFilters.idFmi,
+    photoCoverage: debouncedFilters.photoCoverage,
+    urlTrfmAdvisor: debouncedFilters.urlTrfmAdvisor,
+    urlTrfm: debouncedFilters.urlTrfm,
+    urlInstagram: debouncedFilters.urlInstagram,
     limit: 50
   })
 

@@ -14,6 +14,11 @@ interface UseInfiniteTeamsScrollOptions {
   country?: string
   competition?: string
   limit?: number
+  // Filtros de datos vacíos/llenos
+  teamName?: string // 'all' | 'has' | 'empty'
+  urlTrfmBroken?: string // 'all' | 'broken' | 'ok'
+  urlTrfm?: string // 'all' | 'has' | 'empty'
+  ownerClub?: string // 'all' | 'has' | 'empty'
 }
 
 interface UseInfiniteTeamsScrollReturn {
@@ -33,15 +38,24 @@ export function useInfiniteTeamsScroll(
     search = '',
     country = '',
     competition = '',
-    limit = 50
+    limit = 50,
+    // Filtros de datos vacíos/llenos
+    teamName = 'all',
+    urlTrfmBroken = 'all',
+    urlTrfm = 'all',
+    ownerClub = 'all'
   } = options
 
   // Memoizar filtros para evitar re-renders innecesarios
   const filters = useMemo(() => ({
     search,
     country,
-    competition
-  }), [search, country, competition])
+    competition,
+    teamName,
+    urlTrfmBroken,
+    urlTrfm,
+    ownerClub
+  }), [search, country, competition, teamName, urlTrfmBroken, urlTrfm, ownerClub])
 
   // Memoizar getItemId para que sea estable
   const getItemId = useCallback((team: Team) => team.id_team, [])

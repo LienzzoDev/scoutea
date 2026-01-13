@@ -565,6 +565,150 @@ export default function AdminReportTable({ reports, onDelete }: AdminReportTable
                   {renderSortIcon('initial_competition')}
                 </div>
               </th>
+              {/* Edad Inicial */}
+              <th
+                className="p-3 text-left cursor-pointer hover:bg-slate-700/50 transition-colors"
+                onClick={() => handleSort('initial_age')}
+              >
+                <div className="flex items-center gap-1 whitespace-nowrap">
+                  <span className={`font-semibold text-xs ${sortField === 'initial_age' ? 'text-[#FF5733]' : 'text-slate-300'}`}>
+                    Edad Ini.
+                  </span>
+                  {renderSortIcon('initial_age')}
+                </div>
+              </th>
+              {/* ELO Equipo */}
+              <th
+                className="p-3 text-left cursor-pointer hover:bg-slate-700/50 transition-colors"
+                onClick={() => handleSort('initial_team_elo')}
+              >
+                <div className="flex items-center gap-1 whitespace-nowrap">
+                  <span className={`font-semibold text-xs ${sortField === 'initial_team_elo' ? 'text-[#FF5733]' : 'text-slate-300'}`}>
+                    ELO Equipo
+                  </span>
+                  {renderSortIcon('initial_team_elo')}
+                </div>
+              </th>
+              {/* ELO Competición */}
+              <th
+                className="p-3 text-left cursor-pointer hover:bg-slate-700/50 transition-colors"
+                onClick={() => handleSort('initial_competition_elo')}
+              >
+                <div className="flex items-center gap-1 whitespace-nowrap">
+                  <span className={`font-semibold text-xs ${sortField === 'initial_competition_elo' ? 'text-[#FF5733]' : 'text-slate-300'}`}>
+                    ELO Comp.
+                  </span>
+                  {renderSortIcon('initial_competition_elo')}
+                </div>
+              </th>
+              {/* Nivel Competición */}
+              <th
+                className="p-3 text-left cursor-pointer hover:bg-slate-700/50 transition-colors"
+                onClick={() => handleSort('initial_competition_level')}
+              >
+                <div className="flex items-center gap-1 whitespace-nowrap">
+                  <span className={`font-semibold text-xs ${sortField === 'initial_competition_level' ? 'text-[#FF5733]' : 'text-slate-300'}`}>
+                    Nivel Comp.
+                  </span>
+                  {renderSortIcon('initial_competition_level')}
+                </div>
+              </th>
+              {/* Transfer Team Pts */}
+              <th
+                className="p-3 text-left cursor-pointer hover:bg-slate-700/50 transition-colors"
+                onClick={() => handleSort('transfer_team_pts')}
+              >
+                <div className="flex items-center gap-1 whitespace-nowrap">
+                  <span className={`font-semibold text-xs ${sortField === 'transfer_team_pts' ? 'text-[#FF5733]' : 'text-slate-300'}`}>
+                    Transf. Team
+                  </span>
+                  {renderSortIcon('transfer_team_pts')}
+                </div>
+              </th>
+              {/* Transfer Comp Pts */}
+              <th
+                className="p-3 text-left cursor-pointer hover:bg-slate-700/50 transition-colors"
+                onClick={() => handleSort('transfer_competition_pts')}
+              >
+                <div className="flex items-center gap-1 whitespace-nowrap">
+                  <span className={`font-semibold text-xs ${sortField === 'transfer_competition_pts' ? 'text-[#FF5733]' : 'text-slate-300'}`}>
+                    Transf. Comp.
+                  </span>
+                  {renderSortIcon('transfer_competition_pts')}
+                </div>
+              </th>
+              {/* Report Status */}
+              <th
+                className="p-3 text-left cursor-pointer hover:bg-slate-700/50 transition-colors"
+                onClick={() => handleSort('report_status')}
+              >
+                <div className="flex items-center gap-1 whitespace-nowrap">
+                  <span className={`font-semibold text-xs ${sortField === 'report_status' ? 'text-[#FF5733]' : 'text-slate-300'}`}>
+                    Status Rep.
+                  </span>
+                  {renderSortIcon('report_status')}
+                </div>
+              </th>
+              {/* Report Validation */}
+              <th
+                className="p-3 text-left cursor-pointer hover:bg-slate-700/50 transition-colors"
+                onClick={() => handleSort('report_validation')}
+              >
+                <div className="flex items-center gap-1 whitespace-nowrap">
+                  <span className={`font-semibold text-xs ${sortField === 'report_validation' ? 'text-[#FF5733]' : 'text-slate-300'}`}>
+                    Validación
+                  </span>
+                  {renderSortIcon('report_validation')}
+                </div>
+              </th>
+              {/* ID Player */}
+              <th
+                className="p-3 text-left cursor-pointer hover:bg-slate-700/50 transition-colors"
+                onClick={() => handleSort('id_player')}
+              >
+                <div className="flex items-center gap-1 whitespace-nowrap">
+                  <span className={`font-semibold text-xs ${sortField === 'id_player' ? 'text-[#FF5733]' : 'text-slate-300'}`}>
+                    ID Player
+                  </span>
+                  {renderSortIcon('id_player')}
+                </div>
+              </th>
+              {/* Fecha Aprobación */}
+              <th
+                className="p-3 text-left cursor-pointer hover:bg-slate-700/50 transition-colors"
+                onClick={() => handleSort('approval_date')}
+              >
+                <div className="flex items-center gap-1 whitespace-nowrap">
+                  <span className={`font-semibold text-xs ${sortField === 'approval_date' ? 'text-[#FF5733]' : 'text-slate-300'}`}>
+                    F. Aprobación
+                  </span>
+                  {renderSortIcon('approval_date')}
+                </div>
+              </th>
+              {/* Updated At */}
+              <th
+                className="p-3 text-left cursor-pointer hover:bg-slate-700/50 transition-colors"
+                onClick={() => handleSort('updatedAt')}
+              >
+                <div className="flex items-center gap-1 whitespace-nowrap">
+                  <span className={`font-semibold text-xs ${sortField === 'updatedAt' ? 'text-[#FF5733]' : 'text-slate-300'}`}>
+                    Actualizado
+                  </span>
+                  {renderSortIcon('updatedAt')}
+                </div>
+              </th>
+              {/* URL Reporte */}
+              <th className="p-3 text-left">
+                <span className="font-semibold text-xs text-slate-300 whitespace-nowrap">
+                  URL Rep.
+                </span>
+              </th>
+              {/* URL Video */}
+              <th className="p-3 text-left">
+                <span className="font-semibold text-xs text-slate-300 whitespace-nowrap">
+                  URL Video
+                </span>
+              </th>
               {/* Acciones */}
               <th className="p-3 text-center sticky right-0 bg-[#1a2332]">
                 <span className="font-semibold text-xs text-slate-300">Acciones</span>
@@ -678,6 +822,104 @@ export default function AdminReportTable({ reports, onDelete }: AdminReportTable
                       <p className="text-xs text-slate-400">{report.initial_competition_country}</p>
                     )}
                   </div>
+                </td>
+                {/* Edad Inicial */}
+                <td className="p-3">
+                  <span className="text-xs text-white">
+                    {report.initial_age !== null ? report.initial_age : 'N/A'}
+                  </span>
+                </td>
+                {/* ELO Equipo */}
+                <td className="p-3">
+                  <span className="text-xs text-white">
+                    {report.initial_team_elo !== null ? formatNumber(report.initial_team_elo, 0) : 'N/A'}
+                  </span>
+                </td>
+                {/* ELO Competición */}
+                <td className="p-3">
+                  <span className="text-xs text-white">
+                    {report.initial_competition_elo !== null ? formatNumber(report.initial_competition_elo, 0) : 'N/A'}
+                  </span>
+                </td>
+                {/* Nivel Competición */}
+                <td className="p-3">
+                  <span className="text-xs text-white">
+                    {report.initial_competition_level || 'N/A'}
+                  </span>
+                </td>
+                {/* Transfer Team Pts */}
+                <td className="p-3">
+                  <span className="text-xs text-white">
+                    {report.transfer_team_pts !== null ? formatNumber(report.transfer_team_pts, 1) : 'N/A'}
+                  </span>
+                </td>
+                {/* Transfer Comp Pts */}
+                <td className="p-3">
+                  <span className="text-xs text-white">
+                    {report.transfer_competition_pts !== null ? formatNumber(report.transfer_competition_pts, 1) : 'N/A'}
+                  </span>
+                </td>
+                {/* Report Status */}
+                <td className="p-3">
+                  <span className="text-xs text-white">
+                    {report.report_status || 'N/A'}
+                  </span>
+                </td>
+                {/* Report Validation */}
+                <td className="p-3">
+                  <span className="text-xs text-white">
+                    {report.report_validation || 'N/A'}
+                  </span>
+                </td>
+                {/* ID Player */}
+                <td className="p-3">
+                  <span className="text-xs text-white font-mono">
+                    {report.id_player !== null ? report.id_player : 'N/A'}
+                  </span>
+                </td>
+                {/* Fecha Aprobación */}
+                <td className="p-3">
+                  <span className="text-xs text-white whitespace-nowrap">
+                    {formatDate(report.approval_date)}
+                  </span>
+                </td>
+                {/* Updated At */}
+                <td className="p-3">
+                  <span className="text-xs text-white whitespace-nowrap">
+                    {formatDate(report.updatedAt)}
+                  </span>
+                </td>
+                {/* URL Reporte */}
+                <td className="p-3">
+                  {report.form_url_report ? (
+                    <a
+                      href={report.form_url_report}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-400 hover:text-blue-300 underline truncate max-w-[100px] block"
+                      title={report.form_url_report}
+                    >
+                      Ver
+                    </a>
+                  ) : (
+                    <span className="text-xs text-slate-500">N/A</span>
+                  )}
+                </td>
+                {/* URL Video */}
+                <td className="p-3">
+                  {report.form_url_video ? (
+                    <a
+                      href={report.form_url_video}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-red-400 hover:text-red-300 underline truncate max-w-[100px] block"
+                      title={report.form_url_video}
+                    >
+                      Ver
+                    </a>
+                  ) : (
+                    <span className="text-xs text-slate-500">N/A</span>
+                  )}
                 </td>
                 {/* Acciones */}
                 <td className="p-3 sticky right-0 bg-[#131921]">

@@ -15,6 +15,7 @@ export interface JobOffer {
   } | null
   club_name?: string | null
   custom_logo_url?: string | null
+  national_team?: string | null
   location?: string | null
   remote_allowed: boolean
 
@@ -92,6 +93,7 @@ export interface CreateJobOfferInput {
   team_id?: string
   club_name?: string
   custom_logo_url?: string
+  national_team?: string
   location?: string
   remote_allowed?: boolean
   position_type: string

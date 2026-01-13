@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowUpDown, ArrowUp, ArrowDown, Edit, Trash2 } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Edit, Trash2, AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 
 import EditableCell from "@/components/admin/EditableCell";
 import { Button } from "@/components/ui/button";
@@ -42,11 +42,13 @@ const SCRAPED_FIELDS = new Set([
 
 interface Team {
   id_team: string;
+  displayId?: number | null;
   team_name: string;
   correct_team_name?: string | null;
   team_country?: string | null;
   url_trfm_advisor?: string | null;
   url_trfm?: string | null;
+  url_trfm_broken?: boolean | null;
   owner_club?: string | null;
   owner_club_country?: string | null;
   pre_competition?: string | null;
@@ -64,6 +66,7 @@ interface Team {
   stadium?: string | null;
   website_url?: string | null;
   logo_url?: string | null;
+  fm_guide?: string | null;
   admin_notes?: string | null;
 }
 
@@ -100,6 +103,65 @@ export default function TeamTable({
   const router = useRouter();
   const headerScrollRef = useRef<HTMLDivElement>(null);
   const rowScrollRefs = useRef<HTMLDivElement[]>([]);
+
+  // Calcular valores duplicados para team_name, url_trfm, fm_guide
+  const duplicateValues = useMemo(() => {
+    const teamNameCounts = new Map<string, number>();
+    const urlTrfmCounts = new Map<string, number>();
+    const fmGuideCounts = new Map<string, number>();
+
+    teams.forEach(team => {
+      // Contar team_name
+      if (team.team_name) {
+        const name = team.team_name.toLowerCase();
+        teamNameCounts.set(name, (teamNameCounts.get(name) || 0) + 1);
+      }
+      // Contar url_trfm
+      if (team.url_trfm) {
+        const url = team.url_trfm.toLowerCase();
+        urlTrfmCounts.set(url, (urlTrfmCounts.get(url) || 0) + 1);
+      }
+      // Contar fm_guide
+      if (team.fm_guide) {
+        const url = team.fm_guide.toLowerCase();
+        fmGuideCounts.set(url, (fmGuideCounts.get(url) || 0) + 1);
+      }
+    });
+
+    return {
+      teamNames: new Set(
+        Array.from(teamNameCounts.entries())
+          .filter(([_, count]) => count > 1)
+          .map(([name]) => name)
+      ),
+      urlTrfms: new Set(
+        Array.from(urlTrfmCounts.entries())
+          .filter(([_, count]) => count > 1)
+          .map(([url]) => url)
+      ),
+      fmGuides: new Set(
+        Array.from(fmGuideCounts.entries())
+          .filter(([_, count]) => count > 1)
+          .map(([url]) => url)
+      )
+    };
+  }, [teams]);
+
+  // Función para verificar si un valor está duplicado
+  const isDuplicate = (field: 'team_name' | 'url_trfm' | 'fm_guide', value: string | null | undefined): boolean => {
+    if (!value) return false;
+    const lowerValue = value.toLowerCase();
+    switch (field) {
+      case 'team_name':
+        return duplicateValues.teamNames.has(lowerValue);
+      case 'url_trfm':
+        return duplicateValues.urlTrfms.has(lowerValue);
+      case 'fm_guide':
+        return duplicateValues.fmGuides.has(lowerValue);
+      default:
+        return false;
+    }
+  };
 
   // Función para calcular el ancho de columna basado en el contenido
   const calculateColumnWidth = (category: Category): number => {
@@ -223,6 +285,35 @@ export default function TeamTable({
           ? 'bg-[#1a2332] border-slate-700'
           : 'bg-[#f8f9fa] border-[#e7e7e7]'
       }`}>
+        {/* Columna fija - ID */}
+        <div
+          className={`w-24 p-4 border-r flex-shrink-0 cursor-pointer transition-colors sticky left-0 z-10 ${
+            darkMode
+              ? 'border-slate-700 hover:bg-slate-700/50 bg-[#1a2332]'
+              : 'border-[#e7e7e7] hover:bg-gray-50 bg-[#f8f9fa]'
+          }`}
+          onClick={() => onSort?.('id_team')}
+        >
+          <div className="flex items-center gap-1">
+            <h4 className={`font-semibold text-sm ${
+              sortBy === 'id_team'
+                ? (darkMode ? 'text-[#FF5733]' : 'text-[#8c1a10]')
+                : (darkMode ? 'text-slate-300' : 'text-[#6d6d6d]')
+            }`}>
+              ID
+            </h4>
+            {sortBy === 'id_team' ? (
+              sortOrder === 'asc' ? (
+                <ArrowUp className={`w-3 h-3 ${darkMode ? 'text-[#FF5733]' : 'text-[#8c1a10]'}`} />
+              ) : (
+                <ArrowDown className={`w-3 h-3 ${darkMode ? 'text-[#FF5733]' : 'text-[#8c1a10]'}`} />
+              )
+            ) : (
+              <ArrowUpDown className={`w-3 h-3 ${darkMode ? 'text-slate-500' : 'text-gray-400'}`} />
+            )}
+          </div>
+        </div>
+
         {/* Columna fija - Team Info */}
         <div
           className={`w-80 p-4 border-r flex-shrink-0 cursor-pointer transition-colors ${
@@ -359,11 +450,20 @@ export default function TeamTable({
               darkMode ? 'hover:bg-slate-700/30' : 'hover:bg-gray-50'
             }`}
           >
+            {/* Columna fija - ID */}
+            <div className={`w-24 p-4 border-r flex-shrink-0 sticky left-0 z-10 ${
+              darkMode ? 'border-slate-700 bg-[#131921]' : 'border-[#e7e7e7] bg-white'
+            }`}>
+              <p className={`font-medium text-sm ${darkMode ? 'text-slate-300' : 'text-[#6d6d6d]'}`}>
+                {team.displayId ?? team.id_team}
+              </p>
+            </div>
+
             {/* Columna fija - Team Info */}
             <div className={`w-80 p-4 border-r flex-shrink-0 ${
               darkMode ? 'border-slate-700' : 'border-[#e7e7e7]'
             }`}>
-              <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-[#000000]'}`}>
+              <h3 className={`${isDuplicate('team_name', team.team_name) ? 'font-semibold' : 'font-normal'} ${darkMode ? 'text-white' : 'text-[#000000]'}`}>
                 {team.team_name}
               </h3>
             </div>
@@ -405,6 +505,10 @@ export default function TeamTable({
                   const fieldType = getFieldType(category.key);
                   const columnWidth = calculateColumnWidth(category);
 
+                  // Verificar si es un campo que puede tener duplicados
+                  const isUrlField = category.key === 'url_trfm' || category.key === 'fm_guide';
+                  const hasDuplicate = isUrlField && isDuplicate(category.key as 'url_trfm' | 'fm_guide', value as string | null);
+
                   let formattedValue = category.format
                     ? category.format(value)
                     : value || "N/A";
@@ -428,16 +532,26 @@ export default function TeamTable({
                         width: `${columnWidth}px`,
                       }}
                     >
-                      {isEditable ? (
+                      {category.key === 'url_trfm_broken' ? (
+                        // Mostrar icono de alerta si url_trfm está roto, o guión si está OK
+                        <div className="flex items-center justify-center" title={team.url_trfm_broken ? "URL TRFM roto - detectado en scraping" : "URL TRFM OK"}>
+                          {team.url_trfm_broken ? (
+                            <AlertTriangle className="h-5 w-5 text-amber-500" />
+                          ) : (
+                            <span className="text-slate-500">-</span>
+                          )}
+                        </div>
+                      ) : isEditable ? (
                         <EditableCell
                           value={value ?? null}
                           playerId={team.id_team}
                           fieldName={category.key}
                           onSave={handleSaveField}
                           type={fieldType}
+                          isBold={hasDuplicate}
                         />
                       ) : (
-                        <p className={`font-medium break-words ${
+                        <p className={`${hasDuplicate ? 'font-semibold' : 'font-medium'} break-words ${
                           darkMode ? 'text-white' : 'text-[#000000]'
                         }`}>
                           {formattedValue}

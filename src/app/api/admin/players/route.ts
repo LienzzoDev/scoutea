@@ -66,6 +66,19 @@ export async function GET(request: NextRequest) {
     const heightMin = searchParams.get('heightMin')
     const heightMax = searchParams.get('heightMax')
 
+    // Nuevos filtros de datos vacíos/llenos
+    const playerColor = searchParams.get('playerColor')
+    const playerName = searchParams.get('playerName')
+    const teamName = searchParams.get('teamName')
+    const wyscoutName1 = searchParams.get('wyscoutName1')
+    const wyscoutId1 = searchParams.get('wyscoutId1')
+    const wyscoutId2 = searchParams.get('wyscoutId2')
+    const idFmi = searchParams.get('idFmi')
+    const photoCoverage = searchParams.get('photoCoverage')
+    const urlTrfmAdvisor = searchParams.get('urlTrfmAdvisor')
+    const urlTrfm = searchParams.get('urlTrfm')
+    const urlInstagram = searchParams.get('urlInstagram')
+
     // Validar y parsear limit
     const limit = Math.min(
       parseInt(limitParam || '50', 10),
@@ -152,6 +165,42 @@ export async function GET(request: NextRequest) {
       if (heightMax) {
         where.height.lte = parseInt(heightMax, 10)
       }
+    }
+
+    // 🎨 FILTROS DE DATOS VACÍOS/LLENOS (N/A)
+    // Helper para crear condición de vacío/lleno
+    const createEmptyFilter = (field: string, value: string | null) => {
+      if (!value || value === 'all') return null
+      if (value === 'has') {
+        return { [field]: { not: null } }
+      }
+      if (value === 'empty') {
+        return { [field]: null }
+      }
+      return null
+    }
+
+    // Aplicar filtros de vacío/lleno
+    const emptyFilters = [
+      createEmptyFilter('player_color', playerColor),
+      createEmptyFilter('player_name', playerName),
+      createEmptyFilter('team_name', teamName),
+      createEmptyFilter('wyscout_name_1', wyscoutName1),
+      createEmptyFilter('wyscout_id_1', wyscoutId1),
+      createEmptyFilter('wyscout_id_2', wyscoutId2),
+      createEmptyFilter('id_fmi', idFmi),
+      createEmptyFilter('photo_coverage', photoCoverage),
+      createEmptyFilter('url_trfm_advisor', urlTrfmAdvisor),
+      createEmptyFilter('url_trfm', urlTrfm),
+      createEmptyFilter('url_instagram', urlInstagram)
+    ].filter(Boolean)
+
+    // Añadir filtros de vacío/lleno al where
+    if (emptyFilters.length > 0) {
+      if (!where.AND) {
+        where.AND = []
+      }
+      where.AND.push(...emptyFilters)
     }
 
     // 🎯 DETERMINAR SI SE NECESITAN TODOS LOS CAMPOS O SOLO LOS BÁSICOS
@@ -256,6 +305,7 @@ export async function GET(request: NextRequest) {
       video: true,
       url_trfm_advisor: true,
       url_trfm: true,
+      url_trfm_broken: true,
       url_secondary: true,
       url_instagram: true,
 

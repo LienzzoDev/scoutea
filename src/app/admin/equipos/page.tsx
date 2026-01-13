@@ -1,18 +1,40 @@
 'use client'
 
-import { Globe, Plus, RefreshCw, Search } from "lucide-react"
+import { ChevronDown, ChevronUp, Filter, Globe, Plus, RefreshCw, Search, X } from "lucide-react"
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import ImportTeamsButton from "@/components/admin/ImportTeamsButton"
 import TeamTable from "@/components/team/TeamTable"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingPage } from "@/components/ui/loading-spinner"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { EditableCellProvider } from "@/contexts/EditableCellContext"
 import { useInfiniteTeamsScroll } from '@/hooks/admin/useInfiniteTeamsScroll'
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 import type { Team } from "@/hooks/team/useTeams"
+
+// Tipo para los filtros de equipos
+interface TeamFilters {
+  teamName: string // 'all' | 'has' | 'empty'
+  urlTrfmBroken: string // 'all' | 'broken' | 'ok'
+  urlTrfm: string // 'all' | 'has' | 'empty'
+  ownerClub: string // 'all' | 'has' | 'empty'
+}
+
+const DEFAULT_TEAM_FILTERS: TeamFilters = {
+  teamName: 'all',
+  urlTrfmBroken: 'all',
+  urlTrfm: 'all',
+  ownerClub: 'all'
+}
 
 export default function EquiposPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
@@ -23,6 +45,11 @@ export default function EquiposPage() {
   const [sortBy, setSortBy] = useState<string>('team_name')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
+  // Estado para filtros avanzados
+  const [filters, setFilters] = useState<TeamFilters>(DEFAULT_TEAM_FILTERS)
+  const [debouncedFilters, setDebouncedFilters] = useState<TeamFilters>(DEFAULT_TEAM_FILTERS)
+  const [showFilters, setShowFilters] = useState(false)
+
   // Debounce del search term
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -31,6 +58,29 @@ export default function EquiposPage() {
 
     return () => clearTimeout(timer)
   }, [searchTerm])
+
+  // Debounce de los filtros
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedFilters(filters)
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [filters])
+
+  // Handler para cambios de filtros
+  const handleFilterChange = useCallback((key: keyof TeamFilters, value: string) => {
+    setFilters((prev: TeamFilters) => ({ ...prev, [key]: value }))
+  }, [])
+
+  // Reset de filtros
+  const handleResetFilters = useCallback(() => {
+    setFilters(DEFAULT_TEAM_FILTERS)
+  }, [])
+
+  // Contar filtros activos
+  const activeFilterCount = Object.values(filters).filter(v => v !== 'all').length
+  const hasActiveFilters = activeFilterCount > 0
 
   // Hook de infinite scroll
   const {
@@ -43,7 +93,11 @@ export default function EquiposPage() {
     refresh
   } = useInfiniteTeamsScroll({
     search: debouncedSearch,
-    limit: 50
+    limit: 50,
+    teamName: debouncedFilters.teamName,
+    urlTrfmBroken: debouncedFilters.urlTrfmBroken,
+    urlTrfm: debouncedFilters.urlTrfm,
+    ownerClub: debouncedFilters.ownerClub
   })
 
   // Forzar refresh al montar la página para obtener datos frescos
@@ -52,26 +106,17 @@ export default function EquiposPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Categorías para mostrar en la tabla
+  // Categorías para mostrar en la tabla (ID es ahora columna fija en TeamTable)
   const categories = useMemo(() => [
-    {
-      key: 'id_team',
-      label: 'ID',
-      getValue: (team: Team) => team.displayId ?? team.id_team,
-    },
     {
       key: 'team_country',
       label: 'País del Equipo',
       getValue: (team: Team) => team.team_country,
     },
     {
-      key: 'url_trfm_advisor',
-      label: 'URL TM Advisor',
-      getValue: (team: Team) => team.url_trfm_advisor,
-      format: (value: unknown) => {
-        if (!value || typeof value !== 'string') return 'N/A';
-        return value.length > 30 ? value.substring(0, 30) + '...' : value;
-      },
+      key: 'url_trfm_broken',
+      label: 'URL Broken',
+      getValue: (team: Team) => team.url_trfm_broken,
     },
     {
       key: 'url_trfm',
@@ -118,6 +163,15 @@ export default function EquiposPage() {
       format: (value: unknown) => {
         if (!value || typeof value !== 'number') return 'N/A';
         return value.toFixed(2);
+      },
+    },
+    {
+      key: 'fm_guide',
+      label: 'FM Guide',
+      getValue: (team: Team) => team.fm_guide,
+      format: (value: unknown) => {
+        if (!value || typeof value !== 'string') return 'N/A';
+        return value.length > 30 ? value.substring(0, 30) + '...' : value;
       },
     },
     {
@@ -266,8 +320,8 @@ export default function EquiposPage() {
         </Button>
       </div>
 
-      {/* Search */}
-      <div className="flex items-center justify-between mb-6">
+      {/* Search and Filters */}
+      <div className="flex items-center justify-between mb-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
@@ -278,10 +332,120 @@ export default function EquiposPage() {
             aria-label="Buscar equipos"
           />
         </div>
-        <div className="text-sm text-slate-400">
-          {teams.length} equipos {hasMore ? '(cargando más al hacer scroll)' : 'cargados'}
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className={`border-slate-700 bg-[#131921] text-white hover:bg-slate-700 ${hasActiveFilters ? 'border-[#FF5733]' : ''}`}
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            Filtros
+            {hasActiveFilters && (
+              <span className="ml-2 bg-[#FF5733] text-white text-xs px-1.5 py-0.5 rounded-full">
+                {activeFilterCount}
+              </span>
+            )}
+            {showFilters ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
+          </Button>
+          <div className="text-sm text-slate-400">
+            {teams.length} equipos {hasMore ? '(cargando más al hacer scroll)' : 'cargados'}
+          </div>
         </div>
       </div>
+
+      {/* Filtros Avanzados */}
+      {showFilters && (
+        <div className="mb-6 p-4 bg-[#131921] border border-slate-700 rounded-lg">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-slate-300">Filtros de Datos</h3>
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetFilters}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="h-4 w-4 mr-1" />
+                Limpiar filtros
+              </Button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Team Name Filter */}
+            <div className="space-y-1">
+              <span className="text-xs text-slate-400">Team Name</span>
+              <Select
+                value={filters.teamName}
+                onValueChange={(value) => handleFilterChange('teamName', value)}
+              >
+                <SelectTrigger className="bg-[#0D1117] border-slate-700 text-white">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#131921] border-slate-700">
+                  <SelectItem value="all" className="text-white hover:bg-slate-700">Todos</SelectItem>
+                  <SelectItem value="has" className="text-white hover:bg-slate-700">Con valor</SelectItem>
+                  <SelectItem value="empty" className="text-white hover:bg-slate-700">Vacío (N/A)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* URL TRFM Broken Filter */}
+            <div className="space-y-1">
+              <span className="text-xs text-slate-400">URL Broken</span>
+              <Select
+                value={filters.urlTrfmBroken}
+                onValueChange={(value) => handleFilterChange('urlTrfmBroken', value)}
+              >
+                <SelectTrigger className="bg-[#0D1117] border-slate-700 text-white">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#131921] border-slate-700">
+                  <SelectItem value="all" className="text-white hover:bg-slate-700">Todos</SelectItem>
+                  <SelectItem value="broken" className="text-white hover:bg-slate-700">URL Roto</SelectItem>
+                  <SelectItem value="ok" className="text-white hover:bg-slate-700">URL OK</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* URL TRFM Filter */}
+            <div className="space-y-1">
+              <span className="text-xs text-slate-400">URL Transfermarkt</span>
+              <Select
+                value={filters.urlTrfm}
+                onValueChange={(value) => handleFilterChange('urlTrfm', value)}
+              >
+                <SelectTrigger className="bg-[#0D1117] border-slate-700 text-white">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#131921] border-slate-700">
+                  <SelectItem value="all" className="text-white hover:bg-slate-700">Todos</SelectItem>
+                  <SelectItem value="has" className="text-white hover:bg-slate-700">Con valor</SelectItem>
+                  <SelectItem value="empty" className="text-white hover:bg-slate-700">Vacío (N/A)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Owner Club Filter */}
+            <div className="space-y-1">
+              <span className="text-xs text-slate-400">Owner Club</span>
+              <Select
+                value={filters.ownerClub}
+                onValueChange={(value) => handleFilterChange('ownerClub', value)}
+              >
+                <SelectTrigger className="bg-[#0D1117] border-slate-700 text-white">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#131921] border-slate-700">
+                  <SelectItem value="all" className="text-white hover:bg-slate-700">Todos</SelectItem>
+                  <SelectItem value="has" className="text-white hover:bg-slate-700">Con valor</SelectItem>
+                  <SelectItem value="empty" className="text-white hover:bg-slate-700">Vacío (N/A)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Error State */}
       {error && (

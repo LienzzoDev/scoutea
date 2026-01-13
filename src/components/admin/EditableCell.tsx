@@ -7,10 +7,11 @@ import { useEditableCell } from "@/contexts/EditableCellContext";
 
 interface EditableCellProps {
   value: string | number | boolean | Date | null;
-  playerId: number;
+  playerId: number | string;
   fieldName: string;
-  onSave: (playerId: number, fieldName: string, value: string | number | boolean) => Promise<boolean>;
+  onSave: (playerId: number | string, fieldName: string, value: string | number | boolean) => Promise<boolean>;
   type?: 'text' | 'number' | 'boolean' | 'url' | 'date';
+  isBold?: boolean;
 }
 
 export default function EditableCell({
@@ -18,7 +19,8 @@ export default function EditableCell({
   playerId,
   fieldName,
   onSave,
-  type = 'text'
+  type = 'text',
+  isBold = false
 }: EditableCellProps) {
   const { activeCell, setActiveCell, requestEdit } = useEditableCell();
   const cellId = `${playerId}-${fieldName}`;
@@ -41,6 +43,26 @@ export default function EditableCell({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Sincronizar editValue cuando el value prop cambia externamente
+  useEffect(() => {
+    if (!isEditing) {
+      if (type === 'date' && value) {
+        if (value instanceof Date) {
+          setEditValue(value.toISOString().split('T')[0]);
+        } else if (typeof value === 'string') {
+          const date = new Date(value);
+          if (!isNaN(date.getTime())) {
+            setEditValue(date.toISOString().split('T')[0]);
+          } else {
+            setEditValue('');
+          }
+        }
+      } else {
+        setEditValue(value?.toString() || '');
+      }
+    }
+  }, [value, type, isEditing]);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -244,7 +266,7 @@ export default function EditableCell({
       className="group flex items-center gap-2 cursor-pointer hover:bg-slate-800/50 px-2 py-1 rounded transition-colors"
       onClick={handleEdit}
     >
-      <span className="text-sm text-white whitespace-nowrap flex-1">
+      <span className={`text-sm text-white whitespace-nowrap flex-1 ${isBold ? 'font-semibold' : ''}`}>
         {formatDisplayValue()}
       </span>
       <Edit2 className="h-3 w-3 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity" />

@@ -293,9 +293,14 @@ export function useInfiniteScroll<T = any, F = Record<string, any>>({
    * Función para actualizar un item en el estado local
    */
   const updateItem = useCallback((id: string, updates: Partial<T>) => {
-    setItems((prev: T[]) => prev.map((item: T) =>
-      getItemId(item) === id ? { ...item, ...updates } : item
-    ))
+    console.log('🔄 updateItem called:', { id, updates })
+    setItems((prev: T[]) => {
+      const newItems = prev.map((item: T) =>
+        getItemId(item) === id ? { ...item, ...updates } : item
+      )
+      console.log('🔄 Items updated, new array created')
+      return newItems
+    })
   }, [getItemId])
 
   // Cleanup del observer

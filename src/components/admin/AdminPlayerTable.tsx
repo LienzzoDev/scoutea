@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpDown, ArrowUp, ArrowDown, Edit, ExternalLink } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Edit, ExternalLink, AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useMemo, memo } from "react";
 
@@ -32,8 +32,8 @@ type SortOrder = 'asc' | 'desc';
 
 // Función para determinar el tipo de campo automáticamente
 const getFieldType = (fieldName: string): 'text' | 'number' | 'boolean' | 'url' | 'date' => {
-  // Campos de URL
-  if (fieldName.startsWith('url_') || fieldName === 'video' || fieldName === 'photo_coverage') {
+  // Campos de URL (photo_coverage es solo texto, no link)
+  if (fieldName.startsWith('url_') || fieldName === 'video') {
     return 'url';
   }
 
@@ -152,8 +152,7 @@ const CALCULATED_FIELDS = new Set([
 
 // Campos obtenidos mediante SCRAPING de Transfermarkt
 const SCRAPED_FIELDS = new Set([
-  // URLs
-  'url_trfm_advisor',    // URL del agente en Transfermarkt
+  // URLs (url_trfm_broken es detectado durante scraping)
   
   // Datos personales
   'date_of_birth',       // Fecha de nacimiento
@@ -174,7 +173,7 @@ const SCRAPED_FIELDS = new Set([
   'player_trfm_value',   // Valor de mercado en €
   
   // Imagen
-  'photo_coverage',      // URL de la foto de perfil
+  'photo_coverage',      // Estado de cobertura de foto (texto, no link)
 ]);
 
 // Campos FACTORES que influyen en otros campos calculados
@@ -229,7 +228,7 @@ const COLUMN_DEFINITIONS = [
   { key: 'id_fmi', label: 'ID FMI', width: '100px' },
   { key: 'player_rating', label: 'Player Rating', width: '120px' },
   { key: 'photo_coverage', label: 'Photo Coverage', width: '130px' },
-  { key: 'url_trfm_advisor', label: 'URL TRFM Advisor', width: '150px' },
+  { key: 'url_trfm_broken', label: 'URL Broken', width: '100px' },
   { key: 'url_trfm', label: 'URL TRFM', width: '120px' },
   { key: 'url_secondary', label: 'URL Secondary', width: '130px' },
   { key: 'url_instagram', label: 'URL Instagram', width: '130px' },
@@ -335,10 +334,54 @@ const AdminPlayerTable = memo(function AdminPlayerTable({ players, hiddenColumns
     return duplicates;
   }, [players]);
 
+  // Detectar jugadores donde wyscout_id_1 === wyscout_id_2 o wyscout_name_1 === wyscout_name_2
+  const playersWithMatchingWyscout = useMemo(() => {
+    const matchingIds = new Set<number>();
+    const matchingNames = new Set<number>();
+
+    players.forEach(player => {
+      // Verificar IDs
+      const wyscoutId1 = player.wyscout_id_1;
+      const wyscoutId2 = player.wyscout_id_2;
+      if (wyscoutId1 != null && wyscoutId1 !== '' &&
+          wyscoutId2 != null && wyscoutId2 !== '' &&
+          String(wyscoutId1) === String(wyscoutId2)) {
+        matchingIds.add(player.id_player);
+      }
+
+      // Verificar Names
+      const wyscoutName1 = player.wyscout_name_1;
+      const wyscoutName2 = player.wyscout_name_2;
+      if (wyscoutName1 != null && wyscoutName1 !== '' &&
+          wyscoutName2 != null && wyscoutName2 !== '' &&
+          String(wyscoutName1) === String(wyscoutName2)) {
+        matchingNames.add(player.id_player);
+      }
+    });
+
+    return { matchingIds, matchingNames };
+  }, [players]);
+
   // Función para verificar si un valor está duplicado
-  const isDuplicate = (fieldName: string, value: unknown): boolean => {
-    if (!IMPORTANT_DUPLICATE_FIELDS.has(fieldName)) return false;
+  const isDuplicate = (fieldName: string, value: unknown, playerId?: number): boolean => {
     if (value === null || value === undefined || value === '') return false;
+
+    // Caso especial: wyscout_id_1 y wyscout_id_2 iguales en el mismo jugador
+    if ((fieldName === 'wyscout_id_1' || fieldName === 'wyscout_id_2') && playerId !== undefined) {
+      if (playersWithMatchingWyscout.matchingIds.has(playerId)) {
+        return true;
+      }
+    }
+
+    // Caso especial: wyscout_name_1 y wyscout_name_2 iguales en el mismo jugador
+    if ((fieldName === 'wyscout_name_1' || fieldName === 'wyscout_name_2') && playerId !== undefined) {
+      if (playersWithMatchingWyscout.matchingNames.has(playerId)) {
+        return true;
+      }
+    }
+
+    // Caso normal: valor duplicado entre diferentes jugadores
+    if (!IMPORTANT_DUPLICATE_FIELDS.has(fieldName)) return false;
 
     const duplicateSet = duplicateValues.get(fieldName);
     if (!duplicateSet) return false;
@@ -562,7 +605,7 @@ const AdminPlayerTable = memo(function AdminPlayerTable({ players, hiddenColumns
                   const formattedValue = formatValue(value, col.key);
                   const isEditable = !NON_EDITABLE_FIELDS.has(col.key);
                   const fieldType = getFieldType(col.key);
-                  const hasDuplicate = isDuplicate(col.key, value);
+                  const hasDuplicate = isDuplicate(col.key, value, player.id_player);
 
                   return (
                     <td
@@ -583,6 +626,15 @@ const AdminPlayerTable = memo(function AdminPlayerTable({ players, hiddenColumns
                             playerId={player.id_player}
                             onSave={handleSaveField}
                           />
+                        ) : col.key === 'url_trfm_broken' ? (
+                          // Mostrar icono de alerta si url_trfm está roto, o checkmark si está OK
+                          <div className="flex items-center justify-center" title={player.url_trfm_broken ? "URL TRFM roto - detectado en scraping" : "URL TRFM OK"}>
+                            {player.url_trfm_broken ? (
+                              <AlertTriangle className="h-5 w-5 text-amber-500" />
+                            ) : (
+                              <span className="text-slate-500">-</span>
+                            )}
+                          </div>
                         ) : isEditable ? (
                           <EditableCell
                             value={value ?? null}

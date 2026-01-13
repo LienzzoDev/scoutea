@@ -35,6 +35,19 @@ export interface PlayerFilters {
   eloMax: string
   heightMin: string
   heightMax: string
+
+  // Filtros de datos vacíos/llenos (N/A)
+  playerColor: string // 'all' | 'has' | 'empty' - Color
+  playerName: string // 'all' | 'has' | 'empty' - Player Name
+  teamName: string // 'all' | 'has' | 'empty' - Team Name
+  wyscoutName1: string // 'all' | 'has' | 'empty' - Wyscout Name 1
+  wyscoutId1: string // 'all' | 'has' | 'empty' - Wyscout ID 1
+  wyscoutId2: string // 'all' | 'has' | 'empty' - Wyscout ID 2
+  idFmi: string // 'all' | 'has' | 'empty' - FM (ID FMI)
+  photoCoverage: string // 'all' | 'has' | 'empty' - Photo Coverage
+  urlTrfmAdvisor: string // 'all' | 'has' | 'empty' - URL Advisor
+  urlTrfm: string // 'all' | 'has' | 'empty' - URL TRFM
+  urlInstagram: string // 'all' | 'has' | 'empty' - URL IG
 }
 
 export const DEFAULT_FILTERS: PlayerFilters = {
@@ -55,6 +68,18 @@ export const DEFAULT_FILTERS: PlayerFilters = {
   eloMax: '',
   heightMin: '',
   heightMax: '',
+  // Filtros de datos vacíos/llenos
+  playerColor: 'all',
+  playerName: 'all',
+  teamName: 'all',
+  wyscoutName1: 'all',
+  wyscoutId1: 'all',
+  wyscoutId2: 'all',
+  idFmi: 'all',
+  photoCoverage: 'all',
+  urlTrfmAdvisor: 'all',
+  urlTrfm: 'all',
+  urlInstagram: 'all',
 }
 
 interface AdminPlayerFiltersProps {
@@ -154,15 +179,22 @@ export default function AdminPlayerFilters({
     })
   }
 
+  // Lista de filtros que usan 'all' como valor por defecto
+  const allDefaultFilters = [
+    'onLoan', 'isVisible', 'playerColor', 'playerName', 'teamName',
+    'wyscoutName1', 'wyscoutId1', 'wyscoutId2', 'idFmi',
+    'photoCoverage', 'urlTrfmAdvisor', 'urlTrfm', 'urlInstagram'
+  ]
+
   const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
-    if (key === 'onLoan' || key === 'isVisible') {
+    if (allDefaultFilters.includes(key)) {
       return value !== 'all'
     }
     return value !== ''
   })
 
   const activeFilterCount = Object.entries(filters).filter(([key, value]) => {
-    if (key === 'onLoan' || key === 'isVisible') {
+    if (allDefaultFilters.includes(key)) {
       return value !== 'all'
     }
     return value !== ''
@@ -558,6 +590,212 @@ export default function AdminPlayerFilters({
             </div>
           </div>
 
+          {/* Filtros de datos vacíos/llenos (N/A) */}
+          <div className="mt-4 pt-4 border-t border-slate-700">
+            <h4 className="text-sm text-slate-300 font-medium mb-3">
+              Filtros por datos vacíos / con valor
+            </h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+              {/* Color */}
+              <div className="space-y-1">
+                <span className="text-xs text-slate-400 font-medium block">Color</span>
+                <Select
+                  value={filters.playerColor}
+                  onValueChange={(value) => handleFilterChange('playerColor', value)}
+                >
+                  <SelectTrigger className="bg-slate-800 border-slate-600 text-white h-9 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-600">
+                    <SelectItem value="all" className="text-white hover:bg-slate-700">Todos</SelectItem>
+                    <SelectItem value="has" className="text-white hover:bg-slate-700">Con valor</SelectItem>
+                    <SelectItem value="empty" className="text-white hover:bg-slate-700">Vacío (N/A)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Player Name */}
+              <div className="space-y-1">
+                <span className="text-xs text-slate-400 font-medium block">Player Name</span>
+                <Select
+                  value={filters.playerName}
+                  onValueChange={(value) => handleFilterChange('playerName', value)}
+                >
+                  <SelectTrigger className="bg-slate-800 border-slate-600 text-white h-9 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-600">
+                    <SelectItem value="all" className="text-white hover:bg-slate-700">Todos</SelectItem>
+                    <SelectItem value="has" className="text-white hover:bg-slate-700">Con valor</SelectItem>
+                    <SelectItem value="empty" className="text-white hover:bg-slate-700">Vacío (N/A)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Team Name */}
+              <div className="space-y-1">
+                <span className="text-xs text-slate-400 font-medium block">Team Name</span>
+                <Select
+                  value={filters.teamName}
+                  onValueChange={(value) => handleFilterChange('teamName', value)}
+                >
+                  <SelectTrigger className="bg-slate-800 border-slate-600 text-white h-9 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-600">
+                    <SelectItem value="all" className="text-white hover:bg-slate-700">Todos</SelectItem>
+                    <SelectItem value="has" className="text-white hover:bg-slate-700">Con valor</SelectItem>
+                    <SelectItem value="empty" className="text-white hover:bg-slate-700">Vacío (N/A)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Wyscout Name 1 */}
+              <div className="space-y-1">
+                <span className="text-xs text-slate-400 font-medium block">Wyscout</span>
+                <Select
+                  value={filters.wyscoutName1}
+                  onValueChange={(value) => handleFilterChange('wyscoutName1', value)}
+                >
+                  <SelectTrigger className="bg-slate-800 border-slate-600 text-white h-9 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-600">
+                    <SelectItem value="all" className="text-white hover:bg-slate-700">Todos</SelectItem>
+                    <SelectItem value="has" className="text-white hover:bg-slate-700">Con valor</SelectItem>
+                    <SelectItem value="empty" className="text-white hover:bg-slate-700">Vacío (N/A)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Wyscout ID 1 */}
+              <div className="space-y-1">
+                <span className="text-xs text-slate-400 font-medium block">Wyscout ID 1</span>
+                <Select
+                  value={filters.wyscoutId1}
+                  onValueChange={(value) => handleFilterChange('wyscoutId1', value)}
+                >
+                  <SelectTrigger className="bg-slate-800 border-slate-600 text-white h-9 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-600">
+                    <SelectItem value="all" className="text-white hover:bg-slate-700">Todos</SelectItem>
+                    <SelectItem value="has" className="text-white hover:bg-slate-700">Con valor</SelectItem>
+                    <SelectItem value="empty" className="text-white hover:bg-slate-700">Vacío (N/A)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Wyscout ID 2 */}
+              <div className="space-y-1">
+                <span className="text-xs text-slate-400 font-medium block">Wyscout ID 2</span>
+                <Select
+                  value={filters.wyscoutId2}
+                  onValueChange={(value) => handleFilterChange('wyscoutId2', value)}
+                >
+                  <SelectTrigger className="bg-slate-800 border-slate-600 text-white h-9 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-600">
+                    <SelectItem value="all" className="text-white hover:bg-slate-700">Todos</SelectItem>
+                    <SelectItem value="has" className="text-white hover:bg-slate-700">Con valor</SelectItem>
+                    <SelectItem value="empty" className="text-white hover:bg-slate-700">Vacío (N/A)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* ID FMI (FM) */}
+              <div className="space-y-1">
+                <span className="text-xs text-slate-400 font-medium block">FM (ID FMI)</span>
+                <Select
+                  value={filters.idFmi}
+                  onValueChange={(value) => handleFilterChange('idFmi', value)}
+                >
+                  <SelectTrigger className="bg-slate-800 border-slate-600 text-white h-9 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-600">
+                    <SelectItem value="all" className="text-white hover:bg-slate-700">Todos</SelectItem>
+                    <SelectItem value="has" className="text-white hover:bg-slate-700">Con valor</SelectItem>
+                    <SelectItem value="empty" className="text-white hover:bg-slate-700">Vacío (N/A)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Photo Coverage */}
+              <div className="space-y-1">
+                <span className="text-xs text-slate-400 font-medium block">Photo Cover</span>
+                <Select
+                  value={filters.photoCoverage}
+                  onValueChange={(value) => handleFilterChange('photoCoverage', value)}
+                >
+                  <SelectTrigger className="bg-slate-800 border-slate-600 text-white h-9 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-600">
+                    <SelectItem value="all" className="text-white hover:bg-slate-700">Todos</SelectItem>
+                    <SelectItem value="has" className="text-white hover:bg-slate-700">Con valor</SelectItem>
+                    <SelectItem value="empty" className="text-white hover:bg-slate-700">Vacío (N/A)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* URL Advisor */}
+              <div className="space-y-1">
+                <span className="text-xs text-slate-400 font-medium block">URL Advisor</span>
+                <Select
+                  value={filters.urlTrfmAdvisor}
+                  onValueChange={(value) => handleFilterChange('urlTrfmAdvisor', value)}
+                >
+                  <SelectTrigger className="bg-slate-800 border-slate-600 text-white h-9 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-600">
+                    <SelectItem value="all" className="text-white hover:bg-slate-700">Todos</SelectItem>
+                    <SelectItem value="has" className="text-white hover:bg-slate-700">Con valor</SelectItem>
+                    <SelectItem value="empty" className="text-white hover:bg-slate-700">Vacío (N/A)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* URL TRFM */}
+              <div className="space-y-1">
+                <span className="text-xs text-slate-400 font-medium block">URL TRFM</span>
+                <Select
+                  value={filters.urlTrfm}
+                  onValueChange={(value) => handleFilterChange('urlTrfm', value)}
+                >
+                  <SelectTrigger className="bg-slate-800 border-slate-600 text-white h-9 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-600">
+                    <SelectItem value="all" className="text-white hover:bg-slate-700">Todos</SelectItem>
+                    <SelectItem value="has" className="text-white hover:bg-slate-700">Con valor</SelectItem>
+                    <SelectItem value="empty" className="text-white hover:bg-slate-700">Vacío (N/A)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* URL Instagram */}
+              <div className="space-y-1">
+                <span className="text-xs text-slate-400 font-medium block">URL IG</span>
+                <Select
+                  value={filters.urlInstagram}
+                  onValueChange={(value) => handleFilterChange('urlInstagram', value)}
+                >
+                  <SelectTrigger className="bg-slate-800 border-slate-600 text-white h-9 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-600">
+                    <SelectItem value="all" className="text-white hover:bg-slate-700">Todos</SelectItem>
+                    <SelectItem value="has" className="text-white hover:bg-slate-700">Con valor</SelectItem>
+                    <SelectItem value="empty" className="text-white hover:bg-slate-700">Vacío (N/A)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
           {/* Chips de filtros activos */}
           {hasActiveFilters && (
             <div className="mt-4 pt-4 border-t border-slate-700">
@@ -638,6 +876,72 @@ export default function AdminPlayerFilters({
                       handleFilterChange('heightMin', '')
                       handleFilterChange('heightMax', '')
                     }}
+                  />
+                )}
+                {filters.playerColor !== 'all' && (
+                  <FilterChip
+                    label={`Color: ${filters.playerColor === 'has' ? 'Con valor' : 'Vacío'}`}
+                    onRemove={() => handleFilterChange('playerColor', 'all')}
+                  />
+                )}
+                {filters.playerName !== 'all' && (
+                  <FilterChip
+                    label={`Player Name: ${filters.playerName === 'has' ? 'Con valor' : 'Vacío'}`}
+                    onRemove={() => handleFilterChange('playerName', 'all')}
+                  />
+                )}
+                {filters.teamName !== 'all' && (
+                  <FilterChip
+                    label={`Team Name: ${filters.teamName === 'has' ? 'Con valor' : 'Vacío'}`}
+                    onRemove={() => handleFilterChange('teamName', 'all')}
+                  />
+                )}
+                {filters.wyscoutName1 !== 'all' && (
+                  <FilterChip
+                    label={`Wyscout: ${filters.wyscoutName1 === 'has' ? 'Con valor' : 'Vacío'}`}
+                    onRemove={() => handleFilterChange('wyscoutName1', 'all')}
+                  />
+                )}
+                {filters.wyscoutId1 !== 'all' && (
+                  <FilterChip
+                    label={`Wyscout ID 1: ${filters.wyscoutId1 === 'has' ? 'Con valor' : 'Vacío'}`}
+                    onRemove={() => handleFilterChange('wyscoutId1', 'all')}
+                  />
+                )}
+                {filters.wyscoutId2 !== 'all' && (
+                  <FilterChip
+                    label={`Wyscout ID 2: ${filters.wyscoutId2 === 'has' ? 'Con valor' : 'Vacío'}`}
+                    onRemove={() => handleFilterChange('wyscoutId2', 'all')}
+                  />
+                )}
+                {filters.idFmi !== 'all' && (
+                  <FilterChip
+                    label={`FM: ${filters.idFmi === 'has' ? 'Con valor' : 'Vacío'}`}
+                    onRemove={() => handleFilterChange('idFmi', 'all')}
+                  />
+                )}
+                {filters.photoCoverage !== 'all' && (
+                  <FilterChip
+                    label={`Photo Cover: ${filters.photoCoverage === 'has' ? 'Con valor' : 'Vacío'}`}
+                    onRemove={() => handleFilterChange('photoCoverage', 'all')}
+                  />
+                )}
+                {filters.urlTrfmAdvisor !== 'all' && (
+                  <FilterChip
+                    label={`URL Advisor: ${filters.urlTrfmAdvisor === 'has' ? 'Con valor' : 'Vacío'}`}
+                    onRemove={() => handleFilterChange('urlTrfmAdvisor', 'all')}
+                  />
+                )}
+                {filters.urlTrfm !== 'all' && (
+                  <FilterChip
+                    label={`URL TRFM: ${filters.urlTrfm === 'has' ? 'Con valor' : 'Vacío'}`}
+                    onRemove={() => handleFilterChange('urlTrfm', 'all')}
+                  />
+                )}
+                {filters.urlInstagram !== 'all' && (
+                  <FilterChip
+                    label={`URL IG: ${filters.urlInstagram === 'has' ? 'Con valor' : 'Vacío'}`}
+                    onRemove={() => handleFilterChange('urlInstagram', 'all')}
                   />
                 )}
               </div>

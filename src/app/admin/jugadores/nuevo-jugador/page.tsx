@@ -10,15 +10,36 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { NATIONALITIES } from "@/constants/nationalities"
 import { usePlayers } from "@/hooks/player/usePlayers"
 import { CrearJugadorData } from "@/types/player"
 
-// Posiciones disponibles
+// Posiciones disponibles (según base de datos)
 const POSITIONS = [
-  'GK',
-  'CB', 'LB', 'RB', 'LWB', 'RWB',
-  'DM', 'CM', 'LM', 'RM', 'AM',
-  'LW', 'RW', 'CF', 'ST'
+  'Goalkeeper',
+  'Defender',
+  'Sweeper',
+  'Right-Back',
+  'Centre-Back',
+  'Left-Back',
+  'Midfield',
+  'Defensive Midfield',
+  'Right Midfield',
+  'Central Midfield',
+  'Left Midfield',
+  'Attacking Midfield',
+  'Attack',
+  'Second Striker',
+  'Right Winger',
+  'Centre-Forward',
+  'Left Winger'
+]
+
+// Opciones de lateralidad
+const LATERALITY_OPTIONS = [
+  { value: 'right', label: 'Diestro' },
+  { value: 'left', label: 'Zurdo' },
+  { value: 'both', label: 'Ambidiestro' }
 ]
 
 export default function NuevoJugadorPage() {
@@ -40,6 +61,14 @@ export default function NuevoJugadorPage() {
   const [playerSearchResults, setPlayerSearchResults] = useState<any[]>([])
   const [teamSearchResults, setTeamSearchResults] = useState<any[]>([])
   const [showPlayerResults, setShowPlayerResults] = useState(false)
+
+  // Estado de búsqueda de nacionalidades
+  const [nationalitySearch, setNationalitySearch] = useState('')
+  const [nationality2Search, setNationality2Search] = useState('')
+  const [filteredNationalities, setFilteredNationalities] = useState<string[]>([])
+  const [filteredNationalities2, setFilteredNationalities2] = useState<string[]>([])
+  const [showNationalityResults, setShowNationalityResults] = useState(false)
+  const [showNationality2Results, setShowNationality2Results] = useState(false)
 
   // Estado de la UI
   const [loading, setLoading] = useState(false)
@@ -119,6 +148,45 @@ export default function NuevoJugadorPage() {
       }
     }, 300)
   }, [])
+
+  // Filtrar nacionalidades (búsqueda local, sin API)
+  const filterNationalities = useCallback((query: string, isSecondary: boolean = false) => {
+    if (!query || query.length < 1) {
+      if (isSecondary) {
+        setFilteredNationalities2([])
+        setShowNationality2Results(false)
+      } else {
+        setFilteredNationalities([])
+        setShowNationalityResults(false)
+      }
+      return
+    }
+
+    const filtered = NATIONALITIES.filter(nat =>
+      nat.toLowerCase().includes(query.toLowerCase())
+    ).slice(0, 10)
+
+    if (isSecondary) {
+      setFilteredNationalities2(filtered)
+      setShowNationality2Results(filtered.length > 0)
+    } else {
+      setFilteredNationalities(filtered)
+      setShowNationalityResults(filtered.length > 0)
+    }
+  }, [])
+
+  // Manejar selección de nacionalidad
+  const handleNationalitySelect = (nationality: string, isSecondary: boolean = false) => {
+    if (isSecondary) {
+      handleInputChange('nationality_2', nationality)
+      setNationality2Search(nationality)
+      setShowNationality2Results(false)
+    } else {
+      handleInputChange('nationality', nationality)
+      setNationalitySearch(nationality)
+      setShowNationalityResults(false)
+    }
+  }
 
   // Validar formulario
   const validateForm = (): boolean => {
@@ -490,17 +558,18 @@ export default function NuevoJugadorPage() {
                 {teamSearchResults.length > 0 && (
                   <div className="mt-2 bg-slate-800 border border-slate-700 rounded-lg max-h-48 overflow-y-auto">
                     {teamSearchResults.map((team) => (
-                      <div
+                      <button
+                        type="button"
                         key={team.id_team}
                         onClick={() => {
                           handleInputChange('equipo', team.team_name)
                           setTeamSearchResults([])
                         }}
-                        className="p-3 hover:bg-slate-700 cursor-pointer border-b border-slate-700 last:border-b-0"
+                        className="w-full text-left p-3 hover:bg-slate-700 cursor-pointer border-b border-slate-700 last:border-b-0 focus:outline-none focus:bg-slate-700"
                       >
                         <p className="text-white font-medium">{team.team_name}</p>
                         <p className="text-sm text-slate-400">{team.competition} • {team.team_country}</p>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -508,33 +577,90 @@ export default function NuevoJugadorPage() {
 
               {/* Nacionalidades */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                {/* Nacionalidad Principal */}
+                <div className="relative">
                   <Label htmlFor="nationality" className="text-sm text-slate-300 mb-2 block">
                     Nacionalidad Principal
                   </Label>
-                  <Input
-                    id="nationality"
-                    value={formData.nationality ?? ''}
-                    onChange={(e) => handleInputChange('nationality', e.target.value)}
-                    placeholder="Ej: España"
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
-                  />
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                      id="nationality"
+                      value={nationalitySearch || formData.nationality || ''}
+                      onChange={(e) => {
+                        setNationalitySearch(e.target.value)
+                        handleInputChange('nationality', e.target.value)
+                        filterNationalities(e.target.value, false)
+                      }}
+                      onFocus={() => {
+                        if (nationalitySearch || formData.nationality) {
+                          filterNationalities(nationalitySearch || formData.nationality || '', false)
+                        }
+                      }}
+                      onBlur={() => setTimeout(() => setShowNationalityResults(false), 200)}
+                      placeholder="Buscar nacionalidad..."
+                      className="pl-10 bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
+                    />
+                  </div>
+                  {showNationalityResults && filteredNationalities.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-slate-800 border border-slate-700 rounded-lg max-h-48 overflow-y-auto">
+                      {filteredNationalities.map((nat) => (
+                        <button
+                          type="button"
+                          key={nat}
+                          onClick={() => handleNationalitySelect(nat, false)}
+                          className="w-full text-left p-3 hover:bg-slate-700 cursor-pointer border-b border-slate-700 last:border-b-0 text-white focus:outline-none focus:bg-slate-700"
+                        >
+                          {nat}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div>
+
+                {/* Segunda Nacionalidad */}
+                <div className="relative">
                   <Label htmlFor="nationality_2" className="text-sm text-slate-300 mb-2 block">
                     Segunda Nacionalidad
                   </Label>
-                  <Input
-                    id="nationality_2"
-                    value={formData.nationality_2 ?? ''}
-                    onChange={(e) => handleInputChange('nationality_2', e.target.value)}
-                    placeholder="Ej: Argentina"
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
-                  />
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                      id="nationality_2"
+                      value={nationality2Search || formData.nationality_2 || ''}
+                      onChange={(e) => {
+                        setNationality2Search(e.target.value)
+                        handleInputChange('nationality_2', e.target.value)
+                        filterNationalities(e.target.value, true)
+                      }}
+                      onFocus={() => {
+                        if (nationality2Search || formData.nationality_2) {
+                          filterNationalities(nationality2Search || formData.nationality_2 || '', true)
+                        }
+                      }}
+                      onBlur={() => setTimeout(() => setShowNationality2Results(false), 200)}
+                      placeholder="Buscar nacionalidad..."
+                      className="pl-10 bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
+                    />
+                  </div>
+                  {showNationality2Results && filteredNationalities2.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-slate-800 border border-slate-700 rounded-lg max-h-48 overflow-y-auto">
+                      {filteredNationalities2.map((nat) => (
+                        <button
+                          type="button"
+                          key={nat}
+                          onClick={() => handleNationalitySelect(nat, true)}
+                          className="w-full text-left p-3 hover:bg-slate-700 cursor-pointer border-b border-slate-700 last:border-b-0 text-white focus:outline-none focus:bg-slate-700"
+                        >
+                          {nat}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Altura y Peso */}
+              {/* Altura y Lateralidad */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="height" className="text-sm text-slate-300 mb-2 block">
@@ -552,19 +678,24 @@ export default function NuevoJugadorPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="weight" className="text-sm text-slate-300 mb-2 block">
-                    Peso (kg)
+                  <Label htmlFor="foot" className="text-sm text-slate-300 mb-2 block">
+                    Lateralidad
                   </Label>
-                  <Input
-                    id="weight"
-                    type="number"
-                    min="50"
-                    max="120"
-                    value={formData.weight ?? ''}
-                    onChange={(e) => handleInputChange('weight', e.target.value ? parseInt(e.target.value) : undefined)}
-                    placeholder="Ej: 75"
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
-                  />
+                  <Select
+                    value={formData.foot || ''}
+                    onValueChange={(value) => handleInputChange('foot', value)}
+                  >
+                    <SelectTrigger id="foot" className="bg-slate-800 border-slate-700 text-white">
+                      <SelectValue placeholder="Seleccionar lateralidad" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-800 border-slate-700">
+                      {LATERALITY_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value} className="text-white hover:bg-slate-700">
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
