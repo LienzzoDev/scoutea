@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { original_name, corrected_name } = body
+    const { original_name, corrected_name, reason } = body
 
     if (!original_name || !corrected_name) {
       return NextResponse.json(
@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
       data: {
         original_name: original_name.trim(),
         corrected_name: corrected_name.trim(),
+        reason: reason?.trim() || null,
         created_by: userId
       }
     })

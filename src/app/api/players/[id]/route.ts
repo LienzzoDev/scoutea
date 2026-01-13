@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { CorrectionService } from '@/lib/services/correction-service'
 import { PlayerService } from '@/lib/services/player-service'
+import { ReferenceAutoInsertService } from '@/lib/services/reference-auto-insert-service'
 import {
   validatePlayerId,
   validatePlayerUpdate
@@ -214,14 +215,18 @@ export async function PUT(
     // 🔧 APLICAR CORRECCIONES AUTOMÁTICAS
     const correctedData = await CorrectionService.applyPlayerCorrections(validatedData)
 
+    // 🔄 AUTO-INSERTAR EN TABLAS DE REFERENCIA SI ES NECESARIO
+    const { data: dataWithRefs, createdReferences } = await ReferenceAutoInsertService.processPlayerReferences(correctedData)
+
     // ✏️ ACTUALIZAR JUGADOR
-    const updatedPlayer = await PlayerService.updatePlayer(validatedId, correctedData)
+    const updatedPlayer = await PlayerService.updatePlayer(validatedId, dataWithRefs)
 
     // 📊 LOG DE AUDITORÍA
     console.log('✅ Player updated successfully:', {
       _playerId: updatedPlayer.id_player,
       playerName: updatedPlayer.player_name,
       updatedFields: Object.keys(validatedData),
+      createdReferences,
       updatedBy: userId,
       timestamp: new Date().toISOString()
     })
@@ -438,14 +443,18 @@ export async function PATCH(
     // 🔧 APLICAR CORRECCIONES AUTOMÁTICAS
     const correctedData = await CorrectionService.applyPlayerCorrections(requestBody)
 
+    // 🔄 AUTO-INSERTAR EN TABLAS DE REFERENCIA SI ES NECESARIO
+    const { data: dataWithRefs, createdReferences } = await ReferenceAutoInsertService.processPlayerReferences(correctedData)
+
     // ✏️ ACTUALIZAR JUGADOR (solo los campos proporcionados)
-    const updatedPlayer = await PlayerService.updatePlayer(playerId, correctedData)
+    const updatedPlayer = await PlayerService.updatePlayer(playerId, dataWithRefs)
 
     // 📊 LOG DE AUDITORÍA
     console.log('✅ Player field updated successfully:', {
       playerId: updatedPlayer.id_player,
       playerName: updatedPlayer.player_name,
       updatedFields: Object.keys(requestBody),
+      createdReferences,
       updatedBy: userId,
       timestamp: new Date().toISOString()
     })

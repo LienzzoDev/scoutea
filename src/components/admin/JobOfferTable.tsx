@@ -1,6 +1,6 @@
 'use client'
 
-import { Edit, Trash2, Eye, MapPin, Briefcase, Calendar } from 'lucide-react'
+import { Edit, Trash2, Eye, MapPin, Briefcase, ExternalLink, Flag } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -58,27 +58,6 @@ export function JobOfferTable({ jobOffers, onDelete }: JobOfferTableProps) {
     )
   }
 
-  const formatSalary = (min?: number | null, max?: number | null, currency = 'EUR', period?: string | null) => {
-    if (!min && !max) return '-'
-
-    const formatter = new Intl.NumberFormat('es-ES', {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: 0,
-    })
-
-    if (min && max) {
-      return `${formatter.format(min)} - ${formatter.format(max)}${period ? `/${period === 'yearly' ? 'año' : 'mes'}` : ''}`
-    }
-
-    return `${formatter.format(min || max || 0)}${period ? `/${period === 'yearly' ? 'año' : 'mes'}` : ''}`
-  }
-
-  const formatDate = (date?: Date | string | null) => {
-    if (!date) return '-'
-    return new Date(date).toLocaleDateString('es-ES')
-  }
-
   if (jobOffers.length === 0) {
     return (
       <div className="text-center py-12 bg-[#131921] rounded-lg border border-slate-700">
@@ -95,25 +74,22 @@ export function JobOfferTable({ jobOffers, onDelete }: JobOfferTableProps) {
         <thead className="bg-[#1a2332]">
           <tr>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-              Título
+              Puesto
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-              Equipo
+              Club / Selección
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-              Posición
+              Ubicación
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-              Salario
+              URL Oferta
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
               Estado
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-              Vistas/Apps
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-              Expira
+              Vistas
             </th>
             <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
               Acciones
@@ -126,31 +102,60 @@ export function JobOfferTable({ jobOffers, onDelete }: JobOfferTableProps) {
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex flex-col">
                   <div className="text-sm font-medium text-[#D6DDE6]">{job.title}</div>
-                  {job.location && (
+                  {job.category && (
+                    <div className="text-xs text-gray-400 mt-1">{job.category}</div>
+                  )}
+                </div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="flex flex-col">
+                  {/* Mostrar equipo de BD o club manual */}
+                  {job.team?.team_name ? (
+                    <div className="text-sm text-gray-300">{job.team.team_name}</div>
+                  ) : job.club_name ? (
+                    <div className="text-sm text-gray-300">{job.club_name}</div>
+                  ) : (
+                    <div className="text-sm text-gray-500">-</div>
+                  )}
+                  {/* Mostrar selección nacional si existe */}
+                  {job.national_team && (
                     <div className="text-xs text-gray-400 flex items-center gap-1 mt-1">
-                      <MapPin className="w-3 h-3" />
-                      {job.location}
-                      {job.remote_allowed && ' (Remoto)'}
+                      <Flag className="w-3 h-3" />
+                      {job.national_team}
                     </div>
                   )}
                 </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-300">
-                  {job.team?.team_name || '-'}
+                <div className="flex flex-col">
+                  {job.location ? (
+                    <div className="text-sm text-gray-300 flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {job.location}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500">-</div>
+                  )}
+                  {job.remote_allowed && (
+                    <div className="text-xs text-green-400 mt-1">Remoto permitido</div>
+                  )}
                 </div>
-                {job.team?.team_country && (
-                  <div className="text-xs text-gray-400">{job.team.team_country}</div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                {job.application_url ? (
+                  <a
+                    href={job.application_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    Ver oferta
+                  </a>
+                ) : (
+                  <div className="text-sm text-gray-500">-</div>
                 )}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-300">{job.position_type}</div>
-                <div className="text-xs text-gray-400">{job.contract_type}</div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-300">
-                  {formatSalary(job.salary_min, job.salary_max, job.salary_currency, job.salary_period)}
-                </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 {getStatusBadge(job.status)}
@@ -158,13 +163,7 @@ export function JobOfferTable({ jobOffers, onDelete }: JobOfferTableProps) {
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center gap-2 text-sm text-gray-300">
                   <Eye className="w-4 h-4" />
-                  {job.views_count} / {job.applications_count}
-                </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-300 flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
-                  {formatDate(job.expires_at)}
+                  {job.views_count}
                 </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

@@ -235,10 +235,10 @@ export const ScoutReportCreateSchema = z.object({
 export const ScoutReportForExistingSchema = z.object({
   playerId: nonEmptyString,
   potential: z.number().int().min(1).max(10),
-  urlReport: url.nullable().optional(),
-  urlVideo: url.nullable().optional(),
+  urlReport: z.string().nullable().optional().transform(val => (!val || val === '') ? null : val),
+  urlVideo: z.string().nullable().optional().transform(val => (!val || val === '') ? null : val),
   reportText: z.string().max(10000).nullable().optional(),
-  imageUrl: url.nullable().optional()
+  imageUrl: z.string().nullable().optional().transform(val => (!val || val === '') ? null : val)
 })
 
 // Admin Report For Scout Schema (admin creates report on behalf of scout)

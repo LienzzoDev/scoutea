@@ -2,10 +2,10 @@
 
 /**
  * Data Population Script (TypeScript)
- * 
- * This script identifies and populates null values in both atributos and player_stats_3m tables
- * using position-based realistic data generation.
- * 
+ *
+ * This script populates ALL null/empty values in the Jugador (players) table
+ * using realistic position-based data generation.
+ *
  * Usage:
  *   npx tsx scripts/populate-player-data.ts [options]
  *   or
@@ -19,7 +19,7 @@ interface ScriptOptions {
   dryRun: boolean;
   batchSize: number;
   positions: string[] | null;
-  playerIds: string[] | null;
+  playerIds: number[] | null;
   validate: boolean;
   statsOnly: boolean;
   help: boolean;
@@ -53,7 +53,7 @@ class DataPopulationScript {
 
     for (let i = 0; i < args.length; i++) {
       const arg = args[i];
-      
+
       switch (arg) {
         case '--dry-run':
           options.dryRun = true;
@@ -65,7 +65,7 @@ class DataPopulationScript {
           options.positions = args[++i]?.split(',').map(p => p.trim()) || null;
           break;
         case '--player-ids':
-          options.playerIds = args[++i]?.split(',').map(p => p.trim()) || null;
+          options.playerIds = args[++i]?.split(',').map(p => parseInt(p.trim())).filter(id => !isNaN(id)) || null;
           break;
         case '--validate':
           options.validate = true;
@@ -91,10 +91,10 @@ class DataPopulationScript {
    */
   private showHelp(): void {
     console.log(`
-📊 Data Population Script
+📊 Player Data Population Script
 
-This script populates null values in atributos and player_stats_3m tables
-using position-based realistic data generation.
+This script populates ALL null/empty values in the Jugador (players) table
+using realistic position-based data generation.
 
 Usage:
   npx tsx scripts/populate-player-data.ts [options]
@@ -103,7 +103,7 @@ Options:
   --dry-run          Run without making changes (default: false)
   --batch-size N     Number of players to process per batch (default: 50)
   --positions LIST   Comma-separated positions (e.g., "ST,CM,CB")
-  --player-ids LIST  Comma-separated player IDs to process
+  --player-ids LIST  Comma-separated player IDs to process (numeric)
   --validate         Validate generators before running
   --stats-only       Show population statistics and exit
   --help             Show this help message
@@ -113,16 +113,26 @@ Examples:
   npx tsx scripts/populate-player-data.ts --dry-run
 
   # Populate only strikers and midfielders
-  npx tsx scripts/populate-player-data.ts --positions "ST,CM,AM"
+  npx tsx scripts/populate-player-data.ts --positions "ST,CM,CAM"
 
-  # Populate specific players
-  npx tsx scripts/populate-player-data.ts --player-ids "player1,player2"
+  # Populate specific players by ID
+  npx tsx scripts/populate-player-data.ts --player-ids "1,2,3,4,5"
 
   # Show current data completeness statistics
   npx tsx scripts/populate-player-data.ts --stats-only
 
   # Validate generators before running
   npx tsx scripts/populate-player-data.ts --validate --dry-run
+
+Fields Populated:
+  - Personal: date_of_birth, age, age_value, age_coeff, height, foot
+  - Position: position_player, position_value, position_value_percent
+  - Nationality: nationality_1, nationality_2, nationality_value, national_tier
+  - Team: team_country, team_elo, team_level, team_level_value
+  - Competition: team_competition, competition_tier, competition_confederation, competition_elo
+  - Contract: agency, contract_end, on_loan, owner_club
+  - Value: player_rating, player_trfm_value, player_elo, player_level
+  - Stats: stats_evo_3m, total_fmi_pts_norm, community_potential
 `);
   }
 
@@ -131,28 +141,65 @@ Examples:
    */
   private async showStats(): Promise<void> {
     console.log('📊 Analyzing current data completeness...\n');
-    
+
     try {
       const stats = await this.service.getPopulationStats();
-      
+
       console.log('📈 Overall Statistics:');
       console.log(`  Total Players: ${stats.totalPlayers.toLocaleString()}`);
       console.log(`  Players with Atributos: ${stats.playersWithAtributos.toLocaleString()}`);
       console.log(`  Players with Stats: ${stats.playersWithStats.toLocaleString()}`);
       console.log(`  Avg Atributos Completeness: ${stats.avgAtributosCompleteness.toFixed(1)}%`);
       console.log(`  Avg Stats Completeness: ${stats.avgStatsCompleteness.toFixed(1)}%\n`);
-      
+
       console.log('🎯 Position Breakdown:');
       const sortedPositions = Object.entries(stats.positionBreakdown)
         .sort(([,a], [,b]) => b.count - a.count);
-      
+
       for (const [position, data] of sortedPositions) {
         console.log(`  ${position.padEnd(20)} ${data.count.toString().padStart(6)} players`);
       }
-      
+
+      // Additional field completeness stats
+      console.log('\n📋 Field Completeness Analysis:');
+      await this.showFieldCompleteness();
+
     } catch (error) {
       console.error('❌ Error getting statistics:', (error as Error).message);
       throw error;
+    }
+  }
+
+  /**
+   * Show field completeness for key fields
+   */
+  private async showFieldCompleteness(): Promise<void> {
+    const totalPlayers = await this.prisma.jugador.count();
+
+    const fieldsToCheck = [
+      { field: 'date_of_birth', label: 'Date of Birth' },
+      { field: 'age', label: 'Age' },
+      { field: 'position_player', label: 'Position' },
+      { field: 'foot', label: 'Foot' },
+      { field: 'height', label: 'Height' },
+      { field: 'nationality_1', label: 'Nationality' },
+      { field: 'team_country', label: 'Team Country' },
+      { field: 'team_competition', label: 'Competition' },
+      { field: 'agency', label: 'Agency' },
+      { field: 'contract_end', label: 'Contract End' },
+      { field: 'player_rating', label: 'Player Rating' },
+      { field: 'player_trfm_value', label: 'Market Value' },
+      { field: 'team_elo', label: 'Team ELO' },
+      { field: 'player_elo', label: 'Player ELO' }
+    ];
+
+    for (const { field, label } of fieldsToCheck) {
+      const count = await this.prisma.jugador.count({
+        where: { [field]: { not: null } }
+      });
+      const percent = ((count / totalPlayers) * 100).toFixed(1);
+      const bar = '█'.repeat(Math.round(count / totalPlayers * 20)) + '░'.repeat(20 - Math.round(count / totalPlayers * 20));
+      console.log(`  ${label.padEnd(18)} ${bar} ${count.toString().padStart(6)}/${totalPlayers} (${percent}%)`);
     }
   }
 
@@ -161,10 +208,10 @@ Examples:
    */
   private async validateGenerators(): Promise<boolean> {
     console.log('🔍 Validating data generators...\n');
-    
+
     try {
       const validation = await this.service.validateGenerators();
-      
+
       if (validation.atributosValid && validation.statsValid) {
         console.log('✅ All generators are working correctly');
         return true;
@@ -175,7 +222,7 @@ Examples:
         }
         return false;
       }
-      
+
     } catch (error) {
       console.error('❌ Error validating generators:', (error as Error).message);
       return false;
@@ -188,7 +235,7 @@ Examples:
   private async populate(options: ScriptOptions): Promise<PopulationResult> {
     const mode = options.dryRun ? 'DRY RUN' : 'LIVE';
     console.log(`🚀 Starting data population (${mode})\n`);
-    
+
     // Show configuration
     console.log('⚙️  Configuration:');
     console.log(`  Mode: ${mode}`);
@@ -212,14 +259,13 @@ Examples:
       };
 
       const result = await this.service.populatePlayerData(populationOptions);
-      
+
       // Show results
       console.log('\n📊 Population Results:');
       console.log(`  Players Processed: ${result.playersProcessed.toLocaleString()}`);
-      console.log(`  Atributos Updated: ${result.atributosUpdated.toLocaleString()}`);
-      console.log(`  Stats Updated: ${result.statsUpdated.toLocaleString()}`);
+      console.log(`  Fields Populated: ${result.fieldsPopulated.toLocaleString()}`);
       console.log(`  Execution Time: ${(result.executionTime / 1000).toFixed(2)}s`);
-      
+
       if (result.errors.length > 0) {
         console.log(`\n⚠️  Errors (${result.errors.length}):`);
         result.errors.slice(0, 10).forEach(error => {
@@ -231,25 +277,18 @@ Examples:
       }
 
       // Show field breakdown
-      if (Object.keys(result.populatedFields.atributos).length > 0) {
-        console.log('\n🎯 Atributos Fields Populated:');
-        const sortedAtributos = Object.entries(result.populatedFields.atributos)
+      if (Object.keys(result.populatedFields.jugadores).length > 0) {
+        console.log('\n🎯 Jugador Fields Populated:');
+        const sortedFields = Object.entries(result.populatedFields.jugadores)
           .sort(([,a], [,b]) => b - a)
-          .slice(0, 10);
-        
-        for (const [field, count] of sortedAtributos) {
-          console.log(`  ${field.padEnd(25)} ${count.toString().padStart(6)} players`);
-        }
-      }
+          .slice(0, 15);
 
-      if (Object.keys(result.populatedFields.stats).length > 0) {
-        console.log('\n📊 Stats Fields Populated:');
-        const sortedStats = Object.entries(result.populatedFields.stats)
-          .sort(([,a], [,b]) => b - a)
-          .slice(0, 10);
-        
-        for (const [field, count] of sortedStats) {
-          console.log(`  ${field.padEnd(25)} ${count.toString().padStart(6)} players`);
+        for (const [field, count] of sortedFields) {
+          console.log(`  ${field.padEnd(30)} ${count.toString().padStart(6)} players`);
+        }
+
+        if (Object.keys(result.populatedFields.jugadores).length > 15) {
+          console.log(`  ... and ${Object.keys(result.populatedFields.jugadores).length - 15} more fields`);
         }
       }
 
@@ -260,7 +299,7 @@ Examples:
       }
 
       return result;
-      
+
     } catch (error) {
       console.error('\n❌ Population failed:', (error as Error).message);
       throw error;
@@ -272,7 +311,7 @@ Examples:
    */
   async run(): Promise<void> {
     const options = this.parseArgs();
-    
+
     try {
       if (options.help) {
         this.showHelp();
@@ -297,7 +336,7 @@ Examples:
       }
 
       await this.populate(options);
-      
+
     } catch (error) {
       console.error('\n💥 Script failed:', (error as Error).message);
       if (process.env.NODE_ENV === 'development') {

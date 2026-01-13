@@ -195,7 +195,7 @@ export default function TeamTable({
   // Función para determinar el tipo de campo
   const getFieldType = (fieldName: string): 'text' | 'number' | 'boolean' | 'url' | 'date' => {
     // Campos de URL
-    if (fieldName.startsWith('url_') || fieldName === 'website_url') {
+    if (fieldName.startsWith('url_') || fieldName === 'website_url' || fieldName === 'fm_guide' || fieldName === 'logo_url') {
       return 'url';
     }
 
@@ -231,8 +231,8 @@ export default function TeamTable({
         throw new Error('Error al actualizar el campo');
       }
 
-      // Recargar la página para mostrar los cambios
-      window.location.reload();
+      // Refrescar datos sin recargar la página completa
+      router.refresh();
       return true;
     } catch (error) {
       console.error('Error updating team field:', error);
@@ -343,23 +343,6 @@ export default function TeamTable({
           </div>
         </div>
 
-        {/* Columna fija - Notas */}
-        <div
-          className={`w-60 p-4 border-r flex-shrink-0 ${
-            darkMode
-              ? 'border-slate-700'
-              : 'border-[#e7e7e7]'
-          }`}
-        >
-          <div className="flex items-center gap-1">
-            <h4 className={`font-semibold text-sm ${
-              darkMode ? 'text-slate-300' : 'text-[#6d6d6d]'
-            }`}>
-              Notas
-            </h4>
-          </div>
-        </div>
-
         {/* Headers scrolleables */}
         <div
           ref={headerScrollRef}
@@ -466,19 +449,6 @@ export default function TeamTable({
               <h3 className={`${isDuplicate('team_name', team.team_name) ? 'font-semibold' : 'font-normal'} ${darkMode ? 'text-white' : 'text-[#000000]'}`}>
                 {team.team_name}
               </h3>
-            </div>
-
-            {/* Columna fija - Notas (Editable) */}
-            <div className={`w-60 p-4 border-r flex-shrink-0 ${
-              darkMode ? 'border-slate-700' : 'border-[#e7e7e7]'
-            }`}>
-              <EditableCell
-                value={team.admin_notes ?? null}
-                playerId={team.id_team}
-                fieldName="admin_notes"
-                onSave={handleSaveField}
-                type="text"
-              />
             </div>
 
             {/* Valores scrolleables */}

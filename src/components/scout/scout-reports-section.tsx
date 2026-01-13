@@ -68,7 +68,7 @@ interface Report {
   content: string
   rating: number
   date: string
-  type: 'video' | 'written' | 'social'
+  type: 'video' | 'written' | 'social' | 'web'
   hasVideo?: boolean
   image?: string
   videoUrl?: string
@@ -87,10 +87,10 @@ interface ScoutReportsSectionProps {
 }
 
 const REPORT_TYPES = [
-  { key: 'all', label: 'Todos los reportes', icon: Filter },
-  { key: 'video', label: 'Video Reporte', icon: Video },
-  { key: 'written', label: 'Scouteo (escrito)', icon: FileText },
+  { key: 'written', label: 'Scoutea', icon: FileText },
   { key: 'social', label: 'Redes sociales', icon: Share2 },
+  { key: 'video', label: 'Video', icon: Video },
+  { key: 'web', label: 'Web', icon: Filter },
 ] as const
 
 export default function ScoutReportsSection({
@@ -101,7 +101,7 @@ export default function ScoutReportsSection({
   readOnly = false
 }: ScoutReportsSectionProps) {
   const { toast } = useToast()
-  const [selectedFilter, setSelectedFilter] = useState<string>('all')
+  const [selectedFilter, setSelectedFilter] = useState<string>('written')
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false)
   const [selectedVideoReport, setSelectedVideoReport] = useState<Report | null>(null)
@@ -319,18 +319,27 @@ export default function ScoutReportsSection({
       const { player, report_type, report_date, form_text_report, form_url_video, form_url_report, url_secondary, form_potential, roi, profit, potential, approval_status } = reportData
 
       // Determinar el tipo de reporte basado en el contenido
-      let reportType: 'video' | 'written' | 'social' = 'written'
+      let reportType: 'video' | 'written' | 'social' | 'web' = 'written'
 
-      // Si tiene video, es Video Reporte
+      // Si tiene video, es Video
       if (form_url_video) {
         reportType = 'video'
       }
-      // Si tiene URL de reporte externo sin texto (redes sociales, etc.)
-      else if (form_url_report && !form_text_report && !url_secondary) {
+      // Si tiene URL de reporte externo y contiene instagram/twitter/tiktok, es Redes sociales
+      else if (form_url_report && (
+        form_url_report.includes('instagram') ||
+        form_url_report.includes('twitter') ||
+        form_url_report.includes('tiktok') ||
+        form_url_report.includes('x.com')
+      )) {
         reportType = 'social'
       }
-      // Si tiene texto escrito o no tiene imagen/video, es Scouteo (escrito)
-      else if (form_text_report || (!form_url_video && !url_secondary)) {
+      // Si tiene URL de reporte externo sin texto, es Web
+      else if (form_url_report && !form_text_report) {
+        reportType = 'web'
+      }
+      // Si tiene texto escrito, es Scoutea (escrito)
+      else if (form_text_report) {
         reportType = 'written'
       }
       // Fallback basado en report_type de la BD
@@ -340,6 +349,8 @@ export default function ScoutReportsSection({
           reportType = 'video'
         } else if (typeStr.includes('social') || typeStr.includes('redes')) {
           reportType = 'social'
+        } else if (typeStr.includes('web')) {
+          reportType = 'web'
         }
       }
 
@@ -403,12 +414,8 @@ export default function ScoutReportsSection({
 
   // Filtrar reportes según el tipo seleccionado y término de búsqueda
   const filteredReports = useMemo(() => {
-    let filtered = realReports
-
     // Filtrar por tipo
-    if (selectedFilter !== 'all') {
-      filtered = filtered.filter(report => report.type === selectedFilter)
-    }
+    let filtered = realReports.filter(report => report.type === selectedFilter)
 
     // Filtrar por término de búsqueda
     if (searchTerm.trim()) {
@@ -443,12 +450,6 @@ export default function ScoutReportsSection({
     return filtered
   }, [selectedFilter, searchTerm, advancedFilters, realReports])
 
-  // Calcular rating promedio
-  const averageRating = useMemo(() => {
-    if (filteredReports.length === 0) return 0
-    const sum = filteredReports.reduce((acc, report) => acc + report.rating, 0)
-    return (sum / filteredReports.length).toFixed(1)
-  }, [filteredReports])
 
   if (isLoading) {
     return (
@@ -638,25 +639,6 @@ export default function ScoutReportsSection({
         })}
       </div>
 
-      {/* Overall Rating */}
-      <div className="flex items-center justify-center gap-2 mb-8">
-        <span className="text-2xl font-bold text-[#2e3138]">{averageRating}</span>
-        <div className="flex gap-1">
-          {[...Array(5)].map((_, i) => (
-            <div
-              key={i}
-              className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                i < Math.floor(parseFloat(averageRating)) ? 'bg-[#8B0000]' : 'bg-gray-300'
-              }`}
-            >
-              <span className="text-white text-xs">⚽</span>
-            </div>
-          ))}
-        </div>
-        <span className="text-sm text-[#6d6d6d] ml-2">
-          ({filteredReports.length} reporte{filteredReports.length !== 1 ? 's' : ''})
-        </span>
-      </div>
 
       {/* Reports Grid */}
       {filteredReports.length === 0 ? (
@@ -671,33 +653,19 @@ export default function ScoutReportsSection({
             }
           </p>
           <p className="text-sm text-gray-500 mb-4">
-            {searchTerm 
+            {searchTerm
               ? 'Intenta con otros términos de búsqueda o revisa los filtros'
-              : selectedFilter === 'all' 
-                ? 'No has creado ningún reporte aún'
-                : `No hay reportes de tipo "${REPORT_TYPES.find(t => t.key === selectedFilter)?.label}"`
+              : `No hay reportes de tipo "${REPORT_TYPES.find(t => t.key === selectedFilter)?.label}"`
             }
           </p>
           {searchTerm ? (
-            <div className="space-x-2">
-              <Button
-                onClick={() => setSearchTerm('')}
-                variant="outline"
-                className="border-[#8B0000] text-[#8B0000] hover:bg-[#8B0000] hover:text-white"
-              >
-                Limpiar búsqueda
-              </Button>
-              <Button
-                onClick={() => {
-                  setSearchTerm('')
-                  setSelectedFilter('all')
-                }}
-                variant="outline"
-                className="border-[#6d6d6d] text-[#6d6d6d] hover:bg-[#6d6d6d] hover:text-white"
-              >
-                Ver todos los reportes
-              </Button>
-            </div>
+            <Button
+              onClick={() => setSearchTerm('')}
+              variant="outline"
+              className="border-[#8B0000] text-[#8B0000] hover:bg-[#8B0000] hover:text-white"
+            >
+              Limpiar búsqueda
+            </Button>
           ) : (
             <Link href="/scout/portfolio/new">
               <Button className="bg-[#8B0000] hover:bg-[#660000] text-white">
@@ -714,8 +682,8 @@ export default function ScoutReportsSection({
               {/* Action Buttons - Request Edit/Delete */}
               {!readOnly && (
                 <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
-                  {/* If approval_status is 'pending', show direct edit link */}
-                  {report.approvalStatus === 'pending' ? (
+                  {/* Only approved reports can be directly edited. Pending reports require an edit request */}
+                  {report.approvalStatus === 'approved' ? (
                     <Link
                       href={`/scout/reports/${report.id}/edit`}
                       className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
@@ -761,16 +729,23 @@ export default function ScoutReportsSection({
                     report.type === 'video' ? 'bg-red-100 text-red-700' :
                     report.type === 'written' ? 'bg-blue-100 text-blue-700' :
                     report.type === 'social' ? 'bg-green-100 text-green-700' :
+                    report.type === 'web' ? 'bg-purple-100 text-purple-700' :
                     'bg-gray-100 text-gray-700'
                   }`}>
-                    {report.type === 'video' ? '🎥' :
+                    {report.type === 'video' ? '📹' :
                      report.type === 'written' ? '📝' :
-                     report.type === 'social' ? '🔗' : '📋'}
+                     report.type === 'social' ? '📱' :
+                     report.type === 'web' ? '🌐' : '📋'}
                   </div>
-                  {/* Pending Status Badge - Show when report is ready to edit */}
+                  {/* Status Badge - Show approval status */}
                   {report.approvalStatus === 'pending' && (
+                    <div className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-300">
+                      ⏳ Pendiente de aprobación
+                    </div>
+                  )}
+                  {report.approvalStatus === 'approved' && (
                     <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-300">
-                      ✅ Listo para editar
+                      ✅ Aprobado
                     </div>
                   )}
                 </div>
@@ -931,11 +906,13 @@ export default function ScoutReportsSection({
                     selectedVideoReport.type === 'video' ? 'bg-red-100 text-red-700' :
                     selectedVideoReport.type === 'written' ? 'bg-blue-100 text-blue-700' :
                     selectedVideoReport.type === 'social' ? 'bg-green-100 text-green-700' :
+                    selectedVideoReport.type === 'web' ? 'bg-purple-100 text-purple-700' :
                     'bg-gray-100 text-gray-700'
                   }`}>
-                    {selectedVideoReport.type === 'video' ? '🎥 Video Reporte' : 
-                     selectedVideoReport.type === 'written' ? '📝 Scouteo (escrito)' : 
-                     selectedVideoReport.type === 'social' ? '🔗 Redes sociales' : '📋 Reporte'}
+                    {selectedVideoReport.type === 'video' ? '📹 Video' :
+                     selectedVideoReport.type === 'written' ? '📝 Scoutea' :
+                     selectedVideoReport.type === 'social' ? '📱 Redes sociales' :
+                     selectedVideoReport.type === 'web' ? '🌐 Web' : '📋 Reporte'}
                   </div>
                   <span className="text-sm text-[#6d6d6d]">{selectedVideoReport.date}</span>
                 </div>

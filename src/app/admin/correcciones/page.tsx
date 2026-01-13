@@ -19,12 +19,14 @@ interface NationalityCorrection {
   id: string
   original_name: string
   corrected_name: string
+  reason?: string | null
 }
 
 interface TeamCorrection {
   id: string
   original_name: string
   corrected_name: string
+  reason?: string | null
 }
 
 interface CompetitionCorrection {
@@ -32,6 +34,7 @@ interface CompetitionCorrection {
   original_name: string
   corrected_name: string
   country?: string | null
+  reason?: string | null
 }
 
 type TabType = 'nationalities' | 'teams' | 'competitions'
@@ -68,12 +71,18 @@ export default function CorreccionesPage() {
   const [showResultsModal, setShowResultsModal] = useState(false)
   const [correctionResults, setCorrectionResults] = useState<{
     success: boolean
-    players: { total: number; updated: number; errors: number }
-    teams: { total: number; updated: number; errors: number }
+    type: 'all' | 'nationalities' | 'teams' | 'competitions'
+    players?: { total: number; updated: number; errors: number }
+    teams?: { total: number; updated: number; errors: number }
+    // Para nacionalidades que solo afecta a jugadores
+    total?: number
+    updated?: number
+    errors?: number
   } | null>(null)
-  const [newNationalityData, setNewNationalityData] = useState({ original_name: '', corrected_name: '' })
-  const [newTeamData, setNewTeamData] = useState({ original_name: '', corrected_name: '' })
-  const [newCompetitionData, setNewCompetitionData] = useState({ original_name: '', corrected_name: '', country: '' })
+  const [applyingType, setApplyingType] = useState<'all' | 'nationalities' | 'teams' | 'competitions' | null>(null)
+  const [newNationalityData, setNewNationalityData] = useState({ original_name: '', corrected_name: '', reason: '' })
+  const [newTeamData, setNewTeamData] = useState({ original_name: '', corrected_name: '', reason: '' })
+  const [newCompetitionData, setNewCompetitionData] = useState({ original_name: '', corrected_name: '', country: '', reason: '' })
 
   // Cargar correcciones de nacionalidades
   // Cargar correcciones de nacionalidades
@@ -147,7 +156,7 @@ export default function CorreccionesPage() {
         const data = await response.json()
         throw new Error(data.__error || 'Error al crear')
       }
-      setNewNationalityData({ original_name: '', corrected_name: '' })
+      setNewNationalityData({ original_name: '', corrected_name: '', reason: '' })
       setShowNewForm(false)
       loadNationalityCorrections()
     } catch (err) {
@@ -167,7 +176,7 @@ export default function CorreccionesPage() {
         const data = await response.json()
         throw new Error(data.__error || 'Error al crear')
       }
-      setNewTeamData({ original_name: '', corrected_name: '' })
+      setNewTeamData({ original_name: '', corrected_name: '', reason: '' })
       setShowNewForm(false)
       loadTeamCorrections()
     } catch (err) {
@@ -187,7 +196,7 @@ export default function CorreccionesPage() {
         const data = await response.json()
         throw new Error(data.__error || 'Error al crear')
       }
-      setNewCompetitionData({ original_name: '', corrected_name: '', country: '' })
+      setNewCompetitionData({ original_name: '', corrected_name: '', country: '', reason: '' })
       setShowNewForm(false)
       loadCompetitionCorrections()
     } catch (err) {
@@ -284,7 +293,7 @@ export default function CorreccionesPage() {
     if (!confirm('¿Estás seguro de aplicar todas las correcciones a los jugadores existentes? Este proceso puede tardar varios minutos.')) return
 
     try {
-      setLoading(true)
+      setApplyingType('all')
       setError(null)
 
       const response = await fetch('/api/admin/corrections/apply-all', {
@@ -300,6 +309,7 @@ export default function CorreccionesPage() {
       // Mostrar resultados en modal
       setCorrectionResults({
         success: true,
+        type: 'all',
         players: data.stats.players,
         teams: data.stats.teams
       })
@@ -310,12 +320,135 @@ export default function CorreccionesPage() {
       // Mostrar error en modal también
       setCorrectionResults({
         success: false,
+        type: 'all',
         players: { total: 0, updated: 0, errors: 0 },
         teams: { total: 0, updated: 0, errors: 0 }
       })
       setShowResultsModal(true)
     } finally {
-      setLoading(false)
+      setApplyingType(null)
+    }
+  }
+
+  // Aplicar correcciones de nacionalidades
+  const handleApplyNationalityCorrections = async () => {
+    if (!confirm('¿Estás seguro de aplicar las correcciones de nacionalidades? Este proceso puede tardar varios minutos.')) return
+
+    try {
+      setApplyingType('nationalities')
+      setError(null)
+
+      const response = await fetch('/api/admin/corrections/apply-nationalities', {
+        method: 'POST'
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.__error || 'Error al aplicar correcciones')
+      }
+
+      setCorrectionResults({
+        success: true,
+        type: 'nationalities',
+        total: data.stats.total,
+        updated: data.stats.updated,
+        errors: data.stats.errors
+      })
+      setShowResultsModal(true)
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Error desconocido'
+      setError(errorMsg)
+      setCorrectionResults({
+        success: false,
+        type: 'nationalities',
+        total: 0,
+        updated: 0,
+        errors: 0
+      })
+      setShowResultsModal(true)
+    } finally {
+      setApplyingType(null)
+    }
+  }
+
+  // Aplicar correcciones de equipos
+  const handleApplyTeamCorrections = async () => {
+    if (!confirm('¿Estás seguro de aplicar las correcciones de nombres de equipos? Este proceso puede tardar varios minutos.')) return
+
+    try {
+      setApplyingType('teams')
+      setError(null)
+
+      const response = await fetch('/api/admin/corrections/apply-teams', {
+        method: 'POST'
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.__error || 'Error al aplicar correcciones')
+      }
+
+      setCorrectionResults({
+        success: true,
+        type: 'teams',
+        players: data.stats.players,
+        teams: data.stats.teams
+      })
+      setShowResultsModal(true)
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Error desconocido'
+      setError(errorMsg)
+      setCorrectionResults({
+        success: false,
+        type: 'teams',
+        players: { total: 0, updated: 0, errors: 0 },
+        teams: { total: 0, updated: 0, errors: 0 }
+      })
+      setShowResultsModal(true)
+    } finally {
+      setApplyingType(null)
+    }
+  }
+
+  // Aplicar correcciones de competiciones
+  const handleApplyCompetitionCorrections = async () => {
+    if (!confirm('¿Estás seguro de aplicar las correcciones de competiciones? Este proceso puede tardar varios minutos.')) return
+
+    try {
+      setApplyingType('competitions')
+      setError(null)
+
+      const response = await fetch('/api/admin/corrections/apply-competitions', {
+        method: 'POST'
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.__error || 'Error al aplicar correcciones')
+      }
+
+      setCorrectionResults({
+        success: true,
+        type: 'competitions',
+        players: data.stats.players,
+        teams: data.stats.teams
+      })
+      setShowResultsModal(true)
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Error desconocido'
+      setError(errorMsg)
+      setCorrectionResults({
+        success: false,
+        type: 'competitions',
+        players: { total: 0, updated: 0, errors: 0 },
+        teams: { total: 0, updated: 0, errors: 0 }
+      })
+      setShowResultsModal(true)
+    } finally {
+      setApplyingType(null)
     }
   }
 
@@ -347,9 +480,9 @@ export default function CorreccionesPage() {
           <Button
             className='bg-green-600 hover:bg-green-700 text-white'
             onClick={handleApplyAllCorrections}
-            disabled={loading}
+            disabled={applyingType !== null}
           >
-            {loading ? 'Aplicando...' : 'Aplicar a Todos'}
+            {applyingType === 'all' ? 'Aplicando...' : 'Aplicar a Todos'}
           </Button>
           <Button
             className='bg-[#FF5733] hover:bg-[#E64A2B] text-white'
@@ -447,6 +580,16 @@ export default function CorreccionesPage() {
                   className='bg-[#131921] border-slate-700 text-white'
                 />
               </div>
+              <div>
+                <label htmlFor="nat-reason" className='text-sm text-slate-300 mb-2 block'>Motivo (opcional)</label>
+                <Input
+                  id="nat-reason"
+                  placeholder='Ej: Estandarizar a ingles'
+                  value={newNationalityData.reason}
+                  onChange={e => setNewNationalityData({ ...newNationalityData, reason: e.target.value })}
+                  className='bg-[#131921] border-slate-700 text-white'
+                />
+              </div>
               <div className='flex gap-2 pt-4'>
                 <Button onClick={handleCreateNationality} className='bg-[#FF5733] hover:bg-[#E64A2B] flex-1'>
                   <Check className='h-4 w-4 mr-2' />
@@ -476,6 +619,16 @@ export default function CorreccionesPage() {
                   placeholder='Ej: Real Madrid'
                   value={newTeamData.corrected_name}
                   onChange={e => setNewTeamData({ ...newTeamData, corrected_name: e.target.value })}
+                  className='bg-[#131921] border-slate-700 text-white'
+                />
+              </div>
+              <div>
+                <label htmlFor='new-team-reason' className='text-sm text-slate-300 mb-2 block'>Motivo (opcional)</label>
+                <Input
+                  id='new-team-reason'
+                  placeholder='Ej: Corregir errata'
+                  value={newTeamData.reason}
+                  onChange={e => setNewTeamData({ ...newTeamData, reason: e.target.value })}
                   className='bg-[#131921] border-slate-700 text-white'
                 />
               </div>
@@ -512,12 +665,22 @@ export default function CorreccionesPage() {
                 />
               </div>
               <div>
-                <label htmlFor="comp-country" className='text-sm text-slate-300 mb-2 block'>País (opcional)</label>
+                <label htmlFor="comp-country" className='text-sm text-slate-300 mb-2 block'>Pais (opcional)</label>
                 <Input
                   id="comp-country"
                   placeholder='Ej: Europe'
                   value={newCompetitionData.country}
                   onChange={e => setNewCompetitionData({ ...newCompetitionData, country: e.target.value })}
+                  className='bg-[#131921] border-slate-700 text-white'
+                />
+              </div>
+              <div>
+                <label htmlFor="comp-reason" className='text-sm text-slate-300 mb-2 block'>Motivo (opcional)</label>
+                <Input
+                  id="comp-reason"
+                  placeholder='Ej: Simplificar nombre'
+                  value={newCompetitionData.reason}
+                  onChange={e => setNewCompetitionData({ ...newCompetitionData, reason: e.target.value })}
                   className='bg-[#131921] border-slate-700 text-white'
                 />
               </div>
@@ -554,50 +717,78 @@ export default function CorreccionesPage() {
             </DialogTitle>
             <DialogDescription className='text-slate-400'>
               {correctionResults?.success
-                ? 'Las correcciones se han aplicado exitosamente a la base de datos.'
+                ? `Las correcciones de ${
+                    correctionResults.type === 'all' ? 'todos los tipos' :
+                    correctionResults.type === 'nationalities' ? 'nacionalidades' :
+                    correctionResults.type === 'teams' ? 'equipos' : 'competiciones'
+                  } se han aplicado exitosamente.`
                 : 'Ocurrió un error durante el proceso de corrección.'}
             </DialogDescription>
           </DialogHeader>
 
           {correctionResults?.success && (
             <div className='space-y-4 mt-4'>
-              {/* Estadísticas de Jugadores */}
-              <div className='bg-[#131921] rounded-lg p-4 border border-slate-700'>
-                <h4 className='text-sm font-semibold text-slate-300 mb-3'>Jugadores</h4>
-                <div className='grid grid-cols-3 gap-4'>
-                  <div className='text-center'>
-                    <p className='text-2xl font-bold text-white'>{correctionResults.players.total}</p>
-                    <p className='text-xs text-slate-400'>Procesados</p>
-                  </div>
-                  <div className='text-center'>
-                    <p className='text-2xl font-bold text-green-500'>{correctionResults.players.updated}</p>
-                    <p className='text-xs text-slate-400'>Actualizados</p>
-                  </div>
-                  <div className='text-center'>
-                    <p className='text-2xl font-bold text-red-500'>{correctionResults.players.errors}</p>
-                    <p className='text-xs text-slate-400'>Errores</p>
+              {/* Para nacionalidades (solo jugadores) */}
+              {correctionResults.type === 'nationalities' && correctionResults.total !== undefined && (
+                <div className='bg-[#131921] rounded-lg p-4 border border-slate-700'>
+                  <h4 className='text-sm font-semibold text-slate-300 mb-3'>Jugadores (Nacionalidades)</h4>
+                  <div className='grid grid-cols-3 gap-4'>
+                    <div className='text-center'>
+                      <p className='text-2xl font-bold text-white'>{correctionResults.total}</p>
+                      <p className='text-xs text-slate-400'>Procesados</p>
+                    </div>
+                    <div className='text-center'>
+                      <p className='text-2xl font-bold text-green-500'>{correctionResults.updated}</p>
+                      <p className='text-xs text-slate-400'>Actualizados</p>
+                    </div>
+                    <div className='text-center'>
+                      <p className='text-2xl font-bold text-red-500'>{correctionResults.errors}</p>
+                      <p className='text-xs text-slate-400'>Errores</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Estadísticas de Equipos */}
-              <div className='bg-[#131921] rounded-lg p-4 border border-slate-700'>
-                <h4 className='text-sm font-semibold text-slate-300 mb-3'>Equipos</h4>
-                <div className='grid grid-cols-3 gap-4'>
-                  <div className='text-center'>
-                    <p className='text-2xl font-bold text-white'>{correctionResults.teams.total}</p>
-                    <p className='text-xs text-slate-400'>Procesados</p>
-                  </div>
-                  <div className='text-center'>
-                    <p className='text-2xl font-bold text-green-500'>{correctionResults.teams.updated}</p>
-                    <p className='text-xs text-slate-400'>Actualizados</p>
-                  </div>
-                  <div className='text-center'>
-                    <p className='text-2xl font-bold text-red-500'>{correctionResults.teams.errors}</p>
-                    <p className='text-xs text-slate-400'>Errores</p>
+              {/* Para equipos, competiciones y all (jugadores + equipos) */}
+              {correctionResults.players && (
+                <div className='bg-[#131921] rounded-lg p-4 border border-slate-700'>
+                  <h4 className='text-sm font-semibold text-slate-300 mb-3'>Jugadores</h4>
+                  <div className='grid grid-cols-3 gap-4'>
+                    <div className='text-center'>
+                      <p className='text-2xl font-bold text-white'>{correctionResults.players.total}</p>
+                      <p className='text-xs text-slate-400'>Procesados</p>
+                    </div>
+                    <div className='text-center'>
+                      <p className='text-2xl font-bold text-green-500'>{correctionResults.players.updated}</p>
+                      <p className='text-xs text-slate-400'>Actualizados</p>
+                    </div>
+                    <div className='text-center'>
+                      <p className='text-2xl font-bold text-red-500'>{correctionResults.players.errors}</p>
+                      <p className='text-xs text-slate-400'>Errores</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
+
+              {correctionResults.teams && (
+                <div className='bg-[#131921] rounded-lg p-4 border border-slate-700'>
+                  <h4 className='text-sm font-semibold text-slate-300 mb-3'>Equipos</h4>
+                  <div className='grid grid-cols-3 gap-4'>
+                    <div className='text-center'>
+                      <p className='text-2xl font-bold text-white'>{correctionResults.teams.total}</p>
+                      <p className='text-xs text-slate-400'>Procesados</p>
+                    </div>
+                    <div className='text-center'>
+                      <p className='text-2xl font-bold text-green-500'>{correctionResults.teams.updated}</p>
+                      <p className='text-xs text-slate-400'>Actualizados</p>
+                    </div>
+                    <div className='text-center'>
+                      <p className='text-2xl font-bold text-red-500'>{correctionResults.teams.errors}</p>
+                      <p className='text-xs text-slate-400'>Errores</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <Button
                 onClick={() => setShowResultsModal(false)}
@@ -631,11 +822,26 @@ export default function CorreccionesPage() {
         </div>
       ) : activeTab === 'nationalities' ? (
         <div className='rounded-lg border border-slate-700 bg-[#131921] overflow-hidden'>
+          <div className='bg-[#1a2332] border-b border-slate-700 p-4 flex items-center justify-between'>
+            <div>
+              <h3 className='text-sm font-semibold text-slate-300'>Correcciones de Nacionalidad</h3>
+              <p className='text-xs text-slate-400 mt-1'>Aplica a: tabla jugadores (nationality_1, nationality_2)</p>
+            </div>
+            <Button
+              size='sm'
+              className='bg-blue-600 hover:bg-blue-700 text-white'
+              onClick={handleApplyNationalityCorrections}
+              disabled={applyingType !== null || nationalityCorrections.length === 0}
+            >
+              {applyingType === 'nationalities' ? 'Aplicando...' : 'Aplicar Nacionalidades'}
+            </Button>
+          </div>
           <table className='w-full'>
             <thead className='bg-[#1a2332] border-b border-slate-700'>
               <tr>
                 <th className='p-4 text-left text-sm font-semibold text-slate-300'>Nombre Original</th>
                 <th className='p-4 text-left text-sm font-semibold text-slate-300'>Nombre Corregido</th>
+                <th className='p-4 text-left text-sm font-semibold text-slate-300'>Motivo</th>
                 <th className='p-4 text-center text-sm font-semibold text-slate-300 w-32'>Acciones</th>
               </tr>
             </thead>
@@ -662,6 +868,18 @@ export default function CorreccionesPage() {
                       />
                     ) : (
                       <span className='text-sm text-white font-medium'>{correction.corrected_name}</span>
+                    )}
+                  </td>
+                  <td className='p-4'>
+                    {editingNationality === correction.id ? (
+                      <Input
+                        value={editNationalityData.reason || correction.reason || ''}
+                        onChange={e => setEditNationalityData({ ...editNationalityData, reason: e.target.value })}
+                        className='bg-[#0a0f16] border-slate-600 text-white text-sm'
+                        placeholder='Motivo...'
+                      />
+                    ) : (
+                      <span className='text-sm text-slate-400'>{correction.reason || '-'}</span>
                     )}
                   </td>
                   <td className='p-4'>
@@ -715,17 +933,32 @@ export default function CorreccionesPage() {
           </table>
           {nationalityCorrections.length === 0 && (
             <div className='text-center py-8 text-slate-400'>
-              No hay reglas de corrección para nacionalidades
+              No hay reglas de correccion para nacionalidades
             </div>
           )}
         </div>
       ) : activeTab === 'teams' ? (
         <div className='rounded-lg border border-slate-700 bg-[#131921] overflow-hidden'>
+          <div className='bg-[#1a2332] border-b border-slate-700 p-4 flex items-center justify-between'>
+            <div>
+              <h3 className='text-sm font-semibold text-slate-300'>Correcciones de Equipos</h3>
+              <p className='text-xs text-slate-400 mt-1'>Aplica a: tabla jugadores (team_name) y tabla equipos (team_name)</p>
+            </div>
+            <Button
+              size='sm'
+              className='bg-blue-600 hover:bg-blue-700 text-white'
+              onClick={handleApplyTeamCorrections}
+              disabled={applyingType !== null || teamCorrections.length === 0}
+            >
+              {applyingType === 'teams' ? 'Aplicando...' : 'Aplicar Equipos'}
+            </Button>
+          </div>
           <table className='w-full'>
             <thead className='bg-[#1a2332] border-b border-slate-700'>
               <tr>
                 <th className='p-4 text-left text-sm font-semibold text-slate-300'>Nombre Original</th>
                 <th className='p-4 text-left text-sm font-semibold text-slate-300'>Nombre Corregido</th>
+                <th className='p-4 text-left text-sm font-semibold text-slate-300'>Motivo</th>
                 <th className='p-4 text-center text-sm font-semibold text-slate-300 w-32'>Acciones</th>
               </tr>
             </thead>
@@ -752,6 +985,18 @@ export default function CorreccionesPage() {
                       />
                     ) : (
                       <span className='text-sm text-white font-medium'>{correction.corrected_name}</span>
+                    )}
+                  </td>
+                  <td className='p-4'>
+                    {editingTeam === correction.id ? (
+                      <Input
+                        value={editTeamData.reason || correction.reason || ''}
+                        onChange={e => setEditTeamData({ ...editTeamData, reason: e.target.value })}
+                        className='bg-[#0a0f16] border-slate-600 text-white text-sm'
+                        placeholder='Motivo...'
+                      />
+                    ) : (
+                      <span className='text-sm text-slate-400'>{correction.reason || '-'}</span>
                     )}
                   </td>
                   <td className='p-4'>
@@ -805,18 +1050,33 @@ export default function CorreccionesPage() {
           </table>
           {teamCorrections.length === 0 && (
             <div className='text-center py-8 text-slate-400'>
-              No hay reglas de corrección para equipos
+              No hay reglas de correccion para equipos
             </div>
           )}
         </div>
       ) : (
         <div className='rounded-lg border border-slate-700 bg-[#131921] overflow-hidden'>
+          <div className='bg-[#1a2332] border-b border-slate-700 p-4 flex items-center justify-between'>
+            <div>
+              <h3 className='text-sm font-semibold text-slate-300'>Correcciones de Competiciones</h3>
+              <p className='text-xs text-slate-400 mt-1'>Aplica a: tabla jugadores (team_competition) y tabla equipos (competition)</p>
+            </div>
+            <Button
+              size='sm'
+              className='bg-blue-600 hover:bg-blue-700 text-white'
+              onClick={handleApplyCompetitionCorrections}
+              disabled={applyingType !== null || competitionCorrections.length === 0}
+            >
+              {applyingType === 'competitions' ? 'Aplicando...' : 'Aplicar Competiciones'}
+            </Button>
+          </div>
           <table className='w-full'>
             <thead className='bg-[#1a2332] border-b border-slate-700'>
               <tr>
                 <th className='p-4 text-left text-sm font-semibold text-slate-300'>Nombre Original</th>
                 <th className='p-4 text-left text-sm font-semibold text-slate-300'>Nombre Corregido</th>
-                <th className='p-4 text-left text-sm font-semibold text-slate-300'>País</th>
+                <th className='p-4 text-left text-sm font-semibold text-slate-300'>Pais</th>
+                <th className='p-4 text-left text-sm font-semibold text-slate-300'>Motivo</th>
                 <th className='p-4 text-center text-sm font-semibold text-slate-300 w-32'>Acciones</th>
               </tr>
             </thead>
@@ -854,6 +1114,18 @@ export default function CorreccionesPage() {
                       />
                     ) : (
                       <span className='text-sm text-slate-300'>{correction.country || '-'}</span>
+                    )}
+                  </td>
+                  <td className='p-4'>
+                    {editingCompetition === correction.id ? (
+                      <Input
+                        value={editCompetitionData.reason || correction.reason || ''}
+                        onChange={e => setEditCompetitionData({ ...editCompetitionData, reason: e.target.value })}
+                        className='bg-[#0a0f16] border-slate-600 text-white text-sm'
+                        placeholder='Motivo...'
+                      />
+                    ) : (
+                      <span className='text-sm text-slate-400'>{correction.reason || '-'}</span>
                     )}
                   </td>
                   <td className='p-4'>
@@ -907,7 +1179,7 @@ export default function CorreccionesPage() {
           </table>
           {competitionCorrections.length === 0 && (
             <div className='text-center py-8 text-slate-400'>
-              No hay reglas de corrección para competiciones
+              No hay reglas de correccion para competiciones
             </div>
           )}
         </div>

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { prisma } from '@/lib/db'
+import { ReferenceAutoInsertService } from '@/lib/services/reference-auto-insert-service'
 import { generateReportId } from '@/lib/utils/id-generator'
 import { ScoutReportCreateSchema } from '@/lib/validation/api-schemas'
 
@@ -134,6 +135,15 @@ export async function POST(request: NextRequest) {
     // Preparar datos con conversión de tipos
     const heightValue = validatedData.height ? Number(validatedData.height) : null
 
+    // 🔄 AUTO-INSERTAR EN TABLAS DE REFERENCIA SI ES NECESARIO
+    const { data: dataWithRefs, createdReferences } = await ReferenceAutoInsertService.processPlayerReferences({
+      nationality_1: validatedData.nationality1,
+      nationality_2: validatedData.nationality2 || null,
+      team_name: validatedData.team,
+      team_country: validatedData.teamCountry || null,
+      agency: validatedData.agency || null
+    })
+
     // Crear el jugador con estado "pending" (requiere aprobación del admin)
     // ID generado automáticamente por la base de datos
     const player = await prisma.jugador.create({
@@ -151,11 +161,21 @@ export async function POST(request: NextRequest) {
         agency: validatedData.agency || null,
         url_trfm: validatedData.urlReference || null,
 
+        // IDs de referencias (si se crearon/encontraron)
+        team_id: dataWithRefs.team_id || null,
+        nationality_id: dataWithRefs.nationality_id || null,
+        agency_id: dataWithRefs.agency_id || null,
+
         // Campos de aprobación
         approval_status: 'pending',
         created_by_scout_id: scout.id_scout,
       }
     })
+
+    // Log de referencias creadas
+    if (createdReferences.countries.length > 0 || createdReferences.teams.length > 0 || createdReferences.agencies.length > 0) {
+      console.log('📍 Auto-created references:', createdReferences)
+    }
 
     console.log('✅ Player created with pending status:', {
       id: player.id_player,

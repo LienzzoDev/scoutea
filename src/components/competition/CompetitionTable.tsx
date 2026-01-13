@@ -4,8 +4,32 @@ import { ArrowUpDown, ArrowUp, ArrowDown, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef } from "react";
 
+import EditableCell from "@/components/admin/EditableCell";
 import { Button } from "@/components/ui/button";
 import type { Competition } from "@/lib/services/competition-service";
+
+// Campos NO editables (campos calculados y IDs del sistema)
+const NON_EDITABLE_FIELDS = new Set([
+  'id_competition',
+  'createdAt',
+  'updatedAt',
+  'competition_trfm_value_norm',  // Normalización de competition_trfm_value
+  'competition_rating_norm',      // Normalización de competition_rating
+]);
+
+// Campos CALCULADOS automáticamente mediante fórmulas
+const CALCULATED_FIELDS = new Set([
+  'competition_trfm_value_norm',
+  'competition_rating_norm',
+]);
+
+// Campos obtenidos mediante SCRAPING de Transfermarkt
+const SCRAPED_FIELDS = new Set([
+  'competition_name',
+  'competition_country',
+  'competition_trfm_value',
+  'competition_rating',
+]);
 
 interface Category {
   key: string;
@@ -85,6 +109,81 @@ export default function CompetitionTable({
         return duplicateValues.urlTrfms.has(lowerValue);
       default:
         return false;
+    }
+  };
+
+  // Función para calcular el ancho de columna basado en el contenido
+  const calculateColumnWidth = (category: Category): number => {
+    const MIN_WIDTH = 140;
+    const PADDING = 32;
+    const CHAR_WIDTH = 8;
+
+    let maxWidth = category.label.length * CHAR_WIDTH + PADDING;
+
+    competitions.forEach(competition => {
+      const value = category.getValue(competition);
+      let formattedValue = category.format ? category.format(value) : value;
+
+      if (typeof formattedValue === 'object') {
+        formattedValue = JSON.stringify(formattedValue);
+      } else if (formattedValue === null || formattedValue === undefined) {
+        formattedValue = "N/A";
+      } else {
+        formattedValue = String(formattedValue);
+      }
+
+      const contentWidth = formattedValue.length * CHAR_WIDTH + PADDING;
+      maxWidth = Math.max(maxWidth, contentWidth);
+    });
+
+    return Math.max(MIN_WIDTH, Math.min(maxWidth, 400));
+  };
+
+  // Función para determinar el tipo de campo
+  const getFieldType = (fieldName: string): 'text' | 'number' | 'boolean' | 'url' | 'date' => {
+    // Campos de URL
+    if (fieldName.startsWith('url_')) {
+      return 'url';
+    }
+
+    // Campos numéricos
+    if (fieldName.includes('value') || fieldName.includes('elo') ||
+        fieldName.includes('rating') || fieldName.includes('norm') ||
+        fieldName.includes('tier')) {
+      return 'number';
+    }
+
+    // Por defecto, texto
+    return 'text';
+  };
+
+  // Función para guardar cambios en campos editables
+  const handleSaveField = async (
+    competitionId: string | number,
+    fieldName: string,
+    value: string | number | boolean
+  ): Promise<boolean> => {
+    try {
+      const response = await fetch(`/api/competitions/${competitionId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          [fieldName]: value
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al actualizar el campo');
+      }
+
+      // Refrescar datos sin recargar la página completa
+      router.refresh();
+      return true;
+    } catch (error) {
+      console.error('Error updating competition field:', error);
+      return false;
     }
   };
 
@@ -190,14 +289,15 @@ export default function CompetitionTable({
           <div
             className="flex items-stretch"
             style={{
-              minWidth: `${Math.max(
-                selectedCategories.length * 140,
-                100
-              )}px`,
+              minWidth: `${selectedCategories.reduce((sum, cat) => sum + calculateColumnWidth(cat), 0)}px`,
             }}
           >
-            {selectedCategories.map((category, index, array) => {
+            {selectedCategories.map((category) => {
               const isActive = sortBy === category.key;
+              const isCalculated = CALCULATED_FIELDS.has(category.key);
+              const isScraped = SCRAPED_FIELDS.has(category.key);
+              const columnWidth = calculateColumnWidth(category);
+
               const getSortIcon = () => {
                 if (!isActive) return <ArrowUpDown className={`w-3 h-3 ${darkMode ? 'text-slate-500' : 'text-gray-400'}`} />;
                 const iconColor = darkMode ? 'text-[#FF5733]' : 'text-[#8c1a10]';
@@ -209,20 +309,30 @@ export default function CompetitionTable({
               return (
                 <div
                   key={category.key}
-                  className={`p-4 text-center border-r last:border-r-0 flex-shrink-0 self-stretch cursor-pointer transition-colors ${
+                  className={`p-4 text-center border-r last:border-r-0 flex-shrink-0 self-stretch cursor-pointer transition-colors relative ${
                     darkMode
                       ? `border-slate-700 hover:bg-slate-700/50 ${isActive ? 'bg-slate-700/50' : ''}`
                       : `border-[#e7e7e7] hover:bg-gray-50 ${isActive ? 'bg-gray-50' : ''}`
                   }`}
                   style={{
-                    minWidth: "140px",
-                    width:
-                      array.length <= 4
-                        ? `${100 / array.length}%`
-                        : "140px",
+                    width: `${columnWidth}px`,
                   }}
                   onClick={() => onSort?.(category.key)}
                 >
+                  {/* Indicador de campo calculado - esquina superior derecha */}
+                  {isCalculated && (
+                    <div
+                      className="absolute top-1 right-1 w-2 h-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-sm shadow-sm"
+                      title="Campo calculado automaticamente mediante formula"
+                    />
+                  )}
+                  {/* Indicador de campo scrapeado - esquina superior izquierda */}
+                  {isScraped && (
+                    <div
+                      className="absolute top-1 left-1 w-2 h-2 bg-gradient-to-br from-purple-400 to-violet-500 rounded-sm shadow-sm"
+                      title="Campo obtenido mediante scraping de Transfermarkt"
+                    />
+                  )}
                   <div className="flex items-center justify-center gap-1">
                     <h4 className={`font-semibold text-sm ${
                       isActive
@@ -258,10 +368,9 @@ export default function CompetitionTable({
           return (
             <div
               key={competition.id_competition}
-              className={`flex items-stretch cursor-pointer transition-colors ${
+              className={`flex items-stretch transition-colors ${
                 darkMode ? 'hover:bg-slate-700/30' : 'hover:bg-gray-50'
               }`}
-              onClick={() => router.push(`/admin/competiciones/${competition.id_competition}`)}
             >
               {/* Columna fija - ID */}
               <div className={`w-24 p-4 border-r flex-shrink-0 sticky left-0 z-10 ${
@@ -272,13 +381,18 @@ export default function CompetitionTable({
                 </p>
               </div>
 
-              {/* Columna fija - Competition Info (solo nombre) */}
+              {/* Columna fija - Competition Info (solo nombre) - Editable */}
               <div className={`w-64 p-4 border-r flex-shrink-0 ${
                 darkMode ? 'border-slate-700' : 'border-[#e7e7e7]'
               }`}>
-                <h3 className={`${isNameDuplicate ? 'font-semibold' : 'font-normal'} ${darkMode ? 'text-white' : 'text-[#000000]'}`}>
-                  {displayName}
-                </h3>
+                <EditableCell
+                  value={displayName}
+                  playerId={competition.id_competition}
+                  fieldName="competition_name"
+                  onSave={handleSaveField}
+                  type="text"
+                  isBold={isNameDuplicate}
+                />
               </div>
 
               {/* Valores scrolleables */}
@@ -296,14 +410,18 @@ export default function CompetitionTable({
                 <div
                   className="flex items-stretch"
                   style={{
-                    minWidth: `${Math.max(
-                      selectedCategories.length * 140,
-                      100
-                    )}px`,
+                    minWidth: `${selectedCategories.reduce((sum, cat) => sum + calculateColumnWidth(cat), 0)}px`,
                   }}
                 >
-                  {selectedCategories.map((category, catIndex, array) => {
+                  {selectedCategories.map((category) => {
                     const value = category.getValue(competition);
+                    const isEditable = !NON_EDITABLE_FIELDS.has(category.key);
+                    const fieldType = getFieldType(category.key);
+                    const columnWidth = calculateColumnWidth(category);
+
+                    // Verificar si url_trfm esta duplicada
+                    const isUrlTrfmDuplicate = category.key === 'url_trfm' && isDuplicate('url_trfm', value as string | null | undefined);
+
                     let formattedValue = category.format
                       ? category.format(value)
                       : value || "N/A";
@@ -317,9 +435,6 @@ export default function CompetitionTable({
                       formattedValue = String(formattedValue);
                     }
 
-                    // Verificar si url_trfm está duplicada
-                    const isUrlTrfmDuplicate = category.key === 'url_trfm' && isDuplicate('url_trfm', value as string | null | undefined);
-
                     return (
                       <div
                         key={`${competition.id_competition}-${category.key}`}
@@ -327,20 +442,27 @@ export default function CompetitionTable({
                           darkMode ? 'border-slate-700' : 'border-[#e7e7e7]'
                         }`}
                         style={{
-                          minWidth: "140px",
-                          width:
-                            array.length <= 4
-                              ? `${100 / array.length}%`
-                              : "140px",
+                          width: `${columnWidth}px`,
                         }}
                       >
-                        <p className={`break-words ${
-                          isUrlTrfmDuplicate ? 'font-semibold' : 'font-medium'
-                        } ${
-                          darkMode ? 'text-white' : 'text-[#000000]'
-                        }`}>
-                          {formattedValue}
-                        </p>
+                        {isEditable ? (
+                          <EditableCell
+                            value={value ?? null}
+                            playerId={competition.id_competition}
+                            fieldName={category.key}
+                            onSave={handleSaveField}
+                            type={fieldType}
+                            isBold={isUrlTrfmDuplicate}
+                          />
+                        ) : (
+                          <p className={`break-words ${
+                            isUrlTrfmDuplicate ? 'font-semibold' : 'font-medium'
+                          } ${
+                            darkMode ? 'text-white' : 'text-[#000000]'
+                          }`}>
+                            {formattedValue}
+                          </p>
+                        )}
                       </div>
                     );
                   })}
@@ -384,6 +506,24 @@ export default function CompetitionTable({
             </div>
           );
         })}
+      </div>
+
+      {/* Leyenda de campos automaticos */}
+      <div className={`px-4 py-3 border-t ${
+        darkMode
+          ? 'bg-[#0f1419] border-slate-700'
+          : 'bg-gray-50 border-gray-200'
+      }`}>
+        <div className="flex items-center gap-6 text-xs text-slate-400">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-sm shadow-sm" />
+            <span>Campo calculado automaticamente mediante formula</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 bg-gradient-to-br from-purple-400 to-violet-500 rounded-sm shadow-sm" />
+            <span>Campo obtenido mediante scraping de Transfermarkt</span>
+          </div>
+        </div>
       </div>
     </div>
   );

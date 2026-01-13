@@ -1,6 +1,7 @@
 import type { Jugador } from '@prisma/client'
 
 import { prisma } from '@/lib/db'
+import { ReferenceAutoInsertService } from '@/lib/services/reference-auto-insert-service'
 import type { Player, PlayerStats } from '@/types/player'
 import type { PlayerWhereInput, PlayerOrderByInput } from '@/types/service-types'
 
@@ -479,6 +480,24 @@ export class PlayerService {
         ? (typeof data.contract_end === 'string' ? new Date(data.contract_end) : data.contract_end)
         : null;
 
+      // 🔄 AUTO-INSERTAR EN TABLAS DE REFERENCIA SI ES NECESARIO
+      const { data: dataWithRefs, createdReferences } = await ReferenceAutoInsertService.processPlayerReferences({
+        nationality_1: data.nationality_1 || null,
+        nationality_2: data.nationality_2 || null,
+        team_name: data.team_name || null,
+        team_country: data.team_country || null,
+        team_competition: data.team_competition || null,
+        competition_country: data.competition_country || null,
+        competition_confederation: data.competition_confederation || null,
+        agency: data.agency || null
+      });
+
+      // Log de referencias creadas
+      if (createdReferences.countries.length > 0 || createdReferences.teams.length > 0 ||
+          createdReferences.competitions.length > 0 || createdReferences.agencies.length > 0) {
+        console.log('📍 Auto-created references for new player:', createdReferences);
+      }
+
       const newPlayer = await prisma.jugador.create({
         data: {
           player_name: data.player_name,
@@ -496,6 +515,10 @@ export class PlayerService {
           national_tier: data.national_tier || null,
           contract_end: contractEnd,
           url_instagram: data.url_instagram || null,
+          // IDs de referencias (si se crearon/encontraron)
+          team_id: dataWithRefs.team_id || null,
+          nationality_id: dataWithRefs.nationality_id || null,
+          agency_id: dataWithRefs.agency_id || null,
           createdAt: new Date(),
           updatedAt: new Date()
         }

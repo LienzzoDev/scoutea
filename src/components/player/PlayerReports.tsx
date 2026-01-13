@@ -18,10 +18,13 @@ interface Report {
   urlReference?: string | null;
   urlTrfm?: string | null;
   urlInstagram?: string | null;
-  type?: 'video' | 'written' | 'social';
+  urlReport?: string | null;
+  type?: 'video' | 'written' | 'social' | 'web';
   hasVideo?: boolean;
   image?: string;
-  reportData?: any;
+  content?: string | null;
+  rating?: number;
+  reportData?: Record<string, unknown>;
 }
 
 interface PlayerReportsProps {
@@ -68,7 +71,7 @@ export default function PlayerReports({ player }: PlayerReportsProps) {
     if (selectedFilter === 'all') {
       return reports;
     }
-    return reports.filter(report => report.type === selectedFilter);
+    return reports.filter((report: Report) => report.type === selectedFilter);
   }, [selectedFilter, reports]);
 
 
@@ -91,7 +94,7 @@ export default function PlayerReports({ player }: PlayerReportsProps) {
         {REPORT_TYPES.map((type) => {
           const Icon = type.icon;
           const isActive = selectedFilter === type.key;
-          const count = reports.filter(r => r.type === type.key).length;
+          const count = reports.filter((r: Report) => r.type === type.key).length;
           
           return (
             <button
@@ -131,7 +134,7 @@ export default function PlayerReports({ player }: PlayerReportsProps) {
         </div>
       ) : (
         <div className="columns-1 md:columns-2 gap-6 space-y-6">
-          {filteredReports.map((report: any) => {
+          {filteredReports.map((report: Report) => {
             const reportDate = report.date ? new Date(report.date).toLocaleDateString('es-ES') : 'Sin fecha';
             const reportRating = report.rating || 0;
 
@@ -158,9 +161,14 @@ export default function PlayerReports({ player }: PlayerReportsProps) {
                       <div className={`px-2 py-1 rounded-full text-xs font-medium ${
                         report.type === 'video' ? 'bg-red-100 text-red-700' :
                         report.type === 'written' ? 'bg-blue-100 text-blue-700' :
-                        'bg-green-100 text-green-700'
+                        report.type === 'social' ? 'bg-green-100 text-green-700' :
+                        report.type === 'web' ? 'bg-purple-100 text-purple-700' :
+                        'bg-gray-100 text-gray-700'
                       }`}>
-                        {report.type === 'video' ? '📹' : report.type === 'written' ? '📝' : '📱'}
+                        {report.type === 'video' ? '📹' :
+                         report.type === 'written' ? '📝' :
+                         report.type === 'social' ? '📱' :
+                         report.type === 'web' ? '🌐' : '📋'}
                       </div>
                     )}
                   </div>

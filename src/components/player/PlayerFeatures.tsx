@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 
+import PositionMap from '@/components/player/PositionMap';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePlayerPositioning } from "@/hooks/player/usePlayerPositioning";
+import { usePositionLevels } from "@/hooks/player/usePositionLevels";
 import type { Player } from "@/types/player";
 
 interface PlayerFeaturesProps {
@@ -29,6 +31,12 @@ export default function PlayerFeatures({
     rightFoot,
     isLoading
   } = usePlayerPositioning(player);
+
+  // Fetch position levels from Atributos table
+  const {
+    positionLevels,
+    isLoading: positionLevelsLoading
+  } = usePositionLevels(player.id_player);
 
   const [playerRoles, setPlayerRoles] = useState<PlayerRole[]>([]);
   const [rolesLoading, setRolesLoading] = useState(false);
@@ -94,103 +102,13 @@ export default function PlayerFeatures({
               </div>
             </div>
 
-            {/* Football Pitch with Positions */}
-            <div className="relative bg-green-100 rounded-lg p-8">
-              {isLoading ? (
-                <div className="flex items-center justify-center h-80">
-                  <div className="text-[#6d6d6d]">Cargando posiciones...</div>
-                </div>
-              ) : (
-                <svg className="w-full h-80" viewBox="0 0 600 400">
-                  {/* Pitch outline */}
-                  <rect
-                    x="50"
-                    y="50"
-                    width="500"
-                    height="300"
-                    fill="none"
-                    stroke="#22c55e"
-                    strokeWidth="2"
-                    rx="10"
-                  />
-                  {/* Center line */}
-                  <line
-                    x1="300"
-                    y1="50"
-                    x2="300"
-                    y2="350"
-                    stroke="#22c55e"
-                    strokeWidth="2"
-                  />
-                  {/* Center circle */}
-                  <circle
-                    cx="300"
-                    cy="200"
-                    r="50"
-                    fill="none"
-                    stroke="#22c55e"
-                    strokeWidth="2"
-                  />
-                  {/* Goal areas */}
-                  <rect
-                    x="50"
-                    y="150"
-                    width="30"
-                    height="100"
-                    fill="none"
-                    stroke="#22c55e"
-                    strokeWidth="2"
-                  />
-                  <rect
-                    x="520"
-                    y="150"
-                    width="30"
-                    height="100"
-                    fill="none"
-                    stroke="#22c55e"
-                    strokeWidth="2"
-                  />
-
-                  {/* Dynamic Position blocks based on real data */}
-                  {positions.map((position, index) => (
-                    <g key={index}>
-                      <rect
-                        x={position.x - 20}
-                        y={position.y - 10}
-                        width="40"
-                        height="20"
-                        fill={position.color}
-                        fillOpacity={position.isMainPosition ? 1 : 0.7}
-                        rx="4"
-                        stroke={position.isMainPosition ? "#000" : "none"}
-                        strokeWidth={position.isMainPosition ? "2" : "0"}
-                      />
-                      <text
-                        x={position.x}
-                        y={position.y + 3}
-                        textAnchor="middle"
-                        className={`text-xs font-bold ${
-                          position.color === '#eab308' ? 'fill-black' : 'fill-white'
-                        }`}
-                      >
-                        {position.position.length > 4 
-                          ? position.position.substring(0, 3) 
-                          : position.position}
-                      </text>
-                    </g>
-                  ))}
-
-                  {/* Player info */}
-                  <text
-                    x="300"
-                    y="30"
-                    textAnchor="middle"
-                    className="text-sm font-bold fill-[#2e3138]"
-                  >
-                    {player.player_name} - Posiciones en el Campo
-                  </text>
-                </svg>
-              )}
+            {/* Football Pitch with Position Levels */}
+            <div className="relative rounded-lg overflow-hidden">
+              <PositionMap
+                positionLevels={positionLevels}
+                isLoading={positionLevelsLoading}
+                playerName={player.player_name}
+              />
             </div>
           </div>
 

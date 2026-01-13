@@ -1720,6 +1720,7 @@ model TeamNameCorrection {
   id                String   @id @default(cuid())
   original_name     String   @unique  // Nombre original del equipo (ej: "Real Madrid CF")
   corrected_name    String             // Nombre corregido (ej: "Real Madrid")
+  reason            String?            // Motivo de la corrección
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   created_by        String?            // Usuario que creó la regla
@@ -1734,6 +1735,7 @@ model LeagueCorrection {
   national_tier         String   @unique  // Tier original (ej: "LaLiga")
   rename_national_tier  String             // Nombre de la liga (ej: "La Liga")
   country               String             // País de la liga (ej: "Spain")
+  reason                String?            // Motivo de la corrección
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
   created_by            String?            // Usuario que creó la regla
@@ -1747,6 +1749,7 @@ model NationalityCorrection {
   id                String   @id @default(cuid())
   original_name     String   @unique  // Nacionalidad original (ej: "España")
   corrected_name    String             // Nacionalidad corregida (ej: "Spain")
+  reason            String?            // Motivo de la corrección
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   created_by        String?            // Usuario que creó la regla
@@ -1761,6 +1764,7 @@ model CompetitionCorrection {
   original_name     String   @unique  // Competición original (ej: "UEFA Champions League")
   corrected_name    String             // Competición corregida (ej: "Champions League")
   country           String?            // País de la competición (opcional)
+  reason            String?            // Motivo de la corrección
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   created_by        String?            // Usuario que creó la regla

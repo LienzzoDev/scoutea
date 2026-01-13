@@ -27,6 +27,12 @@ export async function POST(request: NextRequest) {
 
     const validatedData = validation.data;
 
+    // Convertir playerId a número (id_player es Int en el esquema)
+    const playerIdNum = parseInt(validatedData.playerId, 10)
+    if (isNaN(playerIdNum)) {
+      return NextResponse.json({ error: 'ID de jugador inválido' }, { status: 400 })
+    }
+
     // Obtener el scout del usuario actual
     const scout = await prisma.scout.findUnique({
       where: { clerkId: userId },
@@ -39,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     // Verificar que el jugador existe
     const player = await prisma.jugador.findUnique({
-      where: { id_player: validatedData.playerId }
+      where: { id_player: playerIdNum }
     })
 
     if (!player) {
@@ -62,7 +68,7 @@ export async function POST(request: NextRequest) {
         form_url_video: validatedData.urlVideo || null,
         form_text_report: validatedData.reportText || null,
         form_potential: validatedData.potential.toString(),
-        approval_status: 'approved', // Los reportes de jugadores existentes se aprueban automáticamente
+        approval_status: 'pending', // Los reportes requieren aprobación del admin
       }
     })
 

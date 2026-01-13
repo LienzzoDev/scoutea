@@ -474,7 +474,8 @@ export class ReportService {
         id_player: reportData.id_player,
         form_potential: reportData.form_potential,
         roi: reportData.roi,
-        profit: reportData.profit
+        profit: reportData.profit,
+        approval_status: 'pending', // Los reportes requieren aprobación del admin
       },
       include: {
         player: {
