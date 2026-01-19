@@ -10,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-
 import { PLAYER_POSITIONS } from '@/constants/player-positions'
 
 // Tipos para los filtros

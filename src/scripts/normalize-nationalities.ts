@@ -1,5 +1,5 @@
-import { prisma } from '../lib/db';
 import { NATIONALITIES } from '../constants/nationalities';
+import { prisma } from '../lib/db';
 
 // Common demonyms/typos to Standard Country Name
 // Add more here as needed based on audit results

@@ -64,11 +64,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
 
-    const { playerId } = await request.json()
-    console.log('🎯 Player ID recibido:', playerId)
+    const { playerId: rawPlayerId } = await request.json()
+    console.log('🎯 Player ID recibido:', rawPlayerId)
 
-    if (!playerId) {
+    if (!rawPlayerId) {
       return NextResponse.json({ error: 'ID del jugador requerido' }, { status: 400 })
+    }
+
+    // Convertir playerId a número (Prisma espera Int)
+    const playerId = typeof rawPlayerId === 'string' ? parseInt(rawPlayerId, 10) : rawPlayerId
+    if (isNaN(playerId)) {
+      return NextResponse.json({ error: 'ID del jugador inválido' }, { status: 400 })
     }
 
     // Obtener o crear el usuario en la base de datos

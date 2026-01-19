@@ -93,6 +93,14 @@ export default function PlayerTable({
       }`}>
         {/* Columna fija - Player Info */}
         <div
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onSort?.('player_name');
+            }
+          }}
           className={`w-80 p-4 border-r flex-shrink-0 cursor-pointer transition-colors ${
             darkMode
               ? 'border-slate-700 hover:bg-slate-700/50'
@@ -149,6 +157,14 @@ export default function PlayerTable({
               return (
                 <div
                   key={category.key}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onSort?.(category.key);
+                    }
+                  }}
                   className={`p-4 text-center border-r last:border-r-0 flex-shrink-0 self-stretch cursor-pointer transition-colors ${
                     darkMode
                       ? `border-slate-700 hover:bg-slate-700/50 ${isActive ? 'bg-slate-700/50' : ''}`
@@ -183,7 +199,7 @@ export default function PlayerTable({
           darkMode ? 'border-slate-700' : 'border-[#e7e7e7]'
         }`}>
           <h4 className={`font-semibold text-sm ${darkMode ? 'text-slate-300' : 'text-[#6d6d6d]'}`}>
-            Favorites
+            Fav
           </h4>
         </div>
       </div>
@@ -193,6 +209,14 @@ export default function PlayerTable({
         {players.map((player, index) => (
           <div
             key={player.id_player}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                _router.push(`/member/player/${player.id_player}`);
+              }
+            }}
             className={`flex items-stretch cursor-pointer transition-colors ${
               darkMode ? 'hover:bg-slate-700/30' : 'hover:bg-gray-50'
             }`}

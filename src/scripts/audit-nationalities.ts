@@ -1,5 +1,5 @@
-import { prisma } from '../lib/db';
 import { NATIONALITIES } from '../constants/nationalities';
+import { prisma } from '../lib/db';
 
 async function main() {
   console.log('🔍 Starting Nationality Audit...');

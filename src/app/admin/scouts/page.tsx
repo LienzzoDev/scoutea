@@ -1,6 +1,6 @@
 'use client'
 
-import { RefreshCw, Download, Plus, Search } from 'lucide-react'
+import { RefreshCw, Download, Plus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
 
@@ -10,7 +10,6 @@ import CreateScoutDialog from '@/components/admin/CreateScoutDialog'
 import ScoutFilters, { ScoutFiltersState } from '@/components/admin/ScoutFilters'
 import DashboardHeader from '@/components/layout/dashboard-header'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { LoadingPage } from '@/components/ui/loading-spinner'
 import { EditableCellProvider } from '@/contexts/EditableCellContext'
 import { useInfiniteScoutsScroll } from '@/hooks/admin/useInfiniteScoutsScroll'

@@ -1,16 +1,16 @@
 'use client'
 
+import { useUser } from '@clerk/nextjs'
 import { Plus, RefreshCw, Trash2, AlertTriangle, X } from 'lucide-react'
 import { useEffect, useState, useCallback } from 'react'
-import { useUser } from '@clerk/nextjs'
 
 import { AdminReportForm } from '@/components/admin/AdminReportForm'
 import AdminReportTable from '@/components/admin/AdminReportTable'
 import ReportFilters, { ReportFiltersState } from '@/components/admin/ReportFilters'
 import DashboardHeader from '@/components/layout/dashboard-header'
 import { Button } from '@/components/ui/button'
-import { useToast } from '@/hooks/use-toast'
 import { useInfiniteReportsScroll } from '@/hooks/admin/useInfiniteReportsScroll'
+import { useToast } from '@/hooks/use-toast'
 
 export default function AdminReportesPage() {
   const { toast } = useToast()

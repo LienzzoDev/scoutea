@@ -1,4 +1,5 @@
 import { PrismaClient, Prisma } from '@prisma/client'
+
 import { logger } from '../logging/production-logger'
 
 /**
@@ -647,7 +648,7 @@ export class DataPopulationService {
 
   private generateMarketValue(rating: number, age: number): number {
     // Base value from rating
-    let baseValue = Math.pow(10, (rating - 50) / 15)
+    const baseValue = Math.pow(10, (rating - 50) / 15)
 
     // Age multiplier (peak at 26)
     let ageMultiplier = 1

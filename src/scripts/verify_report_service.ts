@@ -1,6 +1,6 @@
 
-import { ReportService } from '@/lib/services/report-service'
 import { prisma } from '@/lib/db'
+import { ReportService } from '@/lib/services/report-service'
 
 async function main() {
   console.log('🔄 Testing ReportService.searchReports with includeOrphans: true')

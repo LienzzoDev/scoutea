@@ -1,11 +1,12 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 
+import { DASHBOARD_CATEGORY_GROUPS } from '@/constants/dashboard-categories';
+import type { PlayerFilters, Category } from '@/types/dashboard';
+
 import { useInfiniteDashboardScroll } from './member/useInfiniteDashboardScroll';
 import { usePlayerList } from './player/usePlayerList';
 import { useUserPreferences } from './useUserPreferences';
 
-import { DASHBOARD_CATEGORY_GROUPS } from '@/constants/dashboard-categories';
-import type { PlayerFilters, Category } from '@/types/dashboard';
 
 export const useDashboardStateInfinite = () => {
   // Hook para preferencias del usuario (guardadas en DB)

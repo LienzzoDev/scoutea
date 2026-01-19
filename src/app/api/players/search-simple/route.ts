@@ -68,7 +68,15 @@ export async function GET(request: NextRequest) {
         team_name: true,
         date_of_birth: true,
         created_by_scout_id: true,
-        approval_status: true
+        approval_status: true,
+        photo_coverage: true,
+        player_trfm_value: true,
+        player_rating: true,
+        height: true,
+        foot: true,
+        contract_end: true,
+        team_competition: true,
+        agency: true
       },
       orderBy: {
         player_name: 'asc'
@@ -98,7 +106,16 @@ export async function GET(request: NextRequest) {
         age,
         created_by_scout_id: player.created_by_scout_id,
         approval_status: player.approval_status,
-        is_own_player: scout ? player.created_by_scout_id === scout.id_scout : false
+        is_own_player: scout ? player.created_by_scout_id === scout.id_scout : false,
+        photo_coverage: player.photo_coverage,
+        player_trfm_value: player.player_trfm_value,
+        player_rating: player.player_rating,
+        date_of_birth: player.date_of_birth,
+        height: player.height,
+        foot: player.foot,
+        contract_end: player.contract_end,
+        team_competition: player.team_competition,
+        agency: player.agency
       }
     })
 

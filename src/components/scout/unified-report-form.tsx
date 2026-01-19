@@ -2,7 +2,6 @@
 
 import { useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
-
 import { useState, useEffect } from "react"
 
 import { MediaUpload } from "@/components/scout/media-upload"
