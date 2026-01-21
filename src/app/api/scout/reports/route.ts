@@ -61,12 +61,11 @@ export async function GET(request: NextRequest) {
         form_text_report: report.form_text_report,
         form_url_report: report.form_url_report,
         form_url_video: report.form_url_video,
-        url_secondary: report.url_secondary,
         form_potential: report.form_potential,
         roi: report.roi,
         profit: report.profit,
-        potential: report.potential,
         approval_status: report.approval_status,
+        initial_player_trfm_value: report.initial_player_trfm_value,
         player: {
           id_player: report.player?.id_player || report.id_player || '',
           player_name: report.player?.player_name || 'Unknown',

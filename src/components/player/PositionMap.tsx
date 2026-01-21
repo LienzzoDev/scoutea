@@ -228,49 +228,10 @@ export default function PositionMap({ positionLevels, isLoading, playerName }: P
             >
               {pos.label}
             </text>
-            {/* Level value (small, below label) */}
-            {level !== null && (
-              <text
-                x={pos.x}
-                y={pos.y + 22}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fill="#ffffff"
-                fontSize="9"
-                fontWeight="500"
-                opacity="0.9"
-              >
-                {level}
-              </text>
-            )}
           </g>
         );
       })}
 
-      {/* Legend */}
-      <g transform="translate(50, 370)">
-        <text x="0" y="0" fill="#ffffff" fontSize="9" fontWeight="500">
-          Niveles:
-        </text>
-        {/* Dark green */}
-        <rect x="50" y="-8" width="12" height="12" fill="#064e3b" rx="2" />
-        <text x="65" y="0" fill="#ffffff" fontSize="8">&gt;8</text>
-        {/* Light green */}
-        <rect x="85" y="-8" width="12" height="12" fill="#22c55e" rx="2" />
-        <text x="100" y="0" fill="#ffffff" fontSize="8">&gt;6</text>
-        {/* Yellow */}
-        <rect x="120" y="-8" width="12" height="12" fill="#eab308" rx="2" />
-        <text x="135" y="0" fill="#ffffff" fontSize="8">&gt;4</text>
-        {/* Orange */}
-        <rect x="155" y="-8" width="12" height="12" fill="#f97316" rx="2" />
-        <text x="170" y="0" fill="#ffffff" fontSize="8">&gt;2</text>
-        {/* Red */}
-        <rect x="190" y="-8" width="12" height="12" fill="#dc2626" rx="2" />
-        <text x="205" y="0" fill="#ffffff" fontSize="8">&le;2</text>
-        {/* Gray (no data) */}
-        <rect x="225" y="-8" width="12" height="12" fill="#9ca3af" rx="2" />
-        <text x="240" y="0" fill="#ffffff" fontSize="8">N/A</text>
-      </g>
 
       {/* Player name (if provided) */}
       {playerName && (

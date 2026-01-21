@@ -15,9 +15,8 @@ export default function PlayerBeeswarm({ playerId }: PlayerBeeswarmProps) {
   const [selectedPosition, setSelectedPosition] = useState('');
   const [selectedNationality, setSelectedNationality] = useState('');
   const [selectedCompetition, setSelectedCompetition] = useState('');
-  const [ageRange, setAgeRange] = useState({ min: '', max: '' });
+  const [trfmValueRange, setTrfmValueRange] = useState({ min: '', max: '' });
   const [showMax, setShowMax] = useState(false);
-  const [showMin, setShowMin] = useState(false);
   const [showAvg, setShowAvg] = useState(true);
   const [showNorm, setShowNorm] = useState(true);
   const [showRaw, setShowRaw] = useState(false);
@@ -43,9 +42,7 @@ export default function PlayerBeeswarm({ playerId }: PlayerBeeswarmProps) {
   const filteredData = getFilteredData({
     position: selectedPosition,
     nationality: selectedNationality,
-    competition: selectedCompetition,
-    ageMin: ageRange.min,
-    ageMax: ageRange.max
+    competition: selectedCompetition
   });
 
   // Calculate statistics
@@ -96,7 +93,7 @@ export default function PlayerBeeswarm({ playerId }: PlayerBeeswarmProps) {
             setSelectedPosition('');
             setSelectedNationality('');
             setSelectedCompetition('');
-            setAgeRange({ min: '', max: '' });
+            setTrfmValueRange({ min: '', max: '' });
           }}
           className="text-sm text-[#6d6d6d] hover:text-[#8c1a10] transition-colors"
         >
@@ -160,7 +157,7 @@ export default function PlayerBeeswarm({ playerId }: PlayerBeeswarmProps) {
                   }}
                 />
                 <label htmlFor="norm-beeswarm" className="text-sm text-[#2e3138]">
-                  Valores Normalizados (0-100)
+                  P90
                 </label>
               </div>
               <div className="flex items-center gap-2">
@@ -176,7 +173,7 @@ export default function PlayerBeeswarm({ playerId }: PlayerBeeswarmProps) {
                   }}
                 />
                 <label htmlFor="raw-beeswarm" className="text-sm text-[#2e3138]">
-                  Valores Reales
+                  Total (Norm 0-1)
                 </label>
               </div>
             </div>
@@ -211,18 +208,6 @@ export default function PlayerBeeswarm({ playerId }: PlayerBeeswarmProps) {
                   Máximo
                 </label>
               </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="min-beeswarm"
-                  className="rounded"
-                  checked={showMin}
-                  onChange={(e) => setShowMin(e.target.checked)}
-                />
-                <label htmlFor="min-beeswarm" className="text-sm text-[#2e3138]">
-                  Mínimo
-                </label>
-              </div>
             </div>
           </div>
         </div>
@@ -248,31 +233,33 @@ export default function PlayerBeeswarm({ playerId }: PlayerBeeswarmProps) {
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-sm font-medium text-[#2e3138] mb-2">
-                Edad Mín
+              <label htmlFor="trfmValueMin-beeswarm" className="block text-sm font-medium text-[#2e3138] mb-2">
+                TRFM Value Mín
               </label>
               <input
                 type="number"
+                id="trfmValueMin-beeswarm"
                 className="w-full p-2 border border-[#8c1a10] rounded-md bg-white"
-                placeholder="16"
-                min="16"
-                max="45"
-                value={ageRange.min}
-                onChange={(e) => setAgeRange(prev => ({ ...prev, min: e.target.value }))}
+                placeholder="0"
+                min="0"
+                step="0.1"
+                value={trfmValueRange.min}
+                onChange={(e) => setTrfmValueRange(prev => ({ ...prev, min: e.target.value }))}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#2e3138] mb-2">
-                Edad Máx
+              <label htmlFor="trfmValueMax-beeswarm" className="block text-sm font-medium text-[#2e3138] mb-2">
+                TRFM Value Máx
               </label>
               <input
                 type="number"
+                id="trfmValueMax-beeswarm"
                 className="w-full p-2 border border-[#8c1a10] rounded-md bg-white"
-                placeholder="45"
-                min="16"
-                max="45"
-                value={ageRange.max}
-                onChange={(e) => setAgeRange(prev => ({ ...prev, max: e.target.value }))}
+                placeholder="100"
+                min="0"
+                step="0.1"
+                value={trfmValueRange.max}
+                onChange={(e) => setTrfmValueRange(prev => ({ ...prev, max: e.target.value }))}
               />
             </div>
           </div>
@@ -337,11 +324,10 @@ export default function PlayerBeeswarm({ playerId }: PlayerBeeswarmProps) {
           </div>
         ) : (
           <div className="relative w-full h-96">
-            <BeeswarmChart 
+            <BeeswarmChart
               data={normalizedData}
               stats={stats}
               showMax={showMax}
-              showMin={showMin}
               showAvg={showAvg}
               showNorm={showNorm}
               showRaw={showRaw}
@@ -391,7 +377,6 @@ interface BeeswarmChartProps {
   data: BeeswarmData[];
   stats: { min: number; max: number; avg: number; count: number };
   showMax: boolean;
-  showMin: boolean;
   showAvg: boolean;
   showNorm: boolean;
   showRaw: boolean;
@@ -400,17 +385,16 @@ interface BeeswarmChartProps {
   metrics: Array<{ value: string; label: string }>;
 }
 
-function BeeswarmChart({ 
-  data, 
-  stats, 
-  showMax, 
-  showMin, 
-  showAvg, 
-  showNorm, 
+function BeeswarmChart({
+  data,
+  stats,
+  showMax,
+  showAvg,
+  showNorm,
   showRaw,
   highlightPlayerId,
   metric,
-  metrics 
+  metrics
 }: BeeswarmChartProps) {
   const width = 800;
   const height = 300;
@@ -458,7 +442,6 @@ function BeeswarmChart({
 
   // Calculate reference lines
   const avgX = valueScale(showNorm ? 50 : (stats.avg || 0));
-  const minX = valueScale(showNorm ? 0 : (stats.min || 0));
   const maxX = valueScale(showNorm ? 100 : (stats.max || 100));
 
   // Generate tick marks
@@ -496,18 +479,6 @@ function BeeswarmChart({
       })}
 
       {/* Reference lines */}
-      {showMin && (
-        <line
-          x1={minX}
-          y1={margin.top}
-          x2={minX}
-          y2={height - margin.bottom}
-          stroke="#ef4444"
-          strokeWidth="2"
-          strokeDasharray="4 4"
-        />
-      )}
-      
       {showAvg && (
         <line
           x1={avgX}
@@ -557,20 +528,14 @@ function BeeswarmChart({
 
       {/* Legend */}
       <g transform={`translate(${width - 150}, 30)`}>
-        {showMin && (
-          <g>
-            <line x1="0" y1="0" x2="20" y2="0" stroke="#ef4444" strokeWidth="2" strokeDasharray="4 4" />
-            <text x="25" y="4" className="text-xs fill-gray-700">Mínimo</text>
-          </g>
-        )}
         {showAvg && (
-          <g transform="translate(0, 20)">
+          <g>
             <line x1="0" y1="0" x2="20" y2="0" stroke="#2563eb" strokeWidth="2" strokeDasharray="4 4" />
             <text x="25" y="4" className="text-xs fill-gray-700">Promedio</text>
           </g>
         )}
         {showMax && (
-          <g transform="translate(0, 40)">
+          <g transform="translate(0, 20)">
             <line x1="0" y1="0" x2="20" y2="0" stroke="#22c55e" strokeWidth="2" strokeDasharray="4 4" />
             <text x="25" y="4" className="text-xs fill-gray-700">Máximo</text>
           </g>

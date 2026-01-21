@@ -283,7 +283,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
                   onChange={() => setShowRaw(false)}
                 />
                 <label htmlFor="percentiles" className="text-sm text-[#2e3138]">
-                  Valores Normalizados
+                  P90
                 </label>
               </div>
               <div className="flex items-center gap-2">
@@ -296,7 +296,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
                   onChange={() => setShowRaw(true)}
                 />
                 <label htmlFor="raw" className="text-sm text-[#2e3138]">
-                  Valores Brutos
+                  Total (Norm 0-1)
                 </label>
               </div>
             </div>
@@ -426,7 +426,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label htmlFor="ratingMin" className="block text-sm font-medium text-[#2e3138] mb-2">
-                Rating Mín
+                TRFM Value Mín
               </label>
               <input 
                 type="number" 
@@ -442,7 +442,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
             </div>
             <div>
               <label htmlFor="ratingMax" className="block text-sm font-medium text-[#2e3138] mb-2">
-                Rating Máx
+                TRFM Value Máx
               </label>
               <input 
                 type="number" 
