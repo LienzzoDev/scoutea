@@ -50,9 +50,6 @@ export const useTeams = () => {
         throw new Error(`Failed to fetch teams: ${response.status}`);
       }
       const data = await response.json();
-      console.log('API Response:', data);
-      console.log('Teams array:', data.teams);
-      console.log('Teams length:', data.teams?.length || 0);
       // La API devuelve { teams: [...], pagination: {...} }
       setTeams(data.teams || []);
     } catch (err) {

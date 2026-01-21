@@ -9,18 +9,19 @@ import AdminReportTable from '@/components/admin/AdminReportTable'
 import ReportFilters, { ReportFiltersState } from '@/components/admin/ReportFilters'
 import DashboardHeader from '@/components/layout/dashboard-header'
 import { Button } from '@/components/ui/button'
+import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useInfiniteReportsScroll } from '@/hooks/admin/useInfiniteReportsScroll'
 import { useToast } from '@/hooks/use-toast'
 
 export default function AdminReportesPage() {
   const { toast } = useToast()
   const { isSignedIn, isLoaded } = useUser()
+  const { dialogState, openDialog, closeDialog } = useConfirmDialog()
 
   // State for filters
   const [filters, setFilters] = useState<ReportFiltersState>({
     search: '',
     status: 'all',
-    validation: 'all',
     type: 'all'
   })
 
@@ -40,7 +41,6 @@ export default function AdminReportesPage() {
   } = useInfiniteReportsScroll({
     player_name: filters.search,
     report_status: filters.status === 'all' ? '' : filters.status,
-    report_validation: filters.validation === 'all' ? '' : filters.validation,
     report_type: filters.type === 'all' ? '' : filters.type,
     limit: 20
   })
@@ -63,12 +63,8 @@ export default function AdminReportesPage() {
     checkOrphanReports()
   }, [checkOrphanReports])
 
-  // Delete orphan reports
-  const handleDeleteOrphans = async () => {
-    if (!confirm(`¿Estás seguro de que deseas eliminar ${orphanCount} reportes huérfanos? Esta acción no se puede deshacer.`)) {
-      return
-    }
-
+  // Delete orphan reports (actual deletion logic)
+  const executeDeleteOrphans = async () => {
     setDeletingOrphans(true)
     try {
       const response = await fetch('/api/admin/reports/orphans', {
@@ -87,8 +83,8 @@ export default function AdminReportesPage() {
 
       setOrphanCount(0)
       refresh()
-    } catch (error) {
-      console.error('Error deleting orphan reports:', error)
+      closeDialog()
+    } catch {
       toast({
         title: 'Error',
         description: 'No se pudieron eliminar los reportes huérfanos',
@@ -99,11 +95,20 @@ export default function AdminReportesPage() {
     }
   }
 
-  const handleDelete = async (reportId: string) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este reporte?')) {
-      return
-    }
+  // Open confirmation dialog for orphan deletion
+  const handleDeleteOrphans = () => {
+    openDialog({
+      title: 'Eliminar reportes huérfanos',
+      description: `¿Estás seguro de que deseas eliminar ${orphanCount} reportes huérfanos? Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar',
+      cancelText: 'Cancelar',
+      variant: 'warning',
+      onConfirm: executeDeleteOrphans
+    })
+  }
 
+  // Delete single report (actual deletion logic)
+  const executeDeleteReport = async (reportId: string) => {
     try {
       const response = await fetch(`/api/reports/${reportId}/delete`, {
         method: 'DELETE'
@@ -119,14 +124,26 @@ export default function AdminReportesPage() {
       })
 
       refresh()
-    } catch (error) {
-      console.error('Error deleting report:', error)
+      closeDialog()
+    } catch {
       toast({
         title: 'Error',
         description: 'No se pudo eliminar el reporte',
         variant: 'destructive'
       })
     }
+  }
+
+  // Open confirmation dialog for report deletion
+  const handleDelete = (reportId: string) => {
+    openDialog({
+      title: 'Eliminar reporte',
+      description: '¿Estás seguro de que deseas eliminar este reporte? Esta acción no se puede deshacer.',
+      confirmText: 'Eliminar',
+      cancelText: 'Cancelar',
+      variant: 'danger',
+      onConfirm: () => executeDeleteReport(reportId)
+    })
   }
 
   if (!isLoaded) return null // Or loading spinner
@@ -289,6 +306,19 @@ export default function AdminReportesPage() {
           </div>
         </div>
       )}
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={dialogState.isOpen}
+        onClose={closeDialog}
+        onConfirm={dialogState.onConfirm}
+        title={dialogState.title}
+        description={dialogState.description}
+        confirmText={dialogState.confirmText || 'Confirmar'}
+        cancelText={dialogState.cancelText || 'Cancelar'}
+        variant={dialogState.variant || 'default'}
+        isLoading={deletingOrphans}
+      />
     </div>
   )
 }

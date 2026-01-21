@@ -6,168 +6,19 @@ import { useState, useMemo } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-
-// Función para convertir URLs de YouTube a formato embebido
-function getYouTubeEmbedUrl(url: string): string | null {
-  if (!url) return null
-
-  try {
-    // Patrones de URL de YouTube
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/,
-      /youtube\.com\/embed\/([^&\s]+)/,
-      /youtube\.com\/v\/([^&\s]+)/
-    ]
-
-    for (const pattern of patterns) {
-      const match = url.match(pattern)
-      if (match && match[1]) {
-        return `https://www.youtube.com/embed/${match[1]}`
-      }
-    }
-
-    // Si no es YouTube, devolver la URL original
-    return url
-  } catch (error) {
-    console.error('Error parsing video URL:', error)
-    return url
-  }
-}
-
-// Lista de dominios de redes sociales conocidas
-const SOCIAL_MEDIA_DOMAINS = [
-  'twitter.com',
-  'x.com',
-  'facebook.com',
-  'fb.com',
-  'instagram.com',
-  'tiktok.com',
-  'linkedin.com',
-  'threads.net',
-  'snapchat.com',
-  'pinterest.com',
-  'reddit.com',
-  'tumblr.com',
-  'whatsapp.com',
-  'telegram.org',
-  't.me',
-  'discord.com',
-  'discord.gg',
-  'twitch.tv',
-  'youtube.com',
-  'youtu.be',
-  'vimeo.com',
-  'dailymotion.com'
-]
-
-// Función para detectar si una URL es de red social
-function isSocialMediaUrl(url: string): boolean {
-  if (!url) return false
-  try {
-    const urlObj = new URL(url)
-    const hostname = urlObj.hostname.toLowerCase().replace('www.', '')
-    return SOCIAL_MEDIA_DOMAINS.some(domain => hostname === domain || hostname.endsWith('.' + domain))
-  } catch {
-    return false
-  }
-}
-
-// Tipos de reporte calculados
-type ReportContentType = 'scoutea' | 'video' | 'redes_sociales' | 'web'
-
-// Función para determinar el tipo de reporte basado en su contenido
-function getReportContentType(report: {
-  form_url_video?: string | null
-  form_url_report?: string | null
-  form_text_report?: string | null
-}): ReportContentType {
-  // 1. Si tiene video → tipo "video"
-  if (report.form_url_video && report.form_url_video.trim() !== '') {
-    return 'video'
-  }
-
-  // 2. Si tiene link a red social → tipo "redes_sociales"
-  if (report.form_url_report && report.form_url_report.trim() !== '') {
-    if (isSocialMediaUrl(report.form_url_report)) {
-      return 'redes_sociales'
-    }
-    // 3. Si tiene cualquier otro link → tipo "web"
-    return 'web'
-  }
-
-  // 4. Si no tiene video ni link (solo texto o imagen) → tipo "scoutea"
-  return 'scoutea'
-}
+import { getYouTubeEmbedUrl } from "@/lib/utils/video-utils"
+import { getReportContentType, REPORT_CONTENT_TYPE_CONFIG, type ReportContentType } from "@/lib/utils/report-utils"
+import type { Report } from "@/types/report"
 
 // Función para obtener el badge de tipo de contenido
 function getContentTypeBadge(type: ReportContentType) {
-  const badges: Record<ReportContentType, { label: string; color: string; icon: string }> = {
-    'scoutea': { label: 'Scoutea', color: 'bg-emerald-900/50 text-emerald-300 border-emerald-700', icon: '📋' },
-    'video': { label: 'Video', color: 'bg-red-900/50 text-red-300 border-red-700', icon: '🎥' },
-    'redes_sociales': { label: 'Redes Sociales', color: 'bg-blue-900/50 text-blue-300 border-blue-700', icon: '📱' },
-    'web': { label: 'Web', color: 'bg-purple-900/50 text-purple-300 border-purple-700', icon: '🌐' }
-  }
-
-  const badge = badges[type]
+  const config = REPORT_CONTENT_TYPE_CONFIG[type]
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${badge.color}`}>
-      <span>{badge.icon}</span>
-      {badge.label}
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${config.color}`}>
+      <span>{config.icon}</span>
+      {config.label}
     </span>
   )
-}
-
-interface Report {
-  id_report: string
-  report_status: string | null
-  report_validation: string | null
-  report_author: string | null
-  scout_id: string | null
-  report_date: string | null
-  report_type: string | null
-  id_player: number | null
-  report_format: string | null
-  form_url_report: string | null
-  form_url_video: string | null
-  form_text_report: string | null
-  form_potential: string | null
-  roi: number | null
-  profit: number | null
-  rating: number | null
-  // Snapshot histórico
-  initial_age: number | null
-  initial_player_trfm_value: number | null
-  initial_team: string | null
-  correct_initial_team: string | null
-  initial_team_elo: number | null
-  initial_team_level: string | null
-  initial_competition: string | null
-  initial_competition_country: string | null
-  initial_competition_elo: number | null
-  initial_competition_level: string | null
-  transfer_team_pts: number | null
-  transfer_competition_pts: number | null
-  // Campos de aprobación
-  approval_status: string | null
-  approved_by_admin_id: string | null
-  approval_date: string | null
-  rejection_reason: string | null
-  createdAt: string
-  updatedAt: string | null
-  // Player data (from join)
-  player?: {
-    player_name: string
-    position_player: string | null
-    team_name: string | null
-    nationality_1: string | null
-    age: number | null
-  }
-  // Scout data (from join)
-  scout?: {
-    scout_name: string
-    name: string | null
-    surname: string | null
-  }
 }
 
 interface AdminReportTableProps {
@@ -284,9 +135,11 @@ export default function AdminReportTable({ reports, onDelete }: AdminReportTable
   const sortedReports = useMemo(() => {
     if (!sortField) return reports
 
+    type SortableValue = string | number | Date | null | undefined
+
     return [...reports].sort((a, b) => {
-      let aValue: any
-      let bValue: any
+      let aValue: SortableValue
+      let bValue: SortableValue
 
       if (sortField === 'player_name') {
         aValue = a.player?.player_name
@@ -295,8 +148,8 @@ export default function AdminReportTable({ reports, onDelete }: AdminReportTable
         aValue = a.scout?.scout_name
         bValue = b.scout?.scout_name
       } else {
-        aValue = a[sortField as keyof Report]
-        bValue = b[sortField as keyof Report]
+        aValue = a[sortField as keyof Report] as SortableValue
+        bValue = b[sortField as keyof Report] as SortableValue
       }
 
       if (aValue === null || aValue === undefined) return 1
@@ -335,7 +188,7 @@ export default function AdminReportTable({ reports, onDelete }: AdminReportTable
     })
   }
 
-  const getStatusBadge = (status: string | null, _type: 'status' | 'validation' | 'approval' = 'status') => {
+  const getStatusBadge = (status: string | null) => {
     if (!status) return <span className="text-slate-500 text-xs">N/A</span>
 
     const statusConfig: Record<string, { color: string; label: string }> = {
@@ -761,7 +614,7 @@ export default function AdminReportTable({ reports, onDelete }: AdminReportTable
                 </td>
                 {/* Estado */}
                 <td className="p-3">
-                  {getStatusBadge(report.approval_status, 'approval')}
+                  {getStatusBadge(report.approval_status)}
                 </td>
                 {/* Tipo */}
                 <td className="p-3">
@@ -977,13 +830,7 @@ export default function AdminReportTable({ reports, onDelete }: AdminReportTable
                 {/* Type Badge */}
                 {(() => {
                   const contentType = getReportContentType(selectedReport)
-                  const badgeConfig: Record<ReportContentType, { label: string; bgColor: string; textColor: string; icon: string }> = {
-                    'scoutea': { label: 'Scoutea', bgColor: 'bg-emerald-100', textColor: 'text-emerald-700', icon: '📋' },
-                    'video': { label: 'Video', bgColor: 'bg-red-100', textColor: 'text-red-700', icon: '🎥' },
-                    'redes_sociales': { label: 'Redes Sociales', bgColor: 'bg-blue-100', textColor: 'text-blue-700', icon: '📱' },
-                    'web': { label: 'Web', bgColor: 'bg-purple-100', textColor: 'text-purple-700', icon: '🌐' }
-                  }
-                  const config = badgeConfig[contentType]
+                  const config = REPORT_CONTENT_TYPE_CONFIG[contentType]
                   return (
                     <div className={`px-2 py-1 rounded-full text-xs font-medium ${config.bgColor} ${config.textColor}`}>
                       {config.icon} {config.label}

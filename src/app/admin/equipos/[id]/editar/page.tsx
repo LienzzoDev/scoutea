@@ -11,13 +11,15 @@ import { Label } from "@/components/ui/label"
 import { LoadingPage } from "@/components/ui/loading-spinner"
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 import { useTeams, Team } from '@/hooks/team/useTeams'
+import { useToast } from '@/hooks/use-toast'
 
 export default function EditarEquipoPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
-  const _router = useRouter()
+  const router = useRouter()
   const params = useParams()
-  const { getTeam, loading, error } = useTeams()
-  
+  const { getTeam, loading } = useTeams()
+  const { toast } = useToast()
+
   const [team, setTeam] = useState<Team | null>(null)
   const [isScraping, setIsScraping] = useState(false)
   const [formData, setFormData] = useState({
@@ -110,15 +112,15 @@ export default function EditarEquipoPage() {
             team_elo: scrapedData.team_elo ? scrapedData.team_elo.toString() : prev.team_elo,
             team_level: scrapedData.team_level || prev.team_level
           }))
-          alert('Scraping completado! Los datos se han cargado en el formulario.')
+          toast({ title: 'Scraping completado', description: 'Los datos se han cargado en el formulario.' })
         } else {
-          alert(`Error en scraping: ${result.error}`)
+          toast({ title: 'Error en scraping', description: result.error, variant: 'destructive' })
         }
       } else {
-        alert('Error al realizar scraping')
+        toast({ title: 'Error al realizar scraping', variant: 'destructive' })
       }
     } catch (_error) {
-      alert('Error al realizar scraping')
+      toast({ title: 'Error al realizar scraping', variant: 'destructive' })
     } finally {
       setIsScraping(false)
     }
@@ -155,16 +157,16 @@ export default function EditarEquipoPage() {
       })
 
       if (response.ok) {
-        alert('Equipo actualizado correctamente')
-        // Forzar recarga completa para que la tabla muestre los datos actualizados
-        window.location.href = '/admin/equipos'
+        toast({ title: 'Equipo actualizado', description: 'Los cambios se han guardado correctamente.' })
+        router.push('/admin/equipos')
+        router.refresh()
       } else {
         const errorData = await response.json().catch(() => ({}))
-        alert(`Error al actualizar el equipo: ${errorData.error || 'Error desconocido'}`)
+        toast({ title: 'Error al actualizar', description: errorData.error || 'Error desconocido', variant: 'destructive' })
       }
     } catch (_error) {
       console.error('Error al guardar:', _error)
-      alert('Error al guardar los cambios')
+      toast({ title: 'Error al guardar', description: 'No se pudieron guardar los cambios', variant: 'destructive' })
     }
   }
 
@@ -184,7 +186,7 @@ export default function EditarEquipoPage() {
       <div className="min-h-screen bg-[#080F17] flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-[#D6DDE6] mb-4">Equipo no encontrado</h1>
-          <Button onClick={() => _router.push('/admin/equipos')}>
+          <Button onClick={() => router.push('/admin/equipos')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver a equipos
           </Button>
@@ -203,14 +205,14 @@ export default function EditarEquipoPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() =>_router.push('/admin/equipos')}
+                onClick={() =>router.push('/admin/equipos')}
                 className="text-slate-400 hover:text-white">
                 <ChevronLeft className="h-5 w-5" />
               </Button>
               <div className="flex items-center space-x-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src="/placeholder.svg" />
-                  <AvatarFallback>{team.team_name.split(" ").map(n => n[0]).join("")}
+                  <AvatarImage src={team.logo_url || "/placeholder.svg"} />
+                  <AvatarFallback>{team.team_name.split(" ").map(n => n[0]).join("").slice(0, 2)}
                   </AvatarFallback>
                 </Avatar>
                 <div>

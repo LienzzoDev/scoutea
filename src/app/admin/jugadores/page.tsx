@@ -19,6 +19,7 @@ import { LoadingPage } from '@/components/ui/loading-spinner'
 import { EditableCellProvider } from '@/contexts/EditableCellContext'
 import { useInfinitePlayersScroll } from '@/hooks/admin/useInfinitePlayersScroll'
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
+import type { Player } from '@/types/player'
 
 export default function JugadoresPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
@@ -123,7 +124,6 @@ export default function JugadoresPage() {
 
   // Ref para preservar posición del scroll
   const previousPlayersCount = useRef(0)
-  const _scrollContainerRef = useRef<HTMLDivElement>(null)
 
   // Hook de infinite scroll con todos los filtros
   const {
@@ -352,7 +352,7 @@ export default function JugadoresPage() {
         <EditableCellProvider>
           <div className='mb-4'>
             <AdminPlayerTable
-              players={filteredPlayers as any}
+              players={filteredPlayers as unknown as Player[]}
               hiddenColumns={hiddenColumns}
               onPlayerUpdate={updatePlayer}
             />

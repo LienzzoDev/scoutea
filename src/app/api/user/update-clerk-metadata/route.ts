@@ -1,15 +1,15 @@
 import { auth, clerkClient } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function POST(__request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth()
-    
+
     if (!userId) {
       return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
     }
 
-    const _body = await request.json()
+    const body = await request.json()
     const { role, profile, phone, company, position, subscription } = body
 
     // Validar datos
@@ -48,7 +48,7 @@ export async function POST(__request: NextRequest) {
       userId,
       metadata
     })
-  } catch (_error) {
+  } catch (error) {
     console.error('❌ Error updating Clerk metadata:', error)
     return NextResponse.json(
       { __error: 'Internal server error' },

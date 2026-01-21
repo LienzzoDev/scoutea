@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { LoadingPage } from "@/components/ui/loading-spinner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { CONFEDERATIONS, SEASON_FORMATS, COMPETITION_TIERS } from '@/constants/competition'
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 
 interface Country {
@@ -194,7 +195,7 @@ export default function NuevaCompeticionPage() {
                     <SelectValue placeholder="Selecciona el tier" />
                   </SelectTrigger>
                   <SelectContent>
-                    {[1, 2, 3, 4, 5].map((tier) => (
+                    {COMPETITION_TIERS.map((tier) => (
                       <SelectItem key={tier} value={tier.toString()}>
                         Tier {tier}
                       </SelectItem>
@@ -216,12 +217,11 @@ export default function NuevaCompeticionPage() {
                     <SelectValue placeholder="Selecciona una confederación" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="UEFA">UEFA</SelectItem>
-                    <SelectItem value="CONMEBOL">CONMEBOL</SelectItem>
-                    <SelectItem value="CONCACAF">CONCACAF</SelectItem>
-                    <SelectItem value="AFC">AFC</SelectItem>
-                    <SelectItem value="CAF">CAF</SelectItem>
-                    <SelectItem value="OFC">OFC</SelectItem>
+                    {CONFEDERATIONS.map((conf) => (
+                      <SelectItem key={conf.value} value={conf.value}>
+                        {conf.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -239,9 +239,11 @@ export default function NuevaCompeticionPage() {
                     <SelectValue placeholder="Selecciona el formato" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="League">Liga</SelectItem>
-                    <SelectItem value="Cup">Copa</SelectItem>
-                    <SelectItem value="Playoff">Playoff</SelectItem>
+                    {SEASON_FORMATS.map((format) => (
+                      <SelectItem key={format.value} value={format.value}>
+                        {format.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

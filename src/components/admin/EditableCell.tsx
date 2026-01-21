@@ -22,7 +22,7 @@ export default function EditableCell({
   type = 'text',
   isBold = false
 }: EditableCellProps) {
-  const { activeCell, setActiveCell, requestEdit } = useEditableCell();
+  const { setActiveCell, requestEdit } = useEditableCell();
   const cellId = `${playerId}-${fieldName}`;
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(() => {
@@ -110,13 +110,13 @@ export default function EditableCell({
     setError(null);
 
     try {
-      let finalValue: string | number | boolean = editValue;
+      let finalValue: string | number | boolean | null = editValue ?? '';
 
       // Conversión de tipo según el campo
       if (type === 'number') {
         // Permitir valores vacíos (null) o convertir a número
         if (editValue === '' || editValue === null || editValue === undefined) {
-          finalValue = null as any; // Permitir null para números
+          finalValue = null;
         } else {
           const parsed = parseFloat(editValue);
           finalValue = isNaN(parsed) ? 0 : parsed;
@@ -131,10 +131,10 @@ export default function EditableCell({
         }
       } else if (type === 'date') {
         // Para fechas, enviamos el string en formato ISO (YYYY-MM-DD)
-        finalValue = editValue || null as any;
+        finalValue = editValue || null;
       }
 
-      const success = await onSave(playerId, fieldName, finalValue);
+      const success = await onSave(playerId, fieldName, finalValue as string | number | boolean);
 
       if (success) {
         setIsEditing(false);

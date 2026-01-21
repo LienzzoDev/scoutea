@@ -6,6 +6,7 @@ import { useMemo, useRef } from "react";
 
 import EditableCell from "@/components/admin/EditableCell";
 import { Button } from "@/components/ui/button";
+import { type Team } from "@/hooks/team/useTeams";
 
 // Campos NO editables (campos calculados y IDs del sistema)
 const NON_EDITABLE_FIELDS = new Set([
@@ -29,46 +30,16 @@ const SCRAPED_FIELDS = new Set([
   'team_name',            // Nombre del equipo
   'team_country',         // País del equipo
   'competition',          // Competición del equipo
-  
+
   // Valores
   'team_trfm_value',      // Valor de mercado del equipo
   'team_rating',          // Rating del equipo
-  
+
   // Otros datos
   'founded_year',         // Año de fundación
   'stadium',              // Estadio
   'logo_url',             // URL del logo
 ]);
-
-interface Team {
-  id_team: string;
-  displayId?: number | null;
-  team_name: string;
-  correct_team_name?: string | null;
-  team_country?: string | null;
-  url_trfm_advisor?: string | null;
-  url_trfm?: string | null;
-  url_trfm_broken?: boolean | null;
-  owner_club?: string | null;
-  owner_club_country?: string | null;
-  pre_competition?: string | null;
-  competition?: string | null;
-  correct_competition?: string | null;
-  competition_country?: string | null;
-  team_trfm_value?: number | null;
-  team_trfm_value_norm?: number | null;
-  team_rating?: number | null;
-  team_rating_norm?: number | null;
-  team_elo?: number | null;
-  team_level?: string | null;
-  short_name?: string | null;
-  founded_year?: number | null;
-  stadium?: string | null;
-  website_url?: string | null;
-  logo_url?: string | null;
-  fm_guide?: string | null;
-  admin_notes?: string | null;
-}
 
 interface Category {
   key: string;

@@ -14,11 +14,22 @@ interface UseInfiniteTeamsScrollOptions {
   country?: string
   competition?: string
   limit?: number
-  // Filtros de datos vacíos/llenos
+  // Filtros de datos vacíos/llenos o valores específicos
   teamName?: string // 'all' | 'has' | 'empty'
   urlTrfmBroken?: string // 'all' | 'broken' | 'ok'
   urlTrfm?: string // 'all' | 'has' | 'empty'
-  ownerClub?: string // 'all' | 'has' | 'empty'
+  ownerClub?: string // 'all' | 'has' | 'empty' | valor específico
+  teamCountry?: string // 'all' | 'has' | 'empty' | valor específico
+  competitionFilter?: string // 'all' | 'has' | 'empty' | valor específico
+  competitionCountry?: string // 'all' | 'has' | 'empty' | valor específico
+  teamLevel?: string // 'all' | 'has' | 'empty' | valor específico
+  // Filtros de rango
+  valueMin?: string
+  valueMax?: string
+  ratingMin?: string
+  ratingMax?: string
+  eloMin?: string
+  eloMax?: string
 }
 
 interface UseInfiniteTeamsScrollReturn {
@@ -39,11 +50,22 @@ export function useInfiniteTeamsScroll(
     country = '',
     competition = '',
     limit = 50,
-    // Filtros de datos vacíos/llenos
+    // Filtros de datos vacíos/llenos o valores específicos
     teamName = 'all',
     urlTrfmBroken = 'all',
     urlTrfm = 'all',
-    ownerClub = 'all'
+    ownerClub = 'all',
+    teamCountry = 'all',
+    competitionFilter = 'all',
+    competitionCountry = 'all',
+    teamLevel = 'all',
+    // Filtros de rango
+    valueMin = '',
+    valueMax = '',
+    ratingMin = '',
+    ratingMax = '',
+    eloMin = '',
+    eloMax = ''
   } = options
 
   // Memoizar filtros para evitar re-renders innecesarios
@@ -54,8 +76,18 @@ export function useInfiniteTeamsScroll(
     teamName,
     urlTrfmBroken,
     urlTrfm,
-    ownerClub
-  }), [search, country, competition, teamName, urlTrfmBroken, urlTrfm, ownerClub])
+    ownerClub,
+    teamCountry,
+    competitionFilter,
+    competitionCountry,
+    teamLevel,
+    valueMin,
+    valueMax,
+    ratingMin,
+    ratingMax,
+    eloMin,
+    eloMax
+  }), [search, country, competition, teamName, urlTrfmBroken, urlTrfm, ownerClub, teamCountry, competitionFilter, competitionCountry, teamLevel, valueMin, valueMax, ratingMin, ratingMax, eloMin, eloMax])
 
   // Memoizar getItemId para que sea estable
   const getItemId = useCallback((team: Team) => team.id_team, [])

@@ -14,8 +14,9 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select"
+import { VirtualizedSelect } from "@/components/ui/virtualized-select"
 import { EditableCellProvider } from "@/contexts/EditableCellContext"
 import { useInfiniteTeamsScroll } from '@/hooks/admin/useInfiniteTeamsScroll'
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
@@ -26,15 +27,49 @@ interface TeamFilters {
   teamName: string // 'all' | 'has' | 'empty'
   urlTrfmBroken: string // 'all' | 'broken' | 'ok'
   urlTrfm: string // 'all' | 'has' | 'empty'
-  ownerClub: string // 'all' | 'has' | 'empty'
+  ownerClub: string // 'all' | 'has' | 'empty' | valor específico
+  teamCountry: string // 'all' | 'has' | 'empty' | valor específico
+  competitionFilter: string // 'all' | 'has' | 'empty' | valor específico
+  competitionCountry: string // 'all' | 'has' | 'empty' | valor específico
+  teamLevel: string // 'all' | 'has' | 'empty' | valor específico
+  // Filtros de rango
+  valueMin: string
+  valueMax: string
+  ratingMin: string
+  ratingMax: string
+  eloMin: string
+  eloMax: string
 }
 
 const DEFAULT_TEAM_FILTERS: TeamFilters = {
   teamName: 'all',
   urlTrfmBroken: 'all',
   urlTrfm: 'all',
-  ownerClub: 'all'
+  ownerClub: 'all',
+  teamCountry: 'all',
+  competitionFilter: 'all',
+  competitionCountry: 'all',
+  teamLevel: 'all',
+  // Filtros de rango
+  valueMin: '',
+  valueMax: '',
+  ratingMin: '',
+  ratingMax: '',
+  eloMin: '',
+  eloMax: ''
 }
+
+// Tipo para las opciones de filtro cargadas de la BD
+interface FilterOptions {
+  ownerClubs: string[]
+  teamCountries: string[]
+  competitions: string[]
+  competitionCountries: string[]
+  teamLevels: string[]
+}
+
+// Constante fuera del componente para evitar re-creaciones
+const SELECT_FILTER_KEYS = ['teamName', 'urlTrfmBroken', 'urlTrfm', 'ownerClub', 'teamCountry', 'competitionFilter', 'competitionCountry', 'teamLevel'] as const
 
 export default function EquiposPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
@@ -49,6 +84,35 @@ export default function EquiposPage() {
   const [filters, setFilters] = useState<TeamFilters>(DEFAULT_TEAM_FILTERS)
   const [debouncedFilters, setDebouncedFilters] = useState<TeamFilters>(DEFAULT_TEAM_FILTERS)
   const [showFilters, setShowFilters] = useState(false)
+
+  // Estado para opciones de filtro (valores únicos de la BD)
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
+    ownerClubs: [],
+    teamCountries: [],
+    competitions: [],
+    competitionCountries: [],
+    teamLevels: []
+  })
+  const [loadingFilterOptions, setLoadingFilterOptions] = useState(false)
+
+  // Cargar opciones de filtro al montar
+  useEffect(() => {
+    const loadFilterOptions = async () => {
+      setLoadingFilterOptions(true)
+      try {
+        const response = await fetch('/api/teams/filters')
+        if (response.ok) {
+          const data = await response.json()
+          setFilterOptions(data)
+        }
+      } catch (error) {
+        console.error('Error loading filter options:', error)
+      } finally {
+        setLoadingFilterOptions(false)
+      }
+    }
+    loadFilterOptions()
+  }, [])
 
   // Debounce del search term
   useEffect(() => {
@@ -78,8 +142,17 @@ export default function EquiposPage() {
     setFilters(DEFAULT_TEAM_FILTERS)
   }, [])
 
-  // Contar filtros activos
-  const activeFilterCount = Object.values(filters).filter(v => v !== 'all').length
+  // Contar filtros activos (memoizado para evitar recálculos)
+  const activeFilterCount = useMemo(() => {
+    return Object.entries(filters).filter(([key, v]) => {
+      // Para filtros select, contar si no es 'all'
+      if ((SELECT_FILTER_KEYS as readonly string[]).includes(key)) {
+        return v !== 'all'
+      }
+      // Para filtros de rango, contar si tiene valor
+      return v !== ''
+    }).length
+  }, [filters])
   const hasActiveFilters = activeFilterCount > 0
 
   // Hook de infinite scroll
@@ -97,13 +170,25 @@ export default function EquiposPage() {
     teamName: debouncedFilters.teamName,
     urlTrfmBroken: debouncedFilters.urlTrfmBroken,
     urlTrfm: debouncedFilters.urlTrfm,
-    ownerClub: debouncedFilters.ownerClub
+    ownerClub: debouncedFilters.ownerClub,
+    teamCountry: debouncedFilters.teamCountry,
+    competitionFilter: debouncedFilters.competitionFilter,
+    competitionCountry: debouncedFilters.competitionCountry,
+    teamLevel: debouncedFilters.teamLevel,
+    // Filtros de rango
+    valueMin: debouncedFilters.valueMin,
+    valueMax: debouncedFilters.valueMax,
+    ratingMin: debouncedFilters.ratingMin,
+    ratingMax: debouncedFilters.ratingMax,
+    eloMin: debouncedFilters.eloMin,
+    eloMax: debouncedFilters.eloMax
   })
 
   // Forzar refresh al montar la página para obtener datos frescos
+  // Se omite `refresh` de las dependencias intencionalmente para ejecutar solo al montar
   useEffect(() => {
     refresh()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- Solo ejecutar al montar el componente
   }, [])
 
   // Categorías para mostrar en la tabla (ID es ahora columna fija en TeamTable)
@@ -358,7 +443,15 @@ export default function EquiposPage() {
       {showFilters && (
         <div className="mb-6 p-4 bg-[#131921] border border-slate-700 rounded-lg">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-slate-300">Filtros de Datos</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-medium text-slate-300">Filtros de Datos</h3>
+              {loadingFilterOptions && (
+                <div className="flex items-center gap-1 text-xs text-slate-500">
+                  <div className="w-3 h-3 border border-slate-500 border-t-transparent rounded-full animate-spin" />
+                  Cargando opciones...
+                </div>
+              )}
+            </div>
             {hasActiveFilters && (
               <Button
                 variant="ghost"
@@ -429,19 +522,135 @@ export default function EquiposPage() {
             {/* Owner Club Filter */}
             <div className="space-y-1">
               <span className="text-xs text-slate-400">Owner Club</span>
-              <Select
+              <VirtualizedSelect
                 value={filters.ownerClub}
                 onValueChange={(value) => handleFilterChange('ownerClub', value)}
-              >
-                <SelectTrigger className="bg-[#0D1117] border-slate-700 text-white">
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#131921] border-slate-700">
-                  <SelectItem value="all" className="text-white hover:bg-slate-700">Todos</SelectItem>
-                  <SelectItem value="has" className="text-white hover:bg-slate-700">Con valor</SelectItem>
-                  <SelectItem value="empty" className="text-white hover:bg-slate-700">Vacío (N/A)</SelectItem>
-                </SelectContent>
-              </Select>
+                options={filterOptions.ownerClubs}
+                placeholder="Todos"
+                className="bg-[#0D1117] border-slate-700 text-white"
+              />
+            </div>
+          </div>
+
+          {/* Segunda fila de filtros con valores de BD */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+            {/* País del Equipo Filter */}
+            <div className="space-y-1">
+              <span className="text-xs text-slate-400">País del Equipo</span>
+              <VirtualizedSelect
+                value={filters.teamCountry}
+                onValueChange={(value) => handleFilterChange('teamCountry', value)}
+                options={filterOptions.teamCountries}
+                placeholder="Todos"
+                className="bg-[#0D1117] border-slate-700 text-white"
+              />
+            </div>
+
+            {/* Competición Filter */}
+            <div className="space-y-1">
+              <span className="text-xs text-slate-400">Competición</span>
+              <VirtualizedSelect
+                value={filters.competitionFilter}
+                onValueChange={(value) => handleFilterChange('competitionFilter', value)}
+                options={filterOptions.competitions}
+                placeholder="Todos"
+                className="bg-[#0D1117] border-slate-700 text-white"
+              />
+            </div>
+
+            {/* País de Competición Filter */}
+            <div className="space-y-1">
+              <span className="text-xs text-slate-400">País Competición</span>
+              <VirtualizedSelect
+                value={filters.competitionCountry}
+                onValueChange={(value) => handleFilterChange('competitionCountry', value)}
+                options={filterOptions.competitionCountries}
+                placeholder="Todos"
+                className="bg-[#0D1117] border-slate-700 text-white"
+              />
+            </div>
+
+            {/* Nivel del Equipo Filter */}
+            <div className="space-y-1">
+              <span className="text-xs text-slate-400">Nivel del Equipo</span>
+              <VirtualizedSelect
+                value={filters.teamLevel}
+                onValueChange={(value) => handleFilterChange('teamLevel', value)}
+                options={filterOptions.teamLevels}
+                placeholder="Todos"
+                className="bg-[#0D1117] border-slate-700 text-white"
+              />
+            </div>
+          </div>
+
+          {/* Filtros de Rango */}
+          <div className="mt-4 pt-4 border-t border-slate-700">
+            <h4 className="text-xs font-medium text-slate-400 mb-3">Filtros de Rango</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Valor Transfermarkt */}
+              <div className="space-y-1">
+                <span className="text-xs text-slate-400">Valor TM (€)</span>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Mín"
+                    value={filters.valueMin}
+                    onChange={(e) => handleFilterChange('valueMin', e.target.value)}
+                    className="bg-[#0D1117] border-slate-700 text-white text-sm"
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Máx"
+                    value={filters.valueMax}
+                    onChange={(e) => handleFilterChange('valueMax', e.target.value)}
+                    className="bg-[#0D1117] border-slate-700 text-white text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Rating */}
+              <div className="space-y-1">
+                <span className="text-xs text-slate-400">Rating</span>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    step="0.1"
+                    placeholder="Mín"
+                    value={filters.ratingMin}
+                    onChange={(e) => handleFilterChange('ratingMin', e.target.value)}
+                    className="bg-[#0D1117] border-slate-700 text-white text-sm"
+                  />
+                  <Input
+                    type="number"
+                    step="0.1"
+                    placeholder="Máx"
+                    value={filters.ratingMax}
+                    onChange={(e) => handleFilterChange('ratingMax', e.target.value)}
+                    className="bg-[#0D1117] border-slate-700 text-white text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* ELO */}
+              <div className="space-y-1">
+                <span className="text-xs text-slate-400">ELO</span>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Mín"
+                    value={filters.eloMin}
+                    onChange={(e) => handleFilterChange('eloMin', e.target.value)}
+                    className="bg-[#0D1117] border-slate-700 text-white text-sm"
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Máx"
+                    value={filters.eloMax}
+                    onChange={(e) => handleFilterChange('eloMax', e.target.value)}
+                    className="bg-[#0D1117] border-slate-700 text-white text-sm"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>

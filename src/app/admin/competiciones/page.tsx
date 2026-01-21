@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { LoadingPage } from "@/components/ui/loading-spinner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { VirtualizedSelect } from '@/components/ui/virtualized-select'
 import { useInfiniteCompetitionsScroll } from '@/hooks/admin/useInfiniteCompetitionsScroll'
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 import type { Competition } from '@/lib/services/competition-service'
@@ -30,8 +31,8 @@ export default function CompeticionesPage() {
   const [tierFilter, setTierFilter] = useState<number | undefined>(undefined)
   const [confederationFilter, setConfederationFilter] = useState('')
 
-  // Estados para opciones de filtros
-  const [countries, setCountries] = useState<(string | { name: string; id?: string })[]>([])
+  // Estados para opciones de filtros (normalizados a string[])
+  const [countries, setCountries] = useState<string[]>([])
   const [confederations, setConfederations] = useState<string[]>([])
 
   // Debounce del search term
@@ -61,9 +62,10 @@ export default function CompeticionesPage() {
   })
 
   // Forzar refresh al montar la página para obtener datos frescos
+  // Se omite `refresh` de las dependencias intencionalmente para ejecutar solo al montar
   useEffect(() => {
     refresh()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- Solo ejecutar al montar el componente
   }, [])
 
   const handleSearch = () => {
@@ -77,7 +79,11 @@ export default function CompeticionesPage() {
         const response = await fetch('/api/competitions/filters')
         if (response.ok) {
           const data = await response.json()
-          setCountries(data.countries || [])
+          // Normalizar países a string[] (pueden venir como objetos o strings)
+          const normalizedCountries = (data.countries || []).map((c: string | { name: string }) =>
+            typeof c === 'string' ? c : c.name
+          ).filter(Boolean) as string[]
+          setCountries(normalizedCountries)
           setConfederations(data.confederations || [])
         }
       } catch (err) {
@@ -357,25 +363,16 @@ export default function CompeticionesPage() {
                   <label htmlFor="country-select" className="block text-sm font-medium text-gray-300 mb-2">
                     País
                   </label>
-                  <Select
-                    value={countryFilter || ''}
-                    onValueChange={(value) => handleFilterChange('country', value)}
-                  >
-                    <SelectTrigger id="country-select" className="w-full bg-[#1F2937] border-slate-600 text-white hover:bg-[#2D3748] focus:ring-[#8C1A10]">
-                      <SelectValue placeholder="Todos" />
-                    </SelectTrigger>
-                      <SelectContent className="bg-[#1F2937] border-slate-600">
-                        {countries.map((country) => {
-                          const countryName = typeof country === 'string' ? country : country.name
-                          const countryKey = typeof country === 'string' ? country : country.id || country.name
-                          return (
-                            <SelectItem key={countryKey} value={countryName} className="text-white hover:bg-slate-700 focus:bg-slate-700">
-                              {countryName}
-                            </SelectItem>
-                          )
-                        })}
-                      </SelectContent>
-                  </Select>
+                  <VirtualizedSelect
+                    value={countryFilter || 'all'}
+                    onValueChange={(value) => handleFilterChange('country', value === 'all' ? '' : value)}
+                    options={countries}
+                    placeholder="Todos"
+                    className="bg-[#0D1117] border-slate-700 text-white"
+                    baseOptions={[
+                      { value: 'all', label: 'Todos' }
+                    ]}
+                  />
                 </div>
                 <div>
                   <label htmlFor="tier-select" className="block text-sm font-medium text-gray-300 mb-2">
@@ -401,21 +398,17 @@ export default function CompeticionesPage() {
                   <label htmlFor="confederation-select" className="block text-sm font-medium text-gray-300 mb-2">
                     Confederación
                   </label>
-                  <Select
-                    value={confederationFilter || ''}
-                    onValueChange={(value) => handleFilterChange('confederation', value)}
-                  >
-                    <SelectTrigger id="confederation-select" className="w-full bg-[#1F2937] border-slate-600 text-white hover:bg-[#2D3748] focus:ring-[#8C1A10]">
-                      <SelectValue placeholder="Todas" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#1F2937] border-slate-600">
-                      {confederations.map((conf) => (
-                        <SelectItem key={conf} value={conf} className="text-white hover:bg-slate-700 focus:bg-slate-700">
-                          {conf}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <VirtualizedSelect
+                    value={confederationFilter || 'all'}
+                    onValueChange={(value) => handleFilterChange('confederation', value === 'all' ? '' : value)}
+                    options={confederations}
+                    placeholder="Todas"
+                    className="bg-[#0D1117] border-slate-700 text-white"
+                    baseOptions={[
+                      { value: 'all', label: 'Todas' }
+                    ]}
+                    showSearch={false}
+                  />
                 </div>
               </div>
             )}

@@ -94,7 +94,7 @@ export function AdminReportForm() {
     const timeoutId = setTimeout(loadPlayers, 300)
 
     return () => clearTimeout(timeoutId)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- toast es estable y no cambia entre renders
   }, [playerSearchTerm])
 
   // Cargar scouts con búsqueda dinámica
@@ -134,7 +134,7 @@ export function AdminReportForm() {
     const timeoutId = setTimeout(loadScouts, 300)
 
     return () => clearTimeout(timeoutId)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- toast es estable y no cambia entre renders
   }, [scoutSearchTerm])
 
   // Convertir players a formato SearchableOption con información adicional

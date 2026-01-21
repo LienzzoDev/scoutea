@@ -287,7 +287,7 @@ const COLUMN_DEFINITIONS = [
   { key: 'video', label: 'Video', width: '100px' },
 ] as const;
 
-const AdminPlayerTable = memo(function AdminPlayerTable({ players, hiddenColumns, onPlayerUpdate }: AdminPlayerTableProps) {
+function AdminPlayerTableComponent({ players, hiddenColumns, onPlayerUpdate }: AdminPlayerTableProps) {
   const router = useRouter();
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
@@ -720,7 +720,7 @@ const AdminPlayerTable = memo(function AdminPlayerTable({ players, hiddenColumns
       </div>
     </div>
   );
-})
+}
 
 // Comparación personalizada para memo
 const arePropsEqual = (
@@ -753,4 +753,4 @@ const arePropsEqual = (
   return true
 }
 
-export default memo(AdminPlayerTable, arePropsEqual)
+export default memo(AdminPlayerTableComponent, arePropsEqual)

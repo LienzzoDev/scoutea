@@ -11,38 +11,11 @@ import { Label } from "@/components/ui/label"
 import { LoadingPage } from "@/components/ui/loading-spinner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { NATIONALITIES } from "@/constants/nationalities"
+import { PLAYER_POSITIONS, LATERALITY_OPTIONS } from "@/constants/player-positions"
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 import { usePlayers } from "@/hooks/player/usePlayers"
 import { type Team } from "@/hooks/team/useTeams"
 import { CrearJugadorData } from "@/types/player"
-
-// Posiciones disponibles (según base de datos)
-const POSITIONS = [
-  'Goalkeeper',
-  'Defender',
-  'Sweeper',
-  'Right-Back',
-  'Centre-Back',
-  'Left-Back',
-  'Midfield',
-  'Defensive Midfield',
-  'Right Midfield',
-  'Central Midfield',
-  'Left Midfield',
-  'Attacking Midfield',
-  'Attack',
-  'Second Striker',
-  'Right Winger',
-  'Centre-Forward',
-  'Left Winger'
-]
-
-// Opciones de lateralidad
-const LATERALITY_OPTIONS = [
-  { value: 'right', label: 'Diestro' },
-  { value: 'left', label: 'Zurdo' },
-  { value: 'both', label: 'Ambidiestro' }
-]
 
 export default function EditarJugadorPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
@@ -475,7 +448,7 @@ export default function EditarJugadorPage() {
                       <SelectValue placeholder="Seleccionar posición" />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-800 border-slate-700">
-                      {POSITIONS.map((pos) => (
+                      {PLAYER_POSITIONS.map((pos) => (
                         <SelectItem key={pos} value={pos} className="text-white hover:bg-slate-700">
                           {pos}
                         </SelectItem>

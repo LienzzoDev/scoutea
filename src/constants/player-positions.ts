@@ -19,3 +19,11 @@ export const PLAYER_POSITIONS = [
 ] as const;
 
 export type PlayerPosition = typeof PLAYER_POSITIONS[number];
+
+export const LATERALITY_OPTIONS = [
+  { value: 'right', label: 'Diestro' },
+  { value: 'left', label: 'Zurdo' },
+  { value: 'both', label: 'Ambidiestro' }
+] as const;
+
+export type Laterality = typeof LATERALITY_OPTIONS[number]['value'];

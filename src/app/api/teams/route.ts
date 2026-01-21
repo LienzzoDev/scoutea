@@ -46,11 +46,23 @@ export async function GET(request: NextRequest) {
     const country = searchParams.get('country') || ''
     const competition = searchParams.get('competition') || ''
 
-    // Filtros de datos vacíos/llenos
+    // Filtros de datos vacíos/llenos o valores específicos
     const teamName = searchParams.get('teamName')
     const urlTrfmBroken = searchParams.get('urlTrfmBroken')
     const urlTrfm = searchParams.get('urlTrfm')
     const ownerClub = searchParams.get('ownerClub')
+    const teamCountry = searchParams.get('teamCountry')
+    const competitionFilter = searchParams.get('competitionFilter')
+    const competitionCountry = searchParams.get('competitionCountry')
+    const teamLevel = searchParams.get('teamLevel')
+
+    // Filtros de rango
+    const valueMin = searchParams.get('valueMin')
+    const valueMax = searchParams.get('valueMax')
+    const ratingMin = searchParams.get('ratingMin')
+    const ratingMax = searchParams.get('ratingMax')
+    const eloMin = searchParams.get('eloMin')
+    const eloMax = searchParams.get('eloMax')
 
     console.log('📊 Teams API - Cursor pagination:', { cursor, limit, search, country, competition })
 
@@ -71,9 +83,9 @@ export async function GET(request: NextRequest) {
       where.competition = { contains: competition, mode: 'insensitive' }
     }
 
-    // 🎨 FILTROS DE DATOS VACÍOS/LLENOS (N/A)
-    // Helper para crear condición de vacío/lleno
-    const createEmptyFilter = (field: string, value: string | null) => {
+    // 🎨 FILTROS DE DATOS VACÍOS/LLENOS O VALORES ESPECÍFICOS
+    // Helper para crear condición de vacío/lleno o valor específico
+    const createValueFilter = (field: string, value: string | null) => {
       if (!value || value === 'all') return null
       if (value === 'has') {
         return { [field]: { not: null } }
@@ -81,7 +93,8 @@ export async function GET(request: NextRequest) {
       if (value === 'empty') {
         return { [field]: null }
       }
-      return null
+      // Valor específico - buscar match exacto
+      return { [field]: value }
     }
 
     // Helper para crear filtro booleano (broken/ok)
@@ -96,20 +109,45 @@ export async function GET(request: NextRequest) {
       return null
     }
 
-    // Aplicar filtros de vacío/lleno y booleanos
-    const emptyFilters = [
-      createEmptyFilter('team_name', teamName),
+    // Helper para crear filtro de rango numérico
+    const createRangeFilter = (field: string, min: string | null, max: string | null) => {
+      const conditions: Record<string, number> = {}
+      if (min && !isNaN(parseFloat(min))) {
+        conditions.gte = parseFloat(min)
+      }
+      if (max && !isNaN(parseFloat(max))) {
+        conditions.lte = parseFloat(max)
+      }
+      if (Object.keys(conditions).length === 0) return null
+      return { [field]: conditions }
+    }
+
+    // Aplicar filtros de valor (vacío/lleno/específico) y booleanos
+    const valueFilters = [
+      createValueFilter('team_name', teamName),
       createBooleanFilter('url_trfm_broken', urlTrfmBroken),
-      createEmptyFilter('url_trfm', urlTrfm),
-      createEmptyFilter('owner_club', ownerClub)
+      createValueFilter('url_trfm', urlTrfm),
+      createValueFilter('owner_club', ownerClub),
+      createValueFilter('team_country', teamCountry),
+      createValueFilter('competition', competitionFilter),
+      createValueFilter('competition_country', competitionCountry),
+      createValueFilter('team_level', teamLevel)
     ].filter(Boolean)
 
-    // Añadir filtros de vacío/lleno al where
-    if (emptyFilters.length > 0) {
+    // Aplicar filtros de rango
+    const rangeFilters = [
+      createRangeFilter('team_trfm_value', valueMin, valueMax),
+      createRangeFilter('team_rating', ratingMin, ratingMax),
+      createRangeFilter('team_elo', eloMin, eloMax)
+    ].filter(Boolean)
+
+    // Añadir todos los filtros al where
+    const allFilters = [...valueFilters, ...rangeFilters]
+    if (allFilters.length > 0) {
       if (!where.AND) {
         where.AND = []
       }
-      where.AND.push(...emptyFilters)
+      where.AND.push(...allFilters)
     }
 
     console.log('🔍 Teams API - WHERE filters:', JSON.stringify(where, null, 2))

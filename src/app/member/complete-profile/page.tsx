@@ -9,11 +9,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useToast } from "@/hooks/use-toast"
 
 export default function CompleteProfilePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, isLoaded } = useUser()
+  const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState('')
 
@@ -95,7 +97,11 @@ export default function CompleteProfilePage() {
     console.log('🔄 handleSkip - Plan seleccionado:', selectedPlan)
 
     if (!selectedPlan) {
-      alert('Por favor, selecciona un plan primero.')
+      toast({
+        title: 'Plan no seleccionado',
+        description: 'Por favor, selecciona un plan primero.',
+        variant: 'destructive'
+      })
       router.push('/')
       return
     }
@@ -123,7 +129,11 @@ export default function CompleteProfilePage() {
       if (!response.ok) {
         const errorData = await response.json()
         console.error('Error creating checkout session:', errorData)
-        alert(`Error al crear la sesión de pago: ${errorData.details || errorData.error}`)
+        toast({
+          title: 'Error',
+          description: `Error al crear la sesión de pago: ${errorData.details || errorData.error}`,
+          variant: 'destructive'
+        })
         return
       }
 
@@ -132,11 +142,19 @@ export default function CompleteProfilePage() {
       if (responseData.url) {
         window.location.href = responseData.url
       } else {
-        alert('Error: No se pudo obtener la URL de pago')
+        toast({
+          title: 'Error',
+          description: 'No se pudo obtener la URL de pago',
+          variant: 'destructive'
+        })
       }
     } catch (error) {
       console.error('Error in handleSkip:', error)
-      alert('Error al procesar la solicitud. Por favor, inténtalo de nuevo.')
+      toast({
+        title: 'Error',
+        description: 'Error al procesar la solicitud. Por favor, inténtalo de nuevo.',
+        variant: 'destructive'
+      })
     } finally {
       setIsLoading(false)
     }
@@ -192,7 +210,11 @@ export default function CompleteProfilePage() {
       if (!checkoutResponse.ok) {
         const errorData = await checkoutResponse.json()
         console.error('Error creating checkout session:', errorData)
-        alert(`Error al crear la sesión de pago: ${errorData.details || errorData.error}`)
+        toast({
+          title: 'Error',
+          description: `Error al crear la sesión de pago: ${errorData.details || errorData.error}`,
+          variant: 'destructive'
+        })
         return
       }
 
@@ -201,11 +223,19 @@ export default function CompleteProfilePage() {
       if (checkoutData.url) {
         window.location.href = checkoutData.url
       } else {
-        alert('Error: No se pudo obtener la URL de pago')
+        toast({
+          title: 'Error',
+          description: 'No se pudo obtener la URL de pago',
+          variant: 'destructive'
+        })
       }
     } catch (error) {
       console.error('Error updating profile:', error)
-      alert('Hubo un error al guardar tu perfil. Por favor, inténtalo de nuevo.')
+      toast({
+        title: 'Error',
+        description: 'Hubo un error al guardar tu perfil. Por favor, inténtalo de nuevo.',
+        variant: 'destructive'
+      })
     } finally {
       setIsLoading(false)
     }

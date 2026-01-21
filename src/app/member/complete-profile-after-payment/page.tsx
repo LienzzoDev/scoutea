@@ -1,7 +1,7 @@
 'use client'
 
 import { CheckCircle, User, Phone, Briefcase, Star, ArrowRight, Sparkles } from 'lucide-react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
 export default function CompleteProfileAfterPayment() {
-  const _router = useRouter()
   const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -86,8 +85,8 @@ export default function CompleteProfileAfterPayment() {
         const errorData = await response.json()
         setError(errorData.error || 'Error al completar el perfil')
       }
-    } catch (_error) {
-      console.error('Error completando perfil:', error)
+    } catch (err) {
+      console.error('Error completando perfil:', err)
       setError('Error al completar el perfil. Inténtalo de nuevo.')
     } finally {
       setIsLoading(false)
@@ -125,8 +124,8 @@ export default function CompleteProfileAfterPayment() {
         const errorData = await response.json()
         setError(errorData.error || 'Error al actualizar el perfil')
       }
-    } catch (_error) {
-      console.error('Error actualizando perfil:', error)
+    } catch (err) {
+      console.error('Error actualizando perfil:', err)
       setError('Error al actualizar el perfil. Inténtalo de nuevo.')
     } finally {
       setIsLoading(false)

@@ -9,10 +9,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { LoadingPage } from "@/components/ui/loading-spinner"
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
+import { type Team } from '@/hooks/team/useTeams'
+import { useToast } from '@/hooks/use-toast'
 
 export default function NuevoEquipoPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
-  const _router = useRouter()
+  const router = useRouter()
+  const { toast } = useToast()
   const [loading, setLoading] = useState(false)
 
   const [formData, setFormData] = useState({
@@ -43,7 +46,7 @@ export default function NuevoEquipoPage() {
 
   // Estado de búsqueda
   const [searchingTeam, setSearchingTeam] = useState(false)
-  const [teamSearchResults, setTeamSearchResults] = useState<any[]>([])
+  const [teamSearchResults, setTeamSearchResults] = useState<Team[]>([])
   const [showTeamResults, setShowTeamResults] = useState(false)
 
   // Buscar equipos
@@ -71,7 +74,7 @@ export default function NuevoEquipoPage() {
   // Función para crear equipo
   const handleCreate = async () => {
     if (!formData.team_name.trim()) {
-      alert('El nombre del equipo es obligatorio')
+      toast({ title: 'Campo requerido', description: 'El nombre del equipo es obligatorio', variant: 'destructive' })
       return
     }
 
@@ -104,15 +107,15 @@ export default function NuevoEquipoPage() {
       })
 
       if (response.ok) {
-        alert('Equipo creado correctamente')
-        _router.push('/admin/equipos')
+        toast({ title: 'Equipo creado', description: 'El equipo se ha creado correctamente.' })
+        router.push('/admin/equipos')
       } else {
-        const _error = await response.json()
-        alert(`Error al crear el equipo: ${_error.error || 'Error desconocido'}`)
+        const errorData = await response.json()
+        toast({ title: 'Error al crear', description: errorData.error || 'Error desconocido', variant: 'destructive' })
       }
     } catch (_error) {
       console.error('Error al crear equipo:', _error)
-      alert('Error al crear el equipo')
+      toast({ title: 'Error al crear', description: 'No se pudo crear el equipo', variant: 'destructive' })
     } finally {
       setLoading(false)
     }
@@ -138,7 +141,7 @@ export default function NuevoEquipoPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() =>_router.push('/admin/equipos')}
+                onClick={() =>router.push('/admin/equipos')}
                 className="text-slate-400 hover:text-white">
                 <ChevronLeft className="h-5 w-5" />
               </Button>

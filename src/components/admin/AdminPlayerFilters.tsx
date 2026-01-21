@@ -30,8 +30,6 @@ export interface PlayerFilters {
   valueMax: string
   ratingMin: string
   ratingMax: string
-  eloMin: string
-  eloMax: string
   heightMin: string
   heightMax: string
 
@@ -63,8 +61,6 @@ export const DEFAULT_FILTERS: PlayerFilters = {
   valueMax: '',
   ratingMin: '',
   ratingMax: '',
-  eloMin: '',
-  eloMax: '',
   heightMin: '',
   heightMax: '',
   // Filtros de datos vacíos/llenos
