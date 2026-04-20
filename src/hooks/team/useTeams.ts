@@ -29,6 +29,7 @@ export interface Team {
   logo_url?: string | null;
   fm_guide?: string | null;
   admin_notes?: string | null;
+  status?: string | null;
 }
 
 export const useTeams = () => {

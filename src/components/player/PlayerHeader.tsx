@@ -44,7 +44,7 @@ export default function PlayerHeader({
         <button
           onClick={navigateToHome}
           className="hover:text-[#8c1a10] hover:underline transition-colors cursor-pointer"
-          title="Ir al dashboard principal"
+          title="Go to main dashboard"
         >
           Wonderkids
         </button>
@@ -52,7 +52,7 @@ export default function PlayerHeader({
         <button
           onClick={navigateToPlayers}
           className="hover:text-[#8c1a10] hover:underline transition-colors cursor-pointer"
-          title="Volver a la página anterior"
+          title="Back to previous page"
         >
           Players
         </button>

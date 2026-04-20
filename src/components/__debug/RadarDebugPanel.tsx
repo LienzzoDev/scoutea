@@ -2,10 +2,19 @@
 
 import { useState } from 'react';
 
+interface RadarDataItem {
+  category?: string;
+  playerValue?: number;
+  percentile?: number;
+  comparisonAverage?: number;
+  totalPlayers?: number;
+  [key: string]: unknown;
+}
+
 interface RadarDebugPanelProps {
   playerId: string;
-  basePlayerData: unknown[];
-  radarData: unknown[];
+  basePlayerData: RadarDataItem[];
+  radarData: RadarDataItem[];
   selectedPosition: string;
 }
 

@@ -1,21 +1,20 @@
 import { UserResource } from '@clerk/nextjs/server'
 
-export type Role = 'member' | 'scout' | 'admin' | 'tester'
+export type Role = 'member' | 'admin' | 'tester'
 
 /**
- * Sistema de roles simplificado
- * Solo verifica si el usuario tiene el rol 'member', 'scout' o 'admin' en publicMetadata
+ * Sistema de roles simplificado.
+ * Valid roles: 'member', 'admin', 'tester'. The scout area is admin-only.
  */
 export function getUserRole(user: UserResource | null | undefined): Role | null {
   if (!user?.publicMetadata) return null
-  
+
   const role = user.publicMetadata.role as string
-  
-  // Solo roles válidos
-  if (role === 'member' || role === 'scout' || role === 'admin' || role === 'tester') {
+
+  if (role === 'member' || role === 'admin' || role === 'tester') {
     return role as Role
   }
-  
+
   return null
 }
 
@@ -24,15 +23,14 @@ export function getUserRole(user: UserResource | null | undefined): Role | null 
  */
 export function canAccessMemberArea(user: UserResource | null | undefined): boolean {
   const role = getUserRole(user)
-  return role === 'member' || role === 'scout' || role === 'tester' || role === 'admin'
+  return role === 'member' || role === 'tester' || role === 'admin'
 }
 
 /**
- * Verifica si el usuario tiene acceso al área de scouts
+ * El área de scouts está restringida a administradores.
  */
 export function canAccessScoutArea(user: UserResource | null | undefined): boolean {
-  const role = getUserRole(user)
-  return role === 'scout' || role === 'tester' || role === 'admin'
+  return getUserRole(user) === 'admin'
 }
 
 /**

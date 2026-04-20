@@ -29,7 +29,7 @@ export function ImageUpload({ value, onChange, label = 'Imagen' }: ImageUploadPr
     if (!validTypes.includes(file.type)) {
       toast({
         title: "Error",
-        description: "Solo se permiten imágenes (JPEG, PNG, WebP, GIF)",
+        description: "Only images are allowed (JPEG, PNG, WebP, GIF)",
         variant: "destructive"
       })
       return
@@ -40,7 +40,7 @@ export function ImageUpload({ value, onChange, label = 'Imagen' }: ImageUploadPr
     if (file.size > maxSize) {
       toast({
         title: "Error",
-        description: "La imagen es demasiado grande. Máximo 5MB",
+        description: "The image is too large. Maximum 5MB",
         variant: "destructive"
       })
       return
@@ -62,17 +62,17 @@ export function ImageUpload({ value, onChange, label = 'Imagen' }: ImageUploadPr
       if (result.success) {
         onChange(result.url)
         toast({
-          title: "¡Éxito!",
-          description: "Imagen subida correctamente"
+          title: "Success!",
+          description: "Image uploaded successfully"
         })
       } else {
-        throw new Error(result.error || 'Error al subir la imagen')
+        throw new Error(result.error || 'Error uploading image')
       }
     } catch (error) {
       console.error('Error uploading image:', error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Error al subir la imagen",
+        description: error instanceof Error ? error.message : "Error uploading image",
         variant: "destructive"
       })
     } finally {
@@ -85,7 +85,7 @@ export function ImageUpload({ value, onChange, label = 'Imagen' }: ImageUploadPr
       onChange(urlInput.trim())
       toast({
         title: "¡Éxito!",
-        description: "URL de imagen guardada"
+        description: "Image URL saved"
       })
     }
   }
@@ -164,10 +164,10 @@ export function ImageUpload({ value, onChange, label = 'Imagen' }: ImageUploadPr
                 <>
                   <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
                   <p className="text-sm text-muted-foreground">
-                    <span className="font-semibold">Click para subir</span> o arrastra aquí
+                    <span className="font-semibold">Click to upload</span> or drag here
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    PNG, JPG, WebP, GIF (máx. 5MB)
+                    PNG, JPG, WebP, GIF (max. 5MB)
                   </p>
                 </>
               )}

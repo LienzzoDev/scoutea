@@ -54,7 +54,7 @@ export default function OnDemandPage() {
     } catch (error) {
       console.error('Error:', error)
       setStatus('error')
-      setErrorMessage('Error de conexión. Por favor, inténtalo de nuevo.')
+      setErrorMessage('Connection error. Please try again.')
     } finally {
       setIsLoading(false)
     }

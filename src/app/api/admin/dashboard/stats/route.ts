@@ -26,24 +26,29 @@ export async function GET() {
       lastUpdatedPlayer,
       badUrlPlayers,
       missingUrlPlayers,
-      
+      brokenInstagramUrls,
+
       // TEAMS Stats
       totalTeams,
       lastUpdatedTeam,
       badUrlTeams,
       missingUrlTeams,
 
-      // REPORTS Evolution (last 12 months)
-      reportsByMonth,
-      
-      // SCOUTS Evolution (last 12 months)
-      scoutsByMonth
+      // USERS Evolution (last 12 months)
+      usersByMonth,
+
+      // PLAYERS Evolution (last 12 months)
+      playersByMonth,
+
+      // JOBS Evolution (last 12 months)
+      jobsByMonth
     ] = await Promise.all([
       // Players
       prisma.jugador.count(),
       prisma.jugador.findFirst({ orderBy: { updatedAt: 'desc' }, select: { updatedAt: true } }),
       prisma.jugador.count({ where: { url_trfm_advisor: { not: null } } }),
       prisma.jugador.count({ where: { OR: [{ url_trfm: null }, { url_trfm: '' }] } }),
+      prisma.jugador.count({ where: { url_instagram_broken: true } }),
 
       // Teams
       prisma.equipo.count(),
@@ -54,19 +59,28 @@ export async function GET() {
       // Reports (Aggregation done in memory or strict manual grouping if needed, 
       // but Prisma groupBy is cleaner. We get all counts by month)
       prisma.$queryRaw<{ month: string, count: bigint }[]>`
-        SELECT TO_CHAR("createdAt", 'YYYY-MM') as month, COUNT(*)::bigint as count 
-        FROM reportes 
+        SELECT TO_CHAR("createdAt", 'YYYY-MM') as month, COUNT(*)::bigint as count
+        FROM usuarios
         WHERE "createdAt" >= NOW() - INTERVAL '12 months'
-        GROUP BY month 
+        GROUP BY month
         ORDER BY month ASC
       `,
 
-      // Scouts (Aggregation)
+      // Players by month
       prisma.$queryRaw<{ month: string, count: bigint }[]>`
-        SELECT TO_CHAR("createdAt", 'YYYY-MM') as month, COUNT(*)::bigint as count 
-        FROM scouts 
+        SELECT TO_CHAR("createdAt", 'YYYY-MM') as month, COUNT(*)::bigint as count
+        FROM jugadores
         WHERE "createdAt" >= NOW() - INTERVAL '12 months'
-        GROUP BY month 
+        GROUP BY month
+        ORDER BY month ASC
+      `,
+
+      // Jobs by month
+      prisma.$queryRaw<{ month: string, count: bigint }[]>`
+        SELECT TO_CHAR("createdAt", 'YYYY-MM') as month, COUNT(*)::bigint as count
+        FROM job_offers
+        WHERE "createdAt" >= NOW() - INTERVAL '12 months'
+        GROUP BY month
         ORDER BY month ASC
       `
     ])
@@ -84,7 +98,8 @@ export async function GET() {
         total: totalPlayers,
         lastScraping: formatDate(lastUpdatedPlayer?.updatedAt || null),
         erroneousUrls: badUrlPlayers,
-        missingTrfmUrls: missingUrlPlayers
+        missingTrfmUrls: missingUrlPlayers,
+        brokenInstagramUrls: brokenInstagramUrls,
       },
       teams: {
         total: totalTeams,
@@ -93,8 +108,9 @@ export async function GET() {
         missingTrfmUrls: missingUrlTeams
       },
       evolution: {
-        reports: formatEvolution(reportsByMonth),
-        scouts: formatEvolution(scoutsByMonth)
+        users: formatEvolution(usersByMonth),
+        players: formatEvolution(playersByMonth),
+        jobs: formatEvolution(jobsByMonth),
       }
     })
 

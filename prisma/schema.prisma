@@ -132,8 +132,33 @@ model Jugador {
   url_trfm_advisor                String?
   url_secondary                   String?
   url_instagram                   String?
+  url_instagram_broken            Boolean             @default(false) // True si el link de Instagram está roto (detectado en scraping)
   video                           String?
+  video_report_1                  String?
+  video_report_2                  String?
+  video_report_3                  String?
+  video_report_4                  String?
+  video_report_5                  String?
+  text_report                     String?
+  development                     String?
+  team_status                     String?
   existing_club                   String?
+
+  // CAMPOS INICIALES PARA SCOUTING REPORT (snapshot al crear el jugador)
+  initial_player_trfm_value       Float?    // Valor de mercado al ser añadido
+  initial_trfm_value_date         DateTime? // Fecha del snapshot inicial
+  initial_team_name               String?   // Equipo cuando fue añadido
+  initial_team_level              String?   // Nivel del equipo inicial
+  initial_team_elo                Float?    // ELO del equipo inicial
+  initial_competition             String?   // Competición inicial
+  initial_competition_level       String?   // Nivel de competición inicial
+  initial_competition_elo         Float?    // ELO de competición inicial
+  initial_age                     Int?      // Edad cuando fue añadido
+  // Métricas calculadas de evolución (plataforma como scout)
+  transfer_team_pts               Float?    // Puntos de transferencia equipo
+  transfer_competition_pts        Float?    // Puntos de transferencia competición
+  roi                             Float?    // Return on investment
+  profit                          Float?    // Beneficio estimado
 
   // NUEVAS FOREIGN KEYS NORMALIZADAS
   team_id                         String?
@@ -154,6 +179,13 @@ model Jugador {
 
   // VISIBILIDAD PARA MEMBERS
   is_visible                      Boolean             @default(true) // Si false, el jugador no aparece para members
+
+  // CATEGORÍAS DE JUGADOR (independientes, un jugador puede pertenecer a varias)
+  is_youth_discovery              Boolean             @default(false)
+  is_emerging_talent              Boolean             @default(false)
+  is_professional                 Boolean             @default(false)
+  is_top_leagues                  Boolean             @default(false)
+  is_big_five                     Boolean             @default(false)
 
   createdAt                       DateTime            @default(now())
   updatedAt                       DateTime            @updatedAt
@@ -249,6 +281,9 @@ model Equipo {
 
   // NOTAS ADMINISTRATIVAS
   admin_notes          String?    // Notas del administrador sobre el equipo
+
+  // ESTADO
+  status               String?
 
   createdAt            DateTime   @default(now())
   updatedAt            DateTime   @updatedAt

@@ -12,7 +12,7 @@ export const usePlayerProfile = (playerId: string) => {
   const [error, setError] = useState<Error | null>(null);
   const [activeTab, setActiveTab] = useState('info');
   const [activeStatsTab, setActiveStatsTab] = useState('period');
-  const [activeFeaturesTab, setActiveFeaturesTab] = useState('on-the-pitch');
+  const [activeFeaturesTab, setActiveFeaturesTab] = useState('heatmap');
   const [isSaving, setIsSaving] = useState(false);
 
   // Period stats state

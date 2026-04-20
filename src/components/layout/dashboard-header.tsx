@@ -81,14 +81,14 @@ export default function DashboardHeader() {
               <a href="/admin/reportes" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
                 Reportes
               </a>
-              <a href="/admin/scouts" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
-                Scouts
-              </a>
               <a href="/admin/torneos" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
                 Torneos
               </a>
               <a href="/admin/jobs" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
                 Jobs
+              </a>
+              <a href="/admin/bulk-photo-upload" className="text-gray-400 hover:text-[#D6DDE6] transition-colors">
+                Fotos
               </a>
             </nav>
           </div>
@@ -229,14 +229,14 @@ export default function DashboardHeader() {
             <a href="/admin/reportes" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
               Reportes
             </a>
-            <a href="/admin/scouts" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
-              Scouts
-            </a>
             <a href="/admin/torneos" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
               Torneos
             </a>
             <a href="/admin/jobs" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
               Jobs
+            </a>
+            <a href="/admin/bulk-photo-upload" className="text-gray-400 hover:text-[#D6DDE6] block px-3 py-2 rounded-md text-base font-medium">
+              Fotos
             </a>
           </div>
         </div>

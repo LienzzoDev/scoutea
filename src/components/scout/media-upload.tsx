@@ -42,9 +42,9 @@ export function MediaUpload({ imageValue, videoValue, onImageChange, onVideoChan
     if (!validTypes.includes(file.type)) {
       toast({
         title: "Error",
-        description: mediaType === 'image' 
-          ? "Solo se permiten imágenes (JPEG, PNG, WebP, GIF)"
-          : "Solo se permiten videos (MP4, WebM, MOV)",
+        description: mediaType === 'image'
+          ? "Only images are allowed (JPEG, PNG, WebP, GIF)"
+          : "Only videos are allowed (MP4, WebM, MOV)",
         variant: "destructive"
       })
       return
@@ -56,8 +56,8 @@ export function MediaUpload({ imageValue, videoValue, onImageChange, onVideoChan
       toast({
         title: "Error",
         description: mediaType === 'image'
-          ? "La imagen es demasiado grande. Máximo 5MB"
-          : "El video es demasiado grande. Máximo 50MB",
+          ? "The image is too large. Maximum 5MB"
+          : "The video is too large. Maximum 50MB",
         variant: "destructive"
       })
       return
@@ -85,17 +85,17 @@ export function MediaUpload({ imageValue, videoValue, onImageChange, onVideoChan
           onImageChange('') // Limpiar imagen
         }
         toast({
-          title: "¡Éxito!",
-          description: `${mediaType === 'image' ? 'Imagen' : 'Video'} subido correctamente`
+          title: "Success!",
+          description: `${mediaType === 'image' ? 'Image' : 'Video'} uploaded successfully`
         })
       } else {
-        throw new Error(result.error || 'Error al subir el archivo')
+        throw new Error(result.error || 'Error uploading the file')
       }
     } catch (error) {
       console.error('Error uploading file:', error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Error al subir el archivo",
+        description: error instanceof Error ? error.message : "Error uploading the file",
         variant: "destructive"
       })
     } finally {
@@ -123,8 +123,8 @@ export function MediaUpload({ imageValue, videoValue, onImageChange, onVideoChan
         // Cambiar automáticamente a la pestaña de video
         setMediaType('video')
         toast({
-          title: "¡Éxito!",
-          description: "URL de video guardada (detectada automáticamente)"
+          title: "Success!",
+          description: "Video URL saved (auto-detected)"
         })
       } else {
         // Si no, guardar según la pestaña seleccionada
@@ -132,15 +132,15 @@ export function MediaUpload({ imageValue, videoValue, onImageChange, onVideoChan
           onImageChange(url)
           onVideoChange('') // Limpiar video
           toast({
-            title: "¡Éxito!",
-            description: "URL de imagen guardada"
+            title: "Success!",
+            description: "Image URL saved"
           })
         } else {
           onVideoChange(url)
           onImageChange('') // Limpiar imagen
           toast({
-            title: "¡Éxito!",
-            description: "URL de video guardada"
+            title: "Success!",
+            description: "Video URL saved"
           })
         }
       }
@@ -279,12 +279,12 @@ export function MediaUpload({ imageValue, videoValue, onImageChange, onVideoChan
                     <VideoIcon className={`w-8 h-8 mb-2 ${darkMode ? 'text-gray-400' : 'text-muted-foreground'}`} />
                   )}
                   <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-muted-foreground'}`}>
-                    <span className="font-semibold">Click para subir</span> o arrastra aquí
+                    <span className="font-semibold">Click to upload</span> or drag here
                   </p>
                   <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-muted-foreground'}`}>
                     {mediaType === 'image'
-                      ? 'PNG, JPG, WebP, GIF (máx. 5MB)'
-                      : 'MP4, WebM, MOV (máx. 50MB)'}
+                      ? 'PNG, JPG, WebP, GIF (max. 5MB)'
+                      : 'MP4, WebM, MOV (max. 50MB)'}
                   </p>
                 </>
               )}
@@ -334,7 +334,7 @@ export function MediaUpload({ imageValue, videoValue, onImageChange, onVideoChan
 
       {/* Info */}
       <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-muted-foreground'}`}>
-        💡 <strong>Nota:</strong> Los reportes solo soportan videos. Si pegas una URL de YouTube, Vimeo o video, se detectará automáticamente como video.
+        💡 <strong>Note:</strong> Reports only support videos. If you paste a YouTube, Vimeo or video URL, it will be auto-detected as a video.
       </p>
     </div>
   )

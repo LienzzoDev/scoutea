@@ -57,14 +57,14 @@ export class DatabaseError extends Error {
     code: string,
     isRetryable: boolean,
     isTemporary: boolean,
-    __context: DatabaseErrorContext,
+    errorContext: DatabaseErrorContext,
     originalError?: unknown) {
     super(message)
     this.name = 'DatabaseError'
     this.code = code
     this.isRetryable = isRetryable
     this.isTemporary = isTemporary
-    this.context = context
+    this.context = errorContext
     this.originalError = originalError
   }
 }
@@ -109,14 +109,13 @@ export class DatabaseErrorHandler {
    */
   async executeWithRetry<T>(
     operation: () => Promise<T>,
-    _context: Omit<DatabaseErrorContext, 'timestamp'>
+    operationContext: Omit<DatabaseErrorContext, 'timestamp'>
   ): Promise<DatabaseOperationResult<T>> {
     const startTime = Date.now()
-    const _lastError: unknown = null
-    const _retryCount = 0
+    let retryCount = 0
 
     const fullContext: DatabaseErrorContext = {
-      ...context,
+      ...operationContext,
       timestamp: startTime
     }
 
@@ -127,17 +126,18 @@ export class DatabaseErrorHandler {
       return {
         success: true,
         data: result.data,
-        _error: undefined,
+        error: undefined,
         retryCount: result.retryCount,
         duration: Date.now() - startTime
       }
-    } catch (_error) {
-      const dbError = this.classifyError(error, fullContext)
-      
+    } catch (err) {
+      const dbError = this.classifyError(err, fullContext)
+      retryCount = fullContext.retryAttempt ?? 0
+
       return {
         success: false,
         data: undefined,
-        _error: dbError,
+        error: dbError,
         retryCount,
         duration: Date.now() - startTime
       }
@@ -149,30 +149,28 @@ export class DatabaseErrorHandler {
    */
   private async executeWithRetryLogic<T>(
     operation: () => Promise<T>,
-    _context: DatabaseErrorContext,
-    initialRetryCount: number
+    ctx: DatabaseErrorContext,
+    _initialRetryCount: number
   ): Promise<{ data: T; retryCount: number }> {
-    const _retryCount = initialRetryCount
     let lastError: unknown = null
 
     for (let attempt = 0; attempt <= this.config.maxRetries; attempt++) {
       try {
         const data = await this.executeWithTimeout(operation, 30000) // 30 second timeout
-        
+
         if (attempt > 0) {
-          logger.info(`Database operation succeeded after retries`, { 
-            operation: context.operation, 
-            attempts: attempt 
+          logger.info(`Database operation succeeded after retries`, {
+            operation: ctx.operation,
+            attempts: attempt
           })
         }
-        
-        return { data, retryCount: attempt }
-      } catch (_error) {
-        lastError = error
-        retryCount = attempt
 
-        const dbError = this.classifyError(error, {
-          ...context,
+        return { data, retryCount: attempt }
+      } catch (err) {
+        lastError = err
+
+        const dbError = this.classifyError(err, {
+          ...ctx,
           retryAttempt: attempt
         })
 
@@ -190,13 +188,13 @@ export class DatabaseErrorHandler {
           this.config.maxDelay
         )
 
-        console.warn(`⏳ Retrying database operation ${context.operation} in ${delay}ms (attempt ${attempt + 1}/${this.config.maxRetries})`)
+        console.warn(`⏳ Retrying database operation ${ctx.operation} in ${delay}ms (attempt ${attempt + 1}/${this.config.maxRetries})`)
         await this.delay(delay)
       }
     }
 
     // This should never be reached, but just in case
-    throw this.classifyError(lastError, context)
+    throw this.classifyError(lastError, ctx)
   }
 
   /**
@@ -226,58 +224,58 @@ export class DatabaseErrorHandler {
   /**
    * Classify database errors for appropriate handling
    */
-  private classifyError(__error: unknown, __context: DatabaseErrorContext): DatabaseError {
+  private classifyError(err: unknown, ctx: DatabaseErrorContext): DatabaseError {
     let code = 'UNKNOWN_ERROR'
     let isRetryable = false
     let isTemporary = false
     let message = 'Unknown database error'
 
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      code = error.code
-      message = this.getPrismaErrorMessage(error)
-      isRetryable = this.config.retryableErrors.includes(error.code)
-      isTemporary = this.isPrismaErrorTemporary(error.code)
-    } else if (error instanceof Prisma.PrismaClientUnknownRequestError) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      code = err.code
+      message = this.getPrismaErrorMessage(err)
+      isRetryable = this.config.retryableErrors.includes(err.code)
+      isTemporary = this.isPrismaErrorTemporary(err.code)
+    } else if (err instanceof Prisma.PrismaClientUnknownRequestError) {
       code = 'UNKNOWN_REQUEST_ERROR'
       message = 'Unknown database request error'
       isRetryable = true
       isTemporary = true
-    } else if (error instanceof Prisma.PrismaClientRustPanicError) {
+    } else if (err instanceof Prisma.PrismaClientRustPanicError) {
       code = 'RUST_PANIC_ERROR'
       message = 'Database engine panic error'
       isRetryable = false
       isTemporary = false
-    } else if (error instanceof Prisma.PrismaClientInitializationError) {
+    } else if (err instanceof Prisma.PrismaClientInitializationError) {
       code = 'INITIALIZATION_ERROR'
       message = 'Database initialization error'
       isRetryable = true
       isTemporary = true
-    } else if (error instanceof Prisma.PrismaClientValidationError) {
+    } else if (err instanceof Prisma.PrismaClientValidationError) {
       code = 'VALIDATION_ERROR'
       message = 'Database query validation error'
       isRetryable = false
       isTemporary = false
-    } else if (error instanceof Error) {
+    } else if (err instanceof Error) {
       // Handle network and connection errors
-      if (error.message.includes('timeout')) {
+      if (err.message.includes('timeout')) {
         code = 'TIMEOUT_ERROR'
         message = 'Database operation timeout'
         isRetryable = true
         isTemporary = true
-      } else if (error.message.includes('connection')) {
+      } else if (err.message.includes('connection')) {
         code = 'CONNECTION_ERROR'
         message = 'Database connection error'
         isRetryable = true
         isTemporary = true
-      } else if (this.config.retryableErrors.some(retryableCode => 
-        error.message.includes(retryableCode) || error.name === retryableCode
+      } else if (this.config.retryableErrors.some(retryableCode =>
+        err.message.includes(retryableCode) || err.name === retryableCode
       )) {
         code = 'NETWORK_ERROR'
         message = 'Network or connection error'
         isRetryable = true
         isTemporary = true
       } else {
-        message = error.message
+        message = err.message
       }
     }
 
@@ -286,16 +284,16 @@ export class DatabaseErrorHandler {
       code,
       isRetryable,
       isTemporary,
-      context,
-      error
+      ctx,
+      err
     )
   }
 
   /**
    * Get user-friendly message for Prisma errors
    */
-  private getPrismaErrorMessage(__error: Prisma.PrismaClientKnownRequestError): string {
-    switch (error.code) {
+  private getPrismaErrorMessage(prismaError: Prisma.PrismaClientKnownRequestError): string {
+    switch (prismaError.code) {
       case 'P1001':
         return 'No se puede conectar al servidor de base de datos'
       case 'P1002':
@@ -311,7 +309,7 @@ export class DatabaseErrorHandler {
       case 'P2025':
         return 'Registro no encontrado'
       default:
-        return error.message || 'Error de base de datos'
+        return prismaError.message || 'Error de base de datos'
     }
   }
 
@@ -328,24 +326,24 @@ export class DatabaseErrorHandler {
   /**
    * Log database error with appropriate level
    */
-  private logError(__error: DatabaseError, attempt: number): void {
-    const logLevel = error.isRetryable ? 'warn' : 'error'
+  private logError(dbError: DatabaseError, attempt: number): void {
+    const logLevel = dbError.isRetryable ? 'warn' : 'error'
     const logMethod = logLevel === 'warn' ? console.warn : console.error
 
-    logMethod(`${error.isRetryable ? '⚠️' : '❌'} Database error (attempt ${attempt + 1}):`, {
-      code: error.code,
-      message: error.message,
-      isRetryable: error.isRetryable,
-      isTemporary: error.isTemporary,
-      operation: error.context.operation,
-      timestamp: new Date(error.context.timestamp).toISOString(),
-      userId: error.context.userId,
-      requestId: error.context.requestId
+    logMethod(`${dbError.isRetryable ? '⚠️' : '❌'} Database error (attempt ${attempt + 1}):`, {
+      code: dbError.code,
+      message: dbError.message,
+      isRetryable: dbError.isRetryable,
+      isTemporary: dbError.isTemporary,
+      operation: dbError.context.operation,
+      timestamp: new Date(dbError.context.timestamp).toISOString(),
+      userId: dbError.context.userId,
+      requestId: dbError.context.requestId
     })
 
     // Log original error details in development
-    if (process.env.NODE_ENV === 'development' && error.originalError) {
-      console.error('Original error details:', error.originalError)
+    if (process.env.NODE_ENV === 'development' && dbError.originalError) {
+      console.error('Original error details:', dbError.originalError)
     }
   }
 
@@ -362,11 +360,11 @@ export class DatabaseErrorHandler {
   createFallbackResponse<T>(
     operation: string,
     defaultValue: T,
-    __error: DatabaseError
+    dbError: DatabaseError
   ): T {
     console.warn(`🔄 Creating fallback response for ${operation}:`, {
-      __error: error.message,
-      code: error.code,
+      errorMessage: dbError.message,
+      code: dbError.code,
       defaultValue: typeof defaultValue
     })
 
@@ -402,11 +400,11 @@ export class DatabaseErrorHandler {
         isHealthy: true,
         latency: Date.now() - startTime
       }
-    } catch (_error) {
+    } catch (healthErr) {
       return {
         isHealthy: false,
         latency: Date.now() - startTime,
-        _error: error instanceof Error ? error.message : String(error)
+        error: healthErr instanceof Error ? healthErr.message : String(healthErr)
       }
     }
   }

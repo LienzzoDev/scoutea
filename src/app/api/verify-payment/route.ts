@@ -94,10 +94,7 @@ export async function GET(request: NextRequest) {
       const userMetadata = await RoleService.getUserMetadata(userId)
       const userRole = userMetadata?.role
 
-      if (userRole === 'scout') {
-        plan = 'scout'
-        logger.info('User has scout role from invitation, using scout plan', { userId })
-      } else if (userRole === 'member') {
+      if (userRole === 'member') {
         plan = 'member'
         logger.info('User has member role from invitation, using member plan', { userId })
       } else {

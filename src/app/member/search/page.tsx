@@ -9,15 +9,37 @@ import { Input } from "@/components/ui/input"
 import PlayerAvatar from "@/components/ui/player-avatar"
 import ScoutAvatar from "@/components/ui/scout-avatar"
 
+interface SearchPlayer {
+  id_player: number
+  player_name: string
+  position_player?: string | null
+  nationality_1?: string | null
+  player_rating?: number | null
+  team_name?: string | null
+  age?: number | null
+  photo_url?: string | null
+}
+
+interface SearchScout {
+  id_scout: string
+  scout_name?: string | null
+  name?: string | null
+  nationality?: string | null
+  scout_elo?: number | null
+  total_reports?: number | null
+  country?: string | null
+  photo_url?: string | null
+}
+
 export default function SearchPage() {
-  const _router = useRouter()
+  const router = useRouter()
   const searchParams = useSearchParams()
   const initialQuery = searchParams.get('q') || ''
-  
+
   const [searchTerm, setSearchTerm] = useState(initialQuery)
   const [results, setResults] = useState<{
-    players: unknown[]
-    scouts: unknown[]
+    players: SearchPlayer[]
+    scouts: SearchScout[]
   }>({ players: [], scouts: [] })
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'all' | 'players' | 'scouts'>('all')
@@ -43,8 +65,8 @@ export default function SearchPage() {
         players: playersData.players || [],
         scouts: scoutsData.scouts || []
       })
-    } catch (_error) {
-      console.error('Error searching:', error)
+    } catch (err) {
+      console.error('Error searching:', err)
       setResults({ players: [], scouts: [] })
     } finally {
       setLoading(false)
@@ -68,9 +90,10 @@ export default function SearchPage() {
     window.history.pushState({}, '', newUrl.toString())
   }
 
-  const totalResults = results.players.length + results.scouts.length
-  const filteredPlayers = activeTab === 'scouts' ? [] : results.players
-  const filteredScouts = activeTab === 'players' ? [] : results.scouts
+  // Scouts ocultos mientras Wonderscouts está deshabilitado.
+  const totalResults = results.players.length
+  const filteredPlayers = results.players
+  const filteredScouts: typeof results.scouts = []
 
   return (
     <div className="min-h-screen bg-[#f8f7f4]">
@@ -131,16 +154,16 @@ export default function SearchPage() {
           >
             Players ({results.players.length})
           </button>
-          <button 
+          {false && <button
             className={`pb-2 font-medium transition-colors ${
-              activeTab === 'scouts' 
-                ? 'text-[#000000] border-b-2 border-[#000000]' 
+              activeTab === 'scouts'
+                ? 'text-[#000000] border-b-2 border-[#000000]'
                 : 'text-[#6d6d6d] hover:text-[#000000]'
             }`}
             onClick={() => setActiveTab('scouts')}
           >
             Scouts ({results.scouts.length})
-          </button>
+          </button>}
         </div>
 
         {/* Loading */}
@@ -163,7 +186,7 @@ export default function SearchPage() {
                     <div
                       key={player.id_player}
                       className="bg-white rounded-lg p-4 border border-[#e7e7e7] cursor-pointer hover:bg-gray-50 transition-colors"
-                      onClick={() => _router.push(`/member/player/${player.id_player}`)}
+                      onClick={() => router.push(`/member/player/${player.id_player}`)}
                     >
                       <div className="flex items-center gap-3 mb-3">
                         <PlayerAvatar player={player} size="md" />
@@ -199,7 +222,7 @@ export default function SearchPage() {
                     <div
                       key={scout.id_scout}
                       className="bg-white rounded-lg p-4 border border-[#e7e7e7] cursor-pointer hover:bg-gray-50 transition-colors"
-                      onClick={() => _router.push(`/member/scout/${scout.id_scout}`)}
+                      onClick={() => router.push(`/member/scout/${scout.id_scout}`)}
                     >
                       <div className="flex items-center gap-3 mb-3">
                         <ScoutAvatar scout={scout} size="md" />

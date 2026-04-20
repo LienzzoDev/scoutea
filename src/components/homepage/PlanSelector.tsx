@@ -2,7 +2,7 @@
 
 import { Check, Crown, ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 interface Plan {
   id: string
@@ -12,8 +12,6 @@ interface Plan {
   features: string[]
   popular: boolean
   color: string
-  requiresApproval?: boolean
-  isScoutPlan?: boolean
 }
 
 interface PlanSelectorProps {
@@ -21,55 +19,34 @@ interface PlanSelectorProps {
 }
 
 export default function PlanSelector({ plans }: PlanSelectorProps) {
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
     setMounted(true)
-    // Load selected plan from localStorage if available
-    const savedPlan = localStorage.getItem('selectedPlan')
-    if (savedPlan) {
-      setSelectedPlan(savedPlan)
-    }
   }, [])
 
-  const handlePlanSelect = (planId: string) => {
-    setSelectedPlan(planId)
-    localStorage.setItem('selectedPlan', planId)
-  }
+  const plan = plans[0]
 
   const handleSubscribe = () => {
-    if (selectedPlan) {
-      const plan = plans.find(p => p.id === selectedPlan)
-
-      // Si el plan requiere aprobación, ir al formulario de solicitud
-      if (plan?.requiresApproval) {
-        router.push('/request-access?plan=' + selectedPlan)
-      } else if (plan?.isScoutPlan) {
-        // Flujo de registro para Scouts
-        router.push('/register/scout')
-      } else {
-        // Flujo normal de registro con Stripe
-        router.push('/register?plan=' + selectedPlan)
-      }
+    if (plan) {
+      localStorage.setItem('selectedPlan', plan.id)
+      router.push('/register?plan=' + plan.id)
     } else {
       router.push('/register')
     }
   }
 
-
-
   const handleLogin = () => {
     router.push('/login')
   }
 
-  if (!mounted) {
+  if (!mounted || !plan) {
     return (
       <div className="min-h-[400px] flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-[#8c1a10] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-[#6d6d6d]">Cargando...</p>
+          <p className="text-[#6d6d6d]">Loading...</p>
         </div>
       </div>
     )
@@ -81,148 +58,89 @@ export default function PlanSelector({ plans }: PlanSelectorProps) {
       <div className="flex items-center justify-center gap-4 mb-12">
         <button
           onClick={handleSubscribe}
-          disabled={!selectedPlan}
-          className="bg-[#8c1a10] hover:bg-[#6d1410] text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-[#8c1a10] hover:bg-[#6d1410] text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl inline-flex items-center justify-center"
         >
-          {selectedPlan ? (
-            plans.find(p => p.id === selectedPlan)?.requiresApproval
-              ? 'Solicitar Acceso Premium'
-              : `Registrarse como ${plans.find(p => p.id === selectedPlan)?.name}`
-          ) : 'Selecciona tu Plan'}
+          Subscribe to {plan.name}
           <ArrowRight className="ml-2 w-5 h-5" />
         </button>
-        <button 
+        <button
           onClick={handleLogin}
           className="text-[#6d6d6d] hover:text-[#8c1a10] font-semibold px-6 py-3 rounded-lg transition-all duration-200 inline-flex items-center justify-center"
         >
-          Iniciar Sesión
+          Sign In
         </button>
       </div>
 
-      {/* Pricing Cards */}
-      <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-16">
-        {plans.map((plan) => (
-          <div
-            key={plan.id}
-            role="button"
-            tabIndex={0}
-            className={`relative cursor-pointer transition-all duration-300 hover:shadow-2xl rounded-lg border bg-white shadow-sm ${
-              selectedPlan === plan.id
-                ? 'ring-2 ring-[#8c1a10] shadow-xl scale-105'
-                : 'hover:shadow-lg'
-            }`}
-            onClick={() => handlePlanSelect(plan.id)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                handlePlanSelect(plan.id)
-              }
-            }}
-          >
-            {plan.popular && (
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-1 rounded-full border inline-flex items-center text-xs font-semibold">
-                  <Crown className="w-4 h-4 mr-1" />
-                  Más Popular
-                </div>
+      {/* Pricing Card */}
+      <div className="max-w-md mx-auto mb-16">
+        <div className="relative rounded-lg border-2 border-[#8c1a10] bg-white shadow-xl">
+          {plan.popular && (
+            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+              <div className="bg-gradient-to-r from-[#8c1a10] to-[#a01e12] text-white px-4 py-1 rounded-full border inline-flex items-center text-xs font-semibold">
+                <Crown className="w-4 h-4 mr-1" />
+                All Access
+              </div>
+            </div>
+          )}
+
+          <div className="text-center pb-4 flex flex-col space-y-1.5 p-6">
+            <h3 className="text-2xl font-bold text-[#000000] mb-2">
+              {plan.name}
+            </h3>
+            <p className="text-[#6d6d6d] mb-4">{plan.description}</p>
+
+            {plan.price && (
+              <div className="flex items-baseline justify-center">
+                <span className="text-5xl font-bold text-[#8c1a10]">
+                  €{plan.price.monthly.toFixed(2).replace('.00', '')}
+                </span>
+                <span className="text-[#6d6d6d] ml-2">/month</span>
               </div>
             )}
-            
-            <div className="text-center pb-4 flex flex-col space-y-1.5 p-6">
-              <h3 className="text-2xl font-bold text-[#000000] mb-2">
-                {plan.name}
-              </h3>
-              <p className="text-[#6d6d6d] mb-4">{plan.description}</p>
-
-              <div className="mb-4">
-                {plan.isScoutPlan ? (
-                  <div className="text-center py-2">
-                    <p className="text-lg font-semibold text-[#8c1a10]">
-                      Acceso por Aprobación
-                    </p>
-                    <p className="text-sm text-[#6d6d6d] mt-1">
-                      Sin coste inicial
-                    </p>
-                  </div>
-                ) : plan.price ? (
-                  <>
-                    <div className="flex items-baseline justify-center">
-                      <span className="text-4xl font-bold text-[#8c1a10]">
-                        ${plan.price.monthly}
-                      </span>
-                      <span className="text-[#6d6d6d] ml-1">/mes</span>
-                    </div>
-                    <p className="text-sm text-green-600 mt-1">
-                      ${plan.price.yearly}/mes si pagas anualmente (20% descuento)
-                    </p>
-                  </>
-                ) : (
-                  <div className="text-center py-2">
-                    <p className="text-lg font-semibold text-[#8c1a10]">
-                      Precio personalizado
-                    </p>
-                    <p className="text-sm text-[#6d6d6d] mt-1">
-                      Contacta con nosotros para más información
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            <div className="p-6 pt-0">
-              <ul className="space-y-3 mb-6">
-                {plan.features.map((feature, index) => (
-                  <li key={index} className="flex items-start">
-                    <Check className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                    <span className="text-[#6d6d6d]">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              
-              <button 
-                className={`w-full inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors h-10 px-4 py-2 ${
-                  selectedPlan === plan.id 
-                    ? 'bg-[#8c1a10] hover:bg-[#6d1410] text-white' 
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                }`}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handlePlanSelect(plan.id)
-                }}
-              >
-                {selectedPlan === plan.id ? `✓ ${plan.name} Seleccionado` : `Elegir ${plan.name}`}
-              </button>
-            </div>
           </div>
-        ))}
+
+          <div className="p-6 pt-0">
+            <ul className="space-y-3 mb-6">
+              {plan.features.map((feature, index) => (
+                <li key={index} className="flex items-start">
+                  <Check className="w-5 h-5 text-[#8c1a10] mr-3 mt-0.5 flex-shrink-0" />
+                  <span className="text-[#6d6d6d]">{feature}</span>
+                </li>
+              ))}
+            </ul>
+
+            <button
+              onClick={handleSubscribe}
+              className="w-full inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors h-12 px-4 py-2 bg-[#8c1a10] hover:bg-[#6d1410] text-white"
+            >
+              Get Started
+              <ArrowRight className="ml-2 w-4 h-4" />
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Final CTA */}
       <div className="text-center bg-white rounded-2xl p-8 shadow-lg">
         <h2 className="text-3xl font-bold text-[#000000] mb-4">
-          ¿Listo para unirte?
+          Ready to join?
         </h2>
         <p className="text-[#6d6d6d] mb-6">
-          Únete a cientos de profesionales del fútbol que ya forman parte de nuestra comunidad
+          Join the football professionals already using Scoutea to discover talent.
         </p>
         <div className="flex items-center justify-center gap-4">
           <button
             onClick={handleSubscribe}
-            disabled={!selectedPlan}
-            className="bg-[#8c1a10] hover:bg-[#6d1410] text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-[#8c1a10] hover:bg-[#6d1410] text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl inline-flex items-center justify-center"
           >
-            {selectedPlan ? (
-              plans.find(p => p.id === selectedPlan)?.requiresApproval
-                ? 'Solicitar Acceso Premium'
-                : `Comenzar como ${plans.find(p => p.id === selectedPlan)?.name}`
-            ) : 'Selecciona tu Plan'}
+            Subscribe now
             <ArrowRight className="ml-2 w-5 h-5" />
           </button>
-          <button 
+          <button
             onClick={handleLogin}
             className="text-[#6d6d6d] hover:text-[#8c1a10] font-semibold px-6 py-3 rounded-lg transition-all duration-200 inline-flex items-center justify-center"
           >
-            Iniciar Sesión
+            Sign In
           </button>
         </div>
       </div>

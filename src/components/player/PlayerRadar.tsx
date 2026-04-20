@@ -6,6 +6,8 @@ import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Responsi
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePlayerRadar } from '@/hooks/player/usePlayerRadar';
 
+import ChartFilters, { EMPTY_FILTERS, type ChartFilterValues } from './stats/ChartFilters';
+
 
 
 interface PlayerRadarProps {
@@ -45,16 +47,9 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
   // Use the custom hook instead of direct API calls
   const { radarData, filterOptions, loading, error, applyFilters, changeRadarType, currentType } = usePlayerRadar(playerId);
   
-  // Filter states
-  const [selectedPosition, setSelectedPosition] = useState<string>('');
-  const [selectedNationality, setSelectedNationality] = useState<string>('');
-  const [selectedCompetition, setSelectedCompetition] = useState<string>('');
-  const [ageMin, setAgeMin] = useState<string>('');
-  const [ageMax, setAgeMax] = useState<string>('');
-  const [ratingMin, setRatingMin] = useState<string>('');
-  const [ratingMax, setRatingMax] = useState<string>('');
+  // Unified filter state
+  const [chartFilters, setChartFilters] = useState<ChartFilterValues>(EMPTY_FILTERS);
   const [showMax, setShowMax] = useState(false);
-  // Min removed as per requirement
   const [showAvg, setShowAvg] = useState(true);
   const [_showPercentiles, _setShowPercentiles] = useState(true);
   const [showRaw, setShowRaw] = useState(false);
@@ -62,20 +57,16 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
 
   // Apply filters when they change
   useEffect(() => {
-    const filters = {
-      position: selectedPosition,
-      nationality: selectedNationality,
-      competition: selectedCompetition,
-      ageMin,
-      ageMax,
-      ratingMin,
-      ratingMax
-    };
-    
-    console.log('🔍 PlayerRadar: Applying filters:', filters);
-    console.log('🔍 PlayerRadar: Current radarData length:', radarData.length);
-    applyFilters(filters);
-  }, [selectedPosition, selectedNationality, selectedCompetition, ageMin, ageMax, ratingMin, ratingMax, applyFilters]);
+    applyFilters({
+      position: chartFilters.position,
+      nationality: chartFilters.nationality,
+      competition: chartFilters.competition,
+      ageMin: chartFilters.ageMin,
+      ageMax: chartFilters.ageMax,
+      ratingMin: chartFilters.trfmMin,
+      ratingMax: chartFilters.trfmMax,
+    });
+  }, [chartFilters, applyFilters]);
 
   // Define category order based on radar type
   const getCategoryOrder = (type: string) => {
@@ -216,16 +207,8 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
           )}
         </div>
         <button
-          onClick={() =>{
-            setSelectedPosition('');
-            setSelectedNationality('');
-            setSelectedCompetition('');
-            setAgeMin('');
-            setAgeMax('');
-            setRatingMin('');
-            setRatingMax('');
-          }}
-          className="text-sm text-[#6d6d6d] hover:text-[#8c1a10] transition-colors">
+          onClick={() => setChartFilters(EMPTY_FILTERS)}
+          className="text-sm text-[#6d6d6d] hover:text-[#8c1a10] transition-colors cursor-pointer">
           Limpiar Filtros
         </button>
       </div>
@@ -237,28 +220,28 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
-              Período
+              Period
             </label>
             <Select defaultValue="1y">
-              <SelectTrigger className="w-full" id="period-select" aria-label="Seleccionar período">
-                <SelectValue placeholder="Seleccionar período" />
+              <SelectTrigger className="w-full" id="period-select" aria-label="Select period">
+                <SelectValue placeholder="Select period" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="3m">3 meses</SelectItem>
-                <SelectItem value="6m">6 meses</SelectItem>
-                <SelectItem value="1y">1 año</SelectItem>
-                <SelectItem value="2y">2 años</SelectItem>
+                <SelectItem value="3m">3 months</SelectItem>
+                <SelectItem value="6m">6 months</SelectItem>
+                <SelectItem value="1y">1 year</SelectItem>
+                <SelectItem value="2y">2 years</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
-              Tipo de Radar
+              Radar Type
             </label>
             <Select value={currentType} onValueChange={(val) => changeRadarType(val)}>
-              <SelectTrigger className="w-full" aria-label="Seleccionar tipo de radar">
-                <SelectValue placeholder="Seleccionar tipo" />
+              <SelectTrigger className="w-full" aria-label="Select radar type">
+                <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="attacking">Attacking</SelectItem>
@@ -270,7 +253,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
           
           <div>
             <label className="block text-sm font-medium text-[#2e3138] mb-3">
-              Tipo de Valores
+              Value Type
             </label>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
@@ -304,7 +287,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
 
           <div>
             <label className="block text-sm font-medium text-[#2e3138] mb-3">
-              Mostrar Líneas
+              Show Lines
             </label>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
@@ -316,7 +299,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
                   onChange={(e) => setShowAvg(e.target.checked)}
                 />
                 <label htmlFor="avg" className="text-sm text-[#2e3138]">
-                  Promedio
+                  Average
                 </label>
               </div>
               <div className="flex items-center gap-2">
@@ -328,7 +311,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
                   onChange={(e) => setShowMax(e.target.checked)}
                 />
                 <label htmlFor="max" className="text-sm text-[#2e3138]">
-                  Máximo
+                  Maximum
                 </label>
               </div>
               {/* Min option removed */}
@@ -337,134 +320,19 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
         </div>
 
         {/* Right Column - Comparison Filters */}
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-[#2e3138] mb-2">
-              Posición
-            </label>
-            <Select value={selectedPosition} onValueChange={setSelectedPosition}>
-              <SelectTrigger className="w-full" aria-label="Seleccionar posición">
-                <SelectValue placeholder="Todas las Posiciones" />
-              </SelectTrigger>
-              <SelectContent>
-                {filterOptions?.positions.map((pos: { value: string; label: string; count: number }) => (
-                  <SelectItem key={pos.value} value={pos.value}>
-                    {pos.label} ({pos.count})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-[#2e3138] mb-2">
-              Nacionalidad
-            </label>
-            <Select value={selectedNationality} onValueChange={setSelectedNationality}>
-              <SelectTrigger className="w-full" aria-label="Seleccionar nacionalidad">
-                <SelectValue placeholder="Todas las Nacionalidades" />
-              </SelectTrigger>
-              <SelectContent>
-                {filterOptions?.nationalities.map((nat: { value: string; label: string; count: number }) => (
-                  <SelectItem key={nat.value} value={nat.value}>
-                    {nat.label} ({nat.count})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-[#2e3138] mb-2">
-              Competición
-            </label>
-            <Select value={selectedCompetition} onValueChange={setSelectedCompetition}>
-              <SelectTrigger className="w-full" aria-label="Seleccionar competición">
-                <SelectValue placeholder="Todas las Competiciones" />
-              </SelectTrigger>
-              <SelectContent>
-                {filterOptions?.competitions.map((comp: { value: string; label: string; count: number }) => (
-                  <SelectItem key={comp.value} value={comp.value}>
-                    {comp.label} ({comp.count})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label htmlFor="ageMin" className="block text-sm font-medium text-[#2e3138] mb-2">
-                Edad Mín
-              </label>
-              <input 
-                type="number" 
-                id="ageMin"
-                className="w-full p-2 border border-gray-300 rounded-md bg-white"
-                placeholder="16"
-                min="16"
-                max="45"
-                value={ageMin}
-                onChange={(e) => setAgeMin(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="ageMax" className="block text-sm font-medium text-[#2e3138] mb-2">
-                Edad Máx
-              </label>
-              <input 
-                type="number" 
-                id="ageMax"
-                className="w-full p-2 border border-gray-300 rounded-md bg-white"
-                placeholder="45"
-                min="16"
-                max="45"
-                value={ageMax}
-                onChange={(e) => setAgeMax(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label htmlFor="ratingMin" className="block text-sm font-medium text-[#2e3138] mb-2">
-                TRFM Value Mín
-              </label>
-              <input 
-                type="number" 
-                id="ratingMin"
-                className="w-full p-2 border border-gray-300 rounded-md bg-white"
-                placeholder="50"
-                min="50"
-                max="100"
-                step="0.1"
-                value={ratingMin}
-                onChange={(e) => setRatingMin(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="ratingMax" className="block text-sm font-medium text-[#2e3138] mb-2">
-                TRFM Value Máx
-              </label>
-              <input 
-                type="number" 
-                id="ratingMax"
-                className="w-full p-2 border border-gray-300 rounded-md bg-white"
-                placeholder="100"
-                min="50"
-                max="100"
-                step="0.1"
-                value={ratingMax}
-                onChange={(e) => setRatingMax(e.target.value)}
-              />
-            </div>
-          </div>
-        </div>
+        <ChartFilters
+          filters={chartFilters}
+          onFilterChange={setChartFilters}
+          filterOptions={filterOptions}
+          onClear={() => setChartFilters(EMPTY_FILTERS)}
+        />
       </div>
       )}
 
       {/* Radar Chart */}
       <div className="border-2 border-[#8c1a10] rounded-lg p-6">
         <h4 className="text-lg font-semibold text-[#2e3138] mb-4 text-center">
-          Radar de Comparación del Jugador
+          Player Comparison Radar
         </h4>
         
         {radarData.length > 0 ? (
@@ -488,7 +356,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Radar
-                  name="Jugador"
+                  name="Player"
                   dataKey="Player"
                   stroke="#8c1a10"
                   fill="#8c1a10"
@@ -498,7 +366,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
                 />
                 {showAvg && (
                   <Radar
-                    name="Promedio"
+                    name="Average"
                     dataKey="Average"
                     stroke="#2563eb"
                     fill="transparent"
@@ -509,7 +377,7 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
                 )}
                 {showMax && (
                   <Radar
-                    name="Máximo"
+                    name="Maximum"
                     dataKey="Max"
                     stroke="#22c55e"
                     fill="transparent"

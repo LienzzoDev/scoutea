@@ -194,6 +194,12 @@ const nextConfig: NextConfig = {
         hostname: 'tmssl.akamaized.net',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.public.blob.vercel-storage.com',
+        port: '',
+        pathname: '/**',
       }
     ],
     deviceSizes: [16, 32, 48, 64, 96, 128, 256, 384],

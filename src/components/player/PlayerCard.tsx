@@ -46,8 +46,8 @@ const PlayerCard = memo<PlayerCardProps>(function PlayerCard({
 
   // 📊 MEMOIZAR CÁLCULOS COSTOSOS
   const playerInfo = useMemo(() => ({
-    displayAge: player.age ? `${player.age} años` : "Edad N/A",
-    displayNationality: player.nationality_1 || "Nacionalidad N/A",
+    displayAge: player.age ? `${player.age} years` : "Age N/A",
+    displayNationality: player.nationality_1 || "Nationality N/A",
     displayTeam: player.team_name || "N/A",
     displayPosition: player.position_player || "N/A",
     displayHeight: player.height ? `${player.height} cm` : "N/A",

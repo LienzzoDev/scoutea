@@ -12,6 +12,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 import { useTournaments, TorneoFilters, Torneo } from "@/hooks/tournament/useTournaments"
 
+interface TorneoFilterOptions {
+  tiposTorneo: string[];
+  categorias: string[];
+  generos: string[];
+  estados: string[];
+}
+
 export default function TorneosPage() {
   const { isSignedIn, isLoaded } = useAuthRedirect()
   const _router = useRouter()
@@ -23,7 +30,7 @@ export default function TorneosPage() {
   const [filters, setFilters] = useState<TorneoFilters>({})
   const [showFilters, setShowFilters] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const [filterOptions, setFilterOptions] = useState<Record<string, unknown> | null>(null)
+  const [filterOptions, setFilterOptions] = useState<TorneoFilterOptions | null>(null)
 
   const {
     torneos,
@@ -210,7 +217,7 @@ export default function TorneosPage() {
                     Tipo de Torneo
                   </label>
                   <Select
-                    value={filters.tipo_torneo || undefined}
+                    value={filters.tipo_torneo ?? ""}
                     onValueChange={(value) => handleFilterChange('tipo_torneo', value)}
                   >
                     <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white hover:bg-[#2D3748] focus:ring-[#8C1A10]">
@@ -230,7 +237,7 @@ export default function TorneosPage() {
                     Categoría
                   </label>
                   <Select
-                    value={filters.categoria || undefined}
+                    value={filters.categoria ?? ""}
                     onValueChange={(value) => handleFilterChange('categoria', value)}
                   >
                     <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white hover:bg-[#2D3748] focus:ring-[#8C1A10]">
@@ -250,7 +257,7 @@ export default function TorneosPage() {
                     Género
                   </label>
                   <Select
-                    value={filters.genero || undefined}
+                    value={filters.genero ?? ""}
                     onValueChange={(value) => handleFilterChange('genero', value)}
                   >
                     <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white hover:bg-[#2D3748] focus:ring-[#8C1A10]">
@@ -270,7 +277,7 @@ export default function TorneosPage() {
                     Estado
                   </label>
                   <Select
-                    value={filters.estado || undefined}
+                    value={filters.estado ?? ""}
                     onValueChange={(value) => handleFilterChange('estado', value)}
                   >
                     <SelectTrigger className="w-full bg-[#1F2937] border-slate-600 text-white hover:bg-[#2D3748] focus:ring-[#8C1A10]">

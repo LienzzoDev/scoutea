@@ -65,7 +65,11 @@ export async function GET(request: NextRequest) {
         player_name: true,
         position_player: true,
         nationality_1: true,
+        nationality_2: true,
+        national_tier: true,
         team_name: true,
+        team_country: true,
+        team_level: true,
         date_of_birth: true,
         created_by_scout_id: true,
         approval_status: true,
@@ -76,6 +80,11 @@ export async function GET(request: NextRequest) {
         foot: true,
         contract_end: true,
         team_competition: true,
+        competition_country: true,
+        competition_tier: true,
+        competition_level: true,
+        on_loan: true,
+        owner_club: true,
         agency: true
       },
       orderBy: {
@@ -102,7 +111,11 @@ export async function GET(request: NextRequest) {
         player_name: player.player_name,
         position_player: player.position_player,
         nationality_1: player.nationality_1,
+        nationality_2: player.nationality_2,
+        national_tier: player.national_tier,
         team_name: player.team_name,
+        team_country: player.team_country,
+        team_level: player.team_level,
         age,
         created_by_scout_id: player.created_by_scout_id,
         approval_status: player.approval_status,
@@ -115,6 +128,11 @@ export async function GET(request: NextRequest) {
         foot: player.foot,
         contract_end: player.contract_end,
         team_competition: player.team_competition,
+        competition_country: player.competition_country,
+        competition_tier: player.competition_tier,
+        competition_level: player.competition_level,
+        on_loan: player.on_loan,
+        owner_club: player.owner_club,
         agency: player.agency
       }
     })

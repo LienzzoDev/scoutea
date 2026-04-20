@@ -31,7 +31,7 @@ export default function UsuariosPage() {
   const [users, setUsers] = useState<User[]>([])
   const [stats, setStats] = useState<UserStats>({
     total: 0,
-    byRole: { admin: 0, member: 0, scout: 0, tester: 0 },
+    byRole: { admin: 0, member: 0, tester: 0 },
     activeSubscriptions: 0,
     pendingInvitations: 0,
   })
@@ -55,7 +55,7 @@ export default function UsuariosPage() {
       const pendingInvitations = data.users.filter((u: User) => u.isPending).length
 
       const total = actualUsers.length
-      const byRole: Record<UserRole, number> = { admin: 0, member: 0, scout: 0, tester: 0 }
+      const byRole: Record<UserRole, number> = { admin: 0, member: 0, tester: 0 }
       let activeSubscriptions = 0
 
       actualUsers.forEach((user: User) => {
@@ -144,11 +144,11 @@ export default function UsuariosPage() {
             {/* Scouts */}
             <div className="bg-[#131921] border border-slate-700 rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-medium text-slate-400">Scouts</h3>
+                <h3 className="text-sm font-medium text-slate-400">Testers</h3>
                 <Award className="h-5 w-5 text-slate-500" />
               </div>
-              <div className="text-3xl font-bold text-[#D6DDE6] mb-1">{stats.byRole.scout}</div>
-              <p className="text-xs text-slate-500">Usuarios con rol scout</p>
+              <div className="text-3xl font-bold text-[#D6DDE6] mb-1">{stats.byRole.tester}</div>
+              <p className="text-xs text-slate-500">Usuarios con rol tester</p>
             </div>
 
             {/* Members */}

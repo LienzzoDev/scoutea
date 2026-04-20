@@ -97,7 +97,7 @@ function ReportCard({ report, type, renderRating, onRequestEdit, onRequestDelete
           <button
             onClick={() => onRequestEdit(report)}
             className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors bg-white/80"
-            title="Solicitar edición"
+            title="Request edit"
           >
             <Edit className="w-4 h-4" />
           </button>
@@ -106,7 +106,7 @@ function ReportCard({ report, type, renderRating, onRequestEdit, onRequestDelete
         <button
           onClick={() => onRequestDelete(report)}
           className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors bg-white/80"
-          title="Solicitar eliminación"
+          title="Request deletion"
         >
           <Trash2 className="w-4 h-4" />
         </button>
@@ -176,7 +176,7 @@ function ReportCard({ report, type, renderRating, onRequestEdit, onRequestDelete
         <span className="text-xs text-[#6d6d6d]">
           {report.report_date
             ? new Date(report.report_date).toLocaleDateString('es-ES')
-            : 'Sin fecha'
+            : 'No date'
           }
         </span>
         {report.form_url_report && (
@@ -227,7 +227,7 @@ export default function ScoutPlayerReports({ playerId, playerName }: ScoutPlayer
     if (!selectedReportForRequest || !requestReason.trim()) {
       toast({
         title: "Error",
-        description: "Por favor, proporciona una razón para la solicitud",
+        description: "Please provide a reason for the request",
         variant: "destructive"
       })
       return
@@ -236,7 +236,7 @@ export default function ScoutPlayerReports({ playerId, playerName }: ScoutPlayer
     if (requestReason.trim().length < 10) {
       toast({
         title: "Error",
-        description: "La razón debe tener al menos 10 caracteres",
+        description: "The reason must be at least 10 characters",
         variant: "destructive"
       })
       return
@@ -265,7 +265,7 @@ export default function ScoutPlayerReports({ playerId, playerName }: ScoutPlayer
 
       toast({
         title: "Solicitud enviada",
-        description: `Tu solicitud de ${requestType === 'edit' ? 'edición' : 'eliminación'} ha sido enviada al administrador`
+        description: `Your ${requestType === 'edit' ? 'edit' : 'deletion'} request has been sent to the administrator`
       })
 
       closeRequestModal()
@@ -391,7 +391,7 @@ export default function ScoutPlayerReports({ playerId, playerName }: ScoutPlayer
         <div className="text-center py-12 text-[#6d6d6d]">
           {reports.length === 0
             ? `No tienes reportes para ${playerName}`
-            : `No hay reportes de tipo "${REPORT_TYPES.find(t => t.key === selectedType)?.label}"`
+            : `No reports of type "${REPORT_TYPES.find(t => t.key === selectedType)?.label}"`
           }
         </div>
       ) : (
@@ -417,10 +417,10 @@ export default function ScoutPlayerReports({ playerId, playerName }: ScoutPlayer
             <div className="flex items-center justify-between mb-6 border-b pb-4">
               <div>
                 <h3 className="text-xl font-bold text-[#000000]">
-                  {requestType === 'edit' ? 'Solicitar Edición' : 'Solicitar Eliminación'}
+                  {requestType === 'edit' ? 'Request Edit' : 'Request Deletion'}
                 </h3>
                 <p className="text-sm text-[#6d6d6d] mt-1">
-                  Reporte de {playerName}
+                  Report by {playerName}
                 </p>
               </div>
               <button
@@ -441,38 +441,38 @@ export default function ScoutPlayerReports({ playerId, playerName }: ScoutPlayer
                 {requestType === 'edit' ? (
                   <>
                     <Edit className="w-5 h-5 text-blue-600" />
-                    <span className="font-medium text-blue-700">Solicitud de Edición</span>
+                    <span className="font-medium text-blue-700">Edit Request</span>
                   </>
                 ) : (
                   <>
                     <Trash2 className="w-5 h-5 text-red-600" />
-                    <span className="font-medium text-red-700">Solicitud de Eliminación</span>
+                    <span className="font-medium text-red-700">Deletion Request</span>
                   </>
                 )}
               </div>
               <p className="text-sm mt-2 text-gray-600">
                 {requestType === 'edit'
-                  ? 'Tu solicitud será revisada por un administrador. Si es aprobada, podrás editar el reporte.'
-                  : 'Tu solicitud será revisada por un administrador. Si es aprobada, el reporte será eliminado permanentemente.'}
+                  ? 'Your request will be reviewed by an administrator. If approved, you will be able to edit the report.'
+                  : 'Your request will be reviewed by an administrator. If approved, the report will be permanently deleted.'}
               </p>
             </div>
 
             {/* Reason Textarea */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Razón de la solicitud <span className="text-red-500">*</span>
+                Reason for the request <span className="text-red-500">*</span>
               </label>
               <Textarea
                 placeholder={requestType === 'edit'
-                  ? 'Explica qué cambios deseas realizar y por qué...'
-                  : 'Explica por qué deseas eliminar este reporte...'}
+                  ? 'Explain what changes you want to make and why...'
+                  : 'Explain why you want to delete this report...'}
                 value={requestReason}
                 onChange={(e) => setRequestReason(e.target.value)}
                 className="min-h-[120px] resize-none"
                 disabled={isSubmittingRequest}
               />
               <p className="text-xs text-gray-500 mt-1">
-                Mínimo 10 caracteres ({requestReason.length}/10)
+                Minimum 10 characters ({requestReason.length}/10)
               </p>
             </div>
 
@@ -483,7 +483,7 @@ export default function ScoutPlayerReports({ playerId, playerName }: ScoutPlayer
                 onClick={closeRequestModal}
                 disabled={isSubmittingRequest}
               >
-                Cancelar
+                Cancel
               </Button>
               <Button
                 onClick={handleSubmitRequest}
@@ -495,10 +495,10 @@ export default function ScoutPlayerReports({ playerId, playerName }: ScoutPlayer
                 {isSubmittingRequest ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Enviando...
+                    Sending...
                   </>
                 ) : (
-                  `Enviar solicitud de ${requestType === 'edit' ? 'edición' : 'eliminación'}`
+                  `Send ${requestType === 'edit' ? 'edit' : 'deletion'} request`
                 )}
               </Button>
             </div>

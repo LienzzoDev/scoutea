@@ -49,9 +49,9 @@ export default function PlayerProfileModal({ player, isOpen, onClose }: PlayerPr
               </AvatarFallback>
             </Avatar>
             <h2 className="text-xl font-bold text-[#D6DDE6] mb-2">{player.player_name}</h2>
-            <p className="text-gray-400 mb-4">{player.position_player || 'Sin posición'}</p>
+            <p className="text-gray-400 mb-4">{player.position_player || 'No position'}</p>
             <Button className="bg-[#FF5733] hover:bg-[#E64A2B] text-white text-sm px-4 py-2">
-              Editar perfil
+              Edit profile
             </Button>
           </div>
 
@@ -67,7 +67,7 @@ export default function PlayerProfileModal({ player, isOpen, onClose }: PlayerPr
 
           {/* Información básica */}
           <div className="mb-6">
-            <h3 className="text-base font-semibold text-[#D6DDE6] mb-3">Información básica</h3>
+            <h3 className="text-base font-semibold text-[#D6DDE6] mb-3">Basic information</h3>
             <div className="space-y-3">
               <div className="flex justify-between items-center py-2 border-b border-slate-700">
                 <span className="text-gray-400">Edad</span>
@@ -122,7 +122,7 @@ export default function PlayerProfileModal({ player, isOpen, onClose }: PlayerPr
 
           {/* Información del Scraping */}
           <div className="mb-6">
-            <h3 className="text-base font-semibold text-[#D6DDE6] mb-3">Información del Scraping</h3>
+            <h3 className="text-base font-semibold text-[#D6DDE6] mb-3">Scraping Information</h3>
             <div className="space-y-3">
               {player.url_trfm_advisor && (
                 <div className="py-2 border-b border-slate-700">
@@ -174,7 +174,7 @@ export default function PlayerProfileModal({ player, isOpen, onClose }: PlayerPr
 
           {/* Información adicional */}
           <div className="mb-6">
-            <h3 className="text-base font-semibold text-[#D6DDE6] mb-3">Información Adicional</h3>
+            <h3 className="text-base font-semibold text-[#D6DDE6] mb-3">Additional Information</h3>
             <div className="space-y-3">
               {player.nationality_2 && (
                 <div className="flex justify-between items-center py-2 border-b border-slate-700">
@@ -190,14 +190,14 @@ export default function PlayerProfileModal({ player, isOpen, onClose }: PlayerPr
               )}
               {player.team_loan_from && (
                 <div className="flex justify-between items-center py-2 border-b border-slate-700">
-                  <span className="text-gray-400">Equipo de préstamo</span>
+                  <span className="text-gray-400">Loan team</span>
                   <span className="text-[#D6DDE6]">{player.team_loan_from}</span>
                 </div>
               )}
               {player.on_loan !== undefined && (
                 <div className="flex justify-between items-center py-2 border-b border-slate-700">
-                  <span className="text-gray-400">En préstamo</span>
-                  <span className="text-[#D6DDE6]">{player.on_loan ? 'Sí' : 'No'}</span>
+                  <span className="text-gray-400">On loan</span>
+                  <span className="text-[#D6DDE6]">{player.on_loan ? 'Yes' : 'No'}</span>
                 </div>
               )}
             </div>

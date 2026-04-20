@@ -1,11 +1,13 @@
 'use client'
 
 import { useUser, useClerk } from '@clerk/nextjs'
-import { User, Mail, Calendar, Shield, LogOut } from "lucide-react"
+import { User, Mail, Calendar, Shield, LogOut, CreditCard } from "lucide-react"
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 import { MemberPageLayout } from '@/components/layout/member-page-layout'
 import { Button } from '@/components/ui/button'
+import { useSubscription } from '@/hooks/auth/use-subscription'
 import { getUserRole } from '@/lib/auth/user-role'
 
 export default function ProfilePage() {
@@ -13,10 +15,29 @@ export default function ProfilePage() {
   const { signOut } = useClerk()
   const router = useRouter()
   const userRole = getUserRole(user)
+  const { subscription, hasActiveSubscription } = useSubscription()
+  const [portalLoading, setPortalLoading] = useState(false)
 
   const handleSignOut = async () => {
     await signOut()
     router.push('/')
+  }
+
+  const handleManageSubscription = async () => {
+    setPortalLoading(true)
+    try {
+      const res = await fetch('/api/create-portal-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ return_url: window.location.href }),
+      })
+      const data = await res.json()
+      if (data.__error) throw new Error(data.__error)
+      window.location.href = data.url
+    } catch (error) {
+      console.error('Error opening portal:', error)
+      setPortalLoading(false)
+    }
   }
 
   if (!isLoaded) {
@@ -31,8 +52,8 @@ export default function ProfilePage() {
 
   return (
     <MemberPageLayout
-      title="Mi Perfil"
-      description="Información de tu cuenta"
+      title="My Profile"
+      description="Your account information"
       showNavbar={true}
     >
       <div className="max-w-4xl mx-auto">
@@ -55,7 +76,7 @@ export default function ProfilePage() {
             {/* User Info */}
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-[#000000] mb-2">
-                {user?.fullName || user?.firstName || 'Usuario'}
+                {user?.fullName || user?.firstName || 'User'}
               </h1>
 
               <div className="space-y-2">
@@ -69,7 +90,7 @@ export default function ProfilePage() {
                 {user?.createdAt && (
                   <div className="flex items-center gap-2 text-[#6d6d6d]">
                     <Calendar className="w-4 h-4" />
-                    <span>Miembro desde {new Date(user.createdAt).toLocaleDateString('es-ES', {
+                    <span>Member since {new Date(user.createdAt).toLocaleDateString('en-US', {
                       month: 'long',
                       year: 'numeric'
                     })}</span>
@@ -89,13 +110,13 @@ export default function ProfilePage() {
 
         {/* Account Details */}
         <div className="bg-white rounded-lg border border-[#e7e7e7] p-8 mb-6">
-          <h2 className="text-xl font-semibold text-[#000000] mb-6">Detalles de la Cuenta</h2>
+          <h2 className="text-xl font-semibold text-[#000000] mb-6">Account Details</h2>
 
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-[#6d6d6d] mb-1">
-                  Nombre
+                  First Name
                 </label>
                 <p className="text-[#000000] font-medium">
                   {user?.firstName || 'N/A'}
@@ -104,7 +125,7 @@ export default function ProfilePage() {
 
               <div>
                 <label className="block text-sm font-medium text-[#6d6d6d] mb-1">
-                  Apellido
+                  Last Name
                 </label>
                 <p className="text-[#000000] font-medium">
                   {user?.lastName || 'N/A'}
@@ -122,7 +143,7 @@ export default function ProfilePage() {
 
               <div>
                 <label className="block text-sm font-medium text-[#6d6d6d] mb-1">
-                  ID de Usuario
+                  User ID
                 </label>
                 <p className="text-[#000000] font-medium font-mono text-sm">
                   {user?.id || 'N/A'}
@@ -132,16 +153,37 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        {/* Subscription */}
+        {hasActiveSubscription && (
+          <div className="bg-white rounded-lg border border-[#e7e7e7] p-8 mb-6">
+            <h2 className="text-xl font-semibold text-[#000000] mb-4">Subscription</h2>
+            <p className="text-[#6d6d6d] mb-4">
+              Plan: <span className="font-medium text-[#000000] capitalize">{subscription?.plan}</span>
+              {subscription?.billing && (
+                <> · <span className="capitalize">{subscription.billing}</span></>
+              )}
+            </p>
+            <Button
+              onClick={handleManageSubscription}
+              disabled={portalLoading}
+              className="bg-[#8c1a10] hover:bg-[#6d1410] text-white"
+            >
+              <CreditCard className="w-4 h-4 mr-2" />
+              {portalLoading ? 'Redirecting...' : 'Manage Subscription'}
+            </Button>
+          </div>
+        )}
+
         {/* Sign Out Button */}
         <div className="bg-white rounded-lg border border-[#e7e7e7] p-8">
-          <h2 className="text-xl font-semibold text-[#000000] mb-4">Sesión</h2>
+          <h2 className="text-xl font-semibold text-[#000000] mb-4">Session</h2>
           <Button
             onClick={handleSignOut}
             variant="destructive"
             className="bg-[#8c1a10] hover:bg-[#6d1410] text-white"
           >
             <LogOut className="w-4 h-4 mr-2" />
-            Cerrar Sesión
+            Sign Out
           </Button>
         </div>
       </div>

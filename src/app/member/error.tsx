@@ -35,10 +35,10 @@ export default function MemberError({
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-[#2e3138] mb-2">
-            Error en el Área de Miembros
+            Error in the Member Area
           </h1>
           <p className="text-[#6d6d6d] mb-6">
-            Ha ocurrido un error en tu área de miembro. Por favor, inténtalo de nuevo.
+            An error occurred in your member area. Please try again.
           </p>
         </div>
         

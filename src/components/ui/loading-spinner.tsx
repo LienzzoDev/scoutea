@@ -50,7 +50,7 @@ export function LoadingSpinner({
 }
 
 // Preset loading states for common use cases
-export function PlayerLoadingSpinner({ text = "Cargando jugador..." }: { text?: string }) {
+export function PlayerLoadingSpinner({ text = "Loading player..." }: { text?: string }) {
   return (
     <div className="flex items-center justify-center py-12">
       <LoadingSpinner
@@ -62,7 +62,7 @@ export function PlayerLoadingSpinner({ text = "Cargando jugador..." }: { text?: 
   );
 }
 
-export function TableLoadingSpinner({ text = "Cargando datos..." }: { text?: string }) {
+export function TableLoadingSpinner({ text = "Loading data..." }: { text?: string }) {
   return (
     <div className="flex items-center justify-center py-8">
       <LoadingSpinner
@@ -84,7 +84,7 @@ export function ButtonLoadingSpinner() {
   );
 }
 
-export function LoadingPage({ text = "Cargando..." }: { text?: string }) {
+export function LoadingPage({ text = "Loading..." }: { text?: string }) {
   return (
     <div className="flex items-center justify-center min-h-[400px]">
       <LoadingSpinner
@@ -96,7 +96,7 @@ export function LoadingPage({ text = "Cargando..." }: { text?: string }) {
   );
 }
 
-export function LoadingCard({ text = "Cargando datos..." }: { text?: string }) {
+export function LoadingCard({ text = "Loading data..." }: { text?: string }) {
   return (
     <div className="flex items-center justify-center py-12">
       <LoadingSpinner

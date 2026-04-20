@@ -35,10 +35,10 @@ export default function PlayerError({
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-[#2e3138] mb-2">
-            Error al Cargar Jugador
+            Error Loading Player
           </h1>
           <p className="text-[#6d6d6d] mb-6">
-            No se pudo cargar la información del jugador. Puede que el jugador no exista o haya un problema temporal.
+            Player information could not be loaded. The player may not exist or there may be a temporary issue.
           </p>
         </div>
         

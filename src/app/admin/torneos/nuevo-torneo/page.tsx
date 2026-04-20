@@ -45,8 +45,8 @@ export default function NuevoTorneoPage() {
           const data = await response.json()
           setCompeticiones(data)
         }
-      } catch (_error) {
-        console.error('Error loading competiciones:', error)
+      } catch (err) {
+        console.error('Error loading competiciones:', err)
       } finally {
         setLoadingCompeticiones(false)
       }
@@ -85,8 +85,8 @@ export default function NuevoTorneoPage() {
       setPdfFile(file)
       setPdfPreview(URL.createObjectURL(file))
       
-    } catch (_error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error al subir el archivo'
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al subir el archivo'
       setErrors(prev => ({ ...prev, pdf: errorMessage }))
     } finally {
       setUploadingPdf(false)
@@ -136,7 +136,7 @@ export default function NuevoTorneoPage() {
     const files = e.dataTransfer.files
     if (files.length > 0) {
       const file = files[0]
-      if (file.type === 'application/pdf') {
+      if (file && file.type === 'application/pdf') {
         if (file.size <= 10 * 1024 * 1024) {
           handlePdfUpload(file)
         } else {
@@ -289,7 +289,7 @@ export default function NuevoTorneoPage() {
                   Competición Asociada
                 </label>
                 <Select
-                  value={formData.id_competition || undefined}
+                  value={formData.id_competition || ""}
                   onValueChange={(value) => handleInputChange('id_competition', value)}
                   disabled={loadingCompeticiones}
                 >

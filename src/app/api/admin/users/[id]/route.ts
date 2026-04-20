@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { UserManagementService } from '@/lib/services/user-management-service'
 
 const updateUserSchema = z.object({
-  role: z.enum(['admin', 'member', 'scout', 'tester']).optional(),
+  role: z.enum(['admin', 'member', 'tester']).optional(),
   hasActiveSubscription: z.boolean().optional(),
 })
 

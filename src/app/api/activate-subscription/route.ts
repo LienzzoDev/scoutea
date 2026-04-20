@@ -3,7 +3,7 @@ import { createClerkClient } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 const clerkClient = createClerkClient({
-  secretKey: process.env.CLERK_SECRET_KEY,
+  secretKey: process.env.CLERK_SECRET_KEY!,
 })
 
 export async function POST(request: NextRequest) {
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       subscription: {
         stripeCustomerId: 'cus_test_123',
         stripeSubscriptionId: 'sub_test_123',
-        plan: currentMetadata.selectedPlan || 'scout',
+        plan: 'member',
         status: 'active',
         billing: 'monthly',
         startDate: new Date().toISOString(),

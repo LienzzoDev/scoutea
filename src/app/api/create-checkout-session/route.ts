@@ -21,42 +21,18 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    let { plan, billing } = body
+    const { billing } = body
+    const plan = 'member'
 
-    console.log('Creating Stripe checkout session for userId:', userId)
-    console.log('Plan:', plan, 'Billing:', billing)
+    console.log('Creating Stripe checkout session for userId:', userId, 'billing:', billing)
 
-    // Obtener información del usuario
     const user = await clerkClient.users.getUser(userId)
     const userEmail = user.emailAddresses[0]?.emailAddress
     const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim()
 
-    // Si no hay plan pero el usuario tiene rol asignado (por invitación), usar ese rol
-    if (!plan) {
-      const userRole = user.publicMetadata?.role as string | undefined
-      if (userRole === 'scout' || userRole === 'member') {
-        plan = userRole
-        console.log('No plan provided, using role from invitation:', plan)
-      }
-    }
-
-    if (!plan) {
-      console.error('No plan provided and no role in user metadata')
-      return NextResponse.json({ error: 'Plan is required' }, { status: 400 })
-    }
-
-    // Validar que no sea plan premium (premium requiere aprobación manual)
-    if (plan === 'premium') {
-      console.error('Premium plan detected in checkout - should go through request access flow')
-      return NextResponse.json(
-        { error: 'El plan Premium requiere aprobación. Por favor, usa el formulario de solicitud.' },
-        { status: 400 }
-      )
-    }
-
     console.log('User info:', { userEmail, userName, plan })
 
-    // Actualizar metadatos del usuario para marcar el plan seleccionado
+    // Marcar el plan seleccionado en metadata
     const currentMetadata = user.publicMetadata || {}
     await clerkClient.users.updateUser(userId, {
       publicMetadata: {
@@ -65,50 +41,22 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Configurar precios según el plan y billing
-    const getPlanDetails = (planType: string) => {
-      switch (planType) {
-        case 'scout':
-          return {
-            name: 'Plan Scout Básico',
-            description: 'Perfil verificado, publicación de reportes y portfolio de jugadores'
-          }
-        case 'basic':
-          return {
-            name: 'Plan Básico (Wonderkids + Torneos)',
-            description: 'Acceso a sección Wonderkids y Torneos'
-          }
-        default:
-          return {
-            name: 'Plan Miembro',
-            description: 'Acceso completo para analistas y profesionales del fútbol'
-          }
-      }
-    }
-
-    const planDetails = getPlanDetails(plan)
-
     const priceData = {
-      currency: 'usd',
+      currency: 'eur',
       product_data: {
-        name: planDetails.name,
-        description: planDetails.description
+        name: 'Member Plan',
+        description: 'Full access to Wonderkids, Tournaments and On Demand'
       },
-      unit_amount: 2000, // $20.00 en centavos
+      unit_amount: 990, // €9.90 in cents
       recurring: {
         interval: billing === 'yearly' ? 'year' : 'month',
         interval_count: 1
       }
     }
 
-    // URLs de redirección - usar página de procesamiento para manejar la transición
     const baseUrl = request.nextUrl.origin
     const successUrl = `${baseUrl}/member/payment-processing?session_id={CHECKOUT_SESSION_ID}&plan=${plan}`
-
-    // URL de cancelación según el tipo de plan
-    const cancelUrl = plan === 'scout'
-      ? `${baseUrl}/register/scout/complete-profile?payment=cancelled`
-      : `${baseUrl}/member/complete-profile?plan=${plan}&payment=cancelled`
+    const cancelUrl = `${baseUrl}/member/complete-profile?plan=${plan}&payment=cancelled`
 
     console.log('Creating Stripe session with:', {
       priceData,

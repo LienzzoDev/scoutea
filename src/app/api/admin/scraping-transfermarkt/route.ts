@@ -34,7 +34,7 @@ interface ScrapingResult {
   url: string
   success: boolean
   fieldsUpdated: string[]
-  error?: string
+  error?: string | undefined
 }
 
 /**
@@ -64,10 +64,10 @@ export async function POST(request: NextRequest) {
     // 📊 OBTENER JUGADORES CON URL DE TRANSFERMARKT
     const playersWithUrls = await prisma.jugador.findMany({
       where: {
-        url_trfm: {
-          not: null,
-          not: ''
-        }
+        AND: [
+          { url_trfm: { not: null } },
+          { url_trfm: { not: '' } }
+        ]
       },
       select: {
         id_player: true,
@@ -113,11 +113,13 @@ export async function POST(request: NextRequest) {
 
     for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
       const batch = batches[batchIndex]
+      if (!batch) continue
       console.log(`\n📦 LOTE ${batchIndex + 1}/${batches.length}`)
       console.log(`📊 Procesando ${batch.length} jugadores en este lote...`)
 
       for (let playerIndex = 0; playerIndex < batch.length; playerIndex++) {
         const player = batch[playerIndex]
+        if (!player) continue
 
         try {
           console.log(`\n[${playerIndex + 1}/${batch.length}] ${player.player_name || player.id_player}`)
@@ -134,8 +136,8 @@ export async function POST(request: NextRequest) {
           const fieldsUpdated = Object.keys(scrapedData)
 
           results.push({
-            playerId: player.id_player,
-            playerName: player.player_name || player.id_player,
+            playerId: String(player.id_player),
+            playerName: player.player_name || String(player.id_player),
             url: player.url_trfm!,
             success: true,
             fieldsUpdated
@@ -154,8 +156,8 @@ export async function POST(request: NextRequest) {
           const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
 
           results.push({
-            playerId: player.id_player,
-            playerName: player.player_name || player.id_player,
+            playerId: String(player.id_player),
+            playerName: player.player_name || String(player.id_player),
             url: player.url_trfm!,
             success: false,
             fieldsUpdated: [],
@@ -209,7 +211,7 @@ export async function POST(request: NextRequest) {
  *
  * Esta función extrae los 13 campos de Transfermarkt
  */
-async function scrapePlayerData(url: string): Promise<Record<string, any>> {
+async function scrapePlayerData(url: string): Promise<Record<string, unknown>> {
   // 🌐 HACER REQUEST A TRANSFERMARKT
   const response = await fetch(url, {
     headers: {
@@ -228,85 +230,85 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
   const html = await response.text()
 
   // 📊 EXTRAER DATOS USANDO REGEX Y PARSING
-  const data: Record<string, any> = {}
+  const data: Record<string, unknown> = {}
 
   // 1. URL del advisor
   const advisorMatch = html.match(/<a href="(\/berater\/[^"]+)"/)
-  if (advisorMatch) {
+  if (advisorMatch?.[1]) {
     data.url_trfm_advisor = `https://www.transfermarkt.es${advisorMatch[1]}`
   }
 
   // 2. Fecha de nacimiento (formato: "1 de enero de 1990")
   const birthDateMatch = html.match(/<span itemprop="birthDate">([^<]+)<\/span>/)
-  if (birthDateMatch) {
+  if (birthDateMatch?.[1]) {
     data.date_of_birth = parseDateString(birthDateMatch[1].trim())
   }
 
   // 3. Equipo actual
   const teamMatch = html.match(/<span class="[^"]*hauptverein[^"]*"[^>]*>([^<]+)<\/span>/)
-  if (teamMatch) {
+  if (teamMatch?.[1]) {
     data.team_name = teamMatch[1].trim()
   }
 
   // 4. Equipo de cesión (si está cedido)
   const loanMatch = html.match(/cedido de[^>]*>([^<]+)</)
-  if (loanMatch) {
+  if (loanMatch?.[1]) {
     data.team_loan_from = loanMatch[1].trim()
   }
 
   // 5. Posición
   const positionMatch = html.match(/<span class="[^"]*position[^"]*"[^>]*>([^<]+)<\/span>/)
-  if (positionMatch) {
+  if (positionMatch?.[1]) {
     data.position_player = positionMatch[1].trim()
   }
 
   // 6. Pie dominante
   const footMatch = html.match(/Pie:<\/span>\s*<span[^>]*>([^<]+)<\/span>/)
-  if (footMatch) {
+  if (footMatch?.[1]) {
     data.foot = footMatch[1].trim()
   }
 
   // 7. Altura (convertir a número)
   const heightMatch = html.match(/Altura:<\/span>\s*<span[^>]*>([0-9,]+)\s*m<\/span>/)
-  if (heightMatch) {
+  if (heightMatch?.[1]) {
     const heightInMeters = parseFloat(heightMatch[1].replace(',', '.'))
     data.height = Math.round(heightInMeters * 100) // Convertir a cm
   }
 
   // 8. Nacionalidad 1 (principal)
   const nat1Match = html.match(/<img[^>]+title="([^"]+)"[^>]+alt="[^"]*bandera[^"]*"/)
-  if (nat1Match) {
+  if (nat1Match?.[1]) {
     data.nationality_1 = nat1Match[1].trim()
   }
 
   // 9. Nacionalidad 2 (secundaria, si existe)
   const nat2Matches = html.matchAll(/<img[^>]+title="([^"]+)"[^>]+alt="[^"]*bandera[^"]*"/g)
-  const nationalities = Array.from(nat2Matches).map(m => m[1].trim())
-  if (nationalities.length > 1) {
+  const nationalities = Array.from(nat2Matches).map(m => m[1]?.trim()).filter((n): n is string => Boolean(n))
+  if (nationalities.length > 1 && nationalities[1]) {
     data.nationality_2 = nationalities[1]
   }
 
   // 10. Nivel de selección nacional
   const nationalTeamMatch = html.match(/Selección nacional:<\/span>\s*<span[^>]*>([^<]+)<\/span>/)
-  if (nationalTeamMatch) {
+  if (nationalTeamMatch?.[1]) {
     data.national_tier = nationalTeamMatch[1].trim()
   }
 
   // 11. Agencia
   const agencyMatch = html.match(/Agencia:<\/span>\s*<a[^>]*>([^<]+)<\/a>/)
-  if (agencyMatch) {
+  if (agencyMatch?.[1]) {
     data.agency = agencyMatch[1].trim()
   }
 
   // 12. Fin de contrato
   const contractMatch = html.match(/Contrato hasta:<\/span>\s*<span[^>]*>([^<]+)<\/span>/)
-  if (contractMatch) {
+  if (contractMatch?.[1]) {
     data.contract_end = parseContractDate(contractMatch[1].trim())
   }
 
   // 13. Valor de mercado (convertir a número)
   const valueMatch = html.match(/Valor de mercado:<\/span>\s*<a[^>]*>([0-9,.]+)\s*(mil|mill?\.?)\s*€<\/a>/)
-  if (valueMatch) {
+  if (valueMatch?.[1] && valueMatch?.[2]) {
     const value = parseFloat(valueMatch[1].replace(',', '.'))
     const multiplier = valueMatch[2].toLowerCase().includes('mill') ? 1000000 : 1000
     data.player_trfm_value = value * multiplier
@@ -314,7 +316,7 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
 
   // 🔍 EXTRAER NOMBRE DEL ADVISOR (no URL)
   const advisorNameMatch = html.match(/Agente:<\/span>\s*<a[^>]*>([^<]+)<\/a>/)
-  if (advisorNameMatch) {
+  if (advisorNameMatch?.[1]) {
     data.advisor = advisorNameMatch[1].trim()
   }
 
@@ -334,13 +336,20 @@ function parseDateString(dateStr: string): Date | null {
     }
 
     if (dateStr.includes('/')) {
-      const [day, month, year] = dateStr.split('/')
+      const parts = dateStr.split('/')
+      const day = parts[0]
+      const month = parts[1]
+      const year = parts[2]
+      if (!day || !month || !year) return null
       return new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
     }
 
     const match = dateStr.match(/(\d+)\s+de\s+(\w+)\s+de\s+(\d{4})/)
     if (match) {
-      const [, day, month, year] = match
+      const day = match[1]
+      const month = match[2]
+      const year = match[3]
+      if (!day || !month || !year) return null
       const monthIndex = months[month.toLowerCase()]
       if (monthIndex !== undefined) {
         return new Date(parseInt(year), monthIndex, parseInt(day))
@@ -360,7 +369,11 @@ function parseContractDate(dateStr: string): Date | null {
   try {
     // Formato: "30/06/2025" o "30 de junio de 2025"
     if (dateStr.includes('/')) {
-      const [day, month, year] = dateStr.split('/')
+      const parts = dateStr.split('/')
+      const day = parts[0]
+      const month = parts[1]
+      const year = parts[2]
+      if (!day || !month || !year) return null
       return new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
     }
 

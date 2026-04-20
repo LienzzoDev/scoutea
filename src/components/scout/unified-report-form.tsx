@@ -105,7 +105,7 @@ export function UnifiedReportForm() {
   const playerOptions = players.map(player => ({
     value: String(player.id_player),
     label: player.player_name,
-    description: `${player.position_player || 'N/A'} • ${player.team_name || 'N/A'} • ${player.nationality_1 || 'N/A'}${player.age ? ` • ${player.age} años` : ''}`,
+    description: `${player.position_player || 'N/A'} • ${player.team_name || 'N/A'} • ${player.nationality_1 || 'N/A'}${player.age ? ` • ${player.age} years` : ''}`,
     isOwnPlayer: player.is_own_player,
     approvalStatus: player.approval_status
   }))
@@ -284,14 +284,14 @@ export function UnifiedReportForm() {
 
         if (result.success) {
           toast({
-            title: "¡Éxito!",
-            description: result.message || "Jugador y reporte añadidos correctamente. Pendiente de aprobación del administrador.",
+            title: "Success!",
+            description: result.message || "Player and report added successfully. Pending administrator approval.",
           })
 
           router.push('/scout/portfolio')
         } else {
           console.error('API Error:', result)
-          throw new Error(result.details || result.error || 'Error al añadir el jugador y reporte')
+          throw new Error(result.details || result.error || 'Error adding player and report')
         }
       } else {
         // Crear reporte para jugador existente
@@ -318,7 +318,7 @@ export function UnifiedReportForm() {
 
         if (result.success) {
           toast({
-            title: "¡Éxito!",
+            title: "Success!",
             description: "Reporte creado correctamente",
           })
 
@@ -435,7 +435,7 @@ export function UnifiedReportForm() {
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {selectedPlayer.nationality_1 || 'N/A'}
-                        {selectedPlayer.age && ` • ${selectedPlayer.age} años`}
+                        {selectedPlayer.age && ` • ${selectedPlayer.age} years`}
                       </p>
                     </div>
                   </div>
@@ -444,7 +444,7 @@ export function UnifiedReportForm() {
                 {/* Info Box */}
                 <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <p className="text-sm text-blue-800">
-                    💡 <strong>Tip:</strong> Busca y selecciona un jugador existente de la base de datos para crear un nuevo reporte sobre él.
+                    💡 <strong>Tip:</strong> Search and select an existing player from the database to create a new report about them.
                   </p>
                 </div>
               </>
@@ -452,7 +452,7 @@ export function UnifiedReportForm() {
               <>
                 {/* New Player Form */}
                 <div className="space-y-5">
-                  <h3 className="text-lg font-semibold text-foreground border-b pb-2">Datos del Nuevo Jugador</h3>
+                  <h3 className="text-lg font-semibold text-foreground border-b pb-2">New Player Data</h3>
 
                   {/* Player Name */}
                   <div className="space-y-2">
@@ -594,7 +594,7 @@ export function UnifiedReportForm() {
                   {/* Info Box */}
                   <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
                     <p className="text-sm text-amber-800">
-                      ⚠️ <strong>Nota:</strong> El jugador será enviado para aprobación del administrador antes de aparecer en la base de datos principal.
+                      ⚠️ <strong>Note:</strong> The player will be sent for administrator approval before appearing in the main database.
                     </p>
                   </div>
                 </div>

@@ -2,7 +2,6 @@ import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { getUserRoleInfo } from '@/lib/auth/role-utils'
 import { prisma } from '@/lib/db'
 
 const approvalSchema = z.object({
@@ -30,9 +29,11 @@ export async function PATCH(
       return NextResponse.json({ __error: 'User not found' }, { status: 404 })
     }
 
-    const roleInfo = getUserRoleInfo({ publicMetadata: { role: 'admin' } })
+    // Get user role from Clerk sessionClaims
+    const { sessionClaims } = await auth()
+    const userRole = sessionClaims?.public_metadata?.role
 
-    if (roleInfo.role !== 'admin') {
+    if (userRole !== 'admin') {
       return NextResponse.json(
         { __error: 'Forbidden: Admin access required' },
         { status: 403 }
@@ -44,7 +45,7 @@ export async function PATCH(
 
     if (!validation.success) {
       return NextResponse.json(
-        { __error: 'Invalid request data', errors: validation.error.errors },
+        { __error: 'Invalid request data', issues: validation.error.issues },
         { status: 400 }
       )
     }
@@ -76,7 +77,7 @@ export async function PATCH(
       where: { id_report: reportId },
       data: {
         approval_status: action === 'approve' ? 'approved' : 'rejected',
-        approved_by_admin_id: user.id_usuario,
+        approved_by_admin_id: user.id,
         approval_date: new Date(),
         rejection_reason: action === 'reject' ? rejectionReason || null : null,
       },

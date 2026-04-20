@@ -16,47 +16,47 @@ interface Job {
   requirements: string[]
 }
 
-// Datos de ejemplo de trabajos para scouts
+// Sample job data for scouts
 const SAMPLE_JOBS: Job[] = [
   {
     id: '1',
-    title: 'Scout Senior - Sudamérica',
+    title: 'Senior Scout - South America',
     club: 'FC Barcelona',
-    location: 'Barcelona, España',
-    type: 'Tiempo completo',
+    location: 'Barcelona, Spain',
+    type: 'Full time',
     postedDate: '2024-02-01',
-    description: 'Buscamos un scout experimentado para identificar y evaluar jóvenes talentos en Sudamérica.',
-    requirements: ['5+ años de experiencia en scouting', 'Conocimiento del fútbol sudamericano', 'Dominio de español/portugués']
+    description: 'We are looking for an experienced scout to identify and evaluate young talent in South America.',
+    requirements: ['5+ years of scouting experience', 'Knowledge of South American football', 'Fluent in Spanish/Portuguese']
   },
   {
     id: '2',
-    title: 'Scout Juvenil - Academia',
+    title: 'Youth Scout - Academy',
     club: 'Real Madrid',
-    location: 'Madrid, España',
-    type: 'Medio tiempo',
+    location: 'Madrid, Spain',
+    type: 'Part time',
     postedDate: '2024-01-28',
-    description: 'Únete a nuestra red de scouting de academia para identificar jugadores prometedores de 14-18 años.',
-    requirements: ['Experiencia con fútbol juvenil', 'Licencias UEFA preferibles', 'Habilidades analíticas sólidas']
+    description: 'Join our academy scouting network to identify promising 14-18 year old players.',
+    requirements: ['Experience with youth football', 'UEFA licenses preferred', 'Strong analytical skills']
   },
   {
     id: '3',
-    title: 'Analista de Datos Scout',
+    title: 'Scout Data Analyst',
     club: 'Manchester City',
-    location: 'Manchester, Reino Unido',
-    type: 'Tiempo completo',
+    location: 'Manchester, United Kingdom',
+    type: 'Full time',
     postedDate: '2024-01-25',
-    description: 'Combina scouting tradicional con análisis de datos para identificar objetivos de transferencia.',
-    requirements: ['Experiencia en análisis de datos', 'Conocimiento de fútbol', 'Dominio de Excel/SQL']
+    description: 'Combine traditional scouting with data analysis to identify transfer targets.',
+    requirements: ['Experience in data analysis', 'Football knowledge', 'Excel/SQL proficiency']
   },
   {
     id: '4',
-    title: 'Scout Regional - África',
+    title: 'Regional Scout - Africa',
     club: 'Chelsea FC',
-    location: 'Londres, Reino Unido (Viajes requeridos)',
-    type: 'Contrato',
+    location: 'London, United Kingdom (Travel required)',
+    type: 'Contract',
     postedDate: '2024-01-20',
-    description: 'Scouting y evaluación de jugadores en ligas y academias africanas.',
-    requirements: ['Red de contactos en fútbol africano', 'Disponibilidad para viajar', '3+ años de experiencia']
+    description: 'Scouting and player evaluation in African leagues and academies.',
+    requirements: ['Network of contacts in African football', 'Availability to travel', '3+ years of experience']
   }
 ]
 
@@ -67,10 +67,10 @@ export default function ScoutJobsSection() {
     const diffTime = Math.abs(now.getTime() - date.getTime())
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     
-    if (diffDays === 1) return 'hace 1 día'
-    if (diffDays < 7) return `hace ${diffDays} días`
-    if (diffDays < 30) return `hace ${Math.ceil(diffDays / 7)} semanas`
-    return `hace ${Math.ceil(diffDays / 30)} meses`
+    if (diffDays === 1) return '1 day ago'
+    if (diffDays < 7) return `${diffDays} days ago`
+    if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`
+    return `${Math.ceil(diffDays / 30)} months ago`
   }
 
   return (
@@ -78,12 +78,12 @@ export default function ScoutJobsSection() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-[#000000]">Trabajos Disponibles</h2>
-          <p className="text-[#6d6d6d] mt-1">Descubre nuevas oportunidades en el scouting de fútbol</p>
+          <h2 className="text-2xl font-bold text-[#000000]">Available Jobs</h2>
+          <p className="text-[#6d6d6d] mt-1">Discover new opportunities in football scouting</p>
         </div>
         <Button variant="outline" className="border-[#e7e7e7] text-[#6d6d6d]">
           <ExternalLink className="w-4 h-4 mr-2" />
-          Ver Todos
+          View All
         </Button>
       </div>
 
@@ -127,7 +127,7 @@ export default function ScoutJobsSection() {
 
               {/* Requirements */}
               <div>
-                <p className="text-sm font-medium text-[#000000] mb-2">Requisitos Principales:</p>
+                <p className="text-sm font-medium text-[#000000] mb-2">Main Requirements:</p>
                 <ul className="space-y-1">
                   {job.requirements.slice(0, 2).map((req, index) => (
                     <li key={index} className="text-sm text-[#6d6d6d] flex items-center gap-2">
@@ -138,7 +138,7 @@ export default function ScoutJobsSection() {
                   {job.requirements.length > 2 && (
                     <li className="text-sm text-[#6d6d6d] flex items-center gap-2">
                       <div className="w-1.5 h-1.5 bg-[#8B0000] rounded-full"></div>
-                      +{job.requirements.length - 2} requisitos más
+                      +{job.requirements.length - 2} more requirements
                     </li>
                   )}
                 </ul>
@@ -147,10 +147,10 @@ export default function ScoutJobsSection() {
               {/* Actions */}
               <div className="flex items-center gap-3 pt-2">
                 <Button className="bg-[#8B0000] hover:bg-[#660000] text-white flex-1">
-                  Aplicar Ahora
+                  Apply Now
                 </Button>
                 <Button variant="outline" className="border-[#e7e7e7] text-[#6d6d6d]">
-                  Guardar
+                  Save
                 </Button>
               </div>
             </div>

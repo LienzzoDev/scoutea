@@ -8,7 +8,7 @@ const createUserSchema = z.object({
   email: z.string().email('Email inválido'),
   firstName: z.string().min(1, 'Nombre requerido'),
   lastName: z.string().min(1, 'Apellido requerido'),
-  role: z.enum(['admin', 'member', 'scout', 'tester']),
+  role: z.enum(['admin', 'member', 'tester']),
   redirectUrl: z.string().url().optional(),
 })
 

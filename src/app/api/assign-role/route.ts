@@ -12,9 +12,9 @@ export async function POST(request: NextRequest) {
     const { role } = await request.json()
     
     // Validar rol
-    if (!role || !['member', 'scout', 'admin'].includes(role)) {
-      return NextResponse.json({ 
-        error: 'Invalid role. Must be member, scout, or admin' 
+    if (!role || !['member', 'admin', 'tester'].includes(role)) {
+      return NextResponse.json({
+        error: 'Invalid role. Must be member, admin, or tester'
       }, { status: 400 })
     }
 

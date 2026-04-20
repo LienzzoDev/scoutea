@@ -25,12 +25,12 @@ export function VirtualizedSelect({
   value,
   onValueChange,
   options,
-  placeholder = "Seleccionar",
+  placeholder = "Select",
   className,
   baseOptions = [
-    { value: "all", label: "Todos" },
-    { value: "has", label: "Con valor" },
-    { value: "empty", label: "Vacío (N/A)" }
+    { value: "all", label: "All" },
+    { value: "has", label: "With value" },
+    { value: "empty", label: "Empty (N/A)" }
   ],
   showSearch = true
 }: VirtualizedSelectProps) {
@@ -105,7 +105,7 @@ export function VirtualizedSelect({
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar..."
+                  placeholder="Search..."
                   className="w-full pl-8 pr-3 py-1.5 text-sm bg-transparent border border-slate-600 rounded focus:outline-none focus:border-slate-500 text-white placeholder:text-slate-500"
                   onClick={(e) => e.stopPropagation()}
                   onKeyDown={(e) => e.stopPropagation()}
@@ -155,14 +155,14 @@ export function VirtualizedSelect({
             {/* Indicador de más resultados */}
             {filteredOptions.length > 100 && (
               <div className="px-2 py-1.5 text-xs text-slate-400 text-center">
-                +{filteredOptions.length - 100} más (usa la búsqueda)
+                +{filteredOptions.length - 100} more (use search)
               </div>
             )}
 
             {/* Sin resultados */}
             {search && visibleOptions.length === 0 && (
               <div className="px-2 py-4 text-sm text-slate-400 text-center">
-                No se encontraron resultados
+                No results found
               </div>
             )}
           </SelectPrimitive.Viewport>

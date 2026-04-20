@@ -34,8 +34,8 @@ export default function AuthGuard({ children, fallback }: AuthGuardProps) {
     return (
       <div className="min-h-screen bg-[#f8f7f4] flex items-center justify-center">
         <div className="text-center">
-          <p className="text-[#6d6d6d] text-lg">No estás autenticado</p>
-          <p className="text-sm text-gray-500 mt-2">Por favor, inicia sesión para continuar</p>
+          <p className="text-[#6d6d6d] text-lg">You are not authenticated</p>
+          <p className="text-sm text-gray-500 mt-2">Please sign in to continue</p>
         </div>
       </div>
     );

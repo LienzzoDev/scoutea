@@ -48,7 +48,8 @@ export async function POST(request: NextRequest) {
 
     for (let i = 0; i < Math.min(players.length, 8); i++) {
       const player = players[i]
-      const reportType = reportTypes[i % reportTypes.length]
+      if (!player) continue
+      const reportType = reportTypes[i % reportTypes.length] ?? 'Scouting'
 
       // Generar valores aleatorios para las métricas
       const potential = 60 + Math.random() * 40 // 60-100
@@ -59,31 +60,27 @@ export async function POST(request: NextRequest) {
         data: {
           scout_id: scoutId,
           id_player: player.id_player,
-          player_name: player.player_name,
           report_date: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000), // Random date in last 90 days
           report_type: reportType,
           report_status: 'completed',
-          form_text_report: `${reportType} report for ${player.player_name}. Excellent player with great potential. Shows strong technical abilities and good decision making. Recommended for further evaluation.`,
+          form_text_report: `${reportType} report for ${player.player_name || 'Unknown'}. Excellent player with great potential. Shows strong technical abilities and good decision making. Recommended for further evaluation.`,
 
-          // Player info
-          position_player: player.position_player,
-          nationality_1: player.nationality_1,
-          team_name: player.team_name,
-          date_of_birth: player.date_of_birth,
+          // Snapshot del estado actual del jugador
+          ...(player.team_name !== null && { initial_team: player.team_name }),
 
           // Metrics
-          potential: potential,
+          form_potential: String(Math.round(potential)),
           roi: roi,
           profit: profit,
 
           // URLs (some reports will have videos)
-          form_url_video: i % 3 === 0 ? `https://youtube.com/watch?v=example${i}` : null,
+          ...(i % 3 === 0 && { form_url_video: `https://youtube.com/watch?v=example${i}` }),
           form_url_report: `https://scoutea.com/reports/${scoutId}/${player.id_player}`,
         }
       })
 
       reportsCreated.push(report)
-      console.log(`✅ Created report for ${player.player_name}`)
+      console.log(`✅ Created report for ${player.player_name || player.id_player}`)
     }
 
     console.log(`🎉 Successfully created ${reportsCreated.length} reports for scout ${scoutId}`)
@@ -97,7 +94,7 @@ export async function POST(request: NextRequest) {
         reportsCreated: reportsCreated.length,
         reports: reportsCreated.map(r => ({
           id_report: r.id_report,
-          player_name: r.player_name,
+          id_player: r.id_player,
           report_type: r.report_type,
           report_date: r.report_date
         }))

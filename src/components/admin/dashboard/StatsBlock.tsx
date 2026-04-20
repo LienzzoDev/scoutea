@@ -1,5 +1,5 @@
 
-import { Users, AlertTriangle, Link as LinkIcon, Clock } from "lucide-react"
+import { Users, AlertTriangle, Link as LinkIcon, Clock, Instagram } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -9,15 +9,17 @@ interface StatsBlockProps {
   lastScraping: string | null
   erroneousUrls: number
   missingTrfmUrls: number
+  brokenInstagramUrls?: number
   loading?: boolean
 }
 
-export function StatsBlock({ 
-  title, 
-  total, 
-  lastScraping, 
-  erroneousUrls, 
+export function StatsBlock({
+  title,
+  total,
+  lastScraping,
+  erroneousUrls,
   missingTrfmUrls,
+  brokenInstagramUrls,
   loading = false
 }: StatsBlockProps) {
   
@@ -71,7 +73,7 @@ export function StatsBlock({
         </div>
 
         {/* Missing URLs */}
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center border-b border-slate-800 pb-2">
           <div className="flex items-center gap-2 text-slate-400 text-sm">
             <LinkIcon className="h-4 w-4 text-orange-400" />
             <span>Sin URL Transfermarkt</span>
@@ -80,6 +82,19 @@ export function StatsBlock({
             {loading ? '...' : missingTrfmUrls.toLocaleString()}
           </span>
         </div>
+
+        {/* Broken Instagram URLs */}
+        {brokenInstagramUrls !== undefined && (
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2 text-slate-400 text-sm">
+              <Instagram className="h-4 w-4 text-pink-400" />
+              <span>Instagram Rotos</span>
+            </div>
+            <span className={`text-sm font-medium ${brokenInstagramUrls > 0 ? 'text-pink-400' : 'text-green-400'}`}>
+              {loading ? '...' : brokenInstagramUrls.toLocaleString()}
+            </span>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

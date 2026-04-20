@@ -57,12 +57,12 @@ export default function ScoutContactForm({ scoutId, scoutName }: ScoutContactFor
         setTimeout(() => setStatus('idle'), 5000)
       } else {
         setStatus('error')
-        setErrorMessage(data.error || 'Error al enviar el mensaje')
+        setErrorMessage(data.error || 'Error sending the message')
       }
     } catch (error) {
       console.error('Error:', error)
       setStatus('error')
-      setErrorMessage('Error de conexión. Por favor, inténtalo de nuevo.')
+      setErrorMessage('Connection error. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -70,12 +70,12 @@ export default function ScoutContactForm({ scoutId, scoutName }: ScoutContactFor
 
   return (
     <div className="bg-white rounded-lg p-8 border border-[#e7e7e7] shadow-sm">
-      <h2 className="text-xl font-bold text-[#000000] mb-4">Contactar con {scoutName}</h2>
-      
+      <h2 className="text-xl font-bold text-[#000000] mb-4">Contact {scoutName}</h2>
+
       {/* Suggestions */}
       <div className="mb-6">
         <p className="text-[#6d6d6d] text-sm">
-          Consultas sobre reportes | Colaboraciones | Información específica de jugadores
+          Report queries | Collaborations | Specific player information
         </p>
       </div>
 
@@ -83,7 +83,7 @@ export default function ScoutContactForm({ scoutId, scoutName }: ScoutContactFor
       {status === 'success' && (
         <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
           <p className="text-green-800 font-medium">
-            ✅ Mensaje enviado correctamente. El scout recibirá tu consulta pronto.
+            ✅ Message sent successfully. The scout will receive your query soon.
           </p>
         </div>
       )}
@@ -101,12 +101,12 @@ export default function ScoutContactForm({ scoutId, scoutName }: ScoutContactFor
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Escribe tu mensaje aquí..."
+          placeholder="Write your message here..."
           disabled={isLoading}
           className="w-full h-64 p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#8c1a10] focus:border-transparent text-[#000000] placeholder-[#6d6d6d] disabled:bg-gray-100 disabled:cursor-not-allowed"
         />
         <div className="text-right text-sm text-[#6d6d6d] mt-2">
-          {message.length} caracteres
+          {message.length} characters
         </div>
       </div>
 

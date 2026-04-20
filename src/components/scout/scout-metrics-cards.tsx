@@ -55,22 +55,22 @@ export function ScoutMetricsCards({ scout }: ScoutMetricsCardsProps) {
 
   const metrics = [
     {
-      title: 'Total Reportes',
+      title: 'Total Reports',
       value: scout.total_reports || 0,
       icon: Users,
       color: 'blue',
       bgColor: 'bg-blue-50',
       iconColor: 'text-blue-600',
-      description: 'Reportes totales realizados'
+      description: 'Total reports made'
     },
     {
-      title: 'Reportes Originales',
+      title: 'Original Reports',
       value: scout.original_reports || 0,
       icon: Target,
       color: 'green',
       bgColor: 'bg-green-50',
       iconColor: 'text-green-600',
-      description: 'Reportes únicos y originales'
+      description: 'Unique and original reports'
     },
     {
       title: 'ROI',
@@ -79,25 +79,25 @@ export function ScoutMetricsCards({ scout }: ScoutMetricsCardsProps) {
       color: scout.roi && scout.roi >= 0 ? 'green' : 'red',
       bgColor: scout.roi && scout.roi >= 0 ? 'bg-green-50' : 'bg-red-50',
       iconColor: getROIColor(scout.roi),
-      description: 'Retorno de inversión promedio'
+      description: 'Average return on investment'
     },
     {
-      title: 'Beneficios Netos',
+      title: 'Net Profits',
       value: formatCurrency(scout.net_profits),
       icon: Award,
       color: scout.net_profits && scout.net_profits >= 0 ? 'green' : 'red',
       bgColor: scout.net_profits && scout.net_profits >= 0 ? 'bg-green-50' : 'bg-red-50',
       iconColor: getProfitColor(scout.net_profits),
-      description: 'Beneficios totales generados'
+      description: 'Total profits generated'
     },
     {
-      title: 'Nivel Scout',
+      title: 'Scout Level',
       value: scout.scout_level || 'N/A',
       icon: BarChart3,
       color: 'purple',
       bgColor: 'bg-purple-50',
       iconColor: 'text-purple-600',
-      description: 'Nivel actual del scout'
+      description: 'Current scout level'
     },
     {
       title: 'Ranking',
@@ -106,25 +106,25 @@ export function ScoutMetricsCards({ scout }: ScoutMetricsCardsProps) {
       color: 'yellow',
       bgColor: 'bg-yellow-50',
       iconColor: 'text-yellow-600',
-      description: 'Posición en el ranking'
+      description: 'Position in the ranking'
     },
     {
-      title: 'Edad Promedio',
-      value: scout.avg_initial_age ? `${scout.avg_initial_age.toFixed(1)} años` : 'N/A',
+      title: 'Average Age',
+      value: scout.avg_initial_age ? `${scout.avg_initial_age.toFixed(1)} years` : 'N/A',
       icon: Calendar,
       color: 'indigo',
       bgColor: 'bg-indigo-50',
       iconColor: 'text-indigo-600',
-      description: 'Edad promedio de jugadores reportados'
+      description: 'Average age of reported players'
     },
     {
-      title: 'Potencial Promedio',
+      title: 'Average Potential',
       value: scout.avg_potential ? scout.avg_potential.toFixed(1) : 'N/A',
       icon: TrendingUp,
       color: 'pink',
       bgColor: 'bg-pink-50',
       iconColor: 'text-pink-600',
-      description: 'Potencial promedio identificado'
+      description: 'Average identified potential'
     }
   ]
 

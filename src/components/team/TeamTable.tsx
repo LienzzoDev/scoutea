@@ -359,7 +359,7 @@ export default function TeamTable({
                   {isCalculated && (
                     <div 
                       className="absolute top-1 right-1 w-2 h-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-sm shadow-sm"
-                      title="Campo calculado automáticamente mediante fórmula"
+                      title="Automatically calculated field"
                     />
                   )}
                   {/* Indicador de campo scrapeado - esquina superior izquierda */}
@@ -552,7 +552,7 @@ export default function TeamTable({
         <div className="flex items-center gap-6 text-xs text-slate-400">
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-sm shadow-sm" />
-            <span>Campo calculado automáticamente mediante fórmula</span>
+            <span>Automatically calculated field</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 bg-gradient-to-br from-purple-400 to-violet-500 rounded-sm shadow-sm" />

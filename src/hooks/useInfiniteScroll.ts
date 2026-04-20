@@ -103,6 +103,10 @@ export function useInfiniteScroll<T = any, F = Record<string, any>>({
   const lastLoadTime = useRef(0)
   const hasLoadedInitial = useRef(false)
   const observerRef = useRef<IntersectionObserver | null>(null)
+  // Mirror of nextCursor used inside loadMore to avoid stale closures when the
+  // caller resets cursor + filters in the same tick (tab switch, etc.)
+  const nextCursorRef = useRef<string | null>(null)
+  const hasMoreRef = useRef(true)
 
   // Serializar filtros para detección de cambios
   const filtersJson = JSON.stringify(filters)
@@ -118,15 +122,19 @@ export function useInfiniteScroll<T = any, F = Record<string, any>>({
     setLoading(true)
     hasLoadedInitial.current = false
     loadingRef.current = false
+    // Synchronously reset the cursor/hasMore refs so the next loadMore call
+    // sees a clean slate even if it fires before the setState commits.
+    nextCursorRef.current = null
+    hasMoreRef.current = true
   }, [filtersJson])
 
   /**
    * Función principal para cargar más items
    */
   const loadMore = useCallback(async () => {
-    // Prevenir llamadas múltiples
-    if (loadingRef.current || !hasMore) {
-      console.log('⏭️ Skipping loadMore:', { loading: loadingRef.current, hasMore })
+    // Prevenir llamadas múltiples. Leemos hasMore del ref para evitar closures stale.
+    if (loadingRef.current || !hasMoreRef.current) {
+      console.log('⏭️ Skipping loadMore:', { loading: loadingRef.current, hasMore: hasMoreRef.current })
       return
     }
 
@@ -147,11 +155,12 @@ export function useInfiniteScroll<T = any, F = Record<string, any>>({
     lastLoadTime.current = now
 
     try {
-      console.log('📡 Loading items...', { cursor: nextCursor, hasMore })
+      const currentCursor = nextCursorRef.current
+      console.log('📡 Loading items...', { cursor: currentCursor, hasMore: hasMoreRef.current })
 
       // Construir URL con parámetros
       const params = new URLSearchParams()
-      if (nextCursor) params.append('cursor', nextCursor)
+      if (currentCursor) params.append('cursor', currentCursor)
       params.append('limit', limit.toString())
 
       // Agregar filtros dinámicamente
@@ -219,19 +228,24 @@ export function useInfiniteScroll<T = any, F = Record<string, any>>({
         return [...prev, ...uniqueNewItems]
       })
 
-      setNextCursor(data.nextCursor || null)
-      setHasMore(data.hasMore ?? false)
+      const newCursor = data.nextCursor || null
+      const newHasMore = data.hasMore ?? false
+      nextCursorRef.current = newCursor
+      hasMoreRef.current = newHasMore
+      setNextCursor(newCursor)
+      setHasMore(newHasMore)
       hasLoadedInitial.current = true
 
     } catch (err) {
       console.error('❌ Error loading items:', err)
       setError(err as Error)
+      hasMoreRef.current = false
       setHasMore(false)
     } finally {
       setLoading(false)
       loadingRef.current = false
     }
-  }, [nextCursor, hasMore, filtersJson, apiEndpoint, limit, throttleMs, getItemId])
+  }, [filtersJson, apiEndpoint, limit, throttleMs, getItemId])
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -283,6 +297,8 @@ export function useInfiniteScroll<T = any, F = Record<string, any>>({
     setLoading(true)
     hasLoadedInitial.current = false
     loadingRef.current = false
+    nextCursorRef.current = null
+    hasMoreRef.current = true
     // Disparar recarga inmediatamente después de limpiar el estado
     setTimeout(() => {
       loadMore()

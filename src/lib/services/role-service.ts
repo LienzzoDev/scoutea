@@ -14,8 +14,8 @@ const clerkClient = createClerkClient({
   secretKey: process.env.CLERK_SECRET_KEY,
 })
 
-export type UserRole = 'member' | 'scout' | 'admin' | 'tester'
-export type UserType = 'member' | 'scout' // Tipo de usuario (scout tiene rol member pero es identificado como scout)
+export type UserRole = 'member' | 'admin' | 'tester'
+export type UserType = 'member'
 export type ProfileStatus = 'incomplete' | 'complete'
 export type SubscriptionStatus = 'active' | 'inactive' | 'cancelled' | 'pending'
 
@@ -51,46 +51,11 @@ export interface RoleAssignmentResult {
 
 export class RoleService {
   /**
-   * Determina el rol basado en el plan seleccionado
-   *
-   * IMPORTANTE:
-   * - Plan 'scout' asigna rol 'member' con plan 'basic' y userType 'scout'
-   *   (Los scouts acceden al área de member BASIC con opción de upgrade)
-   * - Planes 'member', 'basic', 'premium' asignan rol 'member'
-   * La diferencia entre basic y premium se maneja en subscription.plan
-   * El acceso a features se controla con FeatureAccessService
+   * Determina el rol basado en el plan seleccionado.
+   * Con un modelo de plan único, todos los clientes de pago son 'member'.
    */
-  static getRoleFromPlan(plan: string): UserRole {
-    if (!plan) return 'member'
-
-    const planLower = plan.toLowerCase()
-
-    // Plan 'scout' ahora asigna rol 'member' (acceso al área de member BASIC)
-    // El tipo de usuario 'scout' se maneja en metadata.userType
-    if (planLower === 'scout') {
-      return 'member'
-    }
-
-    // Para cualquier otro plan (member, basic, premium, pro), asignar rol 'member'
-    // La diferencia entre basic y premium está en subscription.plan
-    if (planLower.includes('member') ||
-        planLower.includes('basic') ||
-        planLower.includes('basica') ||
-        planLower.includes('premium') ||
-        planLower.includes('pro')) {
-      return 'member'
-    }
-
-    // Default a member
-    logger.warn('Unknown plan type, defaulting to member', { plan })
+  static getRoleFromPlan(_plan: string): UserRole {
     return 'member'
-  }
-
-  /**
-   * Determina si el plan es de tipo Scout
-   */
-  static isScoutPlan(plan: string): boolean {
-    return plan?.toLowerCase() === 'scout'
   }
 
   /**
@@ -193,16 +158,12 @@ export class RoleService {
   }
 
   /**
-   * Asigna rol después de un pago exitoso
-   *
-   * Para scouts:
-   * - Se asigna rol 'member' (acceso al área de member)
-   * - Se guarda plan 'basic' (acceso a Wonderkids + Torneos)
-   * - Se marca userType como 'scout' para identificarlos
+   * Asigna rol después de un pago exitoso.
+   * Todos los pagos activan el plan único 'member'.
    */
   static async assignRoleAfterPayment(
     userId: string,
-    plan: string,
+    _plan: string,
     stripeData: {
       customerId?: string
       subscriptionId?: string
@@ -210,18 +171,12 @@ export class RoleService {
       billing?: 'monthly' | 'yearly'
     }
   ): Promise<RoleAssignmentResult> {
-    const role = this.getRoleFromPlan(plan)
-    const isScout = this.isScoutPlan(plan)
-
-    // Para scouts: plan se guarda como 'basic' pero userType es 'scout'
-    const actualPlan = isScout ? 'basic' : plan
-
     const updates: Partial<UserMetadata> = {
-      role,
-      userType: isScout ? 'scout' : 'member',
+      role: 'member',
+      userType: 'member',
       subscription: {
         status: 'active' as SubscriptionStatus,
-        plan: actualPlan,
+        plan: 'member',
         stripeCustomerId: stripeData.customerId,
         stripeSubscriptionId: stripeData.subscriptionId,
         stripeSessionId: stripeData.sessionId,
@@ -235,13 +190,7 @@ export class RoleService {
       }
     }
 
-    logger.info('Assigning role after payment', {
-      userId,
-      originalPlan: plan,
-      actualPlan,
-      role,
-      isScout
-    })
+    logger.info('Assigning role after payment', { userId })
 
     return this.updateUserRole(userId, updates, 'payment_completed')
   }
@@ -290,9 +239,8 @@ export class RoleService {
   static hasAccess(userRole: UserRole, requiredRole: UserRole): boolean {
     const roleHierarchy: Record<UserRole, number> = {
       'member': 1,
-      'scout': 2,
-      'tester': 3, // Tester tiene acceso a member y scout
-      'admin': 4
+      'tester': 2,
+      'admin': 3
     }
 
     return roleHierarchy[userRole] >= roleHierarchy[requiredRole]
@@ -306,9 +254,7 @@ export class RoleService {
       case 'admin':
         return ['/admin', '/member', '/scout']
       case 'tester':
-        return ['/member', '/scout'] // Tester puede acceder a member y scout
-      case 'scout':
-        return ['/scout', '/member']
+        return ['/member']
       case 'member':
         return ['/member']
       default:

@@ -10,6 +10,44 @@ import { connectionPool } from '../../../../lib/db/connection-pool';
 import { radarLogger } from '../../../../lib/logging/radar-logger';
 import { radarPerformanceMonitor } from '../../../../lib/monitoring/radar-performance-monitor';
 
+interface HealthData {
+  status: 'healthy' | 'degraded' | 'unhealthy'
+  timestamp: string
+  uptime: number
+  version: string
+  database?: {
+    status: string
+    [key: string]: unknown
+  }
+  cache?: {
+    status: string
+    stats: { message: string }
+  }
+  performance?: {
+    status: string
+    general: unknown
+    radar: unknown
+  }
+  system?: {
+    status: string
+    metrics: unknown
+  }
+  detailed?: {
+    logs: {
+      recent: unknown
+      statistics: unknown
+    }
+    monitoring: unknown
+    environment: {
+      nodeVersion: string
+      platform: string
+      arch: string
+      env: string | undefined
+    }
+  }
+  responseTime?: number
+}
+
 export async function GET(_request: NextRequest) {
   const { searchParams } = new URL(_request.url);
   const detailed = searchParams.get('detailed') === 'true';
@@ -19,7 +57,7 @@ export async function GET(_request: NextRequest) {
     const startTime = Date.now();
 
     // Basic health check
-    const healthData: unknown = {
+    const healthData: HealthData = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
@@ -101,7 +139,7 @@ export async function GET(_request: NextRequest) {
 /**
  * Determine overall health status based on component health
  */
-function determineOverallHealth(healthData: unknown): 'healthy' | 'degraded' | 'unhealthy' {
+function determineOverallHealth(healthData: HealthData): 'healthy' | 'degraded' | 'unhealthy' {
   let healthyComponents = 0;
   let totalComponents = 0;
 
@@ -124,11 +162,12 @@ function determineOverallHealth(healthData: unknown): 'healthy' | 'degraded' | '
   // Check performance health
   if (healthData.performance) {
     totalComponents++;
-    const perfStats = healthData.performance.general;
-    const radarStats = healthData.performance.radar;
-    
+    const perfStats = healthData.performance.general as { successRate: number } | undefined;
+    const radarStats = healthData.performance.radar as { cacheHitRate: number } | undefined;
+
     // Consider healthy if success rate > 90% and cache hit rate > 50%
-    if (perfStats.successRate > 0.9 && radarStats.cacheHitRate > 0.5) {
+    if (perfStats?.successRate !== undefined && radarStats?.cacheHitRate !== undefined &&
+        perfStats.successRate > 0.9 && radarStats.cacheHitRate > 0.5) {
       healthyComponents++;
     }
   }
@@ -136,12 +175,17 @@ function determineOverallHealth(healthData: unknown): 'healthy' | 'degraded' | '
   // Check system health
   if (healthData.system) {
     totalComponents++;
-    const systemMetrics = healthData.system.metrics;
-    
+    const systemMetrics = healthData.system.metrics as {
+      memoryUsage: { heapUsed: number; heapTotal: number };
+      averageResponseTime: number
+    } | undefined;
+
     // Consider healthy if memory usage < 80% of available and response time < 3s
-    const memoryUsagePercent = systemMetrics.memoryUsage.heapUsed / systemMetrics.memoryUsage.heapTotal;
-    if (memoryUsagePercent < 0.8 && systemMetrics.averageResponseTime < 3000) {
-      healthyComponents++;
+    if (systemMetrics?.memoryUsage && systemMetrics?.averageResponseTime !== undefined) {
+      const memoryUsagePercent = systemMetrics.memoryUsage.heapUsed / systemMetrics.memoryUsage.heapTotal;
+      if (memoryUsagePercent < 0.8 && systemMetrics.averageResponseTime < 3000) {
+        healthyComponents++;
+      }
     }
   }
 

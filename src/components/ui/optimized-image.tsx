@@ -66,7 +66,7 @@ const OptimizedImage = memo<OptimizedImageProps>(function OptimizedImage({
 
   // 📊 MEMOIZAR PROPS DE IMAGEN
   const imageProps = useMemo(() => {
-    const props: unknown = {
+    const baseProps = {
       alt,
       quality,
       onLoad: handleLoad,
@@ -79,28 +79,28 @@ const OptimizedImage = memo<OptimizedImageProps>(function OptimizedImage({
     };
 
     // 🎯 CONFIGURAR DIMENSIONES
-    if (fill) {
-      props.fill = true;
-    } else if (width && height) {
-      props.width = width;
-      props.height = height;
-    }
+    const dimensionProps = fill
+      ? { fill: true as const }
+      : width && height
+        ? { width, height }
+        : {};
 
     // 🚀 CONFIGURAR OPTIMIZACIONES
-    if (priority) {
-      props.priority = true;
-    }
+    const priorityProps = priority ? { priority: true as const } : {};
 
-    if (placeholder === 'blur' && blurDataURL) {
-      props.placeholder = 'blur';
-      props.blurDataURL = blurDataURL;
-    }
+    const placeholderProps = placeholder === 'blur' && blurDataURL
+      ? { placeholder: 'blur' as const, blurDataURL }
+      : {};
 
-    if (sizes) {
-      props.sizes = sizes;
-    }
+    const sizesProps = sizes ? { sizes } : {};
 
-    return props;
+    return {
+      ...baseProps,
+      ...dimensionProps,
+      ...priorityProps,
+      ...placeholderProps,
+      ...sizesProps
+    };
   }, [
     alt,
     quality,
@@ -189,8 +189,9 @@ export function useLazyImage(src: string, options: { threshold?: number; rootMar
     if (!imageRef || isInView) return;
 
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
+      (entries) => {
+        const entry = entries[0];
+        if (entry?.isIntersecting) {
           setIsInView(true);
           observer.disconnect();
         }

@@ -64,8 +64,8 @@ export default function EditarTorneoPage() {
         } else {
           console.error('Error loading torneo')
         }
-      } catch (_error) {
-        console.error('Error loading torneo:', error)
+      } catch (err) {
+        console.error('Error loading torneo:', err)
       } finally {
         setLoadingTorneo(false)
       }
@@ -85,8 +85,8 @@ export default function EditarTorneoPage() {
           const data = await response.json()
           setCompeticiones(data)
         }
-      } catch (_error) {
-        console.error('Error loading competiciones:', error)
+      } catch (err) {
+        console.error('Error loading competiciones:', err)
       } finally {
         setLoadingCompeticiones(false)
       }
@@ -163,9 +163,12 @@ export default function EditarTorneoPage() {
     
     const file = e.dataTransfer.files[0]
     if (file) {
+      // Create a proper DataTransfer to get a FileList
+      const dataTransfer = new DataTransfer()
+      dataTransfer.items.add(file)
       const fakeEvent = {
-        target: { files: [file] }
-      } as React.ChangeEvent<HTMLInputElement>
+        target: { files: dataTransfer.files }
+      } as unknown as React.ChangeEvent<HTMLInputElement>
       handleFileChange(fakeEvent)
     }
   }
@@ -338,7 +341,7 @@ export default function EditarTorneoPage() {
                   Competición Asociada
                 </label>
                 <Select
-                  value={formData.id_competition || undefined}
+                  value={formData.id_competition || ""}
                   onValueChange={(value) => handleInputChange('id_competition', value)}
                   disabled={loadingCompeticiones}
                 >

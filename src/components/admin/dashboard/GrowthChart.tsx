@@ -1,26 +1,30 @@
 
-import { TrendingUp, FileText, Users } from "lucide-react"
+import { TrendingUp, Users, UserPlus, Briefcase } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface GrowthChartProps {
   title: string
   data: { month: string; count: number }[] // month: YYYY-MM
-  type: 'reports' | 'scouts'
+  type: 'users' | 'players' | 'jobs'
   loading?: boolean
 }
 
+const TYPE_CONFIG = {
+  users: { color: '#10b981', icon: Users, iconClass: 'text-emerald-400' },
+  players: { color: '#3b82f6', icon: UserPlus, iconClass: 'text-blue-400' },
+  jobs: { color: '#f59e0b', icon: Briefcase, iconClass: 'text-amber-400' },
+} as const
+
 export function GrowthChart({ title, data, type, loading = false }: GrowthChartProps) {
   const maxCount = Math.max(...data.map(d => d.count), 1)
-  
-  // Color configuration
-  const color = type === 'reports' ? '#3b82f6' : '#10b981' // Blue for reports, Emerald for scouts
+  const { color, icon: Icon, iconClass } = TYPE_CONFIG[type]
 
   return (
     <Card className="bg-[#131921] border-slate-700 h-full">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-medium text-[#D6DDE6] flex items-center gap-2">
-          {type === 'reports' ? <FileText className="h-5 w-5 text-blue-400" /> : <Users className="h-5 w-5 text-emerald-400" />}
+          <Icon className={`h-5 w-5 ${iconClass}`} />
           {title}
         </CardTitle>
       </CardHeader>

@@ -53,14 +53,14 @@ export function getUserRoleInfo(user: User): UserRoleInfo {
  * Verifica si el usuario puede acceder al área de miembros
  */
 export function canAccessMemberArea(role: UserRole): boolean {
-  return ['member', 'scout', 'tester', 'admin'].includes(role)
+  return ['member', 'tester', 'admin'].includes(role)
 }
 
 /**
- * Verifica si el usuario puede acceder al área de scouts
+ * El área de scouts está restringida a administradores.
  */
 export function canAccessScoutArea(role: UserRole): boolean {
-  return ['scout', 'tester', 'admin'].includes(role)
+  return role === 'admin'
 }
 
 /**
@@ -77,10 +77,7 @@ export function getDashboardUrl(role: UserRole): string {
   switch (role) {
     case 'admin':
       return '/admin/dashboard'
-    case 'scout':
-      return '/scout/dashboard'
     case 'tester':
-      return '/member/dashboard' // Tester por defecto va a member dashboard
     case 'member':
       return '/member/dashboard'
     default:

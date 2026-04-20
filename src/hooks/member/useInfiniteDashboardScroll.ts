@@ -20,6 +20,18 @@ interface UseInfiniteDashboardScrollOptions {
   minValue?: number
   maxValue?: number
   limit?: number
+  period?: string
+  hasMarketValue?: boolean
+  hasAttributes?: boolean
+  hasStats?: boolean
+  hasTextReport?: boolean
+  hasVideoReport?: boolean
+  isYouthDiscovery?: boolean
+  isEmergingTalent?: boolean
+  isProfessional?: boolean
+  isTopLeagues?: boolean
+  isBigFive?: boolean
+  playerIds?: string[]
 }
 
 interface UseInfiniteDashboardScrollReturn {
@@ -47,7 +59,19 @@ export function useInfiniteDashboardScroll(
     maxRating,
     minValue,
     maxValue,
-    limit = 50
+    limit = 50,
+    period = '3m',
+    hasMarketValue,
+    hasAttributes,
+    hasStats,
+    hasTextReport,
+    hasVideoReport,
+    isYouthDiscovery,
+    isEmergingTalent,
+    isProfessional,
+    isTopLeagues,
+    isBigFive,
+    playerIds,
   } = options
 
   const {
@@ -72,7 +96,20 @@ export function useInfiniteDashboardScroll(
       min_rating: minRating,
       max_rating: maxRating,
       min_value: minValue,
-      max_value: maxValue
+      max_value: maxValue,
+      period,
+      has_market_value: hasMarketValue || undefined,
+      has_attributes: hasAttributes || undefined,
+      has_stats: hasStats || undefined,
+      has_text_report: hasTextReport || undefined,
+      has_video_report: hasVideoReport || undefined,
+      is_youth_discovery: isYouthDiscovery || undefined,
+      is_emerging_talent: isEmergingTalent || undefined,
+      is_professional: isProfessional || undefined,
+      is_top_leagues: isTopLeagues || undefined,
+      is_big_five: isBigFive || undefined,
+      // Pass as joined string so useInfiniteScroll serializes it as a single query param
+      player_ids: playerIds && playerIds.length > 0 ? playerIds.join(',') : undefined,
     },
     limit,
     rootMargin: '200px'

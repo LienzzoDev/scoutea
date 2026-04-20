@@ -158,11 +158,11 @@ export async function POST(request: NextRequest) {
 
             const hasChanges = correctedCompetition !== team.competition
 
-            if (hasChanges) {
+            if (hasChanges && correctedCompetition !== null) {
               await prisma.equipo.update({
                 where: { id_team: team.id_team },
                 data: {
-                  competition: correctedCompetition ?? undefined
+                  competition: correctedCompetition
                 }
               })
               updatedTeamsCount++

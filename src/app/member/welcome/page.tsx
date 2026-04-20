@@ -46,15 +46,15 @@ export default function WelcomePage() {
   const getPlanFeatures = (plan: string) => {
     const features = {
       basic: [
-        { icon: Users, text: "Acceso a base de datos de jugadores" },
-        { icon: BarChart3, text: "Reportes básicos de rendimiento" },
-        { icon: Globe, text: "Soporte por email" }
+        { icon: Users, text: "Access to player database" },
+        { icon: BarChart3, text: "Basic performance reports" },
+        { icon: Globe, text: "Email support" }
       ],
       premium: [
-        { icon: Users, text: "Acceso completo a base de datos" },
-        { icon: BarChart3, text: "Reportes avanzados y comparaciones" },
-        { icon: Trophy, text: "Análisis ilimitado de jugadores" },
-        { icon: Headphones, text: "Soporte prioritario 24/7"}
+        { icon: Users, text: "Full database access" },
+        { icon: BarChart3, text: "Advanced reports and comparisons" },
+        { icon: Trophy, text: "Unlimited player analysis" },
+        { icon: Headphones, text: "Priority 24/7 support"}
       ]
     }
     return features[plan as keyof typeof features] || features.basic
@@ -73,7 +73,7 @@ export default function WelcomePage() {
       <div className="min-h-screen bg-[#f8f7f4] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8c1a10] mx-auto mb-4"></div>
-          <p className="text-[#6d6d6d]">Cargando tu bienvenida...</p>
+          <p className="text-[#6d6d6d]">Loading welcome...</p>
         </div>
       </div>
     )
@@ -93,7 +93,7 @@ export default function WelcomePage() {
             <Check className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-4xl font-bold text-[#000000] mb-4">
-            ¡Bienvenido a Scoutea!
+            Welcome to Scoutea!
           </h1>
           <div className="mb-4">
             <Badge className={`${planColor} text-white px-4 py-2 text-lg`}>
@@ -102,10 +102,10 @@ export default function WelcomePage() {
             </Badge>
           </div>
           <p className="text-xl text-[#6d6d6d] mb-2">
-            Tu suscripción ha sido activada exitosamente
+            Your subscription has been activated successfully
           </p>
           <p className="text-lg text-[#6d6d6d]">
-            Ya puedes disfrutar de todas las características incluidas en tu plan
+            You can now enjoy all the features included in your plan
           </p>
         </div>
 
@@ -113,7 +113,7 @@ export default function WelcomePage() {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="text-2xl font-bold text-[#000000] text-center">
-              Tu plan {planName} incluye
+              Your {planName} plan includes
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -139,7 +139,7 @@ export default function WelcomePage() {
           <Button
             onClick={() =>_router.push('/member/dashboard')}
             className="bg-[#8c1a10] hover:bg-[#6d1410] text-white font-semibold px-12 py-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl text-lg">
-            Comenzar a explorar
+            Start exploring
           </Button>
         </div>
       </main>

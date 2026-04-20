@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePlayerLollipop, type LollipopData } from '@/hooks/player/usePlayerLollipop';
 
+import ChartFilters, { EMPTY_FILTERS, type ChartFilterValues } from './stats/ChartFilters';
+
 interface PlayerLollipopProps {
   playerId?: string; // Optional: highlight specific player
 }
@@ -12,11 +14,8 @@ interface PlayerLollipopProps {
 export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
   // Filter states
   const [selectedMetric, setSelectedMetric] = useState('player_rating');
-  const [selectedPosition, setSelectedPosition] = useState('');
-  const [selectedNationality, setSelectedNationality] = useState('');
-  const [selectedCompetition, setSelectedCompetition] = useState('');
-  const [ageRange, setAgeRange] = useState({ min: '', max: '' });
-  const [topN, setTopN] = useState(20); // Show top N players
+  const [chartFilters, setChartFilters] = useState<ChartFilterValues>(EMPTY_FILTERS);
+  const [topN, setTopN] = useState(20);
   const [showMax, setShowMax] = useState(false);
   const [showMin, setShowMin] = useState(false);
   const [showAvg, setShowAvg] = useState(true);
@@ -40,11 +39,11 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
 
   // Get filtered data
   const filteredData = getFilteredData({
-    position: selectedPosition,
-    nationality: selectedNationality,
-    competition: selectedCompetition,
-    ageMin: ageRange.min,
-    ageMax: ageRange.max,
+    position: chartFilters.position,
+    nationality: chartFilters.nationality,
+    competition: chartFilters.competition,
+    ageMin: chartFilters.ageMin,
+    ageMax: chartFilters.ageMax,
     limit: topN
   });
 
@@ -84,13 +83,8 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
           )}
         </div>
         <button
-          onClick={() => {
-            setSelectedPosition('');
-            setSelectedNationality('');
-            setSelectedCompetition('');
-            setAgeRange({ min: '', max: '' });
-          }}
-          className="text-sm text-[#6d6d6d] hover:text-[#8c1a10] transition-colors"
+          onClick={() => setChartFilters(EMPTY_FILTERS)}
+          className="text-sm text-[#6d6d6d] hover:text-[#8c1a10] transition-colors cursor-pointer"
         >
           Limpiar Filtros
         </button>
@@ -103,28 +97,28 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
-              Período
+              Period
             </label>
             <Select defaultValue="1y">
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Seleccionar período" />
+                <SelectValue placeholder="Select period" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="3m">3 meses</SelectItem>
-                <SelectItem value="6m">6 meses</SelectItem>
-                <SelectItem value="1y">1 año</SelectItem>
-                <SelectItem value="2y">2 años</SelectItem>
+                <SelectItem value="3m">3 months</SelectItem>
+                <SelectItem value="6m">6 months</SelectItem>
+                <SelectItem value="1y">1 year</SelectItem>
+                <SelectItem value="2y">2 years</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
-              Estadísticas
+              Statistic
             </label>
             <Select value={selectedMetric} onValueChange={setSelectedMetric}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Seleccionar estadística" />
+                <SelectValue placeholder="Select statistic" />
               </SelectTrigger>
               <SelectContent>
                 {metrics.map(metric => (
@@ -138,11 +132,11 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
 
           <div>
             <label className="block text-sm font-medium text-[#2e3138] mb-2">
-              Mostrar Top
+              Show Top
             </label>
             <Select value={topN.toString()} onValueChange={(val) => setTopN(parseInt(val))}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Seleccionar cantidad" />
+                <SelectValue placeholder="Select amount" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="10">Top 10</SelectItem>
@@ -155,7 +149,7 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
 
           <div>
             <label className="block text-sm font-medium text-[#2e3138] mb-3">
-              Tipo de Valores
+              Value Type
             </label>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
@@ -171,7 +165,7 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
                   }}
                 />
                 <label htmlFor="raw-values" className="text-sm text-[#2e3138]">
-                  Valores Reales
+                  Raw Values
                 </label>
               </div>
               <div className="flex items-center gap-2">
@@ -187,7 +181,7 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
                   }}
                 />
                 <label htmlFor="norm-values" className="text-sm text-[#2e3138]">
-                  Valores Normalizados (0-100)
+                  Normalized Values (0-100)
                 </label>
               </div>
             </div>
@@ -195,7 +189,7 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
 
           <div>
             <label className="block text-sm font-medium text-[#2e3138] mb-3">
-              Mostrar Líneas
+              Show Lines
             </label>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
@@ -207,124 +201,44 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
                   onChange={(e) => setShowAvg(e.target.checked)}
                 />
                 <label htmlFor="avg-line" className="text-sm text-[#2e3138]">
-                  Promedio
+                  Average
                 </label>
               </div>
               <div className="flex items-center gap-2">
-                <input 
-                  type="checkbox" 
-                  id="max-line" 
-                  className="rounded" 
+                <input
+                  type="checkbox"
+                  id="max-line"
+                  className="rounded"
                   checked={showMax}
                   onChange={(e) => setShowMax(e.target.checked)}
                 />
                 <label htmlFor="max-line" className="text-sm text-[#2e3138]">
-                  Máximo
+                  Maximum
                 </label>
               </div>
               <div className="flex items-center gap-2">
-                <input 
-                  type="checkbox" 
-                  id="min-line" 
-                  className="rounded" 
+                <input
+                  type="checkbox"
+                  id="min-line"
+                  className="rounded"
                   checked={showMin}
                   onChange={(e) => setShowMin(e.target.checked)}
                 />
                 <label htmlFor="min-line" className="text-sm text-[#2e3138]">
-                  Mínimo
+                  Minimum
                 </label>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right Column - Comparison Filters */}
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-[#2e3138] mb-2">
-              Posición
-            </label>
-            <Select value={selectedPosition || undefined} onValueChange={setSelectedPosition}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Todas las Posiciones" />
-              </SelectTrigger>
-              <SelectContent>
-                {filterOptions?.positions.map(pos => (
-                  <SelectItem key={pos.value} value={pos.value}>
-                    {pos.label} ({pos.count})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-[#2e3138] mb-2">
-              Nacionalidad
-            </label>
-            <Select value={selectedNationality || undefined} onValueChange={setSelectedNationality}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Todas las Nacionalidades" />
-              </SelectTrigger>
-              <SelectContent>
-                {filterOptions?.nationalities.map(nat => (
-                  <SelectItem key={nat.value} value={nat.value}>
-                    {nat.label} ({nat.count})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-[#2e3138] mb-2">
-              Competición
-            </label>
-            <Select value={selectedCompetition || undefined} onValueChange={setSelectedCompetition}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Todas las Competiciones" />
-              </SelectTrigger>
-              <SelectContent>
-                {filterOptions?.competitions.map(comp => (
-                  <SelectItem key={comp.value} value={comp.value}>
-                    {comp.label} ({comp.count})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-sm font-medium text-[#2e3138] mb-2">
-                Edad Mín
-              </label>
-              <input 
-                type="number" 
-                className="w-full p-2 border border-gray-300 rounded-md bg-white"
-                placeholder="16"
-                min="16"
-                max="45"
-                value={ageRange.min}
-                onChange={(e) => setAgeRange(prev => ({ ...prev, min: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#2e3138] mb-2">
-                Edad Máx
-              </label>
-              <input 
-                type="number" 
-                className="w-full p-2 border border-gray-300 rounded-md bg-white"
-                placeholder="45"
-                min="16"
-                max="45"
-                value={ageRange.max}
-                onChange={(e) => setAgeRange(prev => ({ ...prev, max: e.target.value }))}
-              />
-            </div>
-          </div>
-        </div>
+        {/* Right Column - Unified Filters */}
+        <ChartFilters
+          filters={chartFilters}
+          onFilterChange={setChartFilters}
+          filterOptions={filterOptions}
+          onClear={() => setChartFilters(EMPTY_FILTERS)}
+        />
         </div>
       )}
 
@@ -338,7 +252,7 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8c1a10] mx-auto mb-4"></div>
-              <p className="text-[#6d6d6d]">Cargando datos...</p>
+              <p className="text-[#6d6d6d]">Loading data...</p>
             </div>
           </div>
         ) : error ? (
@@ -369,25 +283,25 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
         {!loading && !error && (
           <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div className="bg-gray-50 p-3 rounded-lg">
-              <p className="text-sm text-[#6d6d6d]">Mínimo</p>
+              <p className="text-sm text-[#6d6d6d]">Minimum</p>
               <p className="text-lg font-bold text-[#ef4444]">
                 {showNorm ? '0' : Math.round(stats.min * 10) / 10}
               </p>
             </div>
             <div className="bg-gray-50 p-3 rounded-lg">
-              <p className="text-sm text-[#6d6d6d]">Promedio</p>
+              <p className="text-sm text-[#6d6d6d]">Average</p>
               <p className="text-lg font-bold text-[#2563eb]">
                 {showNorm ? '50' : Math.round(stats.avg * 10) / 10}
               </p>
             </div>
             <div className="bg-gray-50 p-3 rounded-lg">
-              <p className="text-sm text-[#6d6d6d]">Máximo</p>
+              <p className="text-sm text-[#6d6d6d]">Maximum</p>
               <p className="text-lg font-bold text-[#22c55e]">
                 {showNorm ? '100' : Math.round(stats.max * 10) / 10}
               </p>
             </div>
             <div className="bg-gray-50 p-3 rounded-lg">
-              <p className="text-sm text-[#6d6d6d]">Mostrando</p>
+              <p className="text-sm text-[#6d6d6d]">Showing</p>
               <p className="text-lg font-bold text-[#8c1a10]">
                 {filteredData.length}
               </p>

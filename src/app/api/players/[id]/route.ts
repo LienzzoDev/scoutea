@@ -29,7 +29,7 @@ import type { Player } from '@/types/player'
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-): Promise<NextResponse<Player | { _error: string }>> {
+) {
   try {
     // 🔐 VERIFICAR AUTENTICACIÓN
     const { userId } = await auth()
@@ -146,7 +146,7 @@ export async function GET(
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-): Promise<NextResponse<Player | { _error: string }>> {
+) {
   try {
     // 🔐 VERIFICAR AUTENTICACIÓN Y PERMISOS
     const { userId, sessionClaims } = await auth()
@@ -285,7 +285,7 @@ export async function PUT(
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-): Promise<NextResponse<{ success: boolean; message: string } | { error: string }>> {
+) {
   try {
     // 🔐 VERIFICAR AUTENTICACIÓN Y PERMISOS
     const { userId, sessionClaims } = await auth()

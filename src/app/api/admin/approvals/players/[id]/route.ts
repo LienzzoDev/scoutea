@@ -47,13 +47,21 @@ export async function PATCH(
 
     if (!validation.success) {
       return NextResponse.json(
-        { __error: 'Invalid request data', errors: validation.error.errors },
+        { __error: 'Invalid request data', issues: validation.error.issues },
         { status: 400 }
       )
     }
 
     const { action, rejectionReason } = validation.data
-    const { id: playerId } = await params
+    const { id: playerIdStr } = await params
+    const playerId = parseInt(playerIdStr, 10)
+
+    if (isNaN(playerId)) {
+      return NextResponse.json(
+        { __error: 'Invalid player ID' },
+        { status: 400 }
+      )
+    }
 
     // Check if player exists and is pending
     const player = await prisma.jugador.findUnique({
@@ -79,7 +87,7 @@ export async function PATCH(
       where: { id_player: playerId },
       data: {
         approval_status: action === 'approve' ? 'approved' : 'rejected',
-        approved_by_admin_id: user.id_usuario,
+        approved_by_admin_id: user.id,
         approval_date: new Date(),
         rejection_reason: action === 'reject' ? rejectionReason || null : null,
       },

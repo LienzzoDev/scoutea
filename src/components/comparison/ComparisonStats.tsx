@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { BarChart3, Table } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
 import type { StatsPeriod } from '@/lib/utils/stats-period-utils'
 import { getAllPeriods, getPeriodLabel } from '@/lib/utils/stats-period-utils'
@@ -81,17 +81,21 @@ const STATS_CATEGORIES = {
   },
 }
 
+// Métricas en las que un valor menor es mejor (tarjetas, faltas, goles encajados)
+const NEGATIVE_METRICS = new Set([
+  'Yellow Cards',
+  'Red Cards',
+  'concededGoals',
+  'fouls',
+])
+
 // Componente de barra comparativa enfrentada
 function ComparisonBar({
   value1,
   value2,
-  player1Name,
-  player2Name,
 }: {
   value1: number
   value2: number
-  player1Name: string
-  player2Name: string
 }) {
   const total = value1 + value2
   const percent1 = total > 0 ? (value1 / total) * 100 : 50
@@ -106,29 +110,14 @@ function ComparisonBar({
 
       {/* Barras enfrentadas */}
       <div className="flex-1 flex h-6 rounded-full overflow-hidden bg-gray-100">
-        {/* Barra Player 1 (derecha hacia centro) */}
         <div
-          className="h-full bg-[#8c1a10] transition-all duration-500 ease-out flex items-center justify-end"
+          className="h-full bg-[#8c1a10] transition-all duration-500 ease-out"
           style={{ width: `${percent1}%` }}
-        >
-          {percent1 > 15 && (
-            <span className="text-white text-xs font-medium pr-2">
-              {percent1.toFixed(0)}%
-            </span>
-          )}
-        </div>
-
-        {/* Barra Player 2 (izquierda hacia centro) */}
+        />
         <div
-          className="h-full bg-[#2563eb] transition-all duration-500 ease-out flex items-center justify-start"
+          className="h-full bg-[#2563eb] transition-all duration-500 ease-out"
           style={{ width: `${percent2}%` }}
-        >
-          {percent2 > 15 && (
-            <span className="text-white text-xs font-medium pl-2">
-              {percent2.toFixed(0)}%
-            </span>
-          )}
-        </div>
+        />
       </div>
 
       {/* Valor Player 2 */}
@@ -203,13 +192,27 @@ export default function ComparisonStats({
     return parseFloat(val.replace(/,/g, '')) || 0
   }
 
-  // Helper para comparar valores y determinar el mejor
-  const compareValues = (val1: string, val2: string): 'player1' | 'player2' | 'equal' => {
-    const num1 = parseFloat(val1.replace(/,/g, '')) || 0
-    const num2 = parseFloat(val2.replace(/,/g, '')) || 0
-    if (num1 > num2) return 'player1'
-    if (num2 > num1) return 'player2'
-    return 'equal'
+  // Devuelve clase de color para cada valor: superior verde, inferior rojo,
+  // guion/empate negro. Para métricas negativas se invierte (menor = mejor).
+  const getComparisonColors = (
+    val1: string,
+    val2: string,
+    metricKey: string,
+  ): { color1: string; color2: string } => {
+    const BLACK = 'text-[#000000]'
+    const GREEN = 'text-green-600'
+    const RED = 'text-red-600'
+    if (!val1 || val1 === '-' || !val2 || val2 === '-') {
+      return { color1: BLACK, color2: BLACK }
+    }
+    const num1 = parseFloat(val1.replace(/,/g, ''))
+    const num2 = parseFloat(val2.replace(/,/g, ''))
+    if (!Number.isFinite(num1) || !Number.isFinite(num2) || num1 === num2) {
+      return { color1: BLACK, color2: BLACK }
+    }
+    const higherIsBetter = !NEGATIVE_METRICS.has(metricKey)
+    const p1Better = higherIsBetter ? num1 > num2 : num1 < num2
+    return p1Better ? { color1: GREEN, color2: RED } : { color1: RED, color2: GREEN }
   }
 
   if (isLoading) {
@@ -217,7 +220,7 @@ export default function ComparisonStats({
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-[#8c1a10] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-[#6d6d6d]">Cargando estadísticas...</p>
+          <p className="text-[#6d6d6d]">Loading statistics...</p>
         </div>
       </div>
     )
@@ -333,12 +336,7 @@ export default function ComparisonStats({
                       <div className="text-sm font-medium text-[#2e3138] mb-2 text-center">
                         {metric.label}
                       </div>
-                      <ComparisonBar
-                        value1={val1}
-                        value2={val2}
-                        player1Name={player1Name}
-                        player2Name={player2Name}
-                      />
+                      <ComparisonBar value1={val1} value2={val2} />
                     </div>
                   )
                 })}
@@ -353,11 +351,9 @@ export default function ComparisonStats({
         <div>
           {Object.entries(STATS_CATEGORIES).map(([categoryKey, category]) => (
             <div key={categoryKey} className="mb-8">
-              <h3 className="font-bold text-[#8c1a10] mb-4">{category.label}</h3>
-
-              {/* Header con nombres de jugadores */}
+              {/* Header con nombre del bloque y nombres de jugadores */}
               <div className="grid grid-cols-5 gap-4 py-3 border-b-2 border-gray-200 mb-2">
-                <div className="font-medium text-[#2e3138]">Metric</div>
+                <div className="font-bold text-[#8c1a10]">{category.label}</div>
                 <div className="font-medium text-[#8c1a10] text-center col-span-2">
                   {player1Name}
                 </div>
@@ -382,8 +378,10 @@ export default function ComparisonStats({
                 const total2 = getStatValue(stats2, metric.key, 'totalValue')
                 const p902 = getStatValue(stats2, metric.key, 'p90Value')
 
-                const totalComparison = compareValues(total1, total2)
-                const p90Comparison = compareValues(p901, p902)
+                const totalColors = getComparisonColors(total1, total2, metric.key)
+                const p90Colors = getComparisonColors(p901, p902, metric.key)
+                const weight = (color: string) =>
+                  color === 'text-[#000000]' ? '' : 'font-semibold'
 
                 return (
                   <div
@@ -393,40 +391,16 @@ export default function ComparisonStats({
                     }`}
                   >
                     <div className="font-medium text-[#2e3138]">{metric.label}</div>
-                    <div
-                      className={`text-center ${
-                        totalComparison === 'player1'
-                          ? 'text-green-600 font-semibold'
-                          : 'text-[#6d6d6d]'
-                      }`}
-                    >
+                    <div className={`text-center ${totalColors.color1} ${weight(totalColors.color1)}`}>
                       {total1}
                     </div>
-                    <div
-                      className={`text-center ${
-                        p90Comparison === 'player1'
-                          ? 'text-green-600 font-semibold'
-                          : 'text-[#6d6d6d]'
-                      }`}
-                    >
+                    <div className={`text-center ${p90Colors.color1} ${weight(p90Colors.color1)}`}>
                       {p901}
                     </div>
-                    <div
-                      className={`text-center ${
-                        totalComparison === 'player2'
-                          ? 'text-green-600 font-semibold'
-                          : 'text-[#6d6d6d]'
-                      }`}
-                    >
+                    <div className={`text-center ${totalColors.color2} ${weight(totalColors.color2)}`}>
                       {total2}
                     </div>
-                    <div
-                      className={`text-center ${
-                        p90Comparison === 'player2'
-                          ? 'text-green-600 font-semibold'
-                          : 'text-[#6d6d6d]'
-                      }`}
-                    >
+                    <div className={`text-center ${p90Colors.color2} ${weight(p90Colors.color2)}`}>
                       {p902}
                     </div>
                   </div>

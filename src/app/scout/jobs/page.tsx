@@ -88,13 +88,13 @@ export default function ScoutJobsPage() {
 
         {/* Filters */}
         <div className="bg-white rounded-lg p-6 border border-[#e7e7e7] mb-8">
-          <h2 className="text-lg font-semibold text-[#000000] mb-4">Filtros</h2>
+          <h2 className="text-lg font-semibold text-[#000000] mb-4">Filters</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#6d6d6d]">Buscar por puesto</label>
+              <label className="text-sm font-medium text-[#6d6d6d]">Search by role</label>
               <Input
-                placeholder="Título del puesto..."
+                placeholder="Job title..."
                 value={filters.search}
                 onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                 className="bg-[#f8f7f4] border-[#e7e7e7]"
@@ -102,9 +102,9 @@ export default function ScoutJobsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#6d6d6d]">Ubicación</label>
+              <label className="text-sm font-medium text-[#6d6d6d]">Location</label>
               <Input
-                placeholder="Ciudad..."
+                placeholder="City..."
                 value={filters.location}
                 onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
                 className="bg-[#f8f7f4] border-[#e7e7e7]"
@@ -118,7 +118,7 @@ export default function ScoutJobsPage() {
                 onClick={() => setFilters({ search: '', location: '' })}
                 className="text-sm text-[#8B0000] hover:text-[#660000] font-medium"
               >
-                Limpiar filtros
+                Clear filters
               </button>
             </div>
           )}
@@ -127,13 +127,13 @@ export default function ScoutJobsPage() {
         {/* Job Listings */}
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-[#6d6d6d]">Cargando ofertas...</p>
+            <p className="text-[#6d6d6d]">Loading jobs...</p>
           </div>
         ) : filteredJobs.length === 0 ? (
           <div className="bg-white rounded-lg p-12 border border-[#e7e7e7] text-center">
             <Briefcase className="w-16 h-16 mx-auto mb-4 text-[#6d6d6d] opacity-50" />
-            <h3 className="text-xl font-semibold text-[#000000] mb-2">No hay ofertas disponibles</h3>
-            <p className="text-[#6d6d6d]">Intenta ajustar los filtros o vuelve más tarde</p>
+            <h3 className="text-xl font-semibold text-[#000000] mb-2">No jobs available</h3>
+            <p className="text-[#6d6d6d]">Try adjusting the filters or come back later</p>
           </div>
         ) : (
           <div className="space-y-4">

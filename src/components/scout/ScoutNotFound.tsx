@@ -23,7 +23,7 @@ export function ScoutNotFound({ scoutId, error }: ScoutNotFoundProps) {
             Scout Not Found
           </CardTitle>
           <CardDescription className="text-gray-600">
-            The scout you're looking for doesn't exist or has been removed.
+            The scout you&apos;re looking for doesn&apos;t exist or has been removed.
           </CardDescription>
         </CardHeader>
         

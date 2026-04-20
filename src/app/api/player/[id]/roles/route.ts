@@ -12,7 +12,7 @@ export async function GET(
     // Fetch player roles from database
     const roles = await prisma.playerRole.findMany({
       where: {
-        player_id: playerId,
+        player_id: parseInt(playerId, 10),
       },
       select: {
         role_name: true,

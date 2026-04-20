@@ -21,13 +21,16 @@ export async function GET(request: NextRequest) {
     // Construir filtros
     const where: {
       field_name?: string
-      player_id?: string
+      player_id?: number
     } = {}
     if (fieldName) {
       where.field_name = fieldName
     }
     if (playerId) {
-      where.player_id = playerId
+      const playerIdNum = parseInt(playerId, 10)
+      if (!isNaN(playerIdNum)) {
+        where.player_id = playerIdNum
+      }
     }
 
     // Obtener correcciones con información del jugador

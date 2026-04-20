@@ -1,5 +1,14 @@
 import { useState, useCallback } from 'react';
 
+export interface TorneoCompetition {
+  id_competition: string;
+  competition_name: string | null;
+  competition_country: string | null;
+  competition_confederation: string | null;
+  competition_tier: string | null;
+  competition_level: string | null;
+}
+
 export interface Torneo {
   id_torneo: string;
   nombre: string;
@@ -21,7 +30,16 @@ export interface Torneo {
   contacto_email?: string | null;
   contacto_telefono?: string | null;
   sitio_web?: string | null;
+  pdf_url?: string | null;
+  id_competition?: string | null;
+  competition?: TorneoCompetition | null;
+  es_publico?: boolean;
+  es_gratuito?: boolean;
+  moneda?: string | null;
 }
+
+export type TorneoCreateInput = Omit<Torneo, 'id_torneo' | 'equipos_inscritos' | 'competition'>;
+export type TorneoUpdateInput = Partial<TorneoCreateInput>;
 
 export interface TorneoFilters {
   search?: string;
@@ -134,6 +152,54 @@ export const useTournaments = () => {
     setError(null);
   }, []);
 
+  const createTorneo = useCallback(async (data: TorneoCreateInput): Promise<Torneo | null> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/torneos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create torneo');
+      }
+      return await response.json();
+    } catch (err) {
+      setError(err as Error);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const updateTorneo = useCallback(async (id: string, data: TorneoUpdateInput): Promise<Torneo | null> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/torneos/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update torneo');
+      }
+      return await response.json();
+    } catch (err) {
+      setError(err as Error);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     torneos,
     loading,
@@ -144,6 +210,8 @@ export const useTournaments = () => {
     searchTorneos,
     getTorneo,
     deleteTorneo,
+    createTorneo,
+    updateTorneo,
     clearError,
   };
 };

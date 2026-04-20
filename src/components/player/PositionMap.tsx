@@ -93,7 +93,7 @@ export default function PositionMap({ positionLevels, isLoading, playerName }: P
         y="0"
         width="600"
         height="400"
-        fill="#166534"
+        fill="#4b5563"
         rx="8"
       />
 
@@ -104,7 +104,7 @@ export default function PositionMap({ positionLevels, isLoading, playerName }: P
         width="500"
         height="300"
         fill="none"
-        stroke="#22c55e"
+        stroke="#9ca3af"
         strokeWidth="2"
       />
 
@@ -114,7 +114,7 @@ export default function PositionMap({ positionLevels, isLoading, playerName }: P
         y1="50"
         x2="300"
         y2="350"
-        stroke="#22c55e"
+        stroke="#9ca3af"
         strokeWidth="2"
       />
 
@@ -124,7 +124,7 @@ export default function PositionMap({ positionLevels, isLoading, playerName }: P
         cy="200"
         r="50"
         fill="none"
-        stroke="#22c55e"
+        stroke="#9ca3af"
         strokeWidth="2"
       />
 
@@ -133,7 +133,7 @@ export default function PositionMap({ positionLevels, isLoading, playerName }: P
         cx="300"
         cy="200"
         r="3"
-        fill="#22c55e"
+        fill="#9ca3af"
       />
 
       {/* Left goal area (small box) */}
@@ -143,7 +143,7 @@ export default function PositionMap({ positionLevels, isLoading, playerName }: P
         width="30"
         height="100"
         fill="none"
-        stroke="#22c55e"
+        stroke="#9ca3af"
         strokeWidth="2"
       />
 
@@ -154,7 +154,7 @@ export default function PositionMap({ positionLevels, isLoading, playerName }: P
         width="80"
         height="200"
         fill="none"
-        stroke="#22c55e"
+        stroke="#9ca3af"
         strokeWidth="2"
       />
 
@@ -163,7 +163,7 @@ export default function PositionMap({ positionLevels, isLoading, playerName }: P
         cx="100"
         cy="200"
         r="3"
-        fill="#22c55e"
+        fill="#9ca3af"
       />
 
       {/* Right goal area (small box) */}
@@ -173,7 +173,7 @@ export default function PositionMap({ positionLevels, isLoading, playerName }: P
         width="30"
         height="100"
         fill="none"
-        stroke="#22c55e"
+        stroke="#9ca3af"
         strokeWidth="2"
       />
 
@@ -184,7 +184,7 @@ export default function PositionMap({ positionLevels, isLoading, playerName }: P
         width="80"
         height="200"
         fill="none"
-        stroke="#22c55e"
+        stroke="#9ca3af"
         strokeWidth="2"
       />
 
@@ -193,7 +193,7 @@ export default function PositionMap({ positionLevels, isLoading, playerName }: P
         cx="500"
         cy="200"
         r="3"
-        fill="#22c55e"
+        fill="#9ca3af"
       />
 
       {/* Position blocks */}
@@ -233,19 +233,6 @@ export default function PositionMap({ positionLevels, isLoading, playerName }: P
       })}
 
 
-      {/* Player name (if provided) */}
-      {playerName && (
-        <text
-          x="300"
-          y="25"
-          textAnchor="middle"
-          fill="#ffffff"
-          fontSize="12"
-          fontWeight="bold"
-        >
-          {playerName} - Mapa de Posiciones
-        </text>
-      )}
     </svg>
   );
 }

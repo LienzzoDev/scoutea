@@ -66,7 +66,7 @@ export default function ScoutPlayerDetailPage() {
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
               <div className="w-8 h-8 border-4 border-[#8c1a10] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-[#6d6d6d]">Cargando jugador...</p>
+              <p className="text-[#6d6d6d]">Loading player...</p>
             </div>
           </div>
         </main>
@@ -83,12 +83,12 @@ export default function ScoutPlayerDetailPage() {
           <div className="flex items-center justify-center h-96">
             <div className="text-center max-w-md">
               <div className="text-red-600 text-6xl mb-4">⚠️</div>
-              <p className="text-[#6d6d6d] text-lg mb-2">Error al cargar el jugador</p>
+              <p className="text-[#6d6d6d] text-lg mb-2">Error loading player</p>
               <p className="text-sm text-red-600 mb-4">{error}</p>
               <p className="text-xs text-gray-500 mb-4">Player ID: {playerId}</p>
               <Link href="/scout/portfolio">
                 <Button className="bg-[#8c1a10] hover:bg-[#a01e12] text-white">
-                  Volver a Portfolio
+                  Back to Portfolio
                 </Button>
               </Link>
             </div>
@@ -106,11 +106,11 @@ export default function ScoutPlayerDetailPage() {
         <main className="max-w-7xl mx-auto px-6" style={{ marginTop: '55px' }}>
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
-              <p className="text-[#6d6d6d] text-lg">Jugador no encontrado</p>
+              <p className="text-[#6d6d6d] text-lg">Player not found</p>
               <p className="text-sm text-gray-500 mt-2">Player ID: {playerId}</p>
               <Link href="/scout/portfolio" className="mt-4 inline-block">
                 <Button className="bg-[#8c1a10] hover:bg-[#a01e12] text-white">
-                  Volver a Portfolio
+                  Back to Portfolio
                 </Button>
               </Link>
             </div>

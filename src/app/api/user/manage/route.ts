@@ -21,7 +21,7 @@ import { TransactionService } from '@/lib/services/transaction-service'
 const updateMetadataSchema = z.object({
   action: z.literal('update_metadata'),
   metadata: z.object({
-    role: z.enum(['member', 'scout', 'admin']).optional(),
+    role: z.enum(['member', 'admin', 'tester']).optional(),
     profileStatus: z.enum(['incomplete', 'complete']).optional(),
     subscription: z.object({
       status: z.enum(['active', 'inactive', 'cancelled', 'pending']).optional(),

@@ -6,6 +6,7 @@
  * - Torneos: TOR-2025-00001, etc.
  */
 
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 
 /**
@@ -17,7 +18,8 @@ export async function generateReportId(year?: number): Promise<string> {
   const targetYear = year || new Date().getFullYear();
 
   // Usar transacción para evitar race conditions
-  const result = await prisma.$transaction(async (tx) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await (prisma.$transaction as any)(async (tx: Prisma.TransactionClient) => {
     // Buscar o crear contador para este año
     let counter = await tx.sequenceCounter.findUnique({
       where: {
@@ -70,7 +72,8 @@ export async function generateReportId(year?: number): Promise<string> {
 export async function generateTournamentId(year?: number): Promise<string> {
   const targetYear = year || new Date().getFullYear();
 
-  const result = await prisma.$transaction(async (tx) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await (prisma.$transaction as any)(async (tx: Prisma.TransactionClient) => {
     let counter = await tx.sequenceCounter.findUnique({
       where: {
         entity_type_year: {
@@ -126,9 +129,13 @@ export function parseReportId(id: string): { year: number; sequence: number } | 
   const match = id.match(/^REP-(\d{4})-(\d{5})$/);
   if (!match) return null;
 
+  const yearStr = match[1];
+  const seqStr = match[2];
+  if (!yearStr || !seqStr) return null;
+
   return {
-    year: parseInt(match[1], 10),
-    sequence: parseInt(match[2], 10),
+    year: parseInt(yearStr, 10),
+    sequence: parseInt(seqStr, 10),
   };
 }
 
@@ -165,7 +172,8 @@ export async function generatePlayerId(): Promise<string> {
   // Usar año 0 como comodín para contador global (sin año)
   const GLOBAL_YEAR = 0;
 
-  const result = await prisma.$transaction(async (tx) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await (prisma.$transaction as any)(async (tx: Prisma.TransactionClient) => {
     let counter = await tx.sequenceCounter.findUnique({
       where: {
         entity_type_year: {
@@ -222,8 +230,11 @@ export function parsePlayerId(id: string): { sequence: number } | null {
   const match = id.match(/^PLY-(\d{5})$/);
   if (!match) return null;
 
+  const seqStr = match[1];
+  if (!seqStr) return null;
+
   return {
-    sequence: parseInt(match[1], 10),
+    sequence: parseInt(seqStr, 10),
   };
 }
 

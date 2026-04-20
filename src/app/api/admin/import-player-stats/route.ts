@@ -147,28 +147,31 @@ function mapRowToStatsData(row: PlayerStatsImportRow, period: StatsPeriod): Reco
   const defDuelsP90 = parseDecimal(row[`def_duels_p90_${suffix}`]) || null
   const aerialsDuelsP90 = parseDecimal(row[`aerials_duels_p90_${suffix}`]) || null
 
+  // Helper para convertir Decimal a number
+  const toNum = (d: Decimal | null): number | null => d ? d.toNumber() : null
+
   // Calcular totales automáticamente
-  const goalsTot = calculateTotal(goalsP90, minutesPlayed)
-  const assistsTot = calculateTotal(assistsP90, minutesPlayed)
-  const yellowCardsTot = calculateTotal(yellowCardsP90, minutesPlayed)
-  const redCardsTot = calculateTotal(redCardsP90, minutesPlayed)
-  const concededGoalsTot = calculateTotal(concededGoalsP90, minutesPlayed)
-  const preventedGoalsTot = preventedGoalsP90 && minutesPlayed ? (preventedGoalsP90 * minutesPlayed) / 90 : null
-  const shotsAgainstTot = calculateTotal(shotsAgainstP90, minutesPlayed)
-  const tacklesTot = calculateTotal(tacklesP90, minutesPlayed)
-  const interceptionsTot = calculateTotal(interceptionsP90, minutesPlayed)
-  const foulsTot = calculateTotal(foulsP90, minutesPlayed)
-  const passesTot = calculateTotal(passesP90, minutesPlayed)
-  const forwardPassesTot = calculateTotal(forwardPassesP90, minutesPlayed)
-  const crossesTot = calculateTotal(crossesP90, minutesPlayed)
-  const shotsTot = calculateTotal(shotsP90, minutesPlayed)
-  const offDuelsTot = calculateTotal(offDuelsP90, minutesPlayed)
-  const defDuelsTot = calculateTotal(defDuelsP90, minutesPlayed)
-  const aerialsDuelsTot = calculateTotal(aerialsDuelsP90, minutesPlayed)
+  const goalsTot = calculateTotal(toNum(goalsP90), minutesPlayed)
+  const assistsTot = calculateTotal(toNum(assistsP90), minutesPlayed)
+  const yellowCardsTot = calculateTotal(toNum(yellowCardsP90), minutesPlayed)
+  const redCardsTot = calculateTotal(toNum(redCardsP90), minutesPlayed)
+  const concededGoalsTot = calculateTotal(toNum(concededGoalsP90), minutesPlayed)
+  const preventedGoalsTot = preventedGoalsP90 && minutesPlayed ? (preventedGoalsP90.toNumber() * minutesPlayed) / 90 : null
+  const shotsAgainstTot = calculateTotal(toNum(shotsAgainstP90), minutesPlayed)
+  const tacklesTot = calculateTotal(toNum(tacklesP90), minutesPlayed)
+  const interceptionsTot = calculateTotal(toNum(interceptionsP90), minutesPlayed)
+  const foulsTot = calculateTotal(toNum(foulsP90), minutesPlayed)
+  const passesTot = calculateTotal(toNum(passesP90), minutesPlayed)
+  const forwardPassesTot = calculateTotal(toNum(forwardPassesP90), minutesPlayed)
+  const crossesTot = calculateTotal(toNum(crossesP90), minutesPlayed)
+  const shotsTot = calculateTotal(toNum(shotsP90), minutesPlayed)
+  const offDuelsTot = calculateTotal(toNum(offDuelsP90), minutesPlayed)
+  const defDuelsTot = calculateTotal(toNum(defDuelsP90), minutesPlayed)
+  const aerialsDuelsTot = calculateTotal(toNum(aerialsDuelsP90), minutesPlayed)
 
   // Calcular clean sheets (porterías imbatidas totales, si aplica)
   const cleanSheetsPercent = parseDecimal(row[`clean_sheets_percent_${suffix}`]) || null
-  const cleanSheetsTot = cleanSheetsPercent && matchesPlayed ? Math.round((cleanSheetsPercent * matchesPlayed) / 100) : null
+  const cleanSheetsTot = cleanSheetsPercent && matchesPlayed ? Math.round((cleanSheetsPercent.toNumber() * matchesPlayed) / 100) : null
 
   // Calcular efectividad
   const effectivenessPercent = calculateEffectiveness(goalsTot, shotsTot)
@@ -284,9 +287,10 @@ async function calculateNormalizationsAndRankings(
   const whereClause: Record<string, any> = {}
   whereClause[`matches_played_tot_${suffix}`] = { gt: 0 } // Solo jugadores con partidos jugados
   
-  const allStats = await statsTable.findMany({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const allStats = await (statsTable as any).findMany({
     where: whereClause
-  })
+  }) as Array<{ id_player: string; [key: string]: unknown }>
 
   if (allStats.length === 0) {
     return
@@ -330,14 +334,14 @@ async function calculateNormalizationsAndRankings(
     const values: number[] = []
     const indices: number[] = []
     
-    allStats.forEach((stat, index) => {
-      const value = stat[fieldWithSuffix as keyof typeof stat]
+    allStats.forEach((stat: { id_player: string; [key: string]: unknown }, index: number) => {
+      const value = stat[fieldWithSuffix]
       if (value !== null && value !== undefined) {
         // Convertir Decimal de Prisma a number
-        const numValue = typeof value === 'object' && 'toNumber' in value 
-          ? (value as any).toNumber() 
+        const numValue = typeof value === 'object' && value !== null && 'toNumber' in value
+          ? (value as { toNumber: () => number }).toNumber()
           : Number(value)
-        
+
         if (!isNaN(numValue)) {
           values.push(numValue)
           indices.push(index)
@@ -353,32 +357,32 @@ async function calculateNormalizationsAndRankings(
   // Calcular normalizaciones y rankings
   const updates: Array<{ id_player: string, data: Record<string, any> }> = []
 
-  allStats.forEach((stat, statIndex) => {
-    const updateData: Record<string, any> = {}
+  allStats.forEach((stat: { id_player: string; [key: string]: unknown }) => {
+    const updateData: Record<string, unknown> = {}
 
     fieldsToNormalize.forEach(field => {
       const fieldWithSuffix = `${field}_${suffix}`
       const normField = `${field}_${suffix}_norm`
-      
+
       // Algunos rankings NO tienen sufijo de período (son globales)
       const fieldsWithoutPeriodSuffix = ['yellow_cards_p90', 'red_cards_p90', 'prevented_goals_p90']
       const rankField = fieldsWithoutPeriodSuffix.includes(field)
         ? `${field}_rank`
         : `${field}_${suffix}_rank`
-      
+
       const statsData = statsForNormalization[field]
       if (!statsData) return
 
-      const value = stat[fieldWithSuffix as keyof typeof stat]
+      const value = stat[fieldWithSuffix]
       if (value === null || value === undefined) return
 
       // Convertir Decimal de Prisma a number
-      const numValue = typeof value === 'object' && 'toNumber' in value 
-        ? (value as any).toNumber() 
+      const numValue = typeof value === 'object' && value !== null && 'toNumber' in value
+        ? (value as { toNumber: () => number }).toNumber()
         : Number(value)
-      
+
       if (isNaN(numValue)) return
-      
+
       const { values } = statsData
 
       // Calcular normalización (0-100 usando percentil)
@@ -390,11 +394,11 @@ async function calculateNormalizationsAndRankings(
       // Calcular ranking (1 = mejor)
       const descendingValues = [...values].sort((a, b) => b - a)
       const rank = descendingValues.findIndex(v => v <= numValue) + 1
-      
+
       // Para campos "negativos" (tarjetas, faltas, goles concedidos), invertir el ranking
       const negativeFields = ['yellow_cards', 'red_cards', 'fouls', 'conceded_goals']
       const isNegative = negativeFields.some(nf => field.startsWith(nf))
-      
+
       if (isNegative) {
         updateData[rankField] = values.length - rank + 1
         // Calcular también la normalización negativa
@@ -420,7 +424,8 @@ async function calculateNormalizationsAndRankings(
   })
 
   for (const update of updates) {
-    await statsTable.update({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (statsTable as any).update({
       where: { id_player: update.id_player },
       data: update.data
     })
@@ -528,6 +533,15 @@ export async function POST(request: NextRequest) {
     }
 
     const worksheet = workbook.Sheets[sheetName]
+    if (!worksheet) {
+      return new Response(
+        JSON.stringify({ error: `La hoja "${sheetName}" no existe en el archivo.` }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    }
     const data: PlayerStatsImportRow[] = XLSX.utils.sheet_to_json(worksheet)
 
     console.log(`📊 Excel leído: ${data.length} filas encontradas en hoja "${sheetName}"`)
@@ -544,8 +558,9 @@ export async function POST(request: NextRequest) {
     }
 
     // 🔍 DEBUG: Mostrar columnas del Excel
-    if (data.length > 0) {
-      const columns = Object.keys(data[0])
+    const firstDataRow = data[0]
+    if (firstDataRow) {
+      const columns = Object.keys(firstDataRow)
       console.log(`📋 Columnas detectadas (${columns.length}):`, columns.slice(0, 20))
     }
 
@@ -646,8 +661,8 @@ export async function POST(request: NextRequest) {
           })
 
           // 🔍 DEBUG: Mostrar columnas detectadas en el Excel
-          if (data.length > 0) {
-            const firstRow = data[0]
+          const firstRow = data[0]
+          if (firstRow) {
             const columns = Object.keys(firstRow)
 
             sendSSE(controller, {
@@ -726,7 +741,14 @@ export async function POST(request: NextRequest) {
             message: '🔍 Cargando jugadores existentes en la base de datos...',
           })
 
-          const allPlayerIds = data.map(row => parseString(row.id_player)).filter(Boolean) as string[]
+          const allPlayerIds = data
+            .map(row => {
+              const idStr = parseString(row.id_player)
+              if (!idStr) return null
+              const num = parseInt(idStr, 10)
+              return isNaN(num) ? null : num
+            })
+            .filter((id): id is number => id !== null)
 
           const allWyscoutIds = data
             .map(row => {
@@ -811,13 +833,13 @@ export async function POST(request: NextRequest) {
           }
 
           // Crear mapas de búsqueda rápida
-          const playerByIdMap = new Map<string, (typeof existingPlayers)[0]>()
+          const playerByIdMap = new Map<number, (typeof existingPlayers)[0]>()
           const playerByWyscoutMap = new Map<string, (typeof existingPlayers)[0]>()
 
           existingPlayers.forEach(player => {
             playerByIdMap.set(player.id_player, player)
-            if (player.wyscout_id_1) playerByWyscoutMap.set(player.wyscout_id_1, player)
-            if (player.wyscout_id_2) playerByWyscoutMap.set(player.wyscout_id_2, player)
+            if (player.wyscout_id_1) playerByWyscoutMap.set(String(player.wyscout_id_1), player)
+            if (player.wyscout_id_2) playerByWyscoutMap.set(String(player.wyscout_id_2), player)
           })
 
           sendSSE(controller, {
@@ -856,6 +878,7 @@ export async function POST(request: NextRequest) {
 
           for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
             const batch = batches[batchIndex]
+            if (!batch) continue
             const batchNum = batchIndex + 1
 
             sendSSE(controller, {
@@ -867,10 +890,11 @@ export async function POST(request: NextRequest) {
 
             // Procesar cada registro del lote
             for (const row of batch) {
-              const playerId = parseString(row.id_player)
+              const playerIdStr = parseString(row.id_player)
+              const playerIdNum = playerIdStr ? parseInt(playerIdStr, 10) : null
               const wyscoutId = parseString(row.wyscout_id as string | number)
 
-              if (!playerId && !wyscoutId) {
+              if (!playerIdNum && !wyscoutId) {
                 results.failed++
                 results.errors.push('Fila sin id_player ni wyscout_id')
                 sendSSE(controller, {
@@ -882,18 +906,19 @@ export async function POST(request: NextRequest) {
 
               try {
                 // 🔍 BUSCAR JUGADOR EN LOS MAPAS (O(1) lookup)
-                let player = playerId ? playerByIdMap.get(playerId) : null
+                let player = (playerIdNum && !isNaN(playerIdNum)) ? playerByIdMap.get(playerIdNum) : null
                 if (!player && wyscoutId) {
                   player = playerByWyscoutMap.get(wyscoutId)
                 }
 
                 if (!player) {
                   results.notFound++
-                  results.errors.push(`Jugador no encontrado: ${playerId || wyscoutId}`)
+                  const identifier = playerIdStr || wyscoutId
+                  results.errors.push(`Jugador no encontrado: ${identifier}`)
                   sendSSE(controller, {
                     type: 'player_not_found',
-                    identifier: playerId || wyscoutId,
-                    message: `⚠️ Jugador no encontrado: ${playerId || wyscoutId}`,
+                    identifier,
+                    message: `⚠️ Jugador no encontrado: ${identifier}`,
                   })
                   continue
                 }
@@ -903,11 +928,13 @@ export async function POST(request: NextRequest) {
 
                 // 🔄 UPSERT EN LA BASE DE DATOS
                 try {
-                  const existingStats = await statsTable.findUnique({
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const existingStats = await (statsTable as any).findUnique({
                     where: { id_player: player.id_player },
                   })
 
-                  await statsTable.upsert({
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  await (statsTable as any).upsert({
                     where: { id_player: player.id_player },
                     update: statsData,
                     create: {

@@ -103,7 +103,7 @@ export default function PlayerStats({
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
                 <div className="w-8 h-8 border-4 border-[#8c1a10] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-[#6d6d6d]">Cargando estadísticas...</p>
+                <p className="text-[#6d6d6d]">Loading statistics...</p>
               </div>
             </div>
           )}

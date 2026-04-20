@@ -22,7 +22,7 @@ interface TeamScrapingResult {
   url: string
   success: boolean
   fieldsUpdated: string[]
-  error?: string
+  error?: string | undefined
 }
 
 // 🎛️ CONFIGURACIÓN DE SCRAPING
@@ -237,6 +237,7 @@ export async function POST(request: Request) {
     // 🔄 PROCESAR CADA EQUIPO
     for (let i = 0; i < teams.length; i++) {
       const team = teams[i]
+      if (!team) continue
 
       console.log(`[${i + 1}/${teams.length}] ${team.team_name || team.id_team}`)
 
@@ -343,13 +344,13 @@ export async function POST(request: Request) {
  * 🕷️ FUNCIÓN DE SCRAPING DE UN EQUIPO
  */
 async function scrapeTeamData(url: string): Promise<{
-  data: Record<string, any>
+  data: Record<string, unknown>
   countryWasCorrected: boolean
-  originalCountry?: string
-  correctedCountry?: string
+  originalCountry?: string | undefined
+  correctedCountry?: string | undefined
   competitionWasCorrected: boolean
-  originalCompetition?: string
-  correctedCompetition?: string
+  originalCompetition?: string | undefined
+  correctedCompetition?: string | undefined
 }> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), SCRAPING_CONFIG.REQUEST_TIMEOUT)
@@ -368,7 +369,7 @@ async function scrapeTeamData(url: string): Promise<{
 
     const html = await response.text()
     const $ = cheerio.load(html)
-    const data: Record<string, any> = {}
+    const data: Record<string, unknown> = {}
     let countryWasCorrected = false
     let originalCountry: string | undefined
     let correctedCountry: string | undefined
@@ -412,7 +413,7 @@ async function scrapeTeamData(url: string): Promise<{
       if (competition && competition !== '') {
         // Resolver competición basada en el país del equipo
         // Usar el país ya corregido (si existe en data.team_country)
-        const countryForResolution = data.team_country || ''
+        const countryForResolution = typeof data.team_country === 'string' ? data.team_country : ''
         const resolved = resolveCompetitionByCountry(competition, countryForResolution)
 
         data.competition = resolved
@@ -432,8 +433,8 @@ async function scrapeTeamData(url: string): Promise<{
       const valueText = teamValueElement.text().trim()
       const valueMatch = valueText.match(/([0-9,.]+)\s*(mil|mill?\.?)\s*€/)
 
-      if (valueMatch) {
-        let cleanValue = valueMatch[1]
+      if (valueMatch?.[1] && valueMatch?.[2]) {
+        let cleanValue: string = valueMatch[1]
 
         // Limpiar formato numérico
         if (cleanValue.includes('.') && cleanValue.includes(',')) {

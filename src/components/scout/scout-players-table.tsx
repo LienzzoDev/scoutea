@@ -232,8 +232,8 @@ export default function ScoutPlayersTable({
                       {player.player_name}
                     </h3>
                     <p className="text-[#6d6d6d] text-sm">
-                      {player.age ? `${player.age} años` : "Edad N/A"} • {" "}
-                      {player.nationality_1 || "Nacionalidad N/A"}
+                      {player.age ? `${player.age} years` : "Age N/A"} • {" "}
+                      {player.nationality_1 || "Nationality N/A"}
                     </p>
                     {player.position_player && (
                       <p className="text-[#8B0000] text-xs font-medium mt-1">

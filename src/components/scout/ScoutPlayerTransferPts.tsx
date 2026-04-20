@@ -235,9 +235,9 @@ export default function ScoutPlayerTransferPts({
     return (
       <div className="bg-white p-6 rounded-lg">
         <div className="text-center py-12 text-[#6d6d6d]">
-          No hay datos de Transfer Points disponibles para este jugador.
+          No Transfer Points data available for this player.
           <br />
-          <span className="text-sm">Los puntos se calculan cuando existen reportes con datos históricos.</span>
+          <span className="text-sm">Points are calculated when historical report data exists.</span>
         </div>
       </div>
     )
@@ -249,7 +249,7 @@ export default function ScoutPlayerTransferPts({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Matriz de Equipo */}
         <TransferMatrix
-          title="EQUIPO"
+          title="TEAM"
           initialLevel={data.initialTeamLevel}
           currentLevel={data.currentTeamLevel}
           points={data.teamPts}
@@ -257,7 +257,7 @@ export default function ScoutPlayerTransferPts({
 
         {/* Matriz de Competición */}
         <TransferMatrix
-          title="COMPETICION"
+          title="COMPETITION"
           initialLevel={data.initialCompetitionLevel}
           currentLevel={data.currentCompetitionLevel}
           points={data.competitionPts}
@@ -266,13 +266,13 @@ export default function ScoutPlayerTransferPts({
 
       {/* Explicación */}
       <div className="bg-gray-50 p-4 rounded-lg text-sm text-[#6d6d6d]">
-        <p className="font-medium text-[#2e3138] mb-2">¿Cómo se calculan los puntos?</p>
+        <p className="font-medium text-[#2e3138] mb-2">How are points calculated?</p>
         <ul className="list-disc list-inside space-y-1">
-          <li><strong>Filas</strong>: Nivel cuando se creó el primer reporte (START)</li>
-          <li><strong>Columnas</strong>: Nivel actual del jugador (CURRENT)</li>
-          <li><strong>Puntos positivos (+)</strong>: El jugador ha mejorado de nivel</li>
-          <li><strong>Puntos negativos (-)</strong>: El jugador ha bajado de nivel</li>
-          <li><strong>La celda resaltada</strong> muestra la posición actual del jugador</li>
+          <li><strong>Rows</strong>: Level when the first report was created (START)</li>
+          <li><strong>Columns</strong>: Current player level (CURRENT)</li>
+          <li><strong>Positive points (+)</strong>: The player has moved up a level</li>
+          <li><strong>Negative points (-)</strong>: The player has moved down a level</li>
+          <li><strong>The highlighted cell</strong> shows the player's current position</li>
         </ul>
       </div>
     </div>

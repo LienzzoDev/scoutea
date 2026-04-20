@@ -133,21 +133,21 @@ export function PlayerDetailsForm() {
 
       if (result.success) {
         toast({
-          title: "¡Éxito!",
-          description: result.message || "Jugador añadido correctamente. Pendiente de aprobación del administrador.",
+          title: "Success!",
+          description: result.message || "Player added successfully. Pending administrator approval.",
         })
 
         // Redirigir a la página de jugadores del scout
         router.push('/scout/players')
       } else {
         console.error('API Error:', result)
-        throw new Error(result.details || result.error || 'Error al añadir el jugador')
+        throw new Error(result.details || result.error || 'Error adding player')
       }
     } catch (error) {
       console.error('Error submitting form:', error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Error al añadir el jugador",
+        description: error instanceof Error ? error.message : "Error adding player",
         variant: "destructive"
       })
     } finally {
@@ -414,7 +414,7 @@ export function PlayerDetailsForm() {
             {isSubmitting ? 'AÑADIENDO...' : 'AÑADIR JUGADOR'}
           </Button>
           <p className="mt-3 text-sm text-muted-foreground text-center">
-            El jugador será enviado para aprobación del administrador
+            The player will be sent for administrator approval
           </p>
         </div>
       </div>

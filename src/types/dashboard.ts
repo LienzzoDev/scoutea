@@ -57,6 +57,16 @@ export interface PlayerFilters {
   team_name?: string;
   nationality_1?: string;
   on_loan?: boolean;
+  has_market_value?: boolean;
+  has_attributes?: boolean;
+  has_stats?: boolean;
+  has_text_report?: boolean;
+  has_video_report?: boolean;
+  is_youth_discovery?: boolean;
+  is_emerging_talent?: boolean;
+  is_professional?: boolean;
+  is_top_leagues?: boolean;
+  is_big_five?: boolean;
 }
 
 export interface FilterOptions {
@@ -72,6 +82,7 @@ export interface Category {
   label: string;
   enabled: boolean;
   getValue: (player: PlayerData) => string | number | null | undefined;
+  getSortValue?: (player: PlayerData) => number;
 }
 
 export interface TabCounts {

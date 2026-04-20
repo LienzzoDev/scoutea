@@ -123,46 +123,46 @@ export function ScoutSummaryStats({ scoutId }: ScoutSummaryStatsProps) {
               <span className='font-medium'>#{scout.scout_ranking || 'N/A'}</span>
             </div>
             <div>
-              <span className='text-sm text-gray-600'>Edad promedio inicial: </span>
-              <span className='font-medium'>{scout.avg_initial_age?.toFixed(1) || 'N/A'} años</span>
+              <span className='text-sm text-gray-600'>Average initial age: </span>
+              <span className='font-medium'>{scout.avg_initial_age?.toFixed(1) || 'N/A'} years</span>
             </div>
             <div>
-              <span className='text-sm text-gray-600'>Potencial promedio: </span>
+              <span className='text-sm text-gray-600'>Average potential: </span>
               <span className='font-medium'>{scout.avg_potential?.toFixed(1) || 'N/A'}</span>
             </div>
           </div>
         </div>
 
-        {/* Especialización */}
+        {/* Expertise */}
         <div className='bg-white rounded-lg p-6 border border-gray-200'>
-          <h3 className='text-lg font-semibold text-gray-900 mb-4'>Especialización</h3>
+          <h3 className='text-lg font-semibold text-gray-900 mb-4'>Expertise</h3>
           <div className='space-y-3'>
             <div>
-              <span className='text-sm text-gray-600'>Nacionalidad de especialización: </span>
-              <span className='font-medium'>{scout.nationality_expertise || 'No especificada'}</span>
+              <span className='text-sm text-gray-600'>Nationality expertise: </span>
+              <span className='font-medium'>{scout.nationality_expertise || 'Not specified'}</span>
             </div>
             <div>
-              <span className='text-sm text-gray-600'>Competición de especialización: </span>
-              <span className='font-medium'>{scout.competition_expertise || 'No especificada'}</span>
+              <span className='text-sm text-gray-600'>Competition expertise: </span>
+              <span className='font-medium'>{scout.competition_expertise || 'Not specified'}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Reportes recientes */}
+      {/* Recent reports */}
       {recentReports.length > 0 && (
         <div className='bg-white rounded-lg p-6 border border-gray-200'>
-          <h3 className='text-lg font-semibold text-gray-900 mb-4'>Reportes Recientes</h3>
+          <h3 className='text-lg font-semibold text-gray-900 mb-4'>Recent Reports</h3>
           <div className='overflow-x-auto'>
             <table className='w-full text-sm'>
               <thead>
                 <tr className='border-b border-gray-200'>
-                  <th className='text-left py-2 text-gray-600'>Fecha</th>
-                  <th className='text-left py-2 text-gray-600'>Jugador</th>
-                  <th className='text-left py-2 text-gray-600'>Posición</th>
-                  <th className='text-left py-2 text-gray-600'>Nacionalidad</th>
+                  <th className='text-left py-2 text-gray-600'>Date</th>
+                  <th className='text-left py-2 text-gray-600'>Player</th>
+                  <th className='text-left py-2 text-gray-600'>Position</th>
+                  <th className='text-left py-2 text-gray-600'>Nationality</th>
                   <th className='text-left py-2 text-gray-600'>ROI</th>
-                  <th className='text-left py-2 text-gray-600'>Beneficio</th>
+                  <th className='text-left py-2 text-gray-600'>Profit</th>
                 </tr>
               </thead>
               <tbody>

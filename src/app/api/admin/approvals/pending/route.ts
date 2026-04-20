@@ -25,7 +25,8 @@ export async function GET() {
     }
 
     // Get pending reports with all necessary fields
-    let pendingReports = []
+    type PendingReport = Awaited<ReturnType<typeof prisma.reporte.findMany>>
+    let pendingReports: PendingReport = []
 
     try {
       pendingReports = await prisma.reporte.findMany({

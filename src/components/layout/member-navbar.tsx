@@ -14,8 +14,32 @@ import { TesterBadge } from '@/components/ui/tester-badge'
 import { getUserRole, isTester } from '@/lib/auth/user-role'
 
 
+interface NavSearchPlayer {
+  id_player: number
+  player_name: string
+  position_player?: string | null
+  nationality_1?: string | null
+  team_name?: string | null
+  photo_url?: string | null
+  player_rating?: number | null
+  id?: string
+  createdAt?: Date
+  updatedAt?: Date
+}
+
+interface NavSearchScout {
+  id_scout: string
+  scout_name?: string | null
+  name?: string | null
+  nationality?: string | null
+  country?: string | null
+  photo_url?: string | null
+  total_reports?: number | null
+  scout_elo?: number | null
+}
+
 export default function MemberNavbar() {
-  const _router = useRouter()
+  const router = useRouter()
   const pathname = usePathname()
   const { user } = useUser()
   const [showWonderkidsDropdown, setShowWonderkidsDropdown] = useState(false)
@@ -28,8 +52,8 @@ export default function MemberNavbar() {
   // 🔍 ESTADO PARA BÚSQUEDA GLOBAL
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<{
-    players: unknown[]
-    scouts: unknown[]
+    players: NavSearchPlayer[]
+    scouts: NavSearchScout[]
   }>({ players: [], scouts: [] })
   const [showSearchResults, setShowSearchResults] = useState(false)
   const [searchLoading, setSearchLoading] = useState(false)
@@ -133,7 +157,7 @@ export default function MemberNavbar() {
         <div className="flex items-center gap-6">
           <div 
             className="flex items-center gap-2 cursor-pointer" 
-            onClick={() => _router.push('/member/dashboard')}
+            onClick={() => router.push('/member/dashboard')}
           >
             <img src="/logo-member.svg" alt="Scouted Logo" className="h-10 w-auto" />
           </div>
@@ -141,7 +165,7 @@ export default function MemberNavbar() {
           <div className="relative" ref={searchRef}>
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#6d6d6d] w-4 h-4" />
             <Input
-              placeholder="Buscar jugadores y scouts..."
+              placeholder="Search players and scouts..."
               className="pl-10 pr-10 w-80 bg-[#f8f7f4] border-[#e7e7e7] text-[#6d6d6d]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -175,20 +199,20 @@ export default function MemberNavbar() {
                     {searchResults.players.length > 0 && (
                       <div>
                         <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
-                          <h4 className="text-sm font-medium text-[#6d6d6d]">Jugadores</h4>
+                          <h4 className="text-sm font-medium text-[#6d6d6d]">Players</h4>
                         </div>
                         {searchResults.players.map((player) => (
                           <button
                             key={player.id_player}
                             className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-b-0"
                             onClick={() => {
-                              _router.push(`/member/player/${player.id_player}`)
+                              router.push(`/member/player/${player.id_player}`)
                               setShowSearchResults(false)
                               setSearchTerm('')
                             }}
                           >
                             <div className="flex items-center gap-3">
-                              <PlayerAvatar player={player} size="sm" />
+                              <PlayerAvatar player={player as Parameters<typeof PlayerAvatar>[0]['player']} size="sm" />
                               <div className="flex-1">
                                 <p className="font-medium text-[#000000]">{player.player_name}</p>
                                 <p className="text-sm text-[#6d6d6d]">
@@ -207,8 +231,8 @@ export default function MemberNavbar() {
                       </div>
                     )}
 
-                    {/* SCOUTS */}
-                    {searchResults.scouts.length > 0 && (
+                    {/* SCOUTS — ocultos mientras Wonderscouts está deshabilitado */}
+                    {false && searchResults.scouts.length > 0 && (
                       <div>
                         <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
                           <h4 className="text-sm font-medium text-[#6d6d6d]">Scouts</h4>
@@ -218,13 +242,13 @@ export default function MemberNavbar() {
                             key={scout.id_scout}
                             className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-b-0"
                             onClick={() => {
-                              _router.push(`/member/scout/${scout.id_scout}`)
+                              router.push(`/member/scout/${scout.id_scout}`)
                               setShowSearchResults(false)
                               setSearchTerm('')
                             }}
                           >
                             <div className="flex items-center gap-3">
-                              <ScoutAvatar scout={scout} size="sm" />
+                              <ScoutAvatar scout={scout as Parameters<typeof ScoutAvatar>[0]['scout']} size="sm" />
                               <div className="flex-1">
                                 <p className="font-medium text-[#000000]">{scout.scout_name || scout.name}</p>
                                 <p className="text-sm text-[#6d6d6d]">
@@ -247,7 +271,7 @@ export default function MemberNavbar() {
                     {searchResults.players.length === 0 && searchResults.scouts.length === 0 && searchTerm.trim() && (
                       <div className="p-4 text-center">
                         <p className="text-[#6d6d6d] text-sm">No se encontraron resultados para &quot;{searchTerm}&quot;</p>
-                        <p className="text-[#6d6d6d] text-xs mt-1">Intenta buscar con otras palabras clave</p>
+                        <p className="text-[#6d6d6d] text-xs mt-1">Try searching with different keywords</p>
                       </div>
                     )}
 
@@ -258,7 +282,7 @@ export default function MemberNavbar() {
                           className="w-full text-center py-2 text-sm text-[#8c1a10] hover:bg-gray-50 rounded"
                           onClick={() =>{
                             // Navegar a una página de resultados completos
-                            _router.push(`/member/search?q=${encodeURIComponent(searchTerm)}`)
+                            router.push(`/member/search?q=${encodeURIComponent(searchTerm)}`)
                             setShowSearchResults(false)
                           }}
                         >
@@ -297,7 +321,7 @@ export default function MemberNavbar() {
                     }`}
                     onClick={() => {
                       setShowWonderkidsDropdown(false)
-                      _router.push('/member/dashboard')
+                      router.push('/member/dashboard')
                     }}
                   >
                     <span>Players</span>
@@ -313,10 +337,10 @@ export default function MemberNavbar() {
                     onClick={() => {
                       if (isPremiumUser) {
                         setShowWonderkidsDropdown(false)
-                        _router.push('/member/comparison')
+                        router.push('/member/comparison')
                       } else {
                         setShowWonderkidsDropdown(false)
-                        _router.push('/member/upgrade-required')
+                        router.push('/member/upgrade-required')
                       }
                     }}
                   >
@@ -327,8 +351,9 @@ export default function MemberNavbar() {
               </div>
             )}
           </div>
-          <div className="relative" ref={wonderscoutsDropdownRef}>
-            <div 
+          {/* Wonderscouts oculto: preservamos el código para reactivarlo fácilmente. */}
+          {false && <div className="relative" ref={wonderscoutsDropdownRef}>
+            <div
               className={`flex items-center gap-1 cursor-pointer ${
                 isWonderscoutsSection ? 'text-[#000000] font-medium' : 'text-[#6d6d6d]'
               }`}
@@ -337,7 +362,7 @@ export default function MemberNavbar() {
               <span>Wonderscouts</span>
               <ChevronDown className="w-4 h-4" />
             </div>
-            
+
             {/* Wonderscouts Dropdown Menu */}
             {showWonderscoutsDropdown && (
               <div className="absolute top-full left-0 mt-2 bg-white border border-[#e7e7e7] rounded-lg shadow-lg z-50 min-w-48">
@@ -353,10 +378,10 @@ export default function MemberNavbar() {
                     onClick={() => {
                       if (isPremiumUser) {
                         setShowWonderscoutsDropdown(false)
-                        _router.push('/member/scouts')
+                        router.push('/member/scouts')
                       } else {
                         setShowWonderscoutsDropdown(false)
-                        _router.push('/member/upgrade-required')
+                        router.push('/member/upgrade-required')
                       }
                     }}
                   >
@@ -374,10 +399,10 @@ export default function MemberNavbar() {
                     onClick={() => {
                       if (isPremiumUser) {
                         setShowWonderscoutsDropdown(false)
-                        _router.push('/member/scout-comparison')
+                        router.push('/member/scout-comparison')
                       } else {
                         setShowWonderscoutsDropdown(false)
-                        _router.push('/member/upgrade-required')
+                        router.push('/member/upgrade-required')
                       }
                     }}
                   >
@@ -387,13 +412,13 @@ export default function MemberNavbar() {
                 </div>
               </div>
             )}
-          </div>
+          </div>}
 
           <span
             className={`cursor-pointer ${isTournamentsPage ? 'text-[#000000] font-medium' : 'text-[#6d6d6d]'}`}
-            onClick={() => _router.push('/member/torneos')}
+            onClick={() => router.push('/member/torneos')}
           >
-            Torneos
+            Tournaments
           </span>
           <span
             className={`cursor-pointer flex items-center gap-1 ${
@@ -405,9 +430,9 @@ export default function MemberNavbar() {
             }`}
             onClick={() => {
               if (isPremiumUser) {
-                _router.push('/member/on-demand')
+                router.push('/member/on-demand')
               } else {
-                _router.push('/member/upgrade-required')
+                router.push('/member/upgrade-required')
               }
             }}
           >
@@ -444,7 +469,7 @@ export default function MemberNavbar() {
                         className="w-full text-left px-4 py-2 text-[#6d6d6d] hover:bg-gray-50 hover:text-[#8c1a10] transition-colors flex items-center gap-2"
                         onClick={() => {
                           setShowAreaDropdown(false)
-                          _router.push('/admin/dashboard')
+                          router.push('/admin/dashboard')
                         }}
                       >
                         <Shield className="w-4 h-4" />
@@ -455,7 +480,7 @@ export default function MemberNavbar() {
                       className="w-full text-left px-4 py-2 text-[#6d6d6d] hover:bg-gray-50 hover:text-[#8c1a10] transition-colors flex items-center gap-2"
                       onClick={() => {
                         setShowAreaDropdown(false)
-                        _router.push('/scout/dashboard')
+                        router.push('/scout/dashboard')
                       }}
                     >
                       <Search className="w-4 h-4" />
@@ -469,7 +494,7 @@ export default function MemberNavbar() {
           
           <div
             className="w-8 h-8 bg-[#8c1a10] rounded-full flex items-center justify-center cursor-pointer hover:bg-[#6d1410] transition-colors"
-            onClick={() => _router.push('/member/profile')}
+            onClick={() => router.push('/member/profile')}
           >
             <User className="w-4 h-4 text-white" />
           </div>

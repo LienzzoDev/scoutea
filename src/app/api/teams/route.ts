@@ -194,6 +194,7 @@ export async function GET(request: NextRequest) {
         logo_url: true,
         fm_guide: true,
         admin_notes: true,
+        status: true,
         createdAt: true,
         updatedAt: true
       }

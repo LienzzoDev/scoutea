@@ -39,7 +39,7 @@ export default function PaymentProcessingPage() {
         if (!verifyData.success || verifyData.status !== 'paid') {
           console.error('❌ Pago no completado:', verifyData)
           setStatus('error')
-          setMessage(verifyData.message || 'El pago no se completó correctamente. Por favor, intenta de nuevo.')
+          setMessage(verifyData.message || 'Payment was not completed correctly. Please try again.')
           return
         }
 
@@ -49,11 +49,10 @@ export default function PaymentProcessingPage() {
         if (verifyData.webhookProcessed && verifyData.hasActiveSubscription) {
           console.log('✅ Webhook ya procesó el pago, redirigiendo...')
           setStatus('success')
-          setMessage('¡Pago confirmado! Redirigiendo a tu dashboard...')
+          setMessage('Payment confirmed! Redirecting to your dashboard...')
 
           setTimeout(() => {
-            const dashboardUrl = verifyData.role === 'scout' ? '/scout/dashboard' : '/member/dashboard'
-            router.push(dashboardUrl)
+            router.push('/member/dashboard')
           }, 1500)
           return
         }
@@ -62,7 +61,7 @@ export default function PaymentProcessingPage() {
         if (verifyData.manuallyProcessed) {
           console.log('✅ Pago procesado manualmente, verificando rol...')
           setStatus('activating')
-          setMessage('Activando tu suscripción...')
+          setMessage('Activating your subscription...')
 
           // Forzar reload de la sesión de Clerk para obtener metadata actualizada
           console.log('🔄 Refrescando sesión de Clerk...')
@@ -80,13 +79,10 @@ export default function PaymentProcessingPage() {
           if (roleData.success && roleData.hasActiveSubscription) {
             console.log('✅ Rol verificado, cuenta activada')
             setStatus('success')
-            setMessage('¡Cuenta activada! Redirigiendo...')
+            setMessage('Account activated! Redirecting...')
 
             setTimeout(() => {
-              const dashboardUrl = roleData.role === 'scout' ? '/scout/dashboard' : '/member/dashboard'
-              console.log('🔄 Redirigiendo a:', dashboardUrl)
-              // Usar window.location para forzar recarga completa y evitar cache
-              window.location.href = dashboardUrl
+              window.location.href = '/member/dashboard'
             }, 1500)
             return
           } else {
@@ -115,20 +111,17 @@ export default function PaymentProcessingPage() {
         if (roleData.success && roleData.hasActiveSubscription) {
           console.log('✅ Webhook procesó el pago exitosamente')
           setStatus('success')
-          setMessage('¡Tu cuenta está activa! Redirigiendo...')
+          setMessage('Your account is active! Redirecting...')
 
           setTimeout(() => {
-            const dashboardUrl = roleData.role === 'scout' ? '/scout/dashboard' : '/member/dashboard'
-            console.log('🔄 Redirigiendo a:', dashboardUrl)
-            // Usar window.location para forzar recarga completa
-            window.location.href = dashboardUrl
+            window.location.href = '/member/dashboard'
           }, 1500)
         } else {
           // Después de 3 segundos aún no está procesado - reintentar una vez
           if (retryCount < 2) {
             console.log('⚠️ Webhook aún no procesó, reintentando...', { retryCount })
             setRetryCount(prev => prev + 1)
-            setMessage('Procesando... esto puede tomar unos momentos más.')
+            setMessage('Processing... this may take a few more moments.')
 
             // Reintentar después de 3 segundos
             setTimeout(() => {
@@ -177,14 +170,14 @@ export default function PaymentProcessingPage() {
       case 'success':
         return {
           icon: <CheckCircle className="w-16 h-16 text-green-500" />,
-          title: '¡Pago confirmado!',
+          title: 'Payment confirmed!',
           color: 'text-green-600'
         }
 
       case 'error':
         return {
           icon: <XCircle className="w-16 h-16 text-red-500" />,
-          title: 'Error en el procesamiento',
+          title: 'Processing error',
           color: 'text-red-600'
         }
     }
@@ -216,15 +209,15 @@ export default function PaymentProcessingPage() {
           </h1>
 
           <p className="text-gray-600 mb-6">
-            {message || 'Procesando tu solicitud...'}
+            {message || 'Processing your request...'}
           </p>
 
           {/* Progress Info */}
           {(status === 'verifying' || status === 'activating') && (
             <div className="mb-6">
               <div className="text-sm text-gray-500">
-                {status === 'verifying' ? 'Verificando con Stripe...' : 'Activando suscripción...'}
-                {retryCount > 0 && ` (Intento ${retryCount + 1}/3)`}
+                {status === 'verifying' ? 'Verifying with Stripe...' : 'Activating subscription...'}
+                {retryCount > 0 && ` (Attempt ${retryCount + 1}/3)`}
               </div>
             </div>
           )}
@@ -236,14 +229,14 @@ export default function PaymentProcessingPage() {
                 onClick={() => window.location.reload()}
                 className="w-full bg-[#8c1a10] hover:bg-[#6d1410] text-white font-semibold py-3 px-4 rounded-lg transition-colors"
               >
-                Reintentar
+                Retry
               </button>
 
               <button
                 onClick={() => router.push('/member/dashboard')}
                 className="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
               >
-                Ir al Dashboard
+                Go to Dashboard
               </button>
             </div>
           )}
@@ -251,7 +244,7 @@ export default function PaymentProcessingPage() {
           {/* Session ID for debugging */}
           {sessionId && (
             <div className="mt-6 text-xs text-gray-400">
-              ID de sesión: {sessionId.slice(-8)}
+              Session ID: {sessionId.slice(-8)}
             </div>
           )}
         </div>

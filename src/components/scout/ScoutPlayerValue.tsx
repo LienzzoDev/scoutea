@@ -126,9 +126,9 @@ export default function ScoutPlayerValue({
     return (
       <div className="bg-white p-6 rounded-lg">
         <div className="text-center py-12 text-[#6d6d6d]">
-          No hay datos de valor disponibles para este jugador.
+          No value data available for this player.
           <br />
-          <span className="text-sm">El valor se registra cuando existen reportes con datos históricos.</span>
+          <span className="text-sm">The value is recorded when historical report data exists.</span>
         </div>
       </div>
     )

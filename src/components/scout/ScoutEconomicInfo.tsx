@@ -7,7 +7,7 @@ interface ScoutEconomicInfoProps {
 }
 
 // Función helper para mostrar datos con fallback
-const getDisplayValue = (value?: number | null, fallback: string = 'Por completar'): string => {
+const getDisplayValue = (value?: number | null, fallback: string = 'Not set'): string => {
   if (value !== null && value !== undefined) return String(value)
   return fallback
 }
@@ -21,46 +21,46 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
           <div className='flex justify-between items-center py-3 border-b border-gray-100'>
             <span className='text-[#6d6d6d] text-sm'>Nombre:</span>
             <span className='text-[#2e3138] font-medium'>
-              {scout.scout_name || scout.name || 'Por completar'}
+              {scout.scout_name || scout.name || 'Not set'}
             </span>
           </div>
           <div className='flex justify-between items-center py-3 border-b border-gray-100'>
             <span className='text-[#6d6d6d] text-sm'>Fecha de Nacimiento:</span>
             <span className='text-[#2e3138] font-medium'>
               {scout.date_of_birth
-                ? new Date(scout.date_of_birth).toLocaleDateString('es-ES')
-                : 'Por completar'}
+                ? new Date(scout.date_of_birth).toLocaleDateString('en-US')
+                : 'Not set'}
             </span>
           </div>
           <div className='flex justify-between items-center py-3 border-b border-gray-100'>
             <span className='text-[#6d6d6d] text-sm'>Edad:</span>
             <span className='text-[#2e3138] font-medium'>
-              {scout.age ? `${scout.age} años` : 'Por completar'}
+              {scout.age ? `${scout.age} years` : 'Not set'}
             </span>
           </div>
           <div className='flex justify-between items-center py-3 border-b border-gray-100'>
-            <span className='text-[#6d6d6d] text-sm'>País:</span>
-            <span className='text-[#2e3138] font-medium'>{scout.country || 'Por completar'}</span>
+            <span className='text-[#6d6d6d] text-sm'>Country:</span>
+            <span className='text-[#2e3138] font-medium'>{scout.country || 'Not set'}</span>
           </div>
           <div className='flex justify-between items-center py-3 border-b border-gray-100'>
             <span className='text-[#6d6d6d] text-sm'>Fecha de Ingreso:</span>
             <span className='text-[#2e3138] font-medium'>
               {scout.join_date
-                ? new Date(scout.join_date).toLocaleDateString('es-ES')
-                : 'Por completar'}
+                ? new Date(scout.join_date).toLocaleDateString('en-US')
+                : 'Not set'}
             </span>
           </div>
           <div className='flex justify-between items-center py-3 border-b border-gray-100'>
             <span className='text-[#6d6d6d] text-sm'>Equipo Favorito:</span>
             <span className='text-[#2e3138] font-medium'>
-              {scout.favourite_club || 'Por completar'}
+              {scout.favourite_club || 'Not set'}
             </span>
           </div>
           <div className='flex justify-between items-center py-3 border-b border-gray-100'>
             <span className='text-[#6d6d6d] text-sm'>Disponible para Trabajar:</span>
             <span className='text-[#2e3138] font-medium'>
               {scout.open_to_work === true
-                ? 'Sí'
+                ? 'Yes'
                 : scout.open_to_work === false
                   ? 'No'
                   : 'Por confirmar'}
@@ -69,7 +69,7 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
           <div className='flex justify-between items-center py-3 border-b border-gray-100'>
             <span className='text-[#6d6d6d] text-sm'>Experiencia Profesional:</span>
             <span className='text-[#2e3138] font-medium'>
-              {scout.professional_experience || 'Por completar'}
+              {scout.professional_experience || 'Not set'}
             </span>
           </div>
           <div className='flex justify-between items-center py-3 border-b border-gray-100'>
@@ -87,13 +87,13 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
           <div className='flex justify-between items-center py-3 border-b border-gray-100'>
             <span className='text-[#6d6d6d] text-sm'>Especialidad por Nacionalidad:</span>
             <span className='text-[#2e3138] font-medium'>
-              {scout.nationality_expertise || 'Por completar'}
+              {scout.nationality_expertise || 'Not set'}
             </span>
           </div>
           <div className='flex justify-between items-center py-3 border-b border-gray-100'>
-            <span className='text-[#6d6d6d] text-sm'>Especialidad por Competición:</span>
+            <span className='text-[#6d6d6d] text-sm'>Competition Specialty:</span>
             <span className='text-[#2e3138] font-medium'>
-              {scout.competition_expertise || 'Por completar'}
+              {scout.competition_expertise || 'Not set'}
             </span>
           </div>
           <div className='flex justify-between items-center py-3 border-b border-gray-100'>
@@ -112,7 +112,7 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
           <div className='flex justify-between items-center py-3'>
             <span className='text-[#6d6d6d] text-sm'>Edad Inicial Promedio:</span>
             <span className='text-[#2e3138] font-medium'>
-              {scout.avg_initial_age ? `${scout.avg_initial_age.toFixed(1)} años` : 'Por calcular'}
+              {scout.avg_initial_age ? `${scout.avg_initial_age.toFixed(1)} years` : 'To calculate'}
             </span>
           </div>
         </div>
@@ -120,7 +120,7 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
         {/* Right Column - Economic Data */}
         <div className='space-y-0'>
           <div className='flex justify-between items-center py-3 border-b border-gray-100'>
-            <span className='text-[#6d6d6d] text-sm'>Inversión Total:</span>
+            <span className='text-[#6d6d6d] text-sm'>Total Investment:</span>
             <div className='flex items-center gap-2'>
               <span className='text-[#2e3138] font-medium'>
                 {formatValue(scout.total_investment)}
@@ -259,7 +259,7 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
           </div>
 
           <div className='flex justify-between items-center py-3 border-b border-gray-100'>
-            <span className='text-[#6d6d6d] text-sm'>Máximo Beneficio por Reporte:</span>
+            <span className='text-[#6d6d6d] text-sm'>Max Profit per Report:</span>
             <div className='flex items-center gap-2'>
               <span className='text-[#2e3138] font-medium'>
                 {formatValue(scout.max_profit_report)}
@@ -295,7 +295,7 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
           </div>
 
           <div className='flex justify-between items-center py-3 border-b border-gray-100'>
-            <span className='text-[#6d6d6d] text-sm'>Mínimo Beneficio por Reporte:</span>
+            <span className='text-[#6d6d6d] text-sm'>Min Profit per Report:</span>
             <div className='flex items-center gap-2'>
               <span className='text-[#2e3138] font-medium'>
                 {formatValue(scout.min_profit_report)}
@@ -405,12 +405,12 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
           <div className='flex justify-between items-center py-3 border-b border-gray-100'>
             <span className='text-[#6d6d6d] text-sm'>Nivel Inicial Promedio de Equipo:</span>
             <span className='text-[#2e3138] font-medium'>
-              {scout.avg_initial_team_level || 'Por calcular'}
+              {scout.avg_initial_team_level || 'To calculate'}
             </span>
           </div>
 
           <div className='flex justify-between items-center py-3 border-b border-gray-100'>
-            <span className='text-[#6d6d6d] text-sm'>Puntos de Transferencia de Competición:</span>
+            <span className='text-[#6d6d6d] text-sm'>Competition Transfer Points:</span>
             <div className='flex items-center gap-2'>
               <span className='text-[#2e3138] font-medium'>
                 {formatValue(scout.transfer_competition_pts, ' pts')}
@@ -446,16 +446,16 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
           </div>
 
           <div className='flex justify-between items-center py-3 border-b border-gray-100'>
-            <span className='text-[#6d6d6d] text-sm'>Nivel Inicial Promedio de Competición:</span>
+            <span className='text-[#6d6d6d] text-sm'>Average Initial Competition Level:</span>
             <span className='text-[#2e3138] font-medium'>
-              {scout.avg_initial_competition_level || 'Por calcular'}
+              {scout.avg_initial_competition_level || 'To calculate'}
             </span>
           </div>
 
           <div className='flex justify-between items-center py-3 border-b border-gray-100'>
             <span className='text-[#6d6d6d] text-sm'>ELO del Scout:</span>
             <span className='text-[#2e3138] font-medium'>
-              {scout.scout_elo ? Math.round(scout.scout_elo).toString() : 'Por calcular'}
+              {scout.scout_elo ? Math.round(scout.scout_elo).toString() : 'To calculate'}
             </span>
           </div>
 
@@ -469,7 +469,7 @@ export default function ScoutEconomicInfo({ scout }: ScoutEconomicInfoProps) {
           <div className='flex justify-between items-center py-3'>
             <span className='text-[#6d6d6d] text-sm'>Ranking del Scout:</span>
             <span className='text-[#2e3138] font-medium'>
-              {scout.scout_ranking ? `#${scout.scout_ranking}` : 'Por calcular'}
+              {scout.scout_ranking ? `#${scout.scout_ranking}` : 'To calculate'}
             </span>
           </div>
         </div>

@@ -63,7 +63,7 @@ export default function PlayerTable({
       <div className="flex items-center justify-center py-12">
         <div className="flex items-center gap-2 text-slate-400">
           <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${darkMode ? 'border-[#FF5733]' : 'border-[#8c1a10]'}`}></div>
-          <span>Cargando jugadores...</span>
+          <span>Loading players...</span>
         </div>
       </div>
     );
@@ -235,7 +235,7 @@ export default function PlayerTable({
                     {player.player_name}
                   </h3>
                   <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-[#6d6d6d]'}`}>
-                    {player.age ? `${player.age} años` : "Edad N/A"} • {" "}
+                    {player.age ? `${player.age} years` : "Age N/A"} • {" "}
                     {player.nationality_1 || "Nacionalidad N/A"}
                   </p>
                   {player.position_player && (

@@ -23,8 +23,8 @@ interface ScrapingResult {
   url: string
   success: boolean
   fieldsUpdated: string[]
-  error?: string
-  retries?: number
+  error?: string | undefined
+  retries?: number | undefined
 }
 
 // 🎛️ CONFIGURACIÓN DE SCRAPING (optimizada para velocidad)
@@ -65,8 +65,8 @@ async function registerScrapingAlert(params: {
           lastSeenAt: new Date(),
           seenCount: { increment: 1 },
           errorType: params.errorType,
-          errorMessage: params.errorMessage,
-          httpStatus: params.httpStatus
+          ...(params.errorMessage !== undefined && { errorMessage: params.errorMessage }),
+          ...(params.httpStatus !== undefined && { httpStatus: params.httpStatus })
         }
       })
     } else {
@@ -78,8 +78,8 @@ async function registerScrapingAlert(params: {
           entityName: params.entityName,
           url: params.url,
           errorType: params.errorType,
-          errorMessage: params.errorMessage,
-          httpStatus: params.httpStatus
+          ...(params.errorMessage !== undefined && { errorMessage: params.errorMessage }),
+          ...(params.httpStatus !== undefined && { httpStatus: params.httpStatus })
         }
       })
     }
@@ -289,7 +289,8 @@ function shouldUpdateLoanTeam(
   teamCountry: string | null
 ): { shouldUpdate: boolean; finalLoanTeam: string | null } {
   // Reutilizar la misma lógica que team_name
-  return shouldUpdateTeamName(existingLoanTeam, scrapedLoanTeam, teamCountry)
+  const result = shouldUpdateTeamName(existingLoanTeam, scrapedLoanTeam, teamCountry)
+  return { shouldUpdate: result.shouldUpdate, finalLoanTeam: result.finalTeamName }
 }
 
 /**
@@ -777,10 +778,10 @@ export async function POST(request: Request) {
     // 📊 OBTENER SIGUIENTE BATCH DE JUGADORES
     const playersToProcess = await prisma.jugador.findMany({
       where: {
-        url_trfm: {
-          not: null,
-          not: ''
-        }
+        AND: [
+          { url_trfm: { not: null } },
+          { url_trfm: { not: '' } }
+        ]
       },
       select: {
         id_player: true,
@@ -831,6 +832,7 @@ export async function POST(request: Request) {
     // 🔄 PROCESAR CADA JUGADOR DEL BATCH
     for (let i = 0; i < playersToProcess.length; i++) {
       const player = playersToProcess[i]
+      if (!player) continue
 
       console.log(`[${i + 1}/${playersToProcess.length}] ${player.player_name || player.id_player}`)
       addJobLog(job.id, `🔍 [${i + 1}/${playersToProcess.length}] Scrapeando: ${player.player_name || player.id_player}`)
@@ -1004,8 +1006,8 @@ export async function POST(request: Request) {
         const fieldsUpdated = Object.keys(scrapedData)
 
         results.push({
-          playerId: player.id_player,
-          playerName: player.player_name || player.id_player,
+          playerId: String(player.id_player),
+          playerName: player.player_name || String(player.id_player),
           url: player.url_trfm!,
           success: true,
           fieldsUpdated,
@@ -1029,7 +1031,8 @@ export async function POST(request: Request) {
           // Si son muchos, mostrar solo los 3 primeros
           for (let idx = 0; idx < 3; idx++) {
             const field = fieldsUpdated[idx]
-            const oldValue = (player as any)[field]
+            if (!field) continue
+            const oldValue = (player as Record<string, unknown>)[field]
             const newValue = scrapedData[field]
             addJobLog(job.id, `     • ${field}: "${oldValue || 'null'}" → "${newValue || 'null'}"`)
           }
@@ -1039,8 +1042,8 @@ export async function POST(request: Request) {
       } else {
         // ❌ ERROR - Registrar fallo
         results.push({
-          playerId: player.id_player,
-          playerName: player.player_name || player.id_player,
+          playerId: String(player.id_player),
+          playerName: player.player_name || String(player.id_player),
           url: player.url_trfm!,
           success: false,
           fieldsUpdated: [],
@@ -1137,7 +1140,10 @@ export async function POST(request: Request) {
     addJobLog(job.id, '')
     addJobLog(job.id, `✅ Batch ${updatedJob.currentBatch} completado`)
     addJobLog(job.id, `   - Exitosos: ${batchSuccessCount}, Errores: ${batchErrorCount}`)
-    addJobLog(job.id, `📊 Progreso total: ${updatedJob.processedCount}/${updatedJob.totalPlayers} (${updatedJob.progress}%)`)
+    const progressPercent = updatedJob.totalPlayers > 0
+      ? Math.round((updatedJob.processedCount / updatedJob.totalPlayers) * 100)
+      : 0
+    addJobLog(job.id, `📊 Progreso total: ${updatedJob.processedCount}/${updatedJob.totalPlayers} (${progressPercent}%)`)
     addJobLog(job.id, '')
 
     const isCompleted = updatedJob.processedCount >= updatedJob.totalPlayers
@@ -1254,7 +1260,7 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
 
     // 1. URL del advisor - buscar en info-table después de "Player agent:"
     const advisorMatch = html.match(/Player agent:[\s\S]*?<a[^>]*href="([^"]+)"[^>]*>/)
-    if (advisorMatch && advisorMatch[1].includes('berater')) {
+    if (advisorMatch?.[1]?.includes('berater')) {
       const fullUrl = advisorMatch[1].startsWith('http')
         ? advisorMatch[1]
         : `https://www.transfermarkt.es${advisorMatch[1]}`
@@ -1263,7 +1269,7 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
 
     // 2. Fecha de nacimiento - buscar en data-header con itemprop="birthDate"
     const birthDateMatch = html.match(/<span itemprop="birthDate"[^>]*>\s*(\d{2}\/\d{2}\/\d{4})/)
-    if (birthDateMatch) {
+    if (birthDateMatch?.[1]) {
       // Parsear la fecha a formato ISO para Prisma
       const parsedDate = parseDateString(birthDateMatch[1].trim())
       if (parsedDate) {
@@ -1273,63 +1279,63 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
 
     // 3. Equipo actual - buscar en data-header__club-info el link con title
     const teamMatch = html.match(/data-header__club-info[\s\S]*?<a[^>]*title="([^"]+)"[^>]*href="[^"]*\/startseite\/verein/)
-    if (teamMatch) {
+    if (teamMatch?.[1]) {
       data.team_name = teamMatch[1].trim()
     }
 
     // 4. Equipo de cesión
     const loanMatch = html.match(/cedido de[^>]*>([^<]+)</)
-    if (loanMatch) {
+    if (loanMatch?.[1]) {
       data.team_loan_from = loanMatch[1].trim()
     }
 
     // 5. Posición - buscar en data-header después de "Position:"
     const positionMatch = html.match(/<li class="data-header__label">Position:[\s\S]*?<span class="data-header__content">\s*([^<]+?)\s*<\/span>/)
-    if (positionMatch) {
+    if (positionMatch?.[1]) {
       data.position_player = positionMatch[1].trim()
     }
 
     // 6. Pie dominante - buscar en info-table después de "Foot:"
     const footMatch = html.match(/Foot:[\s\S]*?info-table__content--bold[^>]*>([^<]+)</)
-    if (footMatch) {
+    if (footMatch?.[1]) {
       data.foot = footMatch[1].trim()
     }
 
     // 7. Altura - buscar en data-header después de "Height:"
     const heightMatch = html.match(/<li class="data-header__label">Height:[\s\S]*?<span[^>]*itemprop="height"[^>]*>\s*([0-9,]+)\s*m/)
-    if (heightMatch) {
+    if (heightMatch?.[1]) {
       const heightInMeters = parseFloat(heightMatch[1].replace(',', '.'))
       data.height = Math.round(heightInMeters * 100)
     }
 
     // 8. Nacionalidad 1 - buscar en info-table después de "Citizenship:"
     const nat1Match = html.match(/Citizenship:[\s\S]*?info-table__content--bold[^>]*>[\s\S]*?<img[^>]+title="([^"]+)"/)
-    if (nat1Match) {
+    if (nat1Match?.[1]) {
       data.nationality_1 = nat1Match[1].trim()
     }
 
     // 9. Nacionalidad 2
     const nat2Matches = html.matchAll(/<img[^>]+title="([^"]+)"[^>]+alt="[^"]*bandera[^"]*"/g)
-    const nationalities = Array.from(nat2Matches).map(m => m[1].trim())
-    if (nationalities.length > 1) {
+    const nationalities = Array.from(nat2Matches).map(m => m[1]?.trim()).filter(Boolean)
+    if (nationalities.length > 1 && nationalities[1]) {
       data.nationality_2 = nationalities[1]
     }
 
     // 10. Nivel de selección nacional
     const nationalTeamMatch = html.match(/Selección nacional:<\/span>\s*<span[^>]*>([^<]+)<\/span>/)
-    if (nationalTeamMatch) {
+    if (nationalTeamMatch?.[1]) {
       data.national_tier = nationalTeamMatch[1].trim()
     }
 
     // 11. Agencia
     const agencyMatch = html.match(/Agencia:<\/span>\s*<a[^>]*>([^<]+)<\/a>/)
-    if (agencyMatch) {
+    if (agencyMatch?.[1]) {
       data.agency = agencyMatch[1].trim()
     }
 
     // 12. Fin de contrato
     const contractMatch = html.match(/Contrato hasta:<\/span>\s*<span[^>]*>([^<]+)<\/span>/)
-    if (contractMatch) {
+    if (contractMatch?.[1]) {
       const parsedDate = parseContractDate(contractMatch[1].trim())
       if (parsedDate) {
         data.contract_end = parsedDate
@@ -1338,9 +1344,9 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
 
     // 13. Valor de mercado
     const valueMatch = html.match(/Valor de mercado:<\/span>\s*<a[^>]*>([0-9,.]+)\s*(mil|mill?\.?)\s*€<\/a>/)
-    if (valueMatch) {
+    if (valueMatch?.[1] && valueMatch[2]) {
       // Limpiar formato: "1.500.000" o "1,5" → número limpio
-      let cleanValue = valueMatch[1]
+      let cleanValue: string = valueMatch[1]
 
       // Si tiene puntos Y comas, los puntos son separadores de miles
       if (cleanValue.includes('.') && cleanValue.includes(',')) {
@@ -1350,13 +1356,12 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
       else if (cleanValue.includes('.') && !cleanValue.includes(',')) {
         // Contar puntos: si hay múltiples, son separadores de miles
         const dotCount = (cleanValue.match(/\./g) || []).length
-        if (dotCount > 1 || cleanValue.split('.')[1]?.length === 3) {
+        const afterDot = cleanValue.split('.')[1]
+        if (dotCount > 1 || (afterDot && afterDot.length === 3)) {
           cleanValue = cleanValue.replace(/\./g, '')
         }
         // Si hay un solo punto y el último segmento tiene 1-2 dígitos, es decimal
-        else if (cleanValue.split('.')[1]?.length <= 2) {
-          // Mantener el punto como decimal
-        }
+        // (mantener el punto como decimal - no hacer nada)
       }
       // Si solo tiene comas, la coma es decimal
       else if (cleanValue.includes(',')) {
@@ -1370,7 +1375,7 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
 
     // 14. Nombre del advisor
     const advisorNameMatch = html.match(/Agente:<\/span>\s*<a[^>]*>([^<]+)<\/a>/)
-    if (advisorNameMatch) {
+    if (advisorNameMatch?.[1]) {
       data.advisor = advisorNameMatch[1].trim()
     }
 
@@ -1402,14 +1407,20 @@ function parseDateString(dateStr: string): Date | null {
     }
 
     if (dateStr.includes('/')) {
-      const [day, month, year] = dateStr.split('/')
+      const parts = dateStr.split('/')
+      const day = parts[0]
+      const month = parts[1]
+      const year = parts[2]
+      if (!day || !month || !year) return null
       return new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
     }
 
     const match = dateStr.match(/(\d+)\s+de\s+(\w+)\s+de\s+(\d{4})/)
-    if (match) {
-      const [, day, month, year] = match
-      const monthIndex = months[month.toLowerCase()]
+    if (match?.[1] && match[2] && match[3]) {
+      const day = match[1]
+      const monthName = match[2]
+      const year = match[3]
+      const monthIndex = months[monthName.toLowerCase()]
       if (monthIndex !== undefined) {
         return new Date(parseInt(year), monthIndex, parseInt(day))
       }
@@ -1433,7 +1444,11 @@ function parseContractDate(dateStr: string): Date | null {
   try {
     // Formato DD/MM/YYYY
     if (dateStr.includes('/')) {
-      const [day, month, year] = dateStr.split('/')
+      const parts = dateStr.split('/')
+      const day = parts[0]
+      const month = parts[1]
+      const year = parts[2]
+      if (!day || !month || !year) return null
       return new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
     }
 
@@ -1455,8 +1470,10 @@ function parseContractDate(dateStr: string): Date | null {
 
     // Match: "Jun 30, 2025" o "June 30, 2025"
     const englishMatch = dateStr.match(/(\w+)\s+(\d{1,2}),\s*(\d{4})/)
-    if (englishMatch) {
-      const [, monthStr, day, year] = englishMatch
+    if (englishMatch?.[1] && englishMatch[2] && englishMatch[3]) {
+      const monthStr = englishMatch[1]
+      const day = englishMatch[2]
+      const year = englishMatch[3]
       const monthIndex = englishMonths[monthStr.toLowerCase()]
       if (monthIndex !== undefined) {
         return new Date(parseInt(year), monthIndex, parseInt(day))

@@ -87,7 +87,7 @@ export default function CompleteProfileAfterPayment() {
       }
     } catch (err) {
       console.error('Error completando perfil:', err)
-      setError('Error al completar el perfil. Inténtalo de nuevo.')
+      setError('Error completing profile. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -126,7 +126,7 @@ export default function CompleteProfileAfterPayment() {
       }
     } catch (err) {
       console.error('Error actualizando perfil:', err)
-      setError('Error al actualizar el perfil. Inténtalo de nuevo.')
+      setError('Error updating profile. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -146,14 +146,14 @@ export default function CompleteProfileAfterPayment() {
               </div>
             </div>
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              ¡Perfil completado exitosamente!
+              Profile completed successfully!
             </h1>
             <p className="text-xl text-gray-600 mb-8">
-              Tu perfil ha sido actualizado. Redirigiendo al dashboard...
+              Your profile has been updated. Redirecting to dashboard...
             </p>
             <div className="flex items-center justify-center space-x-2">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500"></div>
-              <span className="text-green-600 font-medium">Procesando...</span>
+              <span className="text-green-600 font-medium">Processing...</span>
             </div>
           </div>
         </div>
@@ -176,23 +176,23 @@ export default function CompleteProfileAfterPayment() {
           </div>
           
           <h1 className="text-5xl font-bold text-gray-900 mb-4">
-            ¡Pago completado exitosamente!
+            Payment completed successfully!
           </h1>
           
           <div className="bg-white rounded-lg shadow-sm border p-6 mb-6 max-w-md mx-auto">
             <div className="flex items-center justify-center space-x-2 mb-2">
               <Sparkles className="h-5 w-5 text-yellow-500" />
               <span className="text-lg font-semibold text-gray-900">
-                Plan {plan ? plan.charAt(0).toUpperCase() + plan.slice(1) : 'Premium'} activado
+                {plan ? plan.charAt(0).toUpperCase() + plan.slice(1) : 'Premium'} plan activated
               </span>
             </div>
             <p className="text-sm text-gray-600">
-              Tu suscripción está activa y lista para usar
+              Your subscription is active and ready to use
             </p>
           </div>
-          
+
           <p className="text-xl text-gray-600 mb-8">
-            Ahora completa tu perfil para acceder a todas las funcionalidades
+            Now complete your profile to access all features
           </p>
         </div>
 
@@ -206,43 +206,43 @@ export default function CompleteProfileAfterPayment() {
                   <User className="h-5 w-5 text-blue-600" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900">
-                  Información Personal
+                  Personal Information
                 </h3>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">Nombre *</Label>
+                  <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">First Name *</Label>
                   <Input
                     id="firstName"
                     value={profileData.firstName}
                     onChange={(e) =>handleInputChange('firstName', e.target.value)}
-                    placeholder="Tu nombre" required
+                    placeholder="Your first name" required
                     className="mt-1" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">Apellido *</Label>
+                  <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">Last Name *</Label>
                   <Input
                     id="lastName"
                     value={profileData.lastName}
                     onChange={(e) =>handleInputChange('lastName', e.target.value)}
-                    placeholder="Tu apellido" required
+                    placeholder="Your last name" required
                     className="mt-1" />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="nationality" className="text-sm font-medium text-gray-700">Nacionalidad *</Label>
+                  <Label htmlFor="nationality" className="text-sm font-medium text-gray-700">Nationality *</Label>
                   <Input
                     id="nationality"
                     value={profileData.nationality}
                     onChange={(e) =>handleInputChange('nationality', e.target.value)}
-                    placeholder="Ej: Española" required
+                    placeholder="e.g. Spanish" required
                     className="mt-1" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="dateOfBirth" className="text-sm font-medium text-gray-700">Fecha de nacimiento</Label>
+                  <Label htmlFor="dateOfBirth" className="text-sm font-medium text-gray-700">Date of birth</Label>
                   <Input
                     id="dateOfBirth"
                     type="date"
@@ -253,12 +253,12 @@ export default function CompleteProfileAfterPayment() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="location" className="text-sm font-medium text-gray-700">Ubicación</Label>
+                <Label htmlFor="location" className="text-sm font-medium text-gray-700">Location</Label>
                 <Input
                   id="location"
                   value={profileData.location}
                   onChange={(e) =>handleInputChange('location', e.target.value)}
-                  placeholder="Ciudad, País" className="mt-1" />
+                  placeholder="City, Country" className="mt-1" />
               </div>
             </div>
 
@@ -269,24 +269,24 @@ export default function CompleteProfileAfterPayment() {
                   <Briefcase className="h-5 w-5 text-green-600" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900">
-                  Información Profesional
+                  Professional Information
                 </h3>
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="bio" className="text-sm font-medium text-gray-700">Biografía *</Label>
+                <Label htmlFor="bio" className="text-sm font-medium text-gray-700">Biography *</Label>
                 <Textarea
                   id="bio"
                   value={profileData.bio}
                   onChange={(e) =>handleInputChange('bio', e.target.value)}
-                  placeholder="Cuéntanos sobre ti y tu experiencia en el fútbol" rows={3}
+                  placeholder="Tell us about yourself and your football experience" rows={3}
                   required
                   className="mt-1" />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="experience" className="text-sm font-medium text-gray-700">Años de experiencia *</Label>
+                  <Label htmlFor="experience" className="text-sm font-medium text-gray-700">Years of experience *</Label>
                   <Input
                     id="experience"
                     type="number"
@@ -296,23 +296,23 @@ export default function CompleteProfileAfterPayment() {
                     className="mt-1" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="specialization" className="text-sm font-medium text-gray-700">Especialización *</Label>
+                  <Label htmlFor="specialization" className="text-sm font-medium text-gray-700">Specialization *</Label>
                   <Input
                     id="specialization"
                     value={profileData.specialization}
                     onChange={(e) =>handleInputChange('specialization', e.target.value)}
-                    placeholder="Ej: Scouting, Análisis de datos" required
+                    placeholder="e.g. Scouting, Data analysis" required
                     className="mt-1" />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="languages" className="text-sm font-medium text-gray-700">Idiomas</Label>
+                <Label htmlFor="languages" className="text-sm font-medium text-gray-700">Languages</Label>
                 <Input
                   id="languages"
                   value={profileData.languages}
                   onChange={(e) =>handleInputChange('languages', e.target.value)}
-                  placeholder="Español, Inglés, Francés" className="mt-1" />
+                  placeholder="Spanish, English, French" className="mt-1" />
               </div>
             </div>
 
@@ -323,13 +323,13 @@ export default function CompleteProfileAfterPayment() {
                   <Phone className="h-5 w-5 text-purple-600" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900">
-                  Información de Contacto
+                  Contact Information
                 </h3>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-sm font-medium text-gray-700">Teléfono</Label>
+                  <Label htmlFor="phone" className="text-sm font-medium text-gray-700">Phone</Label>
                   <Input
                     id="phone"
                     value={profileData.phone}
@@ -337,22 +337,22 @@ export default function CompleteProfileAfterPayment() {
                     placeholder="+34 123 456 789" className="mt-1" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="company" className="text-sm font-medium text-gray-700">Empresa/Club</Label>
+                  <Label htmlFor="company" className="text-sm font-medium text-gray-700">Company/Club</Label>
                   <Input
                     id="company"
                     value={profileData.company}
                     onChange={(e) =>handleInputChange('company', e.target.value)}
-                    placeholder="Nombre de tu empresa o club" className="mt-1" />
+                    placeholder="Your company or club name" className="mt-1" />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="position" className="text-sm font-medium text-gray-700">Posición/Cargo</Label>
+                <Label htmlFor="position" className="text-sm font-medium text-gray-700">Position/Role</Label>
                 <Input
                   id="position"
                   value={profileData.position}
                   onChange={(e) =>handleInputChange('position', e.target.value)}
-                  placeholder="Ej: Scout, Analista, Director deportivo" className="mt-1" />
+                  placeholder="e.g. Scout, Analyst, Sporting Director" className="mt-1" />
               </div>
             </div>
 
@@ -362,7 +362,7 @@ export default function CompleteProfileAfterPayment() {
                 <div className="bg-red-100 rounded-full p-1">
                   <CheckCircle className="h-4 w-4 text-red-600" />
                 </div>
-                <p className="text-sm text-red-600 font-medium">{typeof error === 'string' ? error : error?.message || 'Error desconocido'}</p>
+                <p className="text-sm text-red-600 font-medium">{typeof error === 'string' ? error : error?.message || 'Unknown error'}</p>
               </div>
             )}
 

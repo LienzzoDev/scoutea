@@ -29,6 +29,7 @@ export const ADMIN_COLUMN_GROUPS: ColumnGroup[] = [
     groupName: 'Identificación',
     columns: [
       { key: 'id_player', label: 'ID Player' },
+      { key: 'createdAt', label: 'Creation Date' },
       { key: 'wyscout_id_1', label: 'Wyscout ID 1' },
       { key: 'wyscout_id_2', label: 'Wyscout ID 2' },
       { key: 'wyscout_name_1', label: 'Wyscout Name 1' },
@@ -86,6 +87,7 @@ export const ADMIN_COLUMN_GROUPS: ColumnGroup[] = [
       { key: 'team_level', label: 'Team Level' },
       { key: 'team_level_value', label: 'Team Level Value' },
       { key: 'team_level_value_percent', label: 'Team Level Value %' },
+      { key: 'team_status', label: 'Team Status' },
     ]
   },
   {
@@ -150,10 +152,33 @@ export const ADMIN_COLUMN_GROUPS: ColumnGroup[] = [
     columns: [
       { key: 'photo_coverage', label: 'Photo Coverage' },
       { key: 'video', label: 'Video' },
+      { key: 'video_report_1', label: 'Video Report 1' },
+      { key: 'video_report_2', label: 'Video Report 2' },
+      { key: 'video_report_3', label: 'Video Report 3' },
+      { key: 'video_report_4', label: 'Video Report 4' },
+      { key: 'video_report_5', label: 'Video Report 5' },
       { key: 'url_trfm_advisor', label: 'URL TRFM Advisor' },
       { key: 'url_trfm', label: 'URL TRFM' },
       { key: 'url_secondary', label: 'URL Secondary' },
       { key: 'url_instagram', label: 'URL Instagram' },
+    ]
+  },
+  {
+    groupName: 'Scouting Report',
+    columns: [
+      { key: 'text_report', label: 'Text Report' },
+      { key: 'development', label: 'Development' },
+      { key: 'initial_team_name', label: 'Initial Team' },
+      { key: 'initial_team_elo', label: 'Initial Team ELO' },
+      { key: 'initial_team_level', label: 'Initial Team Level' },
+      { key: 'transfer_team_pts', label: 'Transfer Team Pts' },
+      { key: 'initial_competition', label: 'Initial Competition' },
+      { key: 'initial_competition_elo', label: 'Initial Competition ELO' },
+      { key: 'initial_competition_level', label: 'Initial Competition Level' },
+      { key: 'transfer_competition_pts', label: 'Transfer Competition Pts' },
+      { key: 'initial_player_trfm_value', label: 'Initial Player TRFM Value' },
+      { key: 'roi', label: 'ROI' },
+      { key: 'profit', label: 'Profit' },
     ]
   }
 ]

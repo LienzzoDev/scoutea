@@ -39,10 +39,10 @@ export function ClerkLoadingState({ children, fallback }: ClerkLoadingStateProps
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
         <h2 className="text-lg font-medium text-gray-900 mb-2">
-          Cargando autenticación...
+          Loading authentication...
         </h2>
         <p className="text-sm text-gray-500">
-          Inicializando sistema de seguridad
+          Initializing security system
         </p>
         {process.env.NODE_ENV === 'development' && (
           <div className="mt-4 text-xs text-gray-400">

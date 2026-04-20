@@ -8,12 +8,12 @@ import type { Metadata } from 'next'
 import PlanSelector from '@/components/homepage/PlanSelector'
 
 export const metadata: Metadata = {
-  title: 'Scoutea - Plataforma de Scouting de Fútbol',
-  description: 'La plataforma más avanzada para scouts, analistas y profesionales del fútbol. Accede a datos detallados de miles de jugadores y toma decisiones informadas.',
-  keywords: 'scouting, fútbol, análisis, jugadores, estadísticas',
+  title: 'Scoutea - Football Scouting Platform',
+  description: 'The most advanced platform for scouts, analysts and football professionals. Access detailed data on thousands of players and make informed decisions.',
+  keywords: 'scouting, football, analysis, players, statistics',
   openGraph: {
-    title: 'Scoutea - Plataforma de Scouting de Fútbol',
-    description: 'La plataforma más avanzada para scouts, analistas y profesionales del fútbol.',
+    title: 'Scoutea - Football Scouting Platform',
+    description: 'The most advanced platform for scouts, analysts and football professionals.',
     type: 'website',
   },
 }
@@ -21,59 +21,17 @@ export const metadata: Metadata = {
 export default function HomePage() {
   const plans = [
     {
-      id: 'scout',
-      name: 'Scout',
-      price: { monthly: 20, yearly: 17 },
-      description: 'Para scouts profesionales que buscan visibilidad',
+      id: 'member',
+      name: 'Member',
+      price: { monthly: 9.9, yearly: 9.9 },
+      description: 'Full access to the entire Scoutea platform',
       features: [
-        'Perfil de scout verificado',
-        'Publicación de reportes',
-        'Portfolio de jugadores descubiertos',
-        'Visibilidad en la red de scouts',
-        'Acceso a sección Wonderkids',
-        'Acceso a sección Torneos',
-        'Opción de upgrade a Premium'
-      ],
-      popular: false,
-      color: 'from-emerald-500 to-emerald-600',
-      isScoutPlan: true
-    },
-    {
-      id: 'basic',
-      name: 'Member Basic',
-      price: { monthly: 20, yearly: 17 },
-      description: 'Acceso esencial para descubrir talentos',
-      features: [
-        'Acceso a sección Wonderkids',
-        'Acceso a sección Torneos',
-        'Perfiles detallados de jugadores jóvenes',
-        'Información de competiciones y eventos',
-        'Estadísticas de rendimiento',
-        'Actualizaciones semanales',
-        'Soporte por email'
-      ],
-      popular: false,
-      color: 'from-blue-500 to-blue-600'
-    },
-    {
-      id: 'premium',
-      name: 'Member Pro',
-      price: null,
-      description: 'Para profesionales que buscan análisis avanzado',
-      features: [
-        'Todo lo del plan Básico',
-        'Acceso completo a base de datos de jugadores',
-        'Búsqueda avanzada y filtros',
-        'Comparaciones y análisis',
-        'Radar charts y métricas avanzadas',
-        'Acceso a red de scouts',
-        'Comparador de scouts',
-        'Reportes personalizados',
-        'Soporte prioritario 24/7'
+        'Wonderkids — Full access to the player database',
+        'Tournaments — Browse all competitions and events',
+        'On Demand — Custom reports on any player'
       ],
       popular: true,
-      color: 'from-green-500 to-green-600',
-      requiresApproval: true
+      color: 'from-[#8c1a10] to-[#a01e12]'
     }
   ]
 
@@ -85,12 +43,12 @@ export default function HomePage() {
       <main className="max-w-7xl mx-auto px-6 py-16">
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold text-[#000000] mb-6">
-            Únete a la Comunidad de
-            <span className="text-[#8c1a10]"> Scouting</span>
+            Join the
+            <span className="text-[#8c1a10]"> Scouting</span> Community
           </h1>
           <p className="text-xl text-[#6d6d6d] mb-8 max-w-3xl mx-auto">
-            Elige tu rol en la plataforma más avanzada del fútbol profesional. 
-            Tanto si eres analista como scout, tendrás acceso a las mejores herramientas del mercado.
+            Access the most advanced platform for professional football analysis.
+            One single plan unlocks everything: Wonderkids, Tournaments and On Demand reports.
           </p>
           
           <PlanSelector plans={plans} />
@@ -99,37 +57,37 @@ export default function HomePage() {
         {/* Features Section */}
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold text-[#000000] mb-8">
-            ¿Por qué elegir Scoutea?
+            Why choose Scoutea?
           </h2>
-          
+
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-[#8c1a10] to-[#a01e12] rounded-full mb-4">
                 <BarChart3 className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-[#000000] mb-2">Datos Precisos</h3>
+              <h3 className="text-xl font-semibold text-[#000000] mb-2">Accurate Data</h3>
               <p className="text-[#6d6d6d]">
-                Información actualizada y verificada de miles de jugadores profesionales
+                Up-to-date, verified information on thousands of professional players
               </p>
             </div>
-            
+
             <div className="text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-[#8c1a10] to-[#a01e12] rounded-full mb-4">
                 <Target className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-[#000000] mb-2">Análisis Avanzado</h3>
+              <h3 className="text-xl font-semibold text-[#000000] mb-2">Advanced Analysis</h3>
               <p className="text-[#6d6d6d]">
-                Herramientas de análisis que te ayudan a tomar mejores decisiones
+                Analysis tools that help you make better decisions
               </p>
             </div>
-            
+
             <div className="text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-[#8c1a10] to-[#a01e12] rounded-full mb-4">
                 <TrendingUp className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-[#000000] mb-2">Actualizaciones Constantes</h3>
+              <h3 className="text-xl font-semibold text-[#000000] mb-2">Continuous Updates</h3>
               <p className="text-[#6d6d6d]">
-                Base de datos que se actualiza regularmente con nueva información
+                Database updated regularly with fresh information
               </p>
             </div>
           </div>
@@ -140,7 +98,7 @@ export default function HomePage() {
       <footer className="border-t border-gray-200 mt-16" style={{ backgroundColor: '#edebe6' }}>
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="text-center text-[#6d6d6d]">
-            <p>&copy; 2024 Scoutea. Todos los derechos reservados.</p>
+            <p>&copy; 2024 Scoutea. All rights reserved.</p>
           </div>
         </div>
       </footer>

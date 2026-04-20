@@ -277,7 +277,7 @@ export default function ScoutNotifications() {
                           markAsRead(notification.id)
                         }}
                         className="p-1 hover:bg-gray-200 rounded-full transition-colors"
-                        title="Marcar como leída"
+                        title="Mark as read"
                       >
                         <Check className="w-3 h-3 text-gray-400" />
                       </button>
@@ -292,7 +292,7 @@ export default function ScoutNotifications() {
           {data?.notifications?.length ? (
             <div className="px-4 py-2 border-t border-gray-100 bg-gray-50">
               <p className="text-xs text-center text-[#6d6d6d]">
-                Mostrando las últimas {data.notifications.length} notificaciones
+                Showing the last {data.notifications.length} notifications
               </p>
             </div>
           ) : null}
@@ -344,7 +344,7 @@ export default function ScoutNotifications() {
                 <div className="p-4 bg-red-50 border border-red-100 rounded-lg">
                   <p className="text-sm text-[#2e3138] whitespace-pre-line">
                     {selectedNotification.message.includes('Motivo:')
-                      ? selectedNotification.message.split('Motivo:')[1]?.trim() || 'No se proporcionó un motivo específico.'
+                      ? selectedNotification.message.split('Motivo:')[1]?.trim() || 'No specific reason was provided.'
                       : selectedNotification.message}
                   </p>
                 </div>

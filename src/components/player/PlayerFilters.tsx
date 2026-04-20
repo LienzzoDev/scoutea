@@ -80,7 +80,7 @@ const PlayerFilters = memo<PlayerFiltersProps>(function PlayerFilters({
     return {
       hasActiveFilters,
       totalActiveFilters,
-      buttonText: totalActiveFilters > 0 ? `Filtros (${totalActiveFilters})` : 'Filtros'
+      buttonText: totalActiveFilters > 0 ? `Filters (${totalActiveFilters})` : 'Filters'
     };
   }, [selectedNationalities, selectedPositions, selectedTeams, selectedCompetitions, selectedAges, activeFilters]);
 

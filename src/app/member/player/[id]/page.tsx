@@ -8,6 +8,7 @@ import AuthGuard from "@/components/auth/AuthGuard";
 import MemberNavbar from "@/components/layout/member-navbar";
 import PlayerFeatures from "@/components/player/PlayerFeatures";
 import PlayerHeader from "@/components/player/PlayerHeader";
+import PlayerScouting from "@/components/player/PlayerScouting";
 import PlayerInfo from "@/components/player/PlayerInfo";
 import PlayerReports from "@/components/player/PlayerReports";
 import PlayerSidebar from "@/components/player/PlayerSidebar";
@@ -66,7 +67,7 @@ export default function PlayerProfilePage() {
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
               <div className="w-8 h-8 border-4 border-[#8c1a10] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-[#6d6d6d]">Cargando jugador...</p>
+              <p className="text-[#6d6d6d]">Loading player...</p>
             </div>
           </div>
         </main>
@@ -83,14 +84,14 @@ export default function PlayerProfilePage() {
           <div className="flex items-center justify-center h-96">
             <div className="text-center max-w-md">
               <div className="text-red-600 text-6xl mb-4">⚠️</div>
-              <p className="text-[#6d6d6d] text-lg mb-2">Error al cargar el jugador</p>
+              <p className="text-[#6d6d6d] text-lg mb-2">Error loading player</p>
               <p className="text-sm text-red-600 mb-4">{error.message}</p>
               <p className="text-xs text-gray-500 mb-4">Player ID: {playerId}</p>
               <button
                 onClick={() => window.location.reload()}
                 className="bg-[#8c1a10] text-white px-4 py-2 rounded hover:bg-[#a01e12] transition-colors"
               >
-                Reintentar
+                Retry
               </button>
             </div>
           </div>
@@ -113,7 +114,7 @@ export default function PlayerProfilePage() {
         <main className="max-w-7xl mx-auto px-6" style={{ marginTop: "55px" }}>
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
-              <p className="text-[#6d6d6d] text-lg">Jugador no encontrado</p>
+              <p className="text-[#6d6d6d] text-lg">Player not found</p>
               <p className="text-sm text-gray-500 mt-2">Player ID: {playerId}</p>
             </div>
           </div>
@@ -174,6 +175,9 @@ export default function PlayerProfilePage() {
                 activeFeaturesTab={activeFeaturesTab}
                 onFeaturesTabChange={setActiveFeaturesTab}
               />
+            )}
+            {activeTab === "scouting" && (
+              <PlayerScouting player={player} />
             )}
           </div>
         </div>

@@ -201,7 +201,7 @@ export default function EquiposPage() {
     {
       key: 'url_trfm_broken',
       label: 'URL Broken',
-      getValue: (team: Team) => team.url_trfm_broken,
+      getValue: (team: Team) => team.url_trfm_broken ? 'Yes' : 'No',
     },
     {
       key: 'url_trfm',
@@ -291,6 +291,11 @@ export default function EquiposPage() {
       label: 'Nivel',
       getValue: (team: Team) => team.team_level,
     },
+    {
+      key: 'status',
+      label: 'Status',
+      getValue: (team: Team) => team.status,
+    },
   ], [])
 
   // Función de ordenamiento
@@ -329,12 +334,14 @@ export default function EquiposPage() {
     // Ordenar en cliente
     if (sortBy && sortBy !== 'team_name') { // team_name ya viene ordenado del backend
       return [...teams].sort((a, b) => {
-        let aValue: string | number | null | undefined = a[sortBy as keyof Team];
-        let bValue: string | number | null | undefined = b[sortBy as keyof Team];
+        const rawAValue = a[sortBy as keyof Team];
+        const rawBValue = b[sortBy as keyof Team];
 
-        // Manejar valores null/undefined
-        if (aValue === null || aValue === undefined) aValue = '';
-        if (bValue === null || bValue === undefined) bValue = '';
+        // Convertir a valores comparables
+        let aValue: string | number = typeof rawAValue === 'boolean' ? (rawAValue ? 1 : 0) :
+                                      rawAValue ?? '';
+        let bValue: string | number = typeof rawBValue === 'boolean' ? (rawBValue ? 1 : 0) :
+                                      rawBValue ?? '';
 
         // Convertir a string para comparación si es necesario
         if (typeof aValue === 'string') aValue = aValue.toLowerCase();

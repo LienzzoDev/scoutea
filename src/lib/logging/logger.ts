@@ -130,18 +130,18 @@ class Logger {
   }
 
   // Método específico para errores con stack trace
-  logError(__error: Error, context?: string, metadata?: unknown): void {
+  logError(err: Error, context?: string, metadata?: unknown): void {
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level: LogLevel.ERROR,
-      message: error.message,
+      message: err.message,
       context,
       metadata: this.sanitizeMetadata(metadata),
-      _error: {
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-        code: (error as any).code
+      error: {
+        name: err.name,
+        message: err.message,
+        stack: err.stack,
+        code: (err as Error & { code?: string }).code
       }
     }
 
@@ -190,17 +190,18 @@ class Logger {
     const level = statusCode >= 500 ? LogLevel.ERROR : 
                  statusCode >= 400 ? LogLevel.WARN : LogLevel.INFO
 
+    const meta = metadata as { userAgent?: string; ip?: string } | undefined
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level,
       message: `${method} ${url} - ${statusCode}`,
-      _context: context || 'HTTP',
+      context: context ?? 'HTTP',
       metadata: this.sanitizeMetadata(metadata),
-      _request: {
+      request: {
         method,
         url,
-        userAgent: metadata?.userAgent,
-        ip: metadata?.ip
+        userAgent: meta?.userAgent,
+        ip: meta?.ip
       },
       performance: {
         duration
@@ -234,13 +235,13 @@ class Logger {
   }
 
   // Sanitizar metadatos removiendo campos sensibles
-  private sanitizeMetadata(metadata: unknown): any {
+  private sanitizeMetadata(metadata: unknown): Record<string, unknown> | undefined {
     if (!metadata || typeof metadata !== 'object') {
-      return metadata
+      return undefined
     }
 
-    const sanitized = { ...metadata }
-    
+    const sanitized = { ...(metadata as Record<string, unknown>) }
+
     for (const field of this.config.sensitiveFields) {
       if (field in sanitized) {
         sanitized[field] = '[REDACTED]'
@@ -316,8 +317,8 @@ class Logger {
           },
           body: JSON.stringify({ logs: logsToFlush })
         })
-      } catch (_error) {
-        console.error('Failed to send logs to remote endpoint:', error)
+      } catch (flushError) {
+        console.error('Failed to send logs to remote endpoint:', flushError)
       }
     }
 
@@ -356,47 +357,61 @@ class Logger {
 export const logger = new Logger()
 
 // Función helper para crear loggers con contexto
-export function createLogger(__context: string, config?: Partial<LoggerConfig>): Logger {
+export function createLogger(logContext: string, config?: Partial<LoggerConfig>): Logger {
   const contextLogger = new Logger(config)
-  
+
   // Wrapper que añade contexto automáticamente
   return {
-    debug: (message: string, metadata?: unknown) => contextLogger.debug(message, context, metadata),
-    info: (message: string, metadata?: unknown) => contextLogger.info(message, context, metadata),
-    warn: (message: string, metadata?: unknown) => contextLogger.warn(message, context, metadata),
-    _error: (message: string, metadata?: unknown) => contextLogger.error(message, context, metadata),
-    critical: (message: string, metadata?: unknown) => contextLogger.critical(message, context, metadata),
-    logError: (_error: Error, metadata?: unknown) => contextLogger.logError(error, context, metadata),
-    logPerformance: (operation: string, duration: number, metadata?: unknown) => 
-      contextLogger.logPerformance(operation, duration, context, metadata),
+    debug: (message: string, metadata?: unknown) => contextLogger.debug(message, logContext, metadata),
+    info: (message: string, metadata?: unknown) => contextLogger.info(message, logContext, metadata),
+    warn: (message: string, metadata?: unknown) => contextLogger.warn(message, logContext, metadata),
+    error: (message: string, metadata?: unknown) => contextLogger.error(message, logContext, metadata),
+    critical: (message: string, metadata?: unknown) => contextLogger.critical(message, logContext, metadata),
+    logError: (err: Error, metadata?: unknown) => contextLogger.logError(err, logContext, metadata),
+    logPerformance: (operation: string, duration: number, metadata?: unknown) =>
+      contextLogger.logPerformance(operation, duration, logContext, metadata),
     logRequest: (method: string, url: string, statusCode: number, duration: number, metadata?: unknown) =>
-      contextLogger.logRequest(method, url, statusCode, duration, context, metadata)
-  } as any
+      contextLogger.logRequest(method, url, statusCode, duration, logContext, metadata)
+  } as Logger
+}
+
+// Types for Express-like request/response
+interface ExpressRequest {
+  method: string
+  url: string
+  headers: Record<string, string | string[] | undefined>
+  ip?: string
+  connection?: { remoteAddress?: string }
+}
+
+interface ExpressResponse {
+  statusCode: number
+  send: (body: unknown) => ExpressResponse
 }
 
 // Middleware para logging automático de requests
 export function createRequestLogger() {
-  return (req: unknown, res: unknown, next: unknown) => {
+  return (req: ExpressRequest, res: ExpressResponse, next: () => void) => {
     const startTime = Date.now()
     const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    
+
     // Añadir requestId al contexto global
-    ;(globalThis as any).requestId = requestId
-    
+    ;(globalThis as Record<string, unknown>).requestId = requestId
+
     // Log del request
-    logger.info(`Incoming __request: ${req.method} ${req.url}`, 'HTTP', {
+    logger.info(`Incoming request: ${req.method} ${req.url}`, 'HTTP', {
       requestId,
       method: req.method,
       url: req.url,
       userAgent: req.headers['user-agent'],
-      ip: req.ip || req.connection.remoteAddress
+      ip: req.ip ?? req.connection?.remoteAddress
     })
-    
+
     // Interceptar la respuesta
-    const originalSend = res.send
+    const originalSend = res.send.bind(res)
     res.send = function(body: unknown) {
       const duration = Date.now() - startTime
-      
+
       logger.logRequest(
         req.method,
         req.url,
@@ -405,13 +420,13 @@ export function createRequestLogger() {
         'HTTP',
         {
           requestId,
-          responseSize: body ? body.length : 0
+          responseSize: typeof body === 'string' ? body.length : 0
         }
       )
-      
-      return originalSend.call(this, body)
+
+      return originalSend(body)
     }
-    
+
     next()
   }
 }
@@ -421,7 +436,7 @@ export function setupGlobalErrorHandling(): void {
   // Errores no capturados en Node.js
   if (typeof process !== 'undefined') {
     process.on('uncaughtException', (error) => {
-      logger.critical('Uncaught Exception', 'GLOBAL', { __error: error.message, stack: error.stack })
+      logger.critical('Uncaught Exception', 'GLOBAL', { errorMessage: error.message, stack: error.stack })
       process.exit(1)
     })
     

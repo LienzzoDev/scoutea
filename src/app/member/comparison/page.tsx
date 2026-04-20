@@ -5,8 +5,8 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
-import MemberNavbar from '@/components/layout/member-navbar'
 import ComparisonStats from '@/components/comparison/ComparisonStats'
+import MemberNavbar from '@/components/layout/member-navbar'
 import { Button } from '@/components/ui/button'
 import FlagIcon from '@/components/ui/flag-icon'
 import { Input } from '@/components/ui/input'
@@ -19,7 +19,11 @@ interface ComparisonPlayer {
   player_name: string | null
   position_player: string | null
   nationality_1: string | null
+  nationality_2: string | null
+  national_tier: string | null
   team_name: string | null
+  team_country: string | null
+  team_level: string | null
   date_of_birth: string | Date | null
   photo_coverage: string | null
   player_trfm_value: number | null
@@ -28,6 +32,11 @@ interface ComparisonPlayer {
   foot: string | null
   contract_end: string | Date | null
   team_competition: string | null
+  competition_country: string | null
+  competition_tier: string | null
+  competition_level: string | null
+  on_loan: boolean | null
+  owner_club: string | null
   agency: string | null
 }
 
@@ -48,6 +57,105 @@ const calculateAge = (dateOfBirth: Date | string | null): number | null => {
 const formatMarketValue = (value: number | null | undefined) => {
   if (!value) return '-'
   return formatMoneyCompact(value)
+}
+
+const formatDate = (d: Date | string | null | undefined) =>
+  d ? new Date(d).toLocaleDateString('es-ES') : '-'
+
+interface InfoRow {
+  label: string
+  display1: string
+  display2: string
+  color1: string
+  color2: string
+}
+
+// Valores superiores se pintan verdes, inferiores rojos, empates/guiones negros.
+// Sólo tiene sentido comparar valores numéricos — para textos dejamos todo negro.
+const compareNumeric = (
+  n1: number | null | undefined,
+  n2: number | null | undefined,
+  higherIsBetter = true,
+): { color1: string; color2: string } => {
+  const BLACK = 'text-[#000000]'
+  const GREEN = 'text-green-600'
+  const RED = 'text-red-600'
+  if (n1 == null || n2 == null) return { color1: BLACK, color2: BLACK }
+  if (n1 === n2) return { color1: BLACK, color2: BLACK }
+  const p1Better = higherIsBetter ? n1 > n2 : n1 < n2
+  return {
+    color1: p1Better ? GREEN : RED,
+    color2: p1Better ? RED : GREEN,
+  }
+}
+
+const buildInfoRows = (
+  p1: ComparisonPlayer | null,
+  p2: ComparisonPlayer | null,
+): InfoRow[] => {
+  if (!p1 || !p2) return []
+  const BLACK = 'text-[#000000]'
+  const text = (v: unknown): string =>
+    v === null || v === undefined || v === '' ? '-' : String(v)
+  const row = (
+    label: string,
+    display1: string,
+    display2: string,
+    colors: { color1: string; color2: string } = { color1: BLACK, color2: BLACK },
+  ): InfoRow => ({ label, display1, display2, ...colors })
+
+  const contract1 = p1.contract_end ? new Date(p1.contract_end).getTime() : null
+  const contract2 = p2.contract_end ? new Date(p2.contract_end).getTime() : null
+
+  return [
+    row(
+      'Fecha de nacimiento',
+      p1.date_of_birth
+        ? `${formatDate(p1.date_of_birth)} (${calculateAge(p1.date_of_birth)})`
+        : '-',
+      p2.date_of_birth
+        ? `${formatDate(p2.date_of_birth)} (${calculateAge(p2.date_of_birth)})`
+        : '-',
+      // Más joven es mejor → higherIsBetter=false
+      compareNumeric(calculateAge(p1.date_of_birth), calculateAge(p2.date_of_birth), false),
+    ),
+    row('Position', text(p1.position_player), text(p2.position_player)),
+    row('Foot', text(p1.foot), text(p2.foot)),
+    row(
+      'Height',
+      p1.height ? `${p1.height} cm` : '-',
+      p2.height ? `${p2.height} cm` : '-',
+      compareNumeric(p1.height, p2.height),
+    ),
+    row('Nationality 1', text(p1.nationality_1), text(p2.nationality_1)),
+    row('Nationality 2', text(p1.nationality_2), text(p2.nationality_2)),
+    row('International', text(p1.national_tier), text(p2.national_tier)),
+    row('Team', text(p1.team_name), text(p2.team_name)),
+    row('Team Level', text(p1.team_level), text(p2.team_level)),
+    row('Competition', text(p1.team_competition), text(p2.team_competition)),
+    row('Competition Country', text(p1.competition_country), text(p2.competition_country)),
+    row('Competition Tier', text(p1.competition_tier), text(p2.competition_tier)),
+    row('Competition Level', text(p1.competition_level), text(p2.competition_level)),
+    row(
+      'On Loan',
+      p1.on_loan === true ? 'Yes' : p1.on_loan === false ? 'No' : '-',
+      p2.on_loan === true ? 'Yes' : p2.on_loan === false ? 'No' : '-',
+    ),
+    row('Owner Club', text(p1.owner_club), text(p2.owner_club)),
+    row(
+      'Contract End',
+      formatDate(p1.contract_end),
+      formatDate(p2.contract_end),
+      compareNumeric(contract1, contract2),
+    ),
+    row(
+      'TRFM Value',
+      formatMarketValue(p1.player_trfm_value),
+      formatMarketValue(p2.player_trfm_value),
+      compareNumeric(p1.player_trfm_value, p2.player_trfm_value),
+    ),
+    row('Agent', text(p1.agency), text(p2.agency)),
+  ]
 }
 
 // Componente de tarjeta de selección de jugador (extraído para evitar re-renders)
@@ -207,38 +315,38 @@ function PlayerSummaryCard({
         <X className="w-5 h-5" />
       </button>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-stretch gap-6">
         {player.photo_coverage && getValidImageUrl(player.photo_coverage) ? (
           <Image
             src={getValidImageUrl(player.photo_coverage)!}
             alt={player.player_name || ''}
-            width={64}
-            height={64}
-            className="w-16 h-16 rounded-lg object-cover"
+            width={144}
+            height={144}
+            className="w-36 h-36 rounded-lg object-cover flex-shrink-0"
           />
         ) : (
-          <div className="w-16 h-16 bg-gradient-to-br from-gray-300 to-gray-400 rounded-lg flex items-center justify-center">
-            <User className="w-8 h-8 text-gray-600" />
+          <div className="w-36 h-36 bg-gradient-to-br from-gray-300 to-gray-400 rounded-lg flex items-center justify-center flex-shrink-0">
+            <User className="w-16 h-16 text-gray-600" />
           </div>
         )}
-        <div>
-          <h3 className="text-lg font-semibold text-[#000000]">{player.player_name}</h3>
-          <p className="text-[#6d6d6d] text-sm">
+        <div className="flex flex-col justify-center min-w-0 flex-1">
+          <h3 className="text-xl font-semibold text-[#000000] truncate">{player.player_name}</h3>
+          <p className="text-[#6d6d6d] text-sm mt-1">
             {calculateAge(player.date_of_birth)} Years
           </p>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-2">
             {player.nationality_1 && (
               <FlagIcon nationality={player.nationality_1} size="sm" />
             )}
-            <span className="text-[#6d6d6d] text-sm">{player.nationality_1}</span>
+            <span className="text-[#6d6d6d] text-sm truncate">{player.nationality_1}</span>
           </div>
-          <div className="flex items-center gap-2 mt-2">
-            <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+          <div className="flex items-center gap-2 mt-3">
+            <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
               <span className="text-white text-xs font-bold">
                 {player.player_rating || '-'}
               </span>
             </div>
-            <span className="text-sm text-[#000000]">
+            <span className="text-sm text-[#000000] truncate">
               {player.position_player} | {formatMarketValue(player.player_trfm_value)}
             </span>
           </div>
@@ -404,7 +512,7 @@ export default function PlayerComparisonPage() {
                 <div className="p-6">
                   {/* Header Row */}
                   <div className="grid grid-cols-3 gap-8 py-3 border-b-2 border-gray-200 mb-4">
-                    <div className="text-[#6d6d6d] font-medium">Metric</div>
+                    <div className="text-[#6d6d6d] font-medium">Player Info</div>
                     <div className="text-[#000000] font-semibold text-center">
                       {selectedPlayer1?.player_name}
                     </div>
@@ -415,78 +523,18 @@ export default function PlayerComparisonPage() {
 
                   {/* Comparison Rows */}
                   <div className="space-y-0">
-                    {[
-                      {
-                        label: 'Age',
-                        value1: calculateAge(selectedPlayer1?.date_of_birth) || 'N/A',
-                        value2: calculateAge(selectedPlayer2?.date_of_birth) || 'N/A',
-                      },
-                      {
-                        label: 'Position',
-                        value1: selectedPlayer1?.position_player || 'N/A',
-                        value2: selectedPlayer2?.position_player || 'N/A',
-                      },
-                      {
-                        label: 'Team',
-                        value1: selectedPlayer1?.team_name || 'N/A',
-                        value2: selectedPlayer2?.team_name || 'N/A',
-                      },
-                      {
-                        label: 'Nationality',
-                        value1: selectedPlayer1?.nationality_1 || 'N/A',
-                        value2: selectedPlayer2?.nationality_1 || 'N/A',
-                      },
-                      {
-                        label: 'Overall Rating',
-                        value1: selectedPlayer1?.player_rating || 'N/A',
-                        value2: selectedPlayer2?.player_rating || 'N/A',
-                      },
-                      {
-                        label: 'Market Value',
-                        value1: formatMarketValue(selectedPlayer1?.player_trfm_value),
-                        value2: formatMarketValue(selectedPlayer2?.player_trfm_value),
-                      },
-                      {
-                        label: 'Height',
-                        value1: selectedPlayer1?.height
-                          ? `${selectedPlayer1.height} cm`
-                          : 'N/A',
-                        value2: selectedPlayer2?.height
-                          ? `${selectedPlayer2.height} cm`
-                          : 'N/A',
-                      },
-                      {
-                        label: 'Preferred Foot',
-                        value1: selectedPlayer1?.foot || 'N/A',
-                        value2: selectedPlayer2?.foot || 'N/A',
-                      },
-                      {
-                        label: 'Contract Until',
-                        value1: selectedPlayer1?.contract_end
-                          ? new Date(selectedPlayer1.contract_end).toLocaleDateString('es-ES')
-                          : 'N/A',
-                        value2: selectedPlayer2?.contract_end
-                          ? new Date(selectedPlayer2.contract_end).toLocaleDateString('es-ES')
-                          : 'N/A',
-                      },
-                      {
-                        label: 'Competition',
-                        value1: selectedPlayer1?.team_competition || 'N/A',
-                        value2: selectedPlayer2?.team_competition || 'N/A',
-                      },
-                      {
-                        label: 'Agent',
-                        value1: selectedPlayer1?.agency || 'N/A',
-                        value2: selectedPlayer2?.agency || 'N/A',
-                      },
-                    ].map((row, index) => (
+                    {buildInfoRows(selectedPlayer1, selectedPlayer2).map((row, index) => (
                       <div
                         key={index}
                         className="grid grid-cols-3 gap-8 py-3 border-b border-gray-100 last:border-b-0"
                       >
                         <div className="text-[#6d6d6d] font-medium">{row.label}</div>
-                        <div className="text-[#000000] text-center">{row.value1}</div>
-                        <div className="text-[#000000] text-center">{row.value2}</div>
+                        <div className={`text-center ${row.color1} ${row.color1 !== 'text-[#000000]' ? 'font-semibold' : ''}`}>
+                          {row.display1}
+                        </div>
+                        <div className={`text-center ${row.color2} ${row.color2 !== 'text-[#000000]' ? 'font-semibold' : ''}`}>
+                          {row.display2}
+                        </div>
                       </div>
                     ))}
                   </div>

@@ -18,6 +18,9 @@ export const maxDuration = 300 // 5 minutos (máximo en Vercel Hobby plan)
 export const dynamic = 'force-dynamic'
 
 interface PlayerImportRow {
+  // Index signature for dynamic column access
+  [key: string]: string | number | boolean | Date | undefined | null
+
   // Campos de identificación y nombres
   old_id?: string | number
   id_player?: string
@@ -178,11 +181,16 @@ function parseBoolean(value: boolean | string | undefined | null): boolean | nul
   return null
 }
 
+// Wide type from row index access
+type RowValue = string | number | boolean | Date | undefined | null
+
 /**
  * Helper: Convertir valor a número o null
  */
-function parseNumber(value: number | string | undefined | null): number | null {
+function parseNumber(value: RowValue): number | null {
   if (value === null || value === undefined || value === '') return null
+  if (typeof value === 'boolean') return value ? 1 : 0
+  if (value instanceof Date) return value.getTime()
   const num = typeof value === 'string' ? parseFloat(value) : value
   return isNaN(num) ? null : num
 }
@@ -190,15 +198,16 @@ function parseNumber(value: number | string | undefined | null): number | null {
 /**
  * Helper: Convertir valor a string o null
  */
-function parseString(value: string | number | undefined | null): string | null {
+function parseString(value: RowValue): string | null {
   if (value === null || value === undefined || value === '') return null
+  if (value instanceof Date) return value.toISOString()
   return String(value).trim()
 }
 
 /**
  * Helper: Enviar evento SSE
  */
-function sendSSE(controller: ReadableStreamDefaultController, data: any) {
+function sendSSE(controller: ReadableStreamDefaultController, data: Record<string, unknown>) {
   const message = `data: ${JSON.stringify(data)}\n\n`
   controller.enqueue(new TextEncoder().encode(message))
 }
@@ -280,7 +289,14 @@ export async function POST(request: NextRequest) {
 
     // 🔍 DETECTAR SI LA PRIMERA FILA SON ENCABEZADOS
     // Leer todas las filas como arrays para inspeccionar
-    const allRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: null }) as any[][]
+    if (!worksheet) {
+      return new Response(
+        JSON.stringify({ error: 'No se pudo leer la hoja de cálculo.' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+    type CellValue = string | number | boolean | null
+    const allRows = XLSX.utils.sheet_to_json<CellValue[]>(worksheet, { header: 1, defval: null })
 
     if (!allRows || allRows.length === 0) {
       return new Response(
@@ -289,13 +305,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const firstRow = allRows[0] || []
-    const secondRow = allRows[1] || []
+    const firstRow = allRows[0] ?? []
+    const secondRow = allRows[1] ?? []
 
     // 🔍 Función para verificar si una fila contiene encabezados
-    const isHeaderRow = (row: any[]) => {
-      return row.some((cell: any) => {
-        const cellStr = String(cell || '').toLowerCase().trim()
+    const isHeaderRow = (row: CellValue[]) => {
+      return row.some((cell) => {
+        const cellStr = String(cell ?? '').toLowerCase().trim()
         return cellStr === 'player_name' ||
                cellStr === 'old_id' ||
                cellStr === 'id_player' ||
@@ -306,9 +322,9 @@ export async function POST(request: NextRequest) {
     }
 
     // 🔍 Verificar si la primera fila está vacía (todas las celdas son null/undefined/vacías)
-    const firstRowIsEmpty = firstRow.every((cell: any) => !cell || String(cell).trim() === '')
+    const firstRowIsEmpty = firstRow.every((cell) => !cell || String(cell).trim() === '')
 
-    let headerRow: any[]
+    let headerRow: CellValue[]
     let dataStartIndex: number
     let hasHeaders = false
 
@@ -333,21 +349,21 @@ export async function POST(request: NextRequest) {
 
     if (hasHeaders) {
       // ✅ TIENE ENCABEZADOS: Usar la fila de encabezados detectada
-      const headers = headerRow.map((cell: any) => String(cell || '').trim())
+      const headers = headerRow.map((cell) => String(cell ?? '').trim())
 
       // Convertir las filas restantes a objetos usando los encabezados
-      data = allRows.slice(dataStartIndex).map((row: any[]) => {
-        const obj: any = {}
-        headers.forEach((header: string, index: number) => {
-          if (header) {
+      data = allRows.slice(dataStartIndex).map((row) => {
+        const obj: PlayerImportRow = {}
+        headers.forEach((header, index) => {
+          if (header && row) {
             obj[header] = row[index]
           }
         })
-        return obj as PlayerImportRow
+        return obj
       })
     } else {
       // ❌ NO TIENE ENCABEZADOS: Usar las columnas generadas por XLSX
-      data = XLSX.utils.sheet_to_json(worksheet, {
+      data = XLSX.utils.sheet_to_json<PlayerImportRow>(worksheet, {
         raw: false,
         defval: null
       })
@@ -445,8 +461,8 @@ export async function POST(request: NextRequest) {
           })
 
           // 🔍 DEBUG: Mostrar columnas del Excel para diagnóstico
-          if (data.length > 0) {
-            const firstDataRow = data[0]
+          const firstDataRow = data[0]
+          if (data.length > 0 && firstDataRow) {
             const columns = Object.keys(firstDataRow)
 
             sendSSE(controller, {
@@ -519,6 +535,7 @@ export async function POST(request: NextRequest) {
           // 🔄 PROCESAR CADA LOTE
           for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
             const batch = batches[batchIndex]
+            if (!batch) continue
             const batchNum = batchIndex + 1
 
             sendSSE(controller, {
@@ -529,7 +546,9 @@ export async function POST(request: NextRequest) {
             })
 
             // Procesar cada jugador del lote
-            for (const row of batch) {
+            for (let rowIndex = 0; rowIndex < batch.length; rowIndex++) {
+              const row = batch[rowIndex]
+              if (!row) continue
               // 🔍 DETERMINAR ID DE WYSCOUT (soportar múltiples formatos de columna)
               const wyscoutId = parseString(
                 row['wyscout_id 1'] || row.id
@@ -554,11 +573,11 @@ export async function POST(request: NextRequest) {
               // Validar que al menos tengamos un nombre de jugador
               if (!playerName) {
                 results.failed++
-                const rowIndex = (batchIndex * BATCH_SIZE) + batch.indexOf(row) + 1
-                results.errors.push(`Fila ${rowIndex} sin nombre de jugador`)
+                const fileRowNum = (batchIndex * BATCH_SIZE) + rowIndex + 1
+                results.errors.push(`Fila ${fileRowNum} sin nombre de jugador`)
                 sendSSE(controller, {
                   type: 'error',
-                  message: `⚠️ Fila ${rowIndex} sin nombre de jugador`
+                  message: `⚠️ Fila ${fileRowNum} sin nombre de jugador`
                 })
                 continue
               }
@@ -580,7 +599,7 @@ export async function POST(request: NextRequest) {
             wyscout_name_1: parseString(row['wyscout_name 1']) || null,
             wyscout_id_2: parseString(row['wyscout_id 2']),
             wyscout_name_2: parseString(row['wyscout_name 2']),
-            id_fmi: parseString(row.id_fmi || row.ID_FMI || row['ID FMI'] || row['id FMI'] || row['Id FMI']),
+            id_fmi: parseString(row.id_fmi || row['ID_FMI'] || row['ID FMI'] || row['id FMI'] || row['Id FMI']),
 
             // URLs y referencias
             player_rating: parseNumber(row.player_rating),
@@ -673,7 +692,7 @@ export async function POST(request: NextRequest) {
             existing_club: parseString(row.existing_club),
           }
 
-                let player: { id_player: string } | null = null
+                let player: { id_player: number } | null = null
 
                 // 🆕 SI NO EXISTE, CREAR JUGADOR AUTOMÁTICAMENTE
                 if (!existingPlayer) {
@@ -683,16 +702,18 @@ export async function POST(request: NextRequest) {
                       select: { id_player: true }
                     })
                     // Añadir a los mapas para futuras referencias
-                    const newPlayerData = {
-                      id_player: player.id_player,
-                      wyscout_id_1: wyscoutId,
-                      wyscout_id_2: null,
-                      player_name: playerName
+                    if (player) {
+                      const newPlayerData = {
+                        id_player: player.id_player,
+                        wyscout_id_1: wyscoutId,
+                        wyscout_id_2: null as string | null,
+                        player_name: playerName
+                      }
+                      if (wyscoutId) {
+                        playerMap.set(wyscoutId, newPlayerData)
+                      }
+                      playerNameMap.set(playerName, newPlayerData)
                     }
-                    if (wyscoutId) {
-                      playerMap.set(wyscoutId, newPlayerData)
-                    }
-                    playerNameMap.set(playerName, newPlayerData)
 
                     results.created++
                     if (results.createdPlayers.length < 50) { // Limitar a 50 para evitar memoria
@@ -749,106 +770,109 @@ export async function POST(request: NextRequest) {
                 // 🔄 ACTUALIZAR/CREAR ESTADÍSTICAS (solo si hay campos de stats en el XLS)
                 if (row['Matches played'] || row['Goals per 90'] || row['Passes per 90']) {
                   try {
+                    // Helper to convert to integer
+                    const toInt = (val: unknown): number => Math.round(parseNumber(val as number | string | undefined | null) || 0)
+
                     await prisma.playerStats3m.upsert({
                       where: {
                         id_player: player.id_player
                       },
                       update: {
                         // Partidos y minutos
-                        matches_played_tot_3m: Math.round(row['Matches played'] || 0),
-                        minutes_played_tot_3m: Math.round(row['Minutes played'] || 0),
+                        matches_played_tot_3m: toInt(row['Matches played']),
+                        minutes_played_tot_3m: toInt(row['Minutes played']),
 
                         // Duelos defensivos
-                        def_duels_p90_3m: row['Defensive duels per 90'] || null,
-                        def_duels_won_percent_3m: row['Defensive duels won, %'] || null,
+                        def_duels_p90_3m: parseNumber(row['Defensive duels per 90'] as number | undefined),
+                        def_duels_won_percent_3m: parseNumber(row['Defensive duels won, %'] as number | undefined),
 
                         // Duelos aéreos
-                        aerials_duels_p90_3m: row['Aerial duels per 90'] || null,
-                        aerials_duels_won_percent_3m: row['Aerial duels won, %'] || null,
+                        aerials_duels_p90_3m: parseNumber(row['Aerial duels per 90'] as number | undefined),
+                        aerials_duels_won_percent_3m: parseNumber(row['Aerial duels won, %'] as number | undefined),
 
                         // Tackles e intercepciones
-                        tackles_p90_3m: row['Sliding tackles per 90'] || null,
-                        interceptions_p90_3m: row['Interceptions per 90'] || null,
+                        tackles_p90_3m: parseNumber(row['Sliding tackles per 90'] as number | undefined),
+                        interceptions_p90_3m: parseNumber(row['Interceptions per 90'] as number | undefined),
 
                         // Faltas y tarjetas
-                        fouls_p90_3m: row['Fouls per 90'] || null,
-                        yellow_cards_p90_3m: row['Yellow cards per 90'] || null,
-                        red_cards_p90_3m: row['Red cards per 90'] || null,
+                        fouls_p90_3m: parseNumber(row['Fouls per 90'] as number | undefined),
+                        yellow_cards_p90_3m: parseNumber(row['Yellow cards per 90'] as number | undefined),
+                        red_cards_p90_3m: parseNumber(row['Red cards per 90'] as number | undefined),
 
                         // Goles y tiros
-                        goals_p90_3m: row['Goals per 90'] || null,
-                        shots_p90_3m: row['Shots per 90'] || null,
+                        goals_p90_3m: parseNumber(row['Goals per 90'] as number | undefined),
+                        shots_p90_3m: parseNumber(row['Shots per 90'] as number | undefined),
 
                         // Asistencias y centros
-                        assists_p90_3m: row['Assists per 90'] || null,
-                        crosses_p90_3m: row['Crosses per 90'] || null,
+                        assists_p90_3m: parseNumber(row['Assists per 90'] as number | undefined),
+                        crosses_p90_3m: parseNumber(row['Crosses per 90'] as number | undefined),
 
                         // Duelos ofensivos
-                        off_duels_p90_3m: row['Offensive duels per 90'] || null,
-                        off_duels_won_percent_3m: row['Offensive duels won, %'] || null,
+                        off_duels_p90_3m: parseNumber(row['Offensive duels per 90'] as number | undefined),
+                        off_duels_won_percent_3m: parseNumber(row['Offensive duels won, %'] as number | undefined),
 
                         // Pases
-                        passes_p90_3m: row['Passes per 90'] || null,
-                        accurate_passes_percent_3m: row['Accurate passes, %'] || null,
-                        forward_passes_p90_3m: row['Forward passes per 90'] || null,
+                        passes_p90_3m: parseNumber(row['Passes per 90'] as number | undefined),
+                        accurate_passes_percent_3m: parseNumber(row['Accurate passes, %'] as number | undefined),
+                        forward_passes_p90_3m: parseNumber(row['Forward passes per 90'] as number | undefined),
 
                         // Porteros
-                        conceded_goals_p90_3m: row['Conceded goals per 90'] || null,
-                        shots_against_p90_3m: row['Shots against per 90'] || null,
-                        clean_sheets_tot_3m: Math.round(row['Clean sheets'] || 0),
-                        save_rate_percent_3m: row['Save rate, %'] || null,
-                        prevented_goals_p90_3m: row['Prevented goals per 90'] || null
+                        conceded_goals_p90_3m: parseNumber(row['Conceded goals per 90'] as number | undefined),
+                        shots_against_p90_3m: parseNumber(row['Shots against per 90'] as number | undefined),
+                        clean_sheets_tot_3m: toInt(row['Clean sheets']),
+                        save_rate_percent_3m: parseNumber(row['Save rate, %'] as number | undefined),
+                        prevented_goals_p90_3m: parseNumber(row['Prevented goals per 90'] as number | undefined)
                       },
                       create: {
                         id_player: player.id_player,
 
                         // Partidos y minutos
-                        matches_played_tot_3m: Math.round(row['Matches played'] || 0),
-                        minutes_played_tot_3m: Math.round(row['Minutes played'] || 0),
+                        matches_played_tot_3m: toInt(row['Matches played']),
+                        minutes_played_tot_3m: toInt(row['Minutes played']),
 
                         // Duelos defensivos
-                        def_duels_p90_3m: row['Defensive duels per 90'] || null,
-                        def_duels_won_percent_3m: row['Defensive duels won, %'] || null,
+                        def_duels_p90_3m: parseNumber(row['Defensive duels per 90'] as number | undefined),
+                        def_duels_won_percent_3m: parseNumber(row['Defensive duels won, %'] as number | undefined),
 
                         // Duelos aéreos
-                        aerials_duels_p90_3m: row['Aerial duels per 90'] || null,
-                        aerials_duels_won_percent_3m: row['Aerial duels won, %'] || null,
+                        aerials_duels_p90_3m: parseNumber(row['Aerial duels per 90'] as number | undefined),
+                        aerials_duels_won_percent_3m: parseNumber(row['Aerial duels won, %'] as number | undefined),
 
                         // Tackles e intercepciones
-                        tackles_p90_3m: row['Sliding tackles per 90'] || null,
-                        interceptions_p90_3m: row['Interceptions per 90'] || null,
+                        tackles_p90_3m: parseNumber(row['Sliding tackles per 90'] as number | undefined),
+                        interceptions_p90_3m: parseNumber(row['Interceptions per 90'] as number | undefined),
 
                         // Faltas y tarjetas
-                        fouls_p90_3m: row['Fouls per 90'] || null,
-                        yellow_cards_p90_3m: row['Yellow cards per 90'] || null,
-                        red_cards_p90_3m: row['Red cards per 90'] || null,
+                        fouls_p90_3m: parseNumber(row['Fouls per 90'] as number | undefined),
+                        yellow_cards_p90_3m: parseNumber(row['Yellow cards per 90'] as number | undefined),
+                        red_cards_p90_3m: parseNumber(row['Red cards per 90'] as number | undefined),
 
                         // Goles y tiros
-                        goals_p90_3m: row['Goals per 90'] || null,
-                        shots_p90_3m: row['Shots per 90'] || null,
+                        goals_p90_3m: parseNumber(row['Goals per 90'] as number | undefined),
+                        shots_p90_3m: parseNumber(row['Shots per 90'] as number | undefined),
 
                         // Asistencias y centros
-                        assists_p90_3m: row['Assists per 90'] || null,
-                        crosses_p90_3m: row['Crosses per 90'] || null,
+                        assists_p90_3m: parseNumber(row['Assists per 90'] as number | undefined),
+                        crosses_p90_3m: parseNumber(row['Crosses per 90'] as number | undefined),
 
                         // Duelos ofensivos
-                        off_duels_p90_3m: row['Offensive duels per 90'] || null,
-                        off_duels_won_percent_3m: row['Offensive duels won, %'] || null,
+                        off_duels_p90_3m: parseNumber(row['Offensive duels per 90'] as number | undefined),
+                        off_duels_won_percent_3m: parseNumber(row['Offensive duels won, %'] as number | undefined),
 
                         // Pases
-                        passes_p90_3m: row['Passes per 90'] || null,
-                        accurate_passes_percent_3m: row['Accurate passes, %'] || null,
-                        forward_passes_p90_3m: row['Forward passes per 90'] || null,
+                        passes_p90_3m: parseNumber(row['Passes per 90'] as number | undefined),
+                        accurate_passes_percent_3m: parseNumber(row['Accurate passes, %'] as number | undefined),
+                        forward_passes_p90_3m: parseNumber(row['Forward passes per 90'] as number | undefined),
 
                         // Porteros
-                        conceded_goals_p90_3m: row['Conceded goals per 90'] || null,
-                        shots_against_p90_3m: row['Shots against per 90'] || null,
-                        clean_sheets_tot_3m: Math.round(row['Clean sheets'] || 0),
-                        save_rate_percent_3m: row['Save rate, %'] || null,
-                        prevented_goals_p90_3m: row['Prevented goals per 90'] || null
+                        conceded_goals_p90_3m: parseNumber(row['Conceded goals per 90'] as number | undefined),
+                        shots_against_p90_3m: parseNumber(row['Shots against per 90'] as number | undefined),
+                        clean_sheets_tot_3m: toInt(row['Clean sheets']),
+                        save_rate_percent_3m: parseNumber(row['Save rate, %'] as number | undefined),
+                        prevented_goals_p90_3m: parseNumber(row['Prevented goals per 90'] as number | undefined)
                       }
                     })
-                  } catch (statsError) {
+                  } catch {
                     // No marcamos como error total, el jugador fue creado/actualizado correctamente
                   }
                 }
@@ -856,7 +880,7 @@ export async function POST(request: NextRequest) {
                 results.success++
 
                 // Enviar progreso cada 10 jugadores
-                const currentProgress = (batchIndex * BATCH_SIZE) + batch.indexOf(row) + 1
+                const currentProgress = (batchIndex * BATCH_SIZE) + rowIndex + 1
                 if (currentProgress % 10 === 0 || currentProgress === data.length) {
                   sendSSE(controller, {
                     type: 'progress',

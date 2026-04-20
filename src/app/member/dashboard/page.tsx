@@ -22,6 +22,8 @@ export default function MemberDashboard() {
     activeTab,
     paymentSuccess,
     selectedCategories,
+    statsPeriods,
+    handleStatsPeriodToggle,
     activeFilters,
     selectedNationalities,
     selectedPositions,
@@ -91,10 +93,10 @@ export default function MemberDashboard() {
             </div>
             <div className="ml-3">
               <h3 className="text-sm font-medium text-green-800">
-                ¡Pago completado exitosamente!
+                Payment completed successfully!
               </h3>
               <div className="mt-2 text-sm text-green-700">
-                <p>Tu suscripción ha sido activada correctamente.</p>
+                <p>Your subscription has been activated.</p>
               </div>
             </div>
           </div>
@@ -121,6 +123,7 @@ export default function MemberDashboard() {
           onCategoryToggle={handleCategoryToggle}
           onReset={resetCategories}
           minCategories={1}
+          maxCategories={20}
           storageKey="dashboard-selected-categories"
         />
 
@@ -136,7 +139,7 @@ export default function MemberDashboard() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#6d6d6d] w-4 h-4" />
               <Input
-                placeholder="Buscar por nombre, nacionalidad, equipo, posición..."
+                placeholder="Search by name, nationality, team, position..."
                 className="pl-10 w-80 bg-[#ffffff] border-[#e7e7e7]"
                 value={searchTerm}
                 onChange={(e) => handleSearch(e.target.value)}
@@ -169,99 +172,128 @@ export default function MemberDashboard() {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <h3 className="font-semibold text-[#000000]">Filtros</h3>
+                <h3 className="font-semibold text-[#000000]">Filters</h3>
                 {(Object.keys(activeFilters).length > 0 || selectedNationalities.length > 0 || selectedPositions.length > 0 || selectedTeams.length > 0 || selectedCompetitions.length > 0 || selectedAges.length > 0) && (
                   <button
                     onClick={clearFilters}
                     className="flex items-center gap-1 px-2 py-1 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors cursor-pointer"
                   >
-                    <span className="text-red-600 text-sm">Limpiar Filtros</span>
+                    <span className="text-red-600 text-sm">Clear Filters</span>
                     <X className="w-3 h-3 text-red-600" />
                   </button>
                 )}
               </div>
             </div>
 
+            {/* Stats Period */}
+            <div className="mb-6">
+              <span className="block text-sm font-medium text-gray-700 mb-2">
+                Stats Period (max. 2)
+              </span>
+              <div className="flex rounded-lg border border-[#e7e7e7] overflow-hidden w-fit">
+                {(['3m', '6m', '1y', '2y'] as const).map((period) => {
+                  const isActive = statsPeriods.includes(period)
+                  const isDisabled = !isActive && statsPeriods.length >= 2
+                  return (
+                    <button
+                      key={period}
+                      onClick={() => handleStatsPeriodToggle(period)}
+                      disabled={isDisabled}
+                      className={`px-4 py-2 text-sm font-medium transition-colors ${
+                        isActive
+                          ? 'bg-[#8c1a10] text-white cursor-pointer'
+                          : isDisabled
+                          ? 'bg-white text-[#c7c7c7] cursor-not-allowed'
+                          : 'bg-white text-[#6d6d6d] hover:bg-[#f0f0f0] cursor-pointer'
+                      }`}
+                    >
+                      {period.toUpperCase()}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
             {/* Filter Options */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Nacionalidades */}
+              {/* Nationalities */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nacionalidad
+                  Nationality
                 </label>
                 <MultiSelectFilter
-                  label="Nacionalidad"
+                  label="Nationality"
                   options={filterOptions.nationalities}
                   selectedValues={selectedNationalities}
                   onSelectionChange={setSelectedNationalities}
-                  placeholder="Seleccionar nacionalidades..."
-                  searchPlaceholder="Buscar nacionalidades..."
+                  placeholder="Select nationalities..."
+                  searchPlaceholder="Search nationalities..."
                   maxDisplayTags={2}
                 />
               </div>
 
-              {/* Posiciones */}
+              {/* Positions */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Posición
+                  Position
                 </label>
                 <MultiSelectFilter
-                  label="Posición"
+                  label="Position"
                   options={filterOptions.positions}
                   selectedValues={selectedPositions}
                   onSelectionChange={setSelectedPositions}
-                  placeholder="Seleccionar posiciones..."
-                  searchPlaceholder="Buscar posiciones..."
+                  placeholder="Select positions..."
+                  searchPlaceholder="Search positions..."
                   maxDisplayTags={2}
                 />
               </div>
 
-              {/* Equipos */}
+              {/* Teams */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Equipo
+                  Team
                 </label>
                 <MultiSelectFilter
-                  label="Equipo"
+                  label="Team"
                   options={filterOptions.teams}
                   selectedValues={selectedTeams}
                   onSelectionChange={setSelectedTeams}
-                  placeholder="Seleccionar equipos..."
-                  searchPlaceholder="Buscar equipos..."
+                  placeholder="Select teams..."
+                  searchPlaceholder="Search teams..."
                   maxDisplayTags={1}
                 />
               </div>
 
-              {/* Competiciones */}
+              {/* Competitions */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Competición
+                  Competition
                 </label>
                 <MultiSelectFilter
-                  label="Competición"
+                  label="Competition"
                   options={filterOptions.competitions}
                   selectedValues={selectedCompetitions}
                   onSelectionChange={setSelectedCompetitions}
-                  placeholder="Seleccionar competiciones..."
-                  searchPlaceholder="Buscar competiciones..."
+                  placeholder="Select competitions..."
+                  searchPlaceholder="Search competitions..."
                   maxDisplayTags={1}
                 />
               </div>
             </div>
 
-            {/* Filtros adicionales */}
+            {/* Additional filters */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200">
-              {/* Rango de Edad */}
+              {/* Age Range */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Rango de Edad
+                  Age Range
                 </label>
                 <RangeFilter
-                  label="Edad"
+                  label="Age"
                   minValue={activeFilters.min_age}
                   maxValue={activeFilters.max_age}
-                  minPlaceholder={filterOptions.stats?.age.min ? String(filterOptions.stats.age.min) : "Mín"}
-                  maxPlaceholder={filterOptions.stats?.age.max ? String(filterOptions.stats.age.max) : "Máx"}
+                  minPlaceholder={filterOptions.stats?.age.min ? String(filterOptions.stats.age.min) : "Min"}
+                  maxPlaceholder={filterOptions.stats?.age.max ? String(filterOptions.stats.age.max) : "Max"}
                   onRangeChange={(min, max) =>{
                     const newFilters = { ...activeFilters }
                     if (min === undefined) {
@@ -276,20 +308,20 @@ export default function MemberDashboard() {
                     }
                     applyFilters(newFilters)
                   }}
-                  placeholder="Seleccionar rango de edad..." step="1" suffix=" años" />
+                  placeholder="Select age range..." step="1" suffix=" years" />
               </div>
 
-              {/* Rango de Rating */}
+              {/* Rating Range */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Rango de Rating
+                  Rating Range
                 </label>
                 <RangeFilter
                   label="Rating"
                   minValue={activeFilters.min_rating}
                   maxValue={activeFilters.max_rating}
-                  minPlaceholder={filterOptions.stats?.rating.min ? String(filterOptions.stats.rating.min) : "Mín"}
-                  maxPlaceholder={filterOptions.stats?.rating.max ? String(filterOptions.stats.rating.max) : "Máx"}
+                  minPlaceholder={filterOptions.stats?.rating.min ? String(filterOptions.stats.rating.min) : "Min"}
+                  maxPlaceholder={filterOptions.stats?.rating.max ? String(filterOptions.stats.rating.max) : "Max"}
                   onRangeChange={(min, max) =>{
                     const newFilters = { ...activeFilters }
                     if (min === undefined) {
@@ -304,20 +336,20 @@ export default function MemberDashboard() {
                     }
                     applyFilters(newFilters)
                   }}
-                  placeholder="Seleccionar rango de rating..." step="0.1" />
+                  placeholder="Select rating range..." step="0.1" />
               </div>
 
-              {/* Rango de Valor de Mercado */}
+              {/* Market Value Range */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Valor de Mercado (€M)
+                  Market Value (€M)
                 </label>
                 <RangeFilter
-                  label="Valor"
+                  label="Value"
                   minValue={activeFilters.min_value}
                   maxValue={activeFilters.max_value}
-                  minPlaceholder={filterOptions.stats?.value.min ? String(filterOptions.stats.value.min / 1000000) : "Mín"}
-                  maxPlaceholder={filterOptions.stats?.value.max ? String(filterOptions.stats.value.max / 1000000) : "Máx"}
+                  minPlaceholder={filterOptions.stats?.value.min ? String(filterOptions.stats.value.min / 1000000) : "Min"}
+                  maxPlaceholder={filterOptions.stats?.value.max ? String(filterOptions.stats.value.max / 1000000) : "Max"}
                   onRangeChange={(min, max) =>{
                     const newFilters = { ...activeFilters }
                     if (min === undefined) {
@@ -332,8 +364,70 @@ export default function MemberDashboard() {
                     }
                     applyFilters(newFilters)
                   }}
-                  placeholder="Seleccionar rango de valor..." step="0.1" suffix="M €" />
+                  placeholder="Select value range..." step="0.1" suffix="M €" />
               </div>
+            </div>
+
+            {/* Data availability filters */}
+            <div className="flex flex-wrap gap-3 mt-6 pt-6 border-t border-gray-200">
+              {[
+                { key: 'has_market_value' as const, label: 'With Market Value' },
+                { key: 'has_attributes' as const, label: 'With Attributes' },
+                { key: 'has_stats' as const, label: 'With Stats' },
+                { key: 'has_text_report' as const, label: 'With Text' },
+                { key: 'has_video_report' as const, label: 'With Video' },
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => {
+                    const newFilters = { ...activeFilters }
+                    if (newFilters[key]) {
+                      delete newFilters[key]
+                    } else {
+                      newFilters[key] = true
+                    }
+                    applyFilters(newFilters)
+                  }}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors cursor-pointer ${
+                    activeFilters[key]
+                      ? 'bg-[#8c1a10] text-white border-[#8c1a10]'
+                      : 'bg-white text-[#6d6d6d] border-[#e7e7e7] hover:bg-[#f0f0f0]'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Player category filters */}
+            <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t border-gray-200">
+              {[
+                { key: 'is_youth_discovery' as const, label: 'Youth Discovery' },
+                { key: 'is_emerging_talent' as const, label: 'Emerging Talent' },
+                { key: 'is_professional' as const, label: 'Professional' },
+                { key: 'is_top_leagues' as const, label: 'Top Leagues' },
+                { key: 'is_big_five' as const, label: 'Big Five' },
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => {
+                    const newFilters = { ...activeFilters }
+                    if (newFilters[key]) {
+                      delete newFilters[key]
+                    } else {
+                      newFilters[key] = true
+                    }
+                    applyFilters(newFilters)
+                  }}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors cursor-pointer ${
+                    activeFilters[key]
+                      ? 'bg-[#8c1a10] text-white border-[#8c1a10]'
+                      : 'bg-white text-[#6d6d6d] border-[#e7e7e7] hover:bg-[#f0f0f0]'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -342,7 +436,7 @@ export default function MemberDashboard() {
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
             <p className="text-red-600">
-              Error al cargar los jugadores: {typeof error === 'string' ? error : (error as any)?.message || 'Error desconocido'}
+              Error loading players: {typeof error === 'string' ? error : (error as any)?.message || 'Unknown error'}
             </p>
           </div>
         )}
@@ -353,22 +447,22 @@ export default function MemberDashboard() {
             {!loading && filteredPlayers.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-[#6d6d6d] text-lg">{activeTab === "favourites"
-                    ? "No tienes jugadores en tus favoritos"
+                    ? "You have no players in your favourites"
                     : activeTab === "news"
-                    ? "No hay jugadores nuevos en los últimos 7 días"
+                    ? "No new players in the last 7 days"
                     : searchTerm
-                    ? `No se encontraron jugadores para "${searchTerm}"`
-                    : "No se encontraron jugadores"}
+                    ? `No players found for "${searchTerm}"`
+                    : "No players found"}
                 </p>
                 <p className="text-[#6d6d6d] text-sm mt-2">{searchTerm
-                    ? "Intenta con otros términos de búsqueda"
-                    : "No hay jugadores disponibles en este momento"}
+                    ? "Try different search terms"
+                    : "No players available at the moment"}
                 </p>
                 {searchTerm && (
                   <button
                     onClick={() => handleSearch("")}
                     className="mt-4 px-4 py-2 bg-[#8c1a10] text-white rounded-lg hover:bg-[#6d1410] transition-colors">
-                    Ver todos los jugadores
+                    View all players
                   </button>
                 )}
 
@@ -415,11 +509,11 @@ export default function MemberDashboard() {
                   {loading && hasMore && filteredPlayers.length > 0 && (
                     <div className="flex flex-col items-center gap-2">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8c1a10]"></div>
-                      <span className="text-[#6d6d6d] text-sm">Cargando más jugadores...</span>
+                      <span className="text-[#6d6d6d] text-sm">Loading more players...</span>
                     </div>
                   )}
                   {!hasMore && filteredPlayers.length > 0 && (
-                    <p className="text-[#6d6d6d] text-sm">No hay más jugadores para cargar</p>
+                    <p className="text-[#6d6d6d] text-sm">No more players to load</p>
                   )}
                 </div>
               </>

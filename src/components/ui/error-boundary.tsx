@@ -105,17 +105,17 @@ function ErrorFallback({ error, errorId, onRetry, context }: ErrorFallbackProps)
         <div className="text-red-600 text-4xl mb-4">⚠️</div>
         
         <h2 className="text-lg font-semibold text-red-800 mb-2">
-          Algo salió mal
+          Something went wrong
         </h2>
-        
+
         <p className="text-red-700 mb-4">
-          Ha ocurrido un error inesperado. Por favor, inténtalo de nuevo.
+          An unexpected error has occurred. Please try again.
         </p>
-        
+
         {isDevelopment && error && (
           <details className="mb-4 text-left">
             <summary className="cursor-pointer text-sm text-red-600 hover:text-red-800">
-              Detalles del error (desarrollo)
+              Error details (development)
             </summary>
             <div className="mt-2 p-3 bg-red-100 rounded text-xs font-mono text-red-800 overflow-auto">
               <div className="mb-2">
@@ -123,7 +123,7 @@ function ErrorFallback({ error, errorId, onRetry, context }: ErrorFallbackProps)
               </div>
               {context && (
                 <div className="mb-2">
-                  <strong>Contexto:</strong> {context}
+                  <strong>Context:</strong> {context}
                 </div>
               )}
               {errorId && (
@@ -147,14 +147,14 @@ function ErrorFallback({ error, errorId, onRetry, context }: ErrorFallbackProps)
               onClick={onRetry}
               className="w-full bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
             >
-              Intentar de nuevo
+              Try again
             </button>
           )}
-          
+
           <button
             onClick={() => window.location.reload()}
             className="w-full bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
-            Recargar página
+            Reload page
           </button>
         </div>
       </div>
@@ -174,25 +174,25 @@ export function PageErrorBoundary({ children }: { children: ReactNode }) {
               <div className="text-gray-400 text-6xl mb-6">😵</div>
               
               <h1 className="text-2xl font-bold text-gray-900 mb-4">
-                Error en la página
+                Page error
               </h1>
-              
+
               <p className="text-gray-600 mb-6">
-                Ha ocurrido un error inesperado al cargar esta página. 
-                Nuestro equipo ha sido notificado automáticamente.
+                An unexpected error occurred while loading this page.
+                Our team has been automatically notified.
               </p>
-              
+
               <div className="space-y-3">
                 <button
                   onClick={() => window.location.reload()}
                   className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                  Recargar página
+                  Reload page
                 </button>
-                
+
                 <button
                   onClick={() => window.history.back()}
                   className="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium">
-                  Volver atrás
+                  Go back
                 </button>
               </div>
             </div>

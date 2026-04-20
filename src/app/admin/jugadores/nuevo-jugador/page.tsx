@@ -386,7 +386,7 @@ export default function NuevoJugadorPage() {
                 className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
               />
               <p className="text-xs text-slate-400">
-                Ingresa la URL del perfil del jugador en Transfermarkt y haz clic en "Hacer Scraping" para cargar automáticamente sus datos.
+                Ingresa la URL del perfil del jugador en Transfermarkt y haz clic en &quot;Hacer Scraping&quot; para cargar automáticamente sus datos.
               </p>
               {scrapingResult && (
                 <div className="mt-3 p-3 bg-green-900/20 border border-green-700 rounded text-sm text-green-300">

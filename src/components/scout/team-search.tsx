@@ -147,7 +147,7 @@ export function TeamSearch({ value, onChange, placeholder = "Search team...", cl
       {isOpen && teams.length === 0 && searchTerm.length >= 1 && !loading && (
         <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg p-4">
           <p className="text-sm text-muted-foreground text-center">
-            No teams found for "{searchTerm}"
+            No teams found for &quot;{searchTerm}&quot;
           </p>
         </div>
       )}

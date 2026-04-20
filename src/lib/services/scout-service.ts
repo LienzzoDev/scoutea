@@ -1,28 +1,9 @@
+import { Prisma } from '@prisma/client'
+
 import { prisma } from '@/lib/db'
+import type { Scout, ScoutSearchOptions, ScoutSearchResult, ScoutStats } from '@/types/scout'
 
-export interface ScoutSearchOptions {
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-  filters?: any;
-}
-
-export interface ScoutSearchResult {
-  scouts: any[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
-
-export interface ScoutStats {
-  totalScouts: number;
-  averageRating: number;
-  topScouts: any[];
-}
+export type { Scout, ScoutSearchOptions, ScoutSearchResult, ScoutStats }
 
 export class ScoutService {
   /**
@@ -64,6 +45,7 @@ export class ScoutService {
       console.log('🔍 ScoutService: Searching scouts with options:', options);
 
       // Construir el where clause basado en los filtros
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const where: any = {};
 
       // Filtros de búsqueda general

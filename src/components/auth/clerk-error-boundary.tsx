@@ -43,17 +43,17 @@ export class ClerkErrorBoundary extends Component<Props, State> {
                 </svg>
               </div>
               <h3 className="mt-4 text-lg font-medium text-gray-900">
-                Error de Autenticación
+                Authentication Error
               </h3>
               <p className="mt-2 text-sm text-gray-500">
-                Hubo un problema al cargar el sistema de autenticación. Por favor, recarga la página.
+                There was a problem loading the authentication system. Please reload the page.
               </p>
               <div className="mt-6">
                 <button
                   onClick={() => window.location.reload()}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
                 >
-                  Recargar Página
+                  Reload Page
                 </button>
               </div>
               {process.env.NODE_ENV === 'development' && this.state.error && (

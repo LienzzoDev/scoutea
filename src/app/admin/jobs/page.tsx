@@ -1,6 +1,6 @@
 'use client'
 
-import { Plus } from 'lucide-react'
+import { Plus, MessageSquare, Mail, Clock } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -8,14 +8,29 @@ import { JobOfferTable } from '@/components/admin/JobOfferTable'
 import { Button } from '@/components/ui/button'
 import type { JobOffer } from '@/types/job-offer'
 
+interface OnDemandMessage {
+  id: string
+  userId: string
+  userEmail: string
+  userName: string
+  message: string
+  createdAt: string
+}
+
 export default function AdminJobsPage() {
   const router = useRouter()
   const [jobOffers, setJobOffers] = useState<JobOffer[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // On Demand Messages
+  const [onDemandMessages, setOnDemandMessages] = useState<OnDemandMessage[]>([])
+  const [messagesLoading, setMessagesLoading] = useState(true)
+  const [expandedMessage, setExpandedMessage] = useState<string | null>(null)
+
   useEffect(() => {
     loadJobOffers()
+    loadOnDemandMessages()
   }, [])
 
   const loadJobOffers = async () => {
@@ -34,6 +49,21 @@ export default function AdminJobsPage() {
       setError('Error al cargar las ofertas de trabajo')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadOnDemandMessages = async () => {
+    try {
+      setMessagesLoading(true)
+      const response = await fetch('/api/admin/on-demand-messages')
+      if (response.ok) {
+        const data = await response.json()
+        setOnDemandMessages(data.messages || [])
+      }
+    } catch (err) {
+      console.error('Error loading on-demand messages:', err)
+    } finally {
+      setMessagesLoading(false)
     }
   }
 
@@ -100,6 +130,105 @@ export default function AdminJobsPage() {
         ) : (
           <JobOfferTable jobOffers={jobOffers} onDelete={loadJobOffers} />
         )}
+
+        {/* Separator */}
+        <div className="border-t border-slate-700 my-10" />
+
+        {/* On Demand Messages Section */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <MessageSquare className="w-6 h-6 text-[#FF5733]" />
+            <h2 className="text-2xl font-bold text-[#D6DDE6]">Solicitudes On Demand</h2>
+          </div>
+          <p className="text-gray-400 mb-6">Mensajes enviados por usuarios desde la sección On Demand</p>
+
+          {/* Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="bg-[#131921] p-6 rounded-lg border border-slate-700">
+              <div className="text-gray-400 text-sm mb-1">Total solicitudes</div>
+              <div className="text-3xl font-bold text-[#D6DDE6]">
+                {messagesLoading ? '...' : onDemandMessages.length}
+              </div>
+            </div>
+            <div className="bg-[#131921] p-6 rounded-lg border border-slate-700">
+              <div className="text-gray-400 text-sm mb-1">Últimos 7 días</div>
+              <div className="text-3xl font-bold text-blue-400">
+                {messagesLoading ? '...' : onDemandMessages.filter(m => {
+                  const d = new Date(m.createdAt)
+                  const week = new Date()
+                  week.setDate(week.getDate() - 7)
+                  return d >= week
+                }).length}
+              </div>
+            </div>
+          </div>
+
+          {/* Messages List */}
+          {messagesLoading ? (
+            <div className="text-center py-12 bg-[#131921] rounded-lg border border-slate-700">
+              <p className="text-gray-400">Cargando solicitudes...</p>
+            </div>
+          ) : onDemandMessages.length === 0 ? (
+            <div className="text-center py-12 bg-[#131921] rounded-lg border border-slate-700">
+              <MessageSquare className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+              <p className="text-gray-400">No hay solicitudes On Demand</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {onDemandMessages.map((msg) => {
+                const isExpanded = expandedMessage === msg.id
+                const isLong = msg.message.length > 200
+
+                return (
+                  <div
+                    key={msg.id}
+                    className="bg-[#131921] rounded-lg border border-slate-700 p-5"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        {/* User info */}
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="font-medium text-[#D6DDE6]">{msg.userName}</span>
+                          <span className="flex items-center gap-1 text-xs text-gray-500">
+                            <Mail className="w-3 h-3" />
+                            {msg.userEmail}
+                          </span>
+                        </div>
+
+                        {/* Message */}
+                        <p className="text-gray-300 text-sm whitespace-pre-line">
+                          {isExpanded || !isLong
+                            ? msg.message
+                            : msg.message.slice(0, 200) + '...'}
+                        </p>
+                        {isLong && (
+                          <button
+                            onClick={() => setExpandedMessage(isExpanded ? null : msg.id)}
+                            className="text-xs text-[#FF5733] hover:underline mt-1 cursor-pointer"
+                          >
+                            {isExpanded ? 'Ver menos' : 'Ver más'}
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Date */}
+                      <div className="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
+                        <Clock className="w-3 h-3" />
+                        {new Date(msg.createdAt).toLocaleDateString('es-ES', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </main>
     </div>
   )

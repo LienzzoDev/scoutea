@@ -54,9 +54,7 @@ export default function CompleteProfilePage() {
       const metadata = user.publicMetadata as any
       if (metadata?.subscription?.status === 'active') {
         console.log('✅ Usuario ya tiene suscripción activa, redirigiendo al dashboard')
-        const role = metadata.role || 'member'
-        const dashboardUrl = role === 'scout' ? '/scout/dashboard' : '/member/dashboard'
-        router.push(dashboardUrl)
+        router.push('/member/dashboard')
         return
       }
     }
@@ -131,7 +129,7 @@ export default function CompleteProfilePage() {
         console.error('Error creating checkout session:', errorData)
         toast({
           title: 'Error',
-          description: `Error al crear la sesión de pago: ${errorData.details || errorData.error}`,
+          description: `Error creating checkout session: ${errorData.details || errorData.error}`,
           variant: 'destructive'
         })
         return
@@ -144,7 +142,7 @@ export default function CompleteProfilePage() {
       } else {
         toast({
           title: 'Error',
-          description: 'No se pudo obtener la URL de pago',
+          description: 'Could not get checkout URL',
           variant: 'destructive'
         })
       }
@@ -152,7 +150,7 @@ export default function CompleteProfilePage() {
       console.error('Error in handleSkip:', error)
       toast({
         title: 'Error',
-        description: 'Error al procesar la solicitud. Por favor, inténtalo de nuevo.',
+        description: 'Error processing the request. Please try again.',
         variant: 'destructive'
       })
     } finally {
@@ -212,7 +210,7 @@ export default function CompleteProfilePage() {
         console.error('Error creating checkout session:', errorData)
         toast({
           title: 'Error',
-          description: `Error al crear la sesión de pago: ${errorData.details || errorData.error}`,
+          description: `Error creating checkout session: ${errorData.details || errorData.error}`,
           variant: 'destructive'
         })
         return
@@ -225,7 +223,7 @@ export default function CompleteProfilePage() {
       } else {
         toast({
           title: 'Error',
-          description: 'No se pudo obtener la URL de pago',
+          description: 'Could not get checkout URL',
           variant: 'destructive'
         })
       }
@@ -233,7 +231,7 @@ export default function CompleteProfilePage() {
       console.error('Error updating profile:', error)
       toast({
         title: 'Error',
-        description: 'Hubo un error al guardar tu perfil. Por favor, inténtalo de nuevo.',
+        description: 'There was an error saving your profile. Please try again.',
         variant: 'destructive'
       })
     } finally {
@@ -247,22 +245,22 @@ export default function CompleteProfilePage() {
       <div className="min-h-screen bg-[#f8f7f4] flex items-center justify-center">
         <div className="text-center max-w-md px-6">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8c1a10] mx-auto mb-4"></div>
-          <p className="text-[#6d6d6d] mb-2">Cargando tu perfil...</p>
+          <p className="text-[#6d6d6d] mb-2">Loading your profile...</p>
           {loadingTimeout ? (
             <div className="mt-4">
               <p className="text-sm text-red-600 mb-2">
-                La carga está tomando más tiempo del esperado.
+                Loading is taking longer than expected.
               </p>
               <Button
                 onClick={() => window.location.reload()}
                 className="bg-[#8c1a10] hover:bg-[#6d1410] text-white"
               >
-                Recargar página
+                Reload page
               </Button>
             </div>
           ) : (
             <p className="text-xs text-gray-400">
-              Si esta pantalla permanece por más de 10 segundos, por favor recarga la página.
+              If this screen remains for more than 10 seconds, please reload the page.
             </p>
           )}
         </div>
@@ -278,7 +276,7 @@ export default function CompleteProfilePage() {
       <div className="min-h-screen bg-[#f8f7f4] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8c1a10] mx-auto mb-4"></div>
-          <p className="text-[#6d6d6d]">Redirigiendo a registro...</p>
+          <p className="text-[#6d6d6d]">Redirecting to registration...</p>
         </div>
       </div>
     )
@@ -294,21 +292,21 @@ export default function CompleteProfilePage() {
               <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-medium">1</span>
               </div>
-              <span className="ml-2 text-sm text-green-600 font-medium">Cuenta creada</span>
+              <span className="ml-2 text-sm text-green-600 font-medium">Account created</span>
             </div>
             <ChevronRight className="w-4 h-4 text-gray-400" />
             <div className="flex items-center">
               <div className="w-8 h-8 bg-[#8c1a10] rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-medium">2</span>
               </div>
-              <span className="ml-2 text-sm text-[#8c1a10] font-medium">Completar perfil</span>
+              <span className="ml-2 text-sm text-[#8c1a10] font-medium">Complete profile</span>
             </div>
             <ChevronRight className="w-4 h-4 text-gray-400" />
             <div className="flex items-center">
               <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
                 <span className="text-gray-600 text-sm font-medium">3</span>
               </div>
-              <span className="ml-2 text-sm text-gray-600">Realizar Pago</span>
+              <span className="ml-2 text-sm text-gray-600">Make Payment</span>
             </div>
           </div>
         </div>
@@ -319,10 +317,10 @@ export default function CompleteProfilePage() {
             <User className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-[#000000] mb-2">
-            Completa tu perfil
+            Complete your profile
           </h1>
           <p className="text-lg text-[#6d6d6d]">
-            Ayúdanos a personalizar tu experiencia (opcional)
+            Help us personalize your experience (optional)
           </p>
         </div>
 
@@ -330,7 +328,7 @@ export default function CompleteProfilePage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-xl font-semibold text-[#000000]">
-              Información personal
+              Personal information
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -338,25 +336,25 @@ export default function CompleteProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="firstName" className="text-[#2e3138] font-medium">
-                  Nombre
+                  First Name
                 </Label>
                 <Input
                   id="firstName"
                   value={formData.firstName}
                   onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  placeholder="Tu nombre"
+                  placeholder="Your first name"
                   className="mt-1"
                 />
               </div>
               <div>
                 <Label htmlFor="lastName" className="text-[#2e3138] font-medium">
-                  Apellido
+                  Last Name
                 </Label>
                 <Input
                   id="lastName"
                   value={formData.lastName}
                   onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  placeholder="Tu apellido"
+                  placeholder="Your last name"
                   className="mt-1"
                 />
               </div>
@@ -366,7 +364,7 @@ export default function CompleteProfilePage() {
             <div>
               <Label htmlFor="dateOfBirth" className="text-[#2e3138] font-medium">
                 <Calendar className="w-4 h-4 inline mr-1" />
-                Fecha de nacimiento
+                Date of birth
               </Label>
               <Input
                 id="dateOfBirth"
@@ -380,7 +378,7 @@ export default function CompleteProfilePage() {
             {/* Email */}
             <div>
               <Label htmlFor="email" className="text-[#2e3138] font-medium">
-                Correo electrónico
+                Email
               </Label>
               <Input
                 id="email"
@@ -397,26 +395,26 @@ export default function CompleteProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="city" className="text-[#2e3138] font-medium">
-                  Ciudad
+                  City
                 </Label>
                 <Input
                   id="city"
                   value={formData.city}
                   onChange={(e) => handleInputChange('city', e.target.value)}
-                  placeholder="Tu ciudad"
+                  placeholder="Your city"
                   className="mt-1"
                 />
               </div>
               <div>
                 <Label htmlFor="country" className="text-[#2e3138] font-medium">
                   <Globe className="w-4 h-4 inline mr-1" />
-                  País
+                  Country
                 </Label>
                 <Input
                   id="country"
                   value={formData.country}
                   onChange={(e) => handleInputChange('country', e.target.value)}
-                  placeholder="Tu país"
+                  placeholder="Your country"
                   className="mt-1"
                 />
               </div>
@@ -435,10 +433,10 @@ export default function CompleteProfilePage() {
             {isLoading ? (
               <>
                 <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mr-2" />
-                Guardando...
+                Saving...
               </>
             ) : (
-              'Omitir por ahora'
+              'Skip for now'
             )}
           </Button>
           
@@ -450,11 +448,11 @@ export default function CompleteProfilePage() {
             {isLoading ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                Guardando...
+                Saving...
               </>
             ) : (
               <>
-                Continuar
+                Continue
                 <ArrowRight className="w-4 h-4 ml-2" />
               </>
             )}

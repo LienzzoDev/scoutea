@@ -265,7 +265,7 @@ export default function CompetitionTable({
                 ? (darkMode ? 'text-[#FF5733]' : 'text-[#8c1a10]')
                 : (darkMode ? 'text-slate-300' : 'text-[#6d6d6d]')
             }`}>
-              Competición
+              Competition
             </h4>
             {sortBy === 'competition_name' ? (
               sortOrder === 'asc' ? (

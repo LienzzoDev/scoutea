@@ -50,7 +50,7 @@ export default function ScoutStatsPage() {
         <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 80px)' }}>
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B0000] mx-auto mb-4"></div>
-            <p className="text-[#6d6d6d]">Cargando estadísticas...</p>
+            <p className="text-[#6d6d6d]">Loading statistics...</p>
           </div>
         </div>
       </div>
@@ -109,8 +109,8 @@ export default function ScoutStatsPage() {
           {activeStatsTab === 'qualitative' && (
             <div className="p-6">
               <div className="text-center">
-                <h2 className="text-2xl font-bold text-[#8B4513] mb-4">Qualidades de Scout</h2>
-                <p className="text-[#6d6d6d] mb-6">Dashboard cualitativo con análisis de datos del scout</p>
+                <h2 className="text-2xl font-bold text-[#8B4513] mb-4">Scout Qualities</h2>
+                <p className="text-[#6d6d6d] mb-6">Qualitative dashboard with scout data analysis</p>
                 <QualitativeDashboard scoutId={scoutProfile?.id_scout} />
               </div>
             </div>
@@ -119,8 +119,8 @@ export default function ScoutStatsPage() {
           {activeStatsTab === 'quantitative' && (
             <div className="p-6">
               <div className="text-center">
-                <h2 className="text-2xl font-bold text-[#8B4513] mb-4">Análisis Cuantitativo</h2>
-                <p className="text-[#6d6d6d] mb-6">Dashboard cuantitativo con métricas comparativas del scout</p>
+                <h2 className="text-2xl font-bold text-[#8B4513] mb-4">Quantitative Analysis</h2>
+                <p className="text-[#6d6d6d] mb-6">Quantitative dashboard with comparative scout metrics</p>
                 <QuantitativeDashboard scoutId={scoutProfile?.id_scout} />
               </div>
             </div>

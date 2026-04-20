@@ -120,19 +120,19 @@ export default function EditReportPage() {
 
       if (result.success) {
         toast({
-          title: "¡Éxito!",
-          description: "Reporte actualizado correctamente",
+          title: "Success!",
+          description: "Report updated successfully",
         })
         
         router.push('/scout/reports')
       } else {
-        throw new Error(result.error || 'Error al actualizar el reporte')
+        throw new Error(result.error || 'Error updating report')
       }
     } catch (error) {
       console.error('Error submitting form:', error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Error al actualizar el reporte",
+        description: error instanceof Error ? error.message : "Error updating report",
         variant: "destructive"
       })
     } finally {
@@ -147,7 +147,7 @@ export default function EditReportPage() {
         <main className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex flex-col items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8B0000]"></div>
-            <span className="ml-3 text-[#6d6d6d] mt-2">Cargando reporte...</span>
+            <span className="ml-3 text-[#6d6d6d] mt-2">Loading report...</span>
           </div>
         </main>
       </div>

@@ -5,7 +5,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
 
-import { ClientErrorState, formatErrorMessage, shouldShowErrorToUser } from '@/lib/errors/client-errors'
+import { ClientError, toErrorMessage } from '@/lib/errors/client-errors'
 
 // Tipos para el sistema de toast
 export interface ToastMessage {
@@ -23,7 +23,7 @@ interface ToastContextType {
   toasts: ToastMessage[]
   addToast: (toast: Omit<ToastMessage, 'id'>) => void
   removeToast: (id: string) => void
-  showError: (_error: ClientErrorState | string, duration?: number) => void
+  showError: (error: ClientError | string, duration?: number) => void
   showSuccess: (message: string, duration?: number) => void
   showWarning: (message: string, duration?: number) => void
   showInfo: (message: string, duration?: number) => void
@@ -52,20 +52,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts(prev => prev.filter(toast => toast.id !== id))
   }, [])
   
-  const showError = useCallback((__error: ClientErrorState | string, duration?: number) => {
-    const message = typeof _error === 'string' 
-      ? error 
-      : formatErrorMessage(error)
-    
-    // Solo mostrar si es apropiado para el usuario
-    if (typeof error !== 'string' && !shouldShowErrorToUser(error)) {
-      return
-    }
-    
+  const showError = useCallback((err: ClientError | string, duration?: number) => {
+    const message = typeof err === 'string'
+      ? err
+      : toErrorMessage(err)
+
     addToast({
       message,
       type: 'error',
-      duration
+      ...(duration !== undefined && { duration })
     })
   }, [addToast])
   
@@ -73,23 +68,23 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     addToast({
       message,
       type: 'success',
-      duration
+      ...(duration !== undefined && { duration })
     })
   }, [addToast])
-  
+
   const showWarning = useCallback((message: string, duration?: number) => {
     addToast({
       message,
       type: 'warning',
-      duration
+      ...(duration !== undefined && { duration })
     })
   }, [addToast])
-  
+
   const showInfo = useCallback((message: string, duration?: number) => {
     addToast({
       message,
       type: 'info',
-      duration
+      ...(duration !== undefined && { duration })
     })
   }, [addToast])
   
@@ -245,22 +240,10 @@ function Toast({
 // Hook para integrar automáticamente errores con toast
 export function useErrorToast() {
   const { showError, showSuccess, showWarning, showInfo } = useToast()
-  
-  useEffect(() => {
-    // Suscribirse a errores globales del ClientErrorHandler
-    let unsubscribe: (() => void) | undefined;
-    
-    import('@/lib/errors/client-errors').then(({ ClientErrorHandler }) => {
-      unsubscribe = ClientErrorHandler.subscribe((__error: ClientErrorState) => {
-        if (shouldShowErrorToUser(error)) {
-          showError(error)
-        }
-      })
-    })
-    
-    return () => unsubscribe?.()
-  }, [showError])
-  
+
+  // The hook now simply provides the toast methods for manual error handling
+  // Subscribe functionality was removed as ClientErrorHandler doesn't support it
+
   return {
     showError,
     showSuccess,

@@ -14,7 +14,7 @@ export interface RadarLogContext {
   duration?: number;
   success: boolean;
   error?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface DataPopulationLogContext {
@@ -33,12 +33,24 @@ export interface CacheOperationLogContext {
   duration?: number;
   success: boolean;
   error?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
+}
+
+// Internal log entry type
+interface LogEntry {
+  timestamp: string;
+  type: string;
+  level: string;
+  operation?: string | undefined;
+  duration?: number | undefined;
+  success?: boolean | undefined;
+  error?: string | undefined;
+  [key: string]: unknown;
 }
 
 export class RadarLogger {
   private static instance: RadarLogger;
-  private logBuffer: unknown[] = [];
+  private logBuffer: LogEntry[] = [];
   private bufferSize = 100;
   private flushInterval?: NodeJS.Timeout;
 
@@ -56,31 +68,31 @@ export class RadarLogger {
   /**
    * Log radar calculation events
    */
-  logRadarCalculation(__context: RadarLogContext): void {
-    const logEntry = {
+  logRadarCalculation(ctx: RadarLogContext): void {
+    const logEntry: LogEntry = {
       timestamp: new Date().toISOString(),
       type: 'radar_calculation',
-      level: context.success ? 'info' : 'error',
-      ...context
+      level: ctx.success ? 'info' : 'error',
+      ...ctx
     };
 
     this.addToBuffer(logEntry);
 
-    if (context.success) {
-      logger.info('Radar calculation completed', {
-        _playerId: context.playerId,
-        operation: context.operation,
-        category: context.category,
-        duration: context.duration,
-        metadata: context.metadata
+    if (ctx.success) {
+      logger.info('Radar calculation completed', 'RadarLogger', {
+        playerId: ctx.playerId,
+        operation: ctx.operation,
+        category: ctx.category,
+        duration: ctx.duration,
+        metadata: ctx.metadata
       });
     } else {
-      logger.error('Radar calculation failed', {
-        _playerId: context.playerId,
-        operation: context.operation,
-        category: context.category,
-        __error: context.error,
-        metadata: context.metadata
+      logger.error('Radar calculation failed', 'RadarLogger', {
+        playerId: ctx.playerId,
+        operation: ctx.operation,
+        category: ctx.category,
+        error: ctx.error,
+        metadata: ctx.metadata
       });
     }
   }
@@ -88,30 +100,30 @@ export class RadarLogger {
   /**
    * Log data population events
    */
-  logDataPopulation(__context: DataPopulationLogContext): void {
-    const logEntry = {
+  logDataPopulation(ctx: DataPopulationLogContext): void {
+    const logEntry: LogEntry = {
       timestamp: new Date().toISOString(),
       type: 'data_population',
-      level: context.success ? 'info' : 'error',
-      ...context
+      level: ctx.success ? 'info' : 'error',
+      ...ctx
     };
 
     this.addToBuffer(logEntry);
 
-    if (context.success) {
-      logger.info('Data population completed', {
-        _playerId: context.playerId,
-        tableName: context.tableName,
-        fieldsPopulated: context.fieldsPopulated,
-        populationMethod: context.populationMethod,
-        duration: context.duration
+    if (ctx.success) {
+      logger.info('Data population completed', 'RadarLogger', {
+        playerId: ctx.playerId,
+        tableName: ctx.tableName,
+        fieldsPopulated: ctx.fieldsPopulated,
+        populationMethod: ctx.populationMethod,
+        duration: ctx.duration
       });
     } else {
-      logger.error('Data population failed', {
-        _playerId: context.playerId,
-        tableName: context.tableName,
-        populationMethod: context.populationMethod,
-        __error: context.error
+      logger.error('Data population failed', 'RadarLogger', {
+        playerId: ctx.playerId,
+        tableName: ctx.tableName,
+        populationMethod: ctx.populationMethod,
+        error: ctx.error
       });
     }
   }
@@ -119,25 +131,25 @@ export class RadarLogger {
   /**
    * Log cache operations
    */
-  logCacheOperation(__context: CacheOperationLogContext): void {
-    const logEntry = {
+  logCacheOperation(ctx: CacheOperationLogContext): void {
+    const logEntry: LogEntry = {
       timestamp: new Date().toISOString(),
       type: 'cache_operation',
-      level: context.success ? 'debug' : 'warn',
-      ...context
+      level: ctx.success ? 'debug' : 'warn',
+      ...ctx
     };
 
     this.addToBuffer(logEntry);
 
-    const logLevel = context.success ? 'debug' : 'warn';
-    const message = `Cache ${context.operation}: ${context.success ? 'success' : 'failed'}`;
+    const logLevel = ctx.success ? 'debug' : 'warn';
+    const message = `Cache ${ctx.operation}: ${ctx.success ? 'success' : 'failed'}`;
 
-    logger[logLevel](message, {
-      operation: context.operation,
-      cacheKey: context.cacheKey,
-      duration: context.duration,
-      __error: context.error,
-      metadata: context.metadata
+    logger[logLevel](message, 'RadarLogger', {
+      operation: ctx.operation,
+      cacheKey: ctx.cacheKey,
+      duration: ctx.duration,
+      error: ctx.error,
+      metadata: ctx.metadata
     });
   }
 
@@ -148,9 +160,9 @@ export class RadarLogger {
     operation: string,
     duration: number,
     success: boolean,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): void {
-    const logEntry = {
+    const logEntry: LogEntry = {
       timestamp: new Date().toISOString(),
       type: 'performance_metric',
       level: 'info',
@@ -162,7 +174,7 @@ export class RadarLogger {
 
     this.addToBuffer(logEntry);
 
-    logger.info('Performance metric', {
+    logger.info('Performance metric', 'RadarLogger', {
       operation,
       duration,
       success,
@@ -174,13 +186,13 @@ export class RadarLogger {
    * Log comparison group operations
    */
   logComparisonGroup(
-    __filters: Record<string, any>,
+    filters: Record<string, unknown>,
     groupSize: number,
     duration: number,
     success: boolean,
     error?: string
   ): void {
-    const logEntry = {
+    const logEntry: LogEntry = {
       timestamp: new Date().toISOString(),
       type: 'comparison_group',
       level: success ? 'info' : 'error',
@@ -194,13 +206,13 @@ export class RadarLogger {
     this.addToBuffer(logEntry);
 
     if (success) {
-      logger.info('Comparison group calculated', {
+      logger.info('Comparison group calculated', 'RadarLogger', {
         filters,
         groupSize,
         duration
       });
     } else {
-      logger.error('Comparison group calculation failed', {
+      logger.error('Comparison group calculation failed', 'RadarLogger', {
         filters,
         error
       });
@@ -217,7 +229,7 @@ export class RadarLogger {
     failed: number,
     duration: number
   ): void {
-    const logEntry = {
+    const logEntry: LogEntry = {
       timestamp: new Date().toISOString(),
       type: 'batch_operation',
       level: failed > 0 ? 'warn' : 'info',
@@ -226,19 +238,19 @@ export class RadarLogger {
       processed,
       failed,
       duration,
-      successRate: processed / batchSize
+      successRate: batchSize > 0 ? processed / batchSize : 0
     };
 
     this.addToBuffer(logEntry);
 
     const level = failed > 0 ? 'warn' : 'info';
-    logger[level]('Batch operation completed', {
+    logger[level]('Batch operation completed', 'RadarLogger', {
       operation,
       batchSize,
       processed,
       failed,
       duration,
-      successRate: Math.round((processed / batchSize) * 100)
+      successRate: batchSize > 0 ? Math.round((processed / batchSize) * 100) : 0
     });
   }
 
@@ -252,11 +264,12 @@ export class RadarLogger {
     success: boolean = true,
     error?: string
   ): void {
-    const logEntry = {
+    const truncatedQuery = query.substring(0, 100) + (query.length > 100 ? '...' : '');
+    const logEntry: LogEntry = {
       timestamp: new Date().toISOString(),
       type: 'database_query',
       level: success ? 'debug' : 'error',
-      query: query.substring(0, 100) + (query.length > 100 ? '...' : ''), // Truncate long queries
+      query: truncatedQuery,
       duration,
       rowsAffected,
       success,
@@ -266,14 +279,14 @@ export class RadarLogger {
     this.addToBuffer(logEntry);
 
     if (success) {
-      logger.debug('Database query executed', {
-        query: logEntry.query,
+      logger.debug('Database query executed', 'RadarLogger', {
+        query: truncatedQuery,
         duration,
         rowsAffected
       });
     } else {
-      logger.error('Database query failed', {
-        query: logEntry.query,
+      logger.error('Database query failed', 'RadarLogger', {
+        query: truncatedQuery,
         error
       });
     }
@@ -288,7 +301,7 @@ export class RadarLogger {
     cacheHitRate: number,
     averageResponseTime: number
   ): void {
-    const logEntry = {
+    const logEntry: LogEntry = {
       timestamp: new Date().toISOString(),
       type: 'system_health',
       level: 'info',
@@ -304,19 +317,19 @@ export class RadarLogger {
 
     this.addToBuffer(logEntry);
 
-    logger.info('System health check', logEntry);
+    logger.info('System health check', 'RadarLogger', logEntry);
   }
 
   /**
    * Get recent logs for debugging
    */
-  getRecentLogs(count: number = 50, type?: string): unknown[] {
+  getRecentLogs(count: number = 50, type?: string): LogEntry[] {
     let logs = [...this.logBuffer];
-    
+
     if (type) {
       logs = logs.filter(log => log.type === type);
     }
-    
+
     return logs
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .slice(0, count);
@@ -330,21 +343,21 @@ export class RadarLogger {
     logsByType: Record<string, number>;
     logsByLevel: Record<string, number>;
     errorRate: number;
-    recentErrors: unknown[];
+    recentErrors: LogEntry[];
   } {
     const totalLogs = this.logBuffer.length;
     const logsByType: Record<string, number> = {};
     const logsByLevel: Record<string, number> = {};
     let errorCount = 0;
-    const recentErrors: unknown[] = [];
+    const recentErrors: LogEntry[] = [];
 
     for (const log of this.logBuffer) {
       // Count by type
       logsByType[log.type] = (logsByType[log.type] || 0) + 1;
-      
+
       // Count by level
       logsByLevel[log.level] = (logsByLevel[log.level] || 0) + 1;
-      
+
       // Count errors
       if (log.level === 'error') {
         errorCount++;
@@ -371,17 +384,17 @@ export class RadarLogger {
       return JSON.stringify(this.logBuffer, null, 2);
     } else {
       // Simple CSV export
-      const headers = ['timestamp', 'type', 'level', 'operation', 'duration', 'success'];
+      const headers: (keyof LogEntry)[] = ['timestamp', 'type', 'level', 'operation', 'duration', 'success'];
       const csvRows = [headers.join(',')];
-      
+
       for (const log of this.logBuffer) {
         const row = headers.map(header => {
           const value = log[header];
-          return typeof value === 'string' ? `"${value}"` : (value || '');
+          return typeof value === 'string' ? `"${value}"` : String(value ?? '');
         });
         csvRows.push(row.join(','));
       }
-      
+
       return csvRows.join('\n');
     }
   }
@@ -389,9 +402,9 @@ export class RadarLogger {
   /**
    * Add log entry to buffer
    */
-  private addToBuffer(logEntry: unknown): void {
+  private addToBuffer(logEntry: LogEntry): void {
     this.logBuffer.push(logEntry);
-    
+
     // Keep buffer size manageable
     if (this.logBuffer.length > this.bufferSize) {
       this.logBuffer = this.logBuffer.slice(-this.bufferSize);
@@ -422,7 +435,7 @@ export class RadarLogger {
     // - DataDog
     // - Custom logging service
     
-    logger.info('Flushing radar logs', {
+    logger.info('Flushing radar logs', 'RadarLogger', {
       logCount: this.logBuffer.length,
       types: Object.keys(this.getLogStatistics().logsByType)
     });
@@ -442,7 +455,7 @@ export class RadarLogger {
     // Final flush
     this.flushLogs();
     
-    logger.info('Radar logging shut down');
+    logger.info('Radar logging shut down', 'RadarLogger');
   }
 }
 

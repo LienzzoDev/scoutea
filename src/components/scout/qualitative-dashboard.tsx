@@ -167,14 +167,14 @@ export function QualitativeDashboard({ scoutId }: QualitativeDashboardProps) {
           ) : (
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
               {[
-                { id: 'reportType', label: 'Tipo de Reporte' },
-                { id: 'position', label: 'Posición' },
-                { id: 'nationality1', label: 'Nacionalidad' },
-                { id: 'potential', label: 'Potencial' },
-                { id: 'initialAge', label: 'Edad Inicial' },
-                { id: 'initialCountry', label: 'País Inicial' },
-                { id: 'transferTeamPts', label: 'Puntos Equipo' },
-                { id: 'initialTRFMValue', label: 'Valor Inicial' },
+                { id: 'reportType', label: 'Report Type' },
+                { id: 'position', label: 'Position' },
+                { id: 'nationality1', label: 'Nationality' },
+                { id: 'potential', label: 'Potential' },
+                { id: 'initialAge', label: 'Initial Age' },
+                { id: 'initialCountry', label: 'Initial Country' },
+                { id: 'transferTeamPts', label: 'Team Points' },
+                { id: 'initialTRFMValue', label: 'Initial Value' },
               ].map(filter => (
                 <div key={filter.id}>
                   <label className='block text-sm font-medium text-gray-700 mb-2'>

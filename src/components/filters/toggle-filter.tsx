@@ -123,7 +123,7 @@ export default function ToggleFilter({
                     setIsOpen(false)
                   }}
                   className="text-sm text-gray-600 hover:text-gray-800 font-medium cursor-pointer">
-                  Limpiar selección
+                  Clear selection
                 </button>
               </div>
             )}

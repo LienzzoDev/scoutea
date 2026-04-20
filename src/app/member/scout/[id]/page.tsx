@@ -311,31 +311,31 @@ export default function ScoutProfilePage() {
                 className={`pb-3 font-medium ${activeTab === 'info' ? 'border-b-2 border-[#8c1a10] text-[#2e3138]' : 'text-[#6d6d6d]'}`}
                 onClick={() => setActiveTab('info')}
               >
-                Información
+                Information
               </button>
-              <button 
+              <button
                 className={`pb-3 font-medium ${activeTab === 'portfolio' ? 'border-b-2 border-[#8c1a10] text-[#2e3138]' : 'text-[#6d6d6d]'}`}
                 onClick={() => setActiveTab('portfolio')}
               >
-                Portafolio
+                Portfolio
               </button>
-              <button 
+              <button
                 className={`pb-3 font-medium ${activeTab === 'reports' ? 'border-b-2 border-[#8c1a10] text-[#2e3138]' : 'text-[#6d6d6d]'}`}
                 onClick={() => setActiveTab('reports')}
               >
-                Reportes
+                Reports
               </button>
-              <button 
+              <button
                 className={`pb-3 font-medium ${activeTab === 'stats' ? 'border-b-2 border-[#8c1a10] text-[#2e3138]' : 'text-[#6d6d6d]'}`}
                 onClick={() => setActiveTab('stats')}
               >
-                Estadísticas
+                Statistics
               </button>
-              <button 
+              <button
                 className={`pb-3 font-medium ${activeTab === 'contacto' ? 'border-b-2 border-[#8c1a10] text-[#2e3138]' : 'text-[#6d6d6d]'}`}
                 onClick={() => setActiveTab('contacto')}
               >
-                Contacto
+                Contact
               </button>
             </div>
 
@@ -388,8 +388,8 @@ export default function ScoutProfilePage() {
                 {activeStatsTab === 'qualitative' && (
                   <div className="p-6">
                     <div className="text-center">
-                      <h2 className="text-2xl font-bold text-[#8B4513] mb-4">Qualidades de Scout</h2>
-                      <p className="text-[#6d6d6d] mb-6">Dashboard cualitativo con análisis de datos del scout</p>
+                      <h2 className="text-2xl font-bold text-[#8B4513] mb-4">Scout Qualities</h2>
+                      <p className="text-[#6d6d6d] mb-6">Qualitative dashboard with scout data analysis</p>
                       <QualitativeDashboard scoutId={scoutId} />
                     </div>
                   </div>
@@ -398,8 +398,8 @@ export default function ScoutProfilePage() {
                 {activeStatsTab === 'quantitative' && (
                   <div className="p-6">
                     <div className="text-center">
-                      <h2 className="text-2xl font-bold text-[#8B4513] mb-4">Análisis Cuantitativo</h2>
-                      <p className="text-[#6d6d6d] mb-6">Dashboard cuantitativo con métricas comparativas del scout</p>
+                      <h2 className="text-2xl font-bold text-[#8B4513] mb-4">Quantitative Analysis</h2>
+                      <p className="text-[#6d6d6d] mb-6">Quantitative dashboard with comparative scout metrics</p>
                       <QuantitativeDashboard scoutId={scoutId} />
                     </div>
                   </div>

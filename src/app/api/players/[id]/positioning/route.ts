@@ -2,6 +2,32 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { prisma } from '@/lib/db';
 
+// Type for the player data selected in this route
+interface PlayerPositioningData {
+  id_player: number;
+  player_name: string;
+  position_player: string | null;
+  correct_position_player: string | null;
+  foot: string | null;
+  correct_foot: string | null;
+  height: number | null;
+  correct_height: number | null;
+  age: number | null;
+  player_rating: number | null;
+  atributos: {
+    left_foot_fmi: number | null;
+    right_foot_fmi: number | null;
+    right_foot_tendency: number | null;
+    right_foot_tendency_percent: number | null;
+    left_foot_tendency: number | null;
+    left_foot_tendency_percent: number | null;
+    right_foot_dominance: number | null;
+    right_foot_dominance_level: number | null;
+    left_foot_dominance: number | null;
+    left_foot_dominance_level: number | null;
+  } | null;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -105,21 +131,23 @@ const POSITION_COORDINATES: Record<string, { x: number; y: number; color: string
   'Atacante': { x: 420, y: 200, color: '#3b82f6' },
 };
 
-function generatePositions(player: any) {
+function generatePositions(player: PlayerPositioningData) {
   const positions = [];
   
   // Posición principal
   const mainPosition = player.position_player || player.correct_position_player;
   if (mainPosition) {
-    const coords = POSITION_COORDINATES[mainPosition] || POSITION_COORDINATES['CM'];
-    positions.push({
-      position: mainPosition,
-      x: coords.x,
-      y: coords.y,
-      color: coords.color,
-      isMainPosition: true,
-      intensity: 1.0
-    });
+    const coords = POSITION_COORDINATES[mainPosition] ?? POSITION_COORDINATES['CM'];
+    if (coords) {
+      positions.push({
+        position: mainPosition,
+        x: coords.x,
+        y: coords.y,
+        color: coords.color,
+        isMainPosition: true,
+        intensity: 1.0
+      });
+    }
 
     // Posiciones secundarias
     const secondaryPositions = getSecondaryPositions(mainPosition);
@@ -156,7 +184,7 @@ function getSecondaryPositions(mainPosition: string): string[] {
   return positionMap[mainPosition]?.slice(0, 2) || [];
 }
 
-function generatePhysicalAttributes(player: any) {
+function generatePhysicalAttributes(player: PlayerPositioningData) {
   const rating = player.player_rating || 70;
   const age = player.age || 25;
   const height = player.height || player.correct_height || 175;
@@ -206,7 +234,7 @@ function generatePhysicalAttributes(player: any) {
   }));
 }
 
-function generateFootData(player: any, footType: 'left' | 'right') {
+function generateFootData(player: PlayerPositioningData, footType: 'left' | 'right') {
   // Usar datos reales si están disponibles
   let dominance = 50;
   let tendency = 50;
@@ -247,10 +275,10 @@ function generateFootData(player: any, footType: 'left' | 'right') {
   };
 }
 
-function generateHeatMapData(player: any) {
+function generateHeatMapData(player: PlayerPositioningData) {
   const position = player.position_player || player.correct_position_player || 'CM';
-  const coords = POSITION_COORDINATES[position] || POSITION_COORDINATES['CM'];
-  
+  const coords = POSITION_COORDINATES[position] ?? POSITION_COORDINATES['CM'] ?? { x: 280, y: 200, color: '#a16207' };
+
   // Generar puntos de calor alrededor de la posición principal
   const heatPoints = [];
   const centerX = coords.x;

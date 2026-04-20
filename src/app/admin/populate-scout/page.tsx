@@ -153,7 +153,7 @@ export default function PopulateScoutDataPage() {
           <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800">
             <li>Get a Scout ID from the database or create one</li>
             <li>Enter the Scout ID in the input field above</li>
-            <li>Click "Populate Scout Data" to create sample reports</li>
+            <li>Click &quot;Populate Scout Data&quot; to create sample reports</li>
             <li>
               This will create 8 reports with random players from the database
             </li>

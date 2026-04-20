@@ -115,7 +115,7 @@ export default function ScoutPlayersSection({
       key: "age",
       label: "Age",
       getValue: (playerData: any) => playerData.player.age,
-      format: (value: any) => value ? `${value} años` : 'N/A'
+      format: (value: any) => value ? `${value} years` : 'N/A'
     },
     {
       key: "position",
@@ -350,7 +350,7 @@ export default function ScoutPlayersSection({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#6d6d6d] w-4 h-4" />
             <Input
-              placeholder="Buscar por nombre, nacionalidad, equipo, posición..."
+              placeholder="Search by name, nationality, team, position..."
               className="pl-10 w-80 bg-[#ffffff] border-[#e7e7e7]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -570,13 +570,13 @@ export default function ScoutPlayersSection({
             <div className="text-center py-12">
               <p className="text-[#6d6d6d] text-lg">
                 {searchTerm
-                  ? `No se encontraron jugadores para "${searchTerm}"`
-                  : "No tienes jugadores reportados aún"}
+                  ? `No players found for "${searchTerm}"`
+                  : "You have no reported players yet"}
               </p>
               <p className="text-[#6d6d6d] text-sm mt-2">
                 {searchTerm
-                  ? "Intenta con otros términos de búsqueda"
-                  : "Comienza creando tu primer reporte de jugador"}
+                  ? "Try different search terms"
+                  : "Start by creating your first player report"}
               </p>
               {searchTerm ? (
                 <button

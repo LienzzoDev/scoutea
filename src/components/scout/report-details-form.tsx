@@ -84,7 +84,7 @@ export function ReportDetailsForm() {
   const playerOptions = players.map(player => ({
     value: player.id_player,
     label: player.player_name,
-    description: `${player.position_player || 'N/A'} • ${player.team_name || 'N/A'} • ${player.nationality_1 || 'N/A'}${player.age ? ` • ${player.age} años` : ''}`,
+    description: `${player.position_player || 'N/A'} • ${player.team_name || 'N/A'} • ${player.nationality_1 || 'N/A'}${player.age ? ` • ${player.age} years` : ''}`,
     isOwnPlayer: player.is_own_player,
     approvalStatus: player.approval_status
   }))
@@ -166,7 +166,7 @@ export function ReportDetailsForm() {
 
       if (result.success) {
         toast({
-          title: "¡Éxito!",
+          title: "Success!",
           description: "Reporte creado correctamente",
         })
 
@@ -190,7 +190,7 @@ export function ReportDetailsForm() {
   const selectedOption = selectedPlayer ? {
     value: selectedPlayer.id_player,
     label: selectedPlayer.player_name,
-    description: `${selectedPlayer.position_player || 'N/A'} • ${selectedPlayer.team_name || 'N/A'} • ${selectedPlayer.nationality_1 || 'N/A'}${selectedPlayer.age ? ` • ${selectedPlayer.age} años` : ''}`,
+    description: `${selectedPlayer.position_player || 'N/A'} • ${selectedPlayer.team_name || 'N/A'} • ${selectedPlayer.nationality_1 || 'N/A'}${selectedPlayer.age ? ` • ${selectedPlayer.age} years` : ''}`,
     isOwnPlayer: selectedPlayer.is_own_player,
     approvalStatus: selectedPlayer.approval_status
   } : null
@@ -235,7 +235,7 @@ export function ReportDetailsForm() {
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {selectedPlayer.nationality_1 || 'N/A'}
-                  {selectedPlayer.age && ` • ${selectedPlayer.age} años`}
+                  {selectedPlayer.age && ` • ${selectedPlayer.age} years`}
                 </p>
               </div>
             </div>
@@ -244,7 +244,7 @@ export function ReportDetailsForm() {
           {/* Info Box */}
           <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
             <p className="text-sm text-blue-800">
-              💡 <strong>Tip:</strong> Busca y selecciona un jugador existente de la base de datos para crear un nuevo reporte sobre él.
+              💡 <strong>Tip:</strong> Search and select an existing player from the database to create a new report about them.
             </p>
           </div>
         </div>

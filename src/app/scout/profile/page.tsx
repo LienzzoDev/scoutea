@@ -1,11 +1,13 @@
 'use client'
 
 import { useUser, useClerk } from '@clerk/nextjs'
-import { User, Mail, Calendar, Shield, LogOut } from "lucide-react"
+import { User, Mail, Calendar, Shield, LogOut, CreditCard } from "lucide-react"
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 import ScoutNavbar from '@/components/layout/scout-navbar'
 import { Button } from '@/components/ui/button'
+import { useSubscription } from '@/hooks/auth/use-subscription'
 import { getUserRole } from '@/lib/auth/user-role'
 
 export default function ScoutProfilePage() {
@@ -13,10 +15,29 @@ export default function ScoutProfilePage() {
   const { signOut } = useClerk()
   const router = useRouter()
   const userRole = getUserRole(user)
+  const { subscription, hasActiveSubscription } = useSubscription()
+  const [portalLoading, setPortalLoading] = useState(false)
 
   const handleSignOut = async () => {
     await signOut()
     router.push('/')
+  }
+
+  const handleManageSubscription = async () => {
+    setPortalLoading(true)
+    try {
+      const res = await fetch('/api/create-portal-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ return_url: window.location.href }),
+      })
+      const data = await res.json()
+      if (data.__error) throw new Error(data.__error)
+      window.location.href = data.url
+    } catch (error) {
+      console.error('Error opening portal:', error)
+      setPortalLoading(false)
+    }
   }
 
   if (!isLoaded) {
@@ -134,16 +155,37 @@ export default function ScoutProfilePage() {
             </div>
           </div>
 
+          {/* Subscription */}
+          {hasActiveSubscription && (
+            <div className="bg-white rounded-lg border border-[#e7e7e7] p-8 mb-6">
+              <h3 className="text-xl font-semibold text-[#000000] mb-4">Subscription</h3>
+              <p className="text-[#6d6d6d] mb-4">
+                Plan: <span className="font-medium text-[#000000] capitalize">{subscription?.plan}</span>
+                {subscription?.billing && (
+                  <> · <span className="capitalize">{subscription.billing}</span></>
+                )}
+              </p>
+              <Button
+                onClick={handleManageSubscription}
+                disabled={portalLoading}
+                className="bg-[#8c1a10] hover:bg-[#6d1410] text-white"
+              >
+                <CreditCard className="w-4 h-4 mr-2" />
+                {portalLoading ? 'Redirecting...' : 'Manage Subscription'}
+              </Button>
+            </div>
+          )}
+
           {/* Sign Out Button */}
           <div className="bg-white rounded-lg border border-[#e7e7e7] p-8">
-            <h3 className="text-xl font-semibold text-[#000000] mb-4">Sesión</h3>
+            <h3 className="text-xl font-semibold text-[#000000] mb-4">Session</h3>
             <Button
               onClick={handleSignOut}
               variant="destructive"
               className="bg-[#8c1a10] hover:bg-[#6d1410] text-white"
             >
               <LogOut className="w-4 h-4 mr-2" />
-              Cerrar Sesión
+              Sign Out
             </Button>
           </div>
         </div>

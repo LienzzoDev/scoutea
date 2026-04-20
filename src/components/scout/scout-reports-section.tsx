@@ -158,7 +158,7 @@ export default function ScoutReportsSection({
         console.log('✅ Parsed JSON:', result)
       } catch (parseError) {
         console.error('❌ JSON parse error:', parseError)
-        throw new Error('La respuesta del servidor no es un JSON válido')
+        throw new Error('Server response is not valid JSON')
       }
 
       if (!response.ok) {
@@ -217,7 +217,7 @@ export default function ScoutReportsSection({
     if (!selectedReportForRequest || !requestReason.trim()) {
       toast({
         title: "Error",
-        description: "Por favor, proporciona una razón para la solicitud",
+        description: "Please provide a reason for the request",
         variant: "destructive"
       })
       return
@@ -226,7 +226,7 @@ export default function ScoutReportsSection({
     if (requestReason.trim().length < 10) {
       toast({
         title: "Error",
-        description: "La razón debe tener al menos 10 caracteres",
+        description: "The reason must be at least 10 characters",
         variant: "destructive"
       })
       return
@@ -255,7 +255,7 @@ export default function ScoutReportsSection({
 
       toast({
         title: "Solicitud enviada",
-        description: `Tu solicitud de ${requestType === 'edit' ? 'edición' : 'eliminación'} ha sido enviada al administrador`
+        description: `Your ${requestType === 'edit' ? 'edit' : 'deletion'} request has been sent to the administrator`
       })
 
       closeRequestModal()
@@ -273,7 +273,7 @@ export default function ScoutReportsSection({
 
   // Función para eliminar reporte
   const handleDeleteReport = async (reportId: string, playerName: string) => {
-    if (!confirm(`¿Estás seguro de que quieres eliminar el reporte de ${playerName}?`)) {
+    if (!confirm(`Are you sure you want to delete the report by ${playerName}?`)) {
       return
     }
 
@@ -293,7 +293,7 @@ export default function ScoutReportsSection({
 
       if (result.success) {
         toast({
-          title: "¡Éxito!",
+          title: "Success!",
           description: "Reporte eliminado correctamente"
         })
       } else {
@@ -456,7 +456,7 @@ export default function ScoutReportsSection({
       <div className="bg-white p-6 rounded-xl">
         <div className="flex flex-col items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8B0000]"></div>
-          <span className="ml-3 text-[#6d6d6d] mt-2">Cargando reportes...</span>
+          <span className="ml-3 text-[#6d6d6d] mt-2">Loading reports...</span>
         </div>
       </div>
     )
@@ -513,7 +513,7 @@ export default function ScoutReportsSection({
             onClick={() => setShowFilters(!showFilters)}
           >
             <Filter className="w-4 h-4 text-[#8B0000]" />
-            Filtros
+            Filters
             {(advancedFilters.nationality || advancedFilters.position || advancedFilters.rating) && (
               <span className="ml-1 bg-[#8B0000] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                 {Object.values(advancedFilters).filter(Boolean).length}
@@ -523,7 +523,7 @@ export default function ScoutReportsSection({
         </div>
         {searchTerm && (
           <p className="text-sm text-[#6d6d6d] mt-2">
-            {filteredReports.length} resultado{filteredReports.length !== 1 ? 's' : ''} para "{searchTerm}"
+            {filteredReports.length} result{filteredReports.length !== 1 ? 's' : ''} for &quot;{searchTerm}&quot;
           </p>
         )}
       </div>
@@ -533,13 +533,13 @@ export default function ScoutReportsSection({
         <div className="bg-white rounded-lg p-6 border border-[#e7e7e7] mb-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <h3 className="font-semibold text-[#000000]">Filtros Avanzados</h3>
+              <h3 className="font-semibold text-[#000000]">Advanced Filters</h3>
               {(advancedFilters.nationality || advancedFilters.position || advancedFilters.rating) && (
                 <button
                   onClick={() => setAdvancedFilters({ nationality: '', position: '', rating: '' })}
                   className="flex items-center gap-1 px-2 py-1 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors"
                 >
-                  <span className="text-red-600 text-sm">Limpiar Filtros</span>
+                  <span className="text-red-600 text-sm">Clear Filters</span>
                   <X className="w-3 h-3 text-red-600" />
                 </button>
               )}
@@ -554,13 +554,13 @@ export default function ScoutReportsSection({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Nacionalidad</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Nationality</label>
               <Select
                 value={advancedFilters.nationality || undefined}
                 onValueChange={(value) => setAdvancedFilters({ ...advancedFilters, nationality: value })}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Todas las nacionalidades" />
+                  <SelectValue placeholder="All nationalities" />
                 </SelectTrigger>
                 <SelectContent>
                   {filterOptions.nationalities.map(nat => (
@@ -571,13 +571,13 @@ export default function ScoutReportsSection({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Posición</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>
               <Select
                 value={advancedFilters.position || undefined}
                 onValueChange={(value) => setAdvancedFilters({ ...advancedFilters, position: value })}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Todas las posiciones" />
+                  <SelectValue placeholder="All positions" />
                 </SelectTrigger>
                 <SelectContent>
                   {filterOptions.positions.map(pos => (
@@ -588,19 +588,19 @@ export default function ScoutReportsSection({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Rating Mínimo</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Minimum Rating</label>
               <Select
                 value={advancedFilters.rating || undefined}
                 onValueChange={(value) => setAdvancedFilters({ ...advancedFilters, rating: value })}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Todos los ratings" />
+                  <SelectValue placeholder="All ratings" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="5">5 estrellas</SelectItem>
-                  <SelectItem value="4">4+ estrellas</SelectItem>
-                  <SelectItem value="3">3+ estrellas</SelectItem>
-                  <SelectItem value="2">2+ estrellas</SelectItem>
+                  <SelectItem value="5">5 stars</SelectItem>
+                  <SelectItem value="4">4+ stars</SelectItem>
+                  <SelectItem value="3">3+ stars</SelectItem>
+                  <SelectItem value="2">2+ stars</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -647,15 +647,15 @@ export default function ScoutReportsSection({
             {searchTerm ? '🔍' : '📋'}
           </div>
           <p className="text-[#6d6d6d] text-lg mb-2">
-            {searchTerm 
-              ? `No se encontraron reportes para "${searchTerm}"`
-              : 'No hay reportes disponibles'
+            {searchTerm
+              ? `No reports found for "${searchTerm}"`
+              : 'No reports available'
             }
           </p>
           <p className="text-sm text-gray-500 mb-4">
             {searchTerm
-              ? 'Intenta con otros términos de búsqueda o revisa los filtros'
-              : `No hay reportes de tipo "${REPORT_TYPES.find(t => t.key === selectedFilter)?.label}"`
+              ? 'Try different search terms or review the filters'
+              : `No reports of type "${REPORT_TYPES.find(t => t.key === selectedFilter)?.label}"`
             }
           </p>
           {searchTerm ? (
@@ -664,13 +664,13 @@ export default function ScoutReportsSection({
               variant="outline"
               className="border-[#8B0000] text-[#8B0000] hover:bg-[#8B0000] hover:text-white"
             >
-              Limpiar búsqueda
+              Clear search
             </Button>
           ) : (
             <Link href="/scout/portfolio/new">
               <Button className="bg-[#8B0000] hover:bg-[#660000] text-white">
                 <Plus className="w-4 h-4 mr-2" />
-                Crear primer reporte
+                Create first report
               </Button>
             </Link>
           )}
@@ -695,7 +695,7 @@ export default function ScoutReportsSection({
                     <button
                       onClick={() => openRequestModal(report, 'edit')}
                       className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Solicitar edición"
+                      title="Request edit"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
@@ -704,7 +704,7 @@ export default function ScoutReportsSection({
                   <button
                     onClick={() => openRequestModal(report, 'delete')}
                     className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title="Solicitar eliminación"
+                    title="Request deletion"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -740,7 +740,7 @@ export default function ScoutReportsSection({
                   {/* Status Badge - Show approval status */}
                   {report.approvalStatus === 'pending' && (
                     <div className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-300">
-                      ⏳ Pendiente de aprobación
+                      ⏳ Pending approval
                     </div>
                   )}
                   {report.approvalStatus === 'approved' && (
@@ -789,7 +789,7 @@ export default function ScoutReportsSection({
                           poster={report.image}
                         >
                           <source src={report.videoUrl} type="video/mp4" />
-                          Tu navegador no soporta la reproducción de video.
+                          Your browser does not support video playback.
                         </video>
                       )
                     }
@@ -891,7 +891,7 @@ export default function ScoutReportsSection({
                       poster={selectedVideoReport.image}
                     >
                       <source src={selectedVideoReport.videoUrl} type="video/mp4" />
-                      Tu navegador no soporta la reproducción de video.
+                      Your browser does not support video playback.
                     </video>
                   )
                 }
@@ -975,7 +975,7 @@ export default function ScoutReportsSection({
             {loadingPlayerData ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8B0000]"></div>
-                <span className="ml-3 text-[#6d6d6d] mt-2">Cargando datos del jugador...</span>
+                <span className="ml-3 text-[#6d6d6d] mt-2">Loading player data...</span>
               </div>
             ) : selectedPlayerData ? (
               <div className="space-y-4">
@@ -1002,13 +1002,13 @@ export default function ScoutReportsSection({
                   {selectedPlayerData.age && (
                     <div className="bg-gray-50 p-3 rounded-lg">
                       <p className="text-xs text-gray-500 mb-1">Edad</p>
-                      <p className="font-semibold text-[#2e3138]">{selectedPlayerData.age} años</p>
+                      <p className="font-semibold text-[#2e3138]">{selectedPlayerData.age} years</p>
                     </div>
                   )}
 
                   {selectedPlayerData.position_player && (
                     <div className="bg-gray-50 p-3 rounded-lg">
-                      <p className="text-xs text-gray-500 mb-1">Posición</p>
+                      <p className="text-xs text-gray-500 mb-1">Position</p>
                       <p className="font-semibold text-[#2e3138]">{selectedPlayerData.position_player}</p>
                     </div>
                   )}
@@ -1057,7 +1057,7 @@ export default function ScoutReportsSection({
 
                   {selectedPlayerData.national_tier && (
                     <div className="bg-gray-50 p-3 rounded-lg">
-                      <p className="text-xs text-gray-500 mb-1">Selección Nacional</p>
+                      <p className="text-xs text-gray-500 mb-1">National Team</p>
                       <p className="font-semibold text-[#2e3138]">{selectedPlayerData.national_tier}</p>
                     </div>
                   )}
@@ -1071,7 +1071,7 @@ export default function ScoutReportsSection({
 
                   {selectedPlayerData.competition && (
                     <div className="bg-gray-50 p-3 rounded-lg">
-                      <p className="text-xs text-gray-500 mb-1">Competición</p>
+                      <p className="text-xs text-gray-500 mb-1">Competition</p>
                       <p className="font-semibold text-[#2e3138]">{selectedPlayerData.competition}</p>
                     </div>
                   )}
@@ -1128,7 +1128,7 @@ export default function ScoutReportsSection({
             <div className="flex items-center justify-between mb-6 border-b pb-4">
               <div>
                 <h3 className="text-xl font-bold text-[#000000]">
-                  {requestType === 'edit' ? 'Solicitar Edición' : 'Solicitar Eliminación'}
+                  {requestType === 'edit' ? 'Request Edit' : 'Request Deletion'}
                 </h3>
                 <p className="text-sm text-[#6d6d6d] mt-1">
                   Reporte de {selectedReportForRequest.playerName}
@@ -1152,38 +1152,38 @@ export default function ScoutReportsSection({
                 {requestType === 'edit' ? (
                   <>
                     <Edit className="w-5 h-5 text-blue-600" />
-                    <span className="font-medium text-blue-700">Solicitud de Edición</span>
+                    <span className="font-medium text-blue-700">Edit Request</span>
                   </>
                 ) : (
                   <>
                     <Trash2 className="w-5 h-5 text-red-600" />
-                    <span className="font-medium text-red-700">Solicitud de Eliminación</span>
+                    <span className="font-medium text-red-700">Deletion Request</span>
                   </>
                 )}
               </div>
               <p className="text-sm mt-2 text-gray-600">
                 {requestType === 'edit'
-                  ? 'Tu solicitud será revisada por un administrador. Si es aprobada, podrás editar el reporte.'
-                  : 'Tu solicitud será revisada por un administrador. Si es aprobada, el reporte será eliminado permanentemente.'}
+                  ? 'Your request will be reviewed by an administrator. If approved, you will be able to edit the report.'
+                  : 'Your request will be reviewed by an administrator. If approved, the report will be permanently deleted.'}
               </p>
             </div>
 
             {/* Reason Textarea */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Razón de la solicitud <span className="text-red-500">*</span>
+                Reason for the request <span className="text-red-500">*</span>
               </label>
               <Textarea
                 placeholder={requestType === 'edit'
-                  ? 'Explica qué cambios deseas realizar y por qué...'
-                  : 'Explica por qué deseas eliminar este reporte...'}
+                  ? 'Explain what changes you want to make and why...'
+                  : 'Explain why you want to delete this report...'}
                 value={requestReason}
                 onChange={(e) => setRequestReason(e.target.value)}
                 className="min-h-[120px] resize-none"
                 disabled={isSubmittingRequest}
               />
               <p className="text-xs text-gray-500 mt-1">
-                Mínimo 10 caracteres ({requestReason.length}/10)
+                Minimum 10 characters ({requestReason.length}/10)
               </p>
             </div>
 
@@ -1209,7 +1209,7 @@ export default function ScoutReportsSection({
                     Enviando...
                   </>
                 ) : (
-                  `Enviar solicitud de ${requestType === 'edit' ? 'edición' : 'eliminación'}`
+                  `Send ${requestType === 'edit' ? 'edit' : 'deletion'} request`
                 )}
               </Button>
             </div>

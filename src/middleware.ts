@@ -87,6 +87,17 @@ export default clerkMiddleware(async (auth, req) => {
       return NextResponse.redirect(new URL('/login', req.url))
     }
 
+    // Wonderscouts oculto: cualquier acceso directo a estas rutas redirige al dashboard.
+    // Se deja el código funcional detrás para poder reactivarlo cuando queramos.
+    const p = req.nextUrl.pathname
+    if (
+      p === '/member/scouts' || p.startsWith('/member/scouts/') ||
+      p.startsWith('/member/scout/') ||
+      p === '/member/scout-comparison' || p.startsWith('/member/scout-comparison/')
+    ) {
+      return NextResponse.redirect(new URL('/member/dashboard', req.url))
+    }
+
     // ✅ CRÍTICO: Permitir acceso a rutas de onboarding sin restricciones adicionales
     const isOnboarding = isOnboardingRoute(req.nextUrl.pathname)
     if (isOnboarding) {
@@ -98,11 +109,6 @@ export default clerkMiddleware(async (auth, req) => {
     if (roleInfo && !roleInfo.access.memberArea) {
       console.log('❌ Usuario sin acceso al área de miembros:', roleInfo.role)
       return NextResponse.redirect(new URL('/', req.url))
-    }
-
-    // Si es scout (pero no tester), redirigir a su dashboard apropiado
-    if (roleInfo && roleInfo.role === 'scout' && !req.nextUrl.pathname.startsWith('/member/welcome')) {
-      return NextResponse.redirect(new URL('/scout/dashboard', req.url))
     }
 
     // Los testers pueden acceder libremente al área de members
@@ -136,27 +142,14 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.next()
   }
 
-  // Manejar rutas de scout
+  // Manejar rutas de scout: solo admin tiene acceso.
   if (isScoutRoute(req)) {
     if (!userId || !roleInfo) {
       return NextResponse.redirect(new URL('/login', req.url))
     }
 
-    // Verificar si tiene acceso al área de scouts
-    if (!roleInfo.access.scoutArea) {
-      // Si es member, redirigir a su dashboard
-      if (roleInfo.role === 'member') {
-        return NextResponse.redirect(new URL('/member/dashboard', req.url))
-      }
-      return NextResponse.redirect(new URL('/', req.url))
-    }
-
-    // Los testers pueden acceder libremente al área de scouts
-
-    // Verificar suscripción activa - redirigir al paso apropiado de onboarding
-    if (!roleInfo.hasActiveSubscription) {
-      const redirectUrl = getOnboardingRedirectUrl(roleInfo)
-      return NextResponse.redirect(new URL(redirectUrl, req.url))
+    if (!roleInfo.access.adminArea) {
+      return NextResponse.redirect(new URL('/member/dashboard', req.url))
     }
 
     return NextResponse.next()

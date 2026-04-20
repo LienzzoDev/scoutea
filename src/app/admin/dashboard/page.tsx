@@ -31,6 +31,7 @@ interface DashboardStats {
     lastScraping: string | null
     erroneousUrls: number
     missingTrfmUrls: number
+    brokenInstagramUrls: number
   }
   teams: {
     total: number
@@ -39,15 +40,16 @@ interface DashboardStats {
     missingTrfmUrls: number
   }
   evolution: {
-    reports: { month: string; count: number }[]
-    scouts: { month: string; count: number }[]
+    users: { month: string; count: number }[]
+    players: { month: string; count: number }[]
+    jobs: { month: string; count: number }[]
   }
 }
 
 const INITIAL_STATS: DashboardStats = {
-  players: { total: 0, lastScraping: null, erroneousUrls: 0, missingTrfmUrls: 0 },
+  players: { total: 0, lastScraping: null, erroneousUrls: 0, missingTrfmUrls: 0, brokenInstagramUrls: 0 },
   teams: { total: 0, lastScraping: null, erroneousUrls: 0, missingTrfmUrls: 0 },
-  evolution: { reports: [], scouts: [] }
+  evolution: { users: [], players: [], jobs: [] }
 }
 
 export default function DashboardPage() {
@@ -163,12 +165,13 @@ export default function DashboardPage() {
       <section>
         <h2 className="text-xl font-semibold mb-4 text-[#D6DDE6]">Indicadores Principales</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <StatsBlock 
-            title="Jugadores" 
+          <StatsBlock
+            title="Jugadores"
             total={stats.players.total}
             lastScraping={stats.players.lastScraping}
             erroneousUrls={stats.players.erroneousUrls}
             missingTrfmUrls={stats.players.missingTrfmUrls}
+            brokenInstagramUrls={stats.players.brokenInstagramUrls}
             loading={statsLoading}
           />
           <StatsBlock 
@@ -185,17 +188,23 @@ export default function DashboardPage() {
       {/* 📈 EVOLUCIÓN DE DATOS (BLOQUE 2) */}
       <section>
         <h2 className="text-xl font-semibold mb-4 text-[#D6DDE6]">Evolución de Datos</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <GrowthChart 
-            title="Crecimiento de Reportes" 
-            data={stats.evolution.reports} 
-            type="reports"
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <GrowthChart
+            title="Usuarios Registrados"
+            data={stats.evolution.users}
+            type="users"
             loading={statsLoading}
           />
-          <GrowthChart 
-            title="Crecimiento de Scouts" 
-            data={stats.evolution.scouts} 
-            type="scouts"
+          <GrowthChart
+            title="Jugadores Añadidos"
+            data={stats.evolution.players}
+            type="players"
+            loading={statsLoading}
+          />
+          <GrowthChart
+            title="Trabajos On Demand"
+            data={stats.evolution.jobs}
+            type="jobs"
             loading={statsLoading}
           />
         </div>

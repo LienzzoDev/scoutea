@@ -1,10 +1,12 @@
 import { formatMoney } from '@/lib/utils/format-money'
+import type { StatsPeriod } from '@/lib/utils/stats-period-utils'
 
 export interface Category {
   key: string
   label: string
   enabled?: boolean
   getValue?: (player: Record<string, unknown>) => unknown
+  getSortValue?: (player: Record<string, unknown>) => number
 }
 
 export interface CategoryGroup {
@@ -30,6 +32,134 @@ const processGroup = (group: CategoryGroup): CategoryGroup => ({
   categories: group.categories.map(ensureGetValue),
   subgroups: group.subgroups?.map(processGroup)
 });
+
+// Format a numeric stat value for display (round to 2 decimals if non-integer)
+const formatStatValue = (v: unknown): string => {
+  if (v === null || v === undefined || v === '') return '0'
+  const n = Number(v)
+  if (Number.isNaN(n)) return String(v)
+  return Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/\.?0+$/, '')
+}
+
+// Helper to create a stat category with stable key and support for 1..2 periods
+const statCat = (baseName: string, label: string, periods: StatsPeriod[]): Category => {
+  const primary = periods[0]
+  return {
+    key: baseName,
+    label,
+    getValue: (p: Record<string, unknown>) => {
+      if (periods.length === 0) return 0
+      if (periods.length === 1) return (p[`${baseName}_${periods[0]}`] as number | null | undefined) ?? 0
+      const parts = periods.map(period => formatStatValue(p[`${baseName}_${period}`]))
+      return parts.join(' | ')
+    },
+    getSortValue: (p: Record<string, unknown>) => {
+      if (!primary) return 0
+      const raw = p[`${baseName}_${primary}`]
+      const n = Number(raw ?? 0)
+      return Number.isNaN(n) ? 0 : n
+    },
+  }
+}
+
+// Generate STATS category groups for given periods (1..2)
+function buildStatsGroups(periods: StatsPeriod[]): CategoryGroup[] {
+  const p = periods
+  const periodLabel = periods.map(x => x.toUpperCase()).join(' · ')
+  return [
+    {
+      groupName: '1. General',
+      categories: [],
+      subgroups: [
+        {
+          groupName: `1.1 General Stats (${periodLabel})`,
+          categories: [
+            statCat('matches_played_tot', 'Matches played (TOT)', p),
+            statCat('minutes_played_tot', 'Minutes played (TOT)', p),
+            statCat('goals_p90', 'Goals (P90)', p),
+            statCat('goals_tot', 'Goals (TOT)', p),
+            statCat('assists_p90', 'Assists (P90)', p),
+            statCat('assists_tot', 'Assists (TOT)', p),
+            statCat('yellow_cards_p90', 'Yellow cards (P90)', p),
+            statCat('yellow_cards_tot', 'Yellow cards (TOT)', p),
+            statCat('red_cards_p90', 'Red cards (P90)', p),
+            statCat('red_cards_tot', 'Red cards (TOT)', p),
+          ]
+        },
+      ]
+    },
+    {
+      groupName: '2. Goalkeeping',
+      categories: [
+        statCat('conceded_goals_p90', 'Conceded goals (P90)', p),
+        statCat('conceded_goals_tot', 'Conceded goals (TOT)', p),
+        statCat('prevented_goals_p90', 'Prevented goals (P90)', p),
+        statCat('prevented_goals_tot', 'Prevented goals (TOT)', p),
+        statCat('shots_against_p90', 'Shots against (P90)', p),
+        statCat('shots_against_tot', 'Shots against (TOT)', p),
+        statCat('clean_sheets_tot', 'Clean sheets (TOT)', p),
+        statCat('clean_sheets_percent', 'Clean sheets (%)', p),
+        statCat('save_rate_percent', 'Save rate (%)', p),
+      ]
+    },
+    {
+      groupName: '3. Defending',
+      categories: [
+        statCat('tackles_p90', 'Tackles (P90)', p),
+        statCat('tackles_tot', 'Tackles (TOT)', p),
+        statCat('interceptions_p90', 'Interceptions (P90)', p),
+        statCat('interceptions_tot', 'Interceptions (TOT)', p),
+        statCat('fouls_p90', 'Fouls (P90)', p),
+        statCat('fouls_tot', 'Fouls (TOT)', p),
+      ]
+    },
+    {
+      groupName: '4. Passing',
+      categories: [
+        statCat('passes_p90', 'Passes (P90)', p),
+        statCat('passes_tot', 'Passes (TOT)', p),
+        statCat('forward_passes_p90', 'Forward passes (P90)', p),
+        statCat('forward_passes_tot', 'Forward passes (TOT)', p),
+        statCat('crosses_p90', 'Crosses (P90)', p),
+        statCat('crosses_tot', 'Crosses (TOT)', p),
+        statCat('accurate_passes_percent', 'Accurate passes (%)', p),
+      ]
+    },
+    {
+      groupName: '5. Finishing',
+      categories: [
+        statCat('shots_p90', 'Shots (P90)', p),
+        statCat('shots_tot', 'Shots (TOT)', p),
+        statCat('effectiveness_percent', 'Effectiveness (%)', p),
+      ]
+    },
+    {
+      groupName: '6. 1vs1',
+      categories: [
+        statCat('off_duels_p90', 'Off duels (P90)', p),
+        statCat('off_duels_tot', 'Off duels (TOT)', p),
+        statCat('off_duels_won_percent', 'Off duels won (%)', p),
+        statCat('def_duels_p90', 'Def duels (P90)', p),
+        statCat('def_duels_tot', 'Def duels (TOT)', p),
+        statCat('def_duels_won_percent', 'Def duels won (%)', p),
+        statCat('aerials_duels_p90', 'Aerial duels (P90)', p),
+        statCat('aerials_duels_tot', 'Aerial duels (TOT)', p),
+        statCat('aerials_duels_won_percent', 'Aerial duels won (%)', p),
+      ]
+    },
+    {
+      groupName: '7. Physical',
+      categories: [
+        { key: 'sprinter', label: 'Sprinter' },
+        { key: 'marathonian', label: 'Marathonian' },
+        { key: 'bomberman', label: 'Bomberman' },
+        { key: 'three_sixty', label: '360º' },
+        { key: 'the_rock', label: 'The Rock' },
+        { key: 'air_flyer', label: 'Air Flyer' },
+      ]
+    },
+  ]
+}
 
 export const DASHBOARD_CATEGORY_GROUPS: CategoryGroup[] = [
   // PASSPORT
@@ -185,103 +315,11 @@ export const DASHBOARD_CATEGORY_GROUPS: CategoryGroup[] = [
     ]
   },
 
-  // STATS
+  // STATS (dynamic based on period - default 3m, use getDashboardCategoryGroups for other periods)
   {
     groupName: 'STATS',
     categories: [],
-    subgroups: [
-      // 1. General
-      {
-        groupName: '1. General',
-        categories: [],
-        subgroups: [
-          {
-            groupName: '1.1 General Stats (3M)',
-            categories: [
-              { key: 'matches_played_tot_3m', label: 'Matches played (TOT)', getValue: (p: Record<string, unknown>) => p.matches_played_tot_3m || 0 },
-              { key: 'minutes_played_tot_3m', label: 'Minutes played (TOT)', getValue: (p: Record<string, unknown>) => p.minutes_played_tot_3m || 0 },
-              { key: 'goals_p90_3m', label: 'Goals (P90)', getValue: (p: Record<string, unknown>) => p.goals_p90_3m || 0 },
-              { key: 'goals_tot_3m', label: 'Goals (TOT)', getValue: (p: Record<string, unknown>) => p.goals_tot_3m || 0 },
-              { key: 'assists_p90_3m', label: 'Assists (P90)', getValue: (p: Record<string, unknown>) => p.assists_p90_3m || 0 },
-              { key: 'assists_tot_3m', label: 'Assists (TOT)', getValue: (p: Record<string, unknown>) => p.assists_tot_3m || 0 },
-              { key: 'yellow_cards_p90_3m', label: 'Yellow cards (P90)', getValue: (p: Record<string, unknown>) => p.yellow_cards_p90_3m || 0 },
-              { key: 'yellow_cards_tot_3m', label: 'Yellow cards (TOT)', getValue: (p: Record<string, unknown>) => p.yellow_cards_tot_3m || 0 },
-              { key: 'red_cards_p90_3m', label: 'Red cards (P90)', getValue: (p: Record<string, unknown>) => p.red_cards_p90_3m || 0 },
-              { key: 'red_cards_tot_3m', label: 'Red cards (TOT)', getValue: (p: Record<string, unknown>) => p.red_cards_tot_3m || 0 },
-            ]
-          },
-        ]
-      },
-
-      // 2. Goalkeeping
-      {
-        groupName: '2. Goalkeeping',
-        categories: [
-          { key: 'conceded_goals_p90_3m', label: 'Conceded goals (P90)' },
-          { key: 'conceded_goals_tot_3m', label: 'Conceded goals (TOT)' },
-          { key: 'prevented_goals_p90_3m', label: 'Prevented goals (P90)' },
-          { key: 'prevented_goals_tot_3m', label: 'Prevented goals (TOT)' },
-          { key: 'shots_against_p90_3m', label: 'Shots against (P90)' },
-          { key: 'shots_against_tot_3m', label: 'Shots against (TOT)' },
-          { key: 'clean_sheets_tot_3m', label: 'Clean sheets (TOT)' },
-          { key: 'clean_sheets_percent_3m', label: 'Clean sheets (%)' },
-          { key: 'save_rate_percent_3m', label: 'Save rate (%)' },
-        ]
-      },
-
-      // 3. Defending
-      {
-        groupName: '3. Defending',
-        categories: [
-          { key: 'tackles_p90_3m', label: 'Tackles (P90)' },
-          { key: 'tackles_tot_3m', label: 'Tackles (TOT)' },
-          { key: 'interceptions_p90_3m', label: 'Interceptions (P90)' },
-          { key: 'interceptions_tot_3m', label: 'Interceptions (TOT)' },
-          { key: 'fouls_p90_3m', label: 'Fouls (P90)' },
-          { key: 'fouls_tot_3m', label: 'Fouls (TOT)' },
-        ]
-      },
-
-      // 4. Passing
-      {
-        groupName: '4. Passing',
-        categories: [
-          { key: 'passes_p90_3m', label: 'Passes (P90)' },
-          { key: 'passes_tot_3m', label: 'Passes (TOT)' },
-          { key: 'forward_passes_p90_3m', label: 'Forward passes (P90)' },
-          { key: 'forward_passes_tot_3m', label: 'Forward passes (TOT)' },
-          { key: 'crosses_p90_3m', label: 'Crosses (P90)' },
-          { key: 'crosses_tot_3m', label: 'Crosses (TOT)' },
-          { key: 'accurate_passes_percent_3m', label: 'Accurate passes (%)' },
-        ]
-      },
-
-      // 5. Finishing
-      {
-        groupName: '5. Finishing',
-        categories: [
-          { key: 'shots_p90_3m', label: 'Shots (P90)' },
-          { key: 'shots_tot_3m', label: 'Shots (TOT)' },
-          { key: 'effectiveness_percent_3m', label: 'Effectiveness (%)' },
-        ]
-      },
-
-      // 6. 1vs1
-      {
-        groupName: '6. 1vs1',
-        categories: [
-          { key: 'off_duels_p90_3m', label: 'Off duels (P90)' },
-          { key: 'off_duels_tot_3m', label: 'Off duels (TOT)' },
-          { key: 'off_duels_won_percent_3m', label: 'Off duels won (%)' },
-          { key: 'def_duels_p90_3m', label: 'Def duels (P90)' },
-          { key: 'def_duels_tot_3m', label: 'Def duels (TOT)' },
-          { key: 'def_duels_won_percent_3m', label: 'Def duels won (%)' },
-          { key: 'aerials_duels_p90_3m', label: 'Aerial duels (P90)' },
-          { key: 'aerials_duels_tot_3m', label: 'Aerial duels (TOT)' },
-          { key: 'aerials_duels_won_percent_3m', label: 'Aerial duels won (%)' },
-        ]
-      },
-    ]
+    subgroups: buildStatsGroups(['3m']),
   },
 
   // ON THE PITCH
@@ -376,9 +414,9 @@ export const DASHBOARD_CATEGORY_GROUPS: CategoryGroup[] = [
     ]
   },
 
-  // PHYSICAL
+  // ARCHETYPE
   {
-    groupName: 'PHYSICAL',
+    groupName: 'ARCHETYPE',
     categories: [
       { key: 'sprinter', label: 'Sprinter' },
       { key: 'marathonian', label: 'Marathonian' },
@@ -405,4 +443,47 @@ export const DASHBOARD_CATEGORY_GROUPS: CategoryGroup[] = [
       { key: 'injury_resistance', label: 'Injury Resistance' },
     ]
   },
+
+  // EVOLUTION
+  {
+    groupName: 'EVOLUTION',
+    categories: [
+      {
+        key: 'transfer_team_pts',
+        label: 'Transfer Team Pts',
+        getValue: (player: Record<string, unknown>) => player.transfer_team_pts ?? 'N/A'
+      },
+      {
+        key: 'transfer_competition_pts',
+        label: 'Transfer Competition Pts',
+        getValue: (player: Record<string, unknown>) => player.transfer_competition_pts ?? 'N/A'
+      },
+      {
+        key: 'roi',
+        label: 'ROI',
+        getValue: (player: Record<string, unknown>) => player.roi ?? 'N/A'
+      },
+    ]
+  },
 ].map(processGroup);
+
+/**
+ * Generate dashboard category groups for a specific stats period.
+ * Non-stats groups (PASSPORT, CONTRACT, etc.) stay the same.
+ * Only the STATS group is regenerated with the appropriate period suffix.
+ */
+export function getDashboardCategoryGroups(periods: StatsPeriod[]): CategoryGroup[] {
+  return DASHBOARD_CATEGORY_GROUPS.map(group => {
+    if (group.groupName === 'STATS') {
+      if (periods.length === 0) {
+        // Hide STATS group entirely when no period is selected
+        return null
+      }
+      return processGroup({
+        ...group,
+        subgroups: buildStatsGroups(periods),
+      })
+    }
+    return group
+  }).filter((g): g is CategoryGroup => g !== null)
+}

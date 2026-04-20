@@ -303,11 +303,32 @@ export async function GET(request: NextRequest) {
       // URLs y referencias
       photo_coverage: true,
       video: true,
+      video_report_1: true,
+      video_report_2: true,
+      video_report_3: true,
+      video_report_4: true,
+      video_report_5: true,
       url_trfm_advisor: true,
       url_trfm: true,
       url_trfm_broken: true,
       url_secondary: true,
       url_instagram: true,
+
+      // Scouting report
+      text_report: true,
+      development: true,
+      team_status: true,
+      initial_team_name: true,
+      initial_team_elo: true,
+      initial_team_level: true,
+      transfer_team_pts: true,
+      initial_competition: true,
+      initial_competition_elo: true,
+      initial_competition_level: true,
+      transfer_competition_pts: true,
+      initial_player_trfm_value: true,
+      roi: true,
+      profit: true,
 
       // Notas administrativas
       admin_notes: true,

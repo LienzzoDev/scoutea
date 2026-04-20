@@ -112,7 +112,7 @@ export default function MultiSelectFilter({
               ? "bg-slate-800 text-slate-400"
               : "bg-gray-100 text-gray-600"
           )}>
-            +{remainingCount} más
+            +{remainingCount} more
           </span>
         )}
       </div>

@@ -22,6 +22,7 @@ function parseDateString(dateStr: string): Date | null {
     // Si viene en formato DD/MM/YYYY
     if (cleanStr.includes('/')) {
       const [day, month, year] = cleanStr.split('/')
+      if (!day || !month || !year) return null
       const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
       return isNaN(date.getTime()) ? null : date
     }
@@ -34,9 +35,13 @@ function parseDateString(dateStr: string): Date | null {
 
     const parts = cleanStr.split(' ')
     if (parts.length >= 3) {
-      const day = parseInt(parts[0])
-      const monthStr = parts[1].toLowerCase().replace('.', '').substring(0, 3)
-      const year = parseInt(parts[2])
+      const dayStr = parts[0]
+      const monthPart = parts[1]
+      const yearStr = parts[2]
+      if (!dayStr || !monthPart || !yearStr) return null
+      const day = parseInt(dayStr)
+      const monthStr = monthPart.toLowerCase().replace('.', '').substring(0, 3)
+      const year = parseInt(yearStr)
 
       if (months[monthStr] !== undefined) {
         const date = new Date(year, months[monthStr], day)
@@ -53,7 +58,7 @@ function parseDateString(dateStr: string): Date | null {
 /**
  * Scrapear datos de un jugador desde Transfermarkt
  */
-export async function scrapePlayerData(url: string): Promise<Record<string, any>> {
+export async function scrapePlayerData(url: string): Promise<Record<string, unknown>> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), SCRAPING_CONFIG.REQUEST_TIMEOUT)
 
@@ -72,11 +77,11 @@ export async function scrapePlayerData(url: string): Promise<Record<string, any>
     const html = await response.text()
 
     // Extraer datos usando regex
-    const data: Record<string, any> = {}
+    const data: Record<string, unknown> = {}
 
     // 1. Fecha de nacimiento - buscar en data-header con itemprop="birthDate"
     const birthDateMatch = html.match(/<span itemprop="birthDate"[^>]*>\s*(\d{2}\/\d{2}\/\d{4})/)
-    if (birthDateMatch) {
+    if (birthDateMatch?.[1]) {
       // Parsear la fecha a formato ISO para Prisma
       const parsedDate = parseDateString(birthDateMatch[1].trim())
       if (parsedDate) {
@@ -86,50 +91,50 @@ export async function scrapePlayerData(url: string): Promise<Record<string, any>
 
     // 2. Equipo actual - buscar en data-header__club-info el link con title
     const teamMatch = html.match(/data-header__club-info[\s\S]*?<a[^>]*title="([^"]+)"[^>]*href="[^"]*\/startseite\/verein/)
-    if (teamMatch) {
+    if (teamMatch?.[1]) {
       data.team_name = teamMatch[1].trim()
     }
 
     // 3. Posición - buscar en data-header después de "Position:"
     const positionMatch = html.match(/<li class="data-header__label">Position:[\s\S]*?<span class="data-header__content">\s*([^<]+?)\s*<\/span>/)
-    if (positionMatch) {
+    if (positionMatch?.[1]) {
       data.position_player = positionMatch[1].trim()
     }
 
     // 4. Pie - buscar en info-table después de "Foot:"
     const footMatch = html.match(/Foot:[\s\S]*?info-table__content--bold[^>]*>([^<]+)</)
-    if (footMatch) {
+    if (footMatch?.[1]) {
       data.foot = footMatch[1].trim()
     }
 
     // 5. Altura - buscar en data-header después de "Height:"
     const heightMatch = html.match(/<li class="data-header__label">Height:[\s\S]*?<span[^>]*itemprop="height"[^>]*>\s*([0-9,]+)\s*m/)
-    if (heightMatch) {
+    if (heightMatch?.[1]) {
       const heightInMeters = parseFloat(heightMatch[1].replace(',', '.'))
       data.height = Math.round(heightInMeters * 100)
     }
 
     // 6. Nacionalidad 1 - buscar en info-table después de "Citizenship:"
     const nat1Match = html.match(/Citizenship:[\s\S]*?info-table__content--bold[^>]*>[\s\S]*?<img[^>]+title="([^"]+)"/)
-    if (nat1Match) {
+    if (nat1Match?.[1]) {
       data.nationality_1 = nat1Match[1].trim()
     }
 
     // 7. Nacionalidad 2
     const nat2Match = html.match(/Nacionalidad:<\/span>[\s\S]*?title="[^"]+"[\s\S]*?title="([^"]+)"/)
-    if (nat2Match) {
+    if (nat2Match?.[1]) {
       data.nationality_2 = nat2Match[1].trim()
     }
 
     // 8. Agencia
     const agencyMatch = html.match(/Agente:<\/span>[\s\S]*?<a[^>]*>([^<]+)<\/a>/)
-    if (agencyMatch) {
+    if (agencyMatch?.[1]) {
       data.agency = agencyMatch[1].trim()
     }
 
     // 9. Fin de contrato
     const contractMatch = html.match(/Contrato hasta:<\/span>\s*<span[^>]*>([^<]+)<\/span>/)
-    if (contractMatch) {
+    if (contractMatch?.[1]) {
       const contractStr = contractMatch[1].trim()
       const parsedDate = parseDateString(contractStr)
       if (parsedDate) {
@@ -139,7 +144,7 @@ export async function scrapePlayerData(url: string): Promise<Record<string, any>
 
     // 10. Valor de mercado
     const valueMatch = html.match(/Valor de mercado:<\/span>\s*<[^>]*>([^<]+)<\//)
-    if (valueMatch) {
+    if (valueMatch?.[1]) {
       data.player_trfm_value = valueMatch[1].trim()
     }
 
@@ -153,7 +158,7 @@ export async function scrapePlayerData(url: string): Promise<Record<string, any>
 /**
  * Scrapear datos de un equipo desde Transfermarkt
  */
-export async function scrapeTeamData(url: string): Promise<Record<string, any>> {
+export async function scrapeTeamData(url: string): Promise<Record<string, unknown>> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), SCRAPING_CONFIG.REQUEST_TIMEOUT)
 
@@ -171,29 +176,29 @@ export async function scrapeTeamData(url: string): Promise<Record<string, any>> 
 
     const html = await response.text()
 
-    const data: Record<string, any> = {}
+    const data: Record<string, unknown> = {}
 
     // 1. Nombre del equipo
     const teamNameMatch = html.match(/<h1[^>]*itemprop="name"[^>]*>([^<]+)<\/h1>/)
-    if (teamNameMatch) {
+    if (teamNameMatch?.[1]) {
       data.team_name = teamNameMatch[1].trim()
     }
 
     // 2. País
     const countryMatch = html.match(/País:<\/span>[\s\S]*?title="([^"]+)"/)
-    if (countryMatch) {
+    if (countryMatch?.[1]) {
       data.team_country = countryMatch[1].trim()
     }
 
     // 3. Liga/Competición
     const competitionMatch = html.match(/Liga:<\/span>[\s\S]*?<a[^>]*>([^<]+)<\/a>/)
-    if (competitionMatch) {
+    if (competitionMatch?.[1]) {
       data.competition = competitionMatch[1].trim()
     }
 
     // 4. Valor de mercado del equipo
     const teamValueMatch = html.match(/Valor de mercado total:<\/span>\s*<[^>]*>([^<]+)<\//)
-    if (teamValueMatch) {
+    if (teamValueMatch?.[1]) {
       data.team_trfm_value = teamValueMatch[1].trim()
     }
 

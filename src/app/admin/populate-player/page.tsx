@@ -167,7 +167,7 @@ export default function PopulatePlayerScoutsPage() {
           </h2>
           <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800">
             <li>Enter a Player ID (default is player-sample-1)</li>
-            <li>Click "Populate Scout Reports" to create sample reports</li>
+            <li>Click &quot;Populate Scout Reports&quot; to create sample reports</li>
             <li>
               This will create 5 scout reports from different scouts with high ELO
             </li>
@@ -178,7 +178,7 @@ export default function PopulatePlayerScoutsPage() {
               Reports include metrics (ROI, Profit, Potential) and some have video URLs
             </li>
             <li>
-              Visit the player profile page to see the scout reports in the "Scouts" tab
+              Visit the player profile page to see the scout reports in the &quot;Scouts&quot; tab
             </li>
           </ol>
         </div>

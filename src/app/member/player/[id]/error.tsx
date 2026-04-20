@@ -26,11 +26,11 @@ export default function PlayerProfileError({
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-center text-gray-600">
-            No se pudo cargar la información del jugador. Por favor, inténtalo de nuevo.
+            Player information could not be loaded. Please try again.
           </p>
           <div className="flex justify-center">
             <Button onClick={reset}>
-              Intentar de nuevo
+              Try again
             </Button>
           </div>
         </CardContent>

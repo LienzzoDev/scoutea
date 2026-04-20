@@ -6,8 +6,8 @@ import { useState, useMemo } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { getYouTubeEmbedUrl } from "@/lib/utils/video-utils"
 import { getReportContentType, REPORT_CONTENT_TYPE_CONFIG, type ReportContentType } from "@/lib/utils/report-utils"
+import { getYouTubeEmbedUrl } from "@/lib/utils/video-utils"
 import type { Report } from "@/types/report"
 
 // Función para obtener el badge de tipo de contenido

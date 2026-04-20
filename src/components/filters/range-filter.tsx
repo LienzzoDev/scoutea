@@ -23,8 +23,8 @@ export default function RangeFilter({
   maxValue,
   onRangeChange,
   placeholder = "Select range...",
-  minPlaceholder = "Mín",
-  maxPlaceholder = "Máx",
+  minPlaceholder = "Min",
+  maxPlaceholder = "Max",
   step = "1",
   suffix = ""
 }: RangeFilterProps) {

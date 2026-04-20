@@ -83,11 +83,34 @@ export interface Player {
   player_ranking?: number | null;
   community_potential?: number | null;
   video?: string | null;
+  video_report_1?: string | null;
+  video_report_2?: string | null;
+  video_report_3?: string | null;
+  video_report_4?: string | null;
+  video_report_5?: string | null;
+  text_report?: string | null;
+  development?: string | null;
+  team_status?: string | null;
   existing_club?: string | null;
   previous_trfm_value?: number | null;
   previous_trfm_value_date?: Date | null;
   trfm_value_change_percent?: number | null;
   trfm_value_last_updated?: Date | null;
+  // Campos iniciales para scouting report
+  initial_player_trfm_value?: number | null;
+  initial_trfm_value_date?: Date | null;
+  initial_team_name?: string | null;
+  initial_team_level?: string | null;
+  initial_team_elo?: number | null;
+  initial_competition?: string | null;
+  initial_competition_level?: string | null;
+  initial_competition_elo?: number | null;
+  initial_age?: number | null;
+  // Métricas de evolución
+  transfer_team_pts?: number | null;
+  transfer_competition_pts?: number | null;
+  roi?: number | null;
+  profit?: number | null;
   // Campos de redes sociales
   facebook_profile?: string | null;
   twitter_profile?: string | null;

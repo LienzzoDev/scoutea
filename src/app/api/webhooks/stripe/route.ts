@@ -7,7 +7,7 @@ import { TransactionService } from '@/lib/services/transaction-service'
 import { WebhookRetryService } from '@/lib/services/webhook-retry-service'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-06-20',
+  apiVersion: '2025-08-27.basil',
 })
 
 
@@ -48,25 +48,27 @@ export async function POST(request: NextRequest) {
     let handlerResult = null
 
     // Manejar eventos de Stripe con reintentos
+    // event is guaranteed non-null here after constructEvent succeeds
+    const verifiedEvent = event!
     const retryResult = await WebhookRetryService.processStripeWebhookWithRetry(
-      event.type,
-      event.id,
+      verifiedEvent.type,
+      verifiedEvent.id,
       async () => {
-        switch (event.type) {
+        switch (verifiedEvent.type) {
           case 'checkout.session.completed':
-            return await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session)
+            return await handleCheckoutSessionCompleted(verifiedEvent.data.object as Stripe.Checkout.Session)
           case 'customer.subscription.created':
-            return await handleSubscriptionCreated(event.data.object as Stripe.Subscription)
+            return await handleSubscriptionCreated(verifiedEvent.data.object as Stripe.Subscription)
           case 'customer.subscription.updated':
-            return await handleSubscriptionUpdated(event.data.object as Stripe.Subscription)
+            return await handleSubscriptionUpdated(verifiedEvent.data.object as Stripe.Subscription)
           case 'customer.subscription.deleted':
-            return await handleSubscriptionDeleted(event.data.object as Stripe.Subscription)
+            return await handleSubscriptionDeleted(verifiedEvent.data.object as Stripe.Subscription)
           case 'invoice.payment_succeeded':
-            return await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice)
+            return await handleInvoicePaymentSucceeded(verifiedEvent.data.object as Stripe.Invoice)
           case 'invoice.payment_failed':
-            return await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice)
+            return await handleInvoicePaymentFailed(verifiedEvent.data.object as Stripe.Invoice)
           default:
-            console.log(`⚠️ Unhandled event type: ${event.type}`)
+            console.log(`⚠️ Unhandled event type: ${verifiedEvent.type}`)
             return { handled: false, reason: 'Unhandled event type' }
         }
       }
@@ -127,21 +129,21 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
   // Validaciones críticas
   if (!userId) {
-    const error = 'No userId found in checkout session'
-    logger.error(error, { sessionId: session.id })
-    return { success: false, error, sessionId: session.id }
+    const errorMsg = 'No userId found in checkout session'
+    logger.error(errorMsg, new Error(errorMsg), { sessionId: session.id })
+    return { success: false, error: errorMsg, sessionId: session.id }
   }
 
   if (session.payment_status !== 'paid') {
-    const error = `Payment not completed. Status: ${session.payment_status}`
-    logger.error(error, { sessionId: session.id, userId })
-    return { success: false, error, sessionId: session.id, paymentStatus: session.payment_status }
+    const errorMsg = `Payment not completed. Status: ${session.payment_status}`
+    logger.error(errorMsg, new Error(errorMsg), { sessionId: session.id, userId })
+    return { success: false, error: errorMsg, sessionId: session.id, paymentStatus: session.payment_status }
   }
 
   if (!plan) {
-    const error = 'No plan found in checkout session'
-    logger.error(error, { sessionId: session.id, userId })
-    return { success: false, error, sessionId: session.id }
+    const errorMsg = 'No plan found in checkout session'
+    logger.error(errorMsg, new Error(errorMsg), { sessionId: session.id, userId })
+    return { success: false, error: errorMsg, sessionId: session.id }
   }
 
   try {
@@ -172,11 +174,10 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     })
 
     if (!result.success) {
-      logger.error('Failed to process payment completion', {
+      logger.error('Failed to process payment completion', new Error(result.error || 'Unknown error'), {
         userId,
         sessionId: session.id,
-        plan,
-        error: result.error
+        plan
       })
       
       // Intentar rollback si es posible
@@ -236,20 +237,15 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 async function attemptPaymentRollback(userId: string, sessionId: string) {
   try {
     logger.info('Attempting payment rollback', { userId, sessionId })
-    
-    // Revertir metadata de suscripción
-    await RoleService.updateUserRole(userId, {
-      subscription: {
-        status: 'cancelled' as any,
-        cancelledAt: new Date().toISOString()
-      }
-    }, 'payment_rollback')
-    
+
+    // Cancelar suscripción usando el método específico
+    await RoleService.cancelUserSubscription(userId)
+
     logger.info('Payment rollback completed', { userId, sessionId })
   } catch (rollbackError) {
-    logger.error('Failed to rollback payment', rollbackError as Error, { 
-      userId, 
-      sessionId 
+    logger.error('Failed to rollback payment', rollbackError as Error, {
+      userId,
+      sessionId
     })
   }
 }
@@ -268,12 +264,17 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   }
 
   try {
-    const status = subscription.status === 'active' ? 'active' : 'inactive'
-    
+    const status: 'active' | 'inactive' = subscription.status === 'active' ? 'active' : 'inactive'
+
+    // Get existing metadata to preserve the plan
+    const existingMetadata = await RoleService.getUserMetadata(userId)
+    const existingPlan = existingMetadata?.subscription?.plan || 'unknown'
+
     const result = await RoleService.updateUserRole(userId, {
       subscription: {
-        status: status as any,
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString()
+        status,
+        plan: existingPlan,
+        stripeSubscriptionId: subscription.id
       }
     }, 'subscription_updated')
 

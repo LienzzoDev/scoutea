@@ -462,6 +462,7 @@ export default function ScoutsPage() {
           onCategoryToggle={handleCategoryToggle}
           onReset={resetCategories}
           minCategories={1}
+          maxCategories={20}
           storageKey="scouts-selected-categories"
         />
 
@@ -480,8 +481,8 @@ export default function ScoutsPage() {
           <div className="flex items-center gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#6d6d6d] w-4 h-4" />
-              <Input 
-                placeholder="Buscar por nombre, nacionalidad, país, nivel..." 
+              <Input
+                placeholder="Search by name, nationality, country, level..."
                 className="pl-10 w-80 bg-[#ffffff] border-[#e7e7e7]"
                 value={searchTerm}
                 onChange={(e) => handleSearch(e.target.value)}
@@ -490,14 +491,14 @@ export default function ScoutsPage() {
             <Button
               variant="outline"
               className={`flex items-center gap-2 border-[#e7e7e7] transition-all duration-200 ${
-                showFilters 
-                  ? 'bg-[#8c1a10]/10 text-[#8c1a10] border-[#8c1a10]/30' 
+                showFilters
+                  ? 'bg-[#8c1a10]/10 text-[#8c1a10] border-[#8c1a10]/30'
                   : 'text-[#6d6d6d] bg-transparent'
               }`}
               onClick={() => setShowFilters(!showFilters)}
             >
               <Filter className="w-4 h-4 text-[#8c1a10]" />
-              Filtros
+              Filters
             </Button>
           </div>
         </div>
@@ -508,13 +509,13 @@ export default function ScoutsPage() {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <h3 className="font-semibold text-[#000000]">Filtros</h3>
+                <h3 className="font-semibold text-[#000000]">Filters</h3>
                 {(Object.keys(activeFilters).length > 0 || selectedNationalities.length > 0 || selectedLevels.length > 0 || selectedCountries.length > 0 || selectedExpertise.length > 0) && (
                   <button
                     onClick={clearFilters}
                     className="flex items-center gap-1 px-2 py-1 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors cursor-pointer"
                   >
-                    <span className="text-red-600 text-sm">Limpiar Filtros</span>
+                    <span className="text-red-600 text-sm">Clear Filters</span>
                     <X className="w-3 h-3 text-red-600" />
                   </button>
                 )}
@@ -523,50 +524,50 @@ export default function ScoutsPage() {
 
             {/* Filter Options */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Nacionalidades */}
+              {/* Nationalities */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nacionalidad
+                  Nationality
                 </label>
                 <MultiSelectFilter
-                  label="Nacionalidad"
+                  label="Nationality"
                   options={filterOptions.nationalities}
                   selectedValues={selectedNationalities}
                   onSelectionChange={setSelectedNationalities}
-                  placeholder="Seleccionar nacionalidades..."
-                  searchPlaceholder="Buscar nacionalidades..."
+                  placeholder="Select nationalities..."
+                  searchPlaceholder="Search nationalities..."
                   maxDisplayTags={2}
                 />
               </div>
 
-              {/* Niveles */}
+              {/* Levels */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nivel de Scout
+                  Scout Level
                 </label>
                 <MultiSelectFilter
-                  label="Nivel"
+                  label="Level"
                   options={filterOptions.levels}
                   selectedValues={selectedLevels}
                   onSelectionChange={setSelectedLevels}
-                  placeholder="Seleccionar niveles..."
-                  searchPlaceholder="Buscar niveles..."
+                  placeholder="Select levels..."
+                  searchPlaceholder="Search levels..."
                   maxDisplayTags={2}
                 />
               </div>
 
-              {/* Países */}
+              {/* Countries */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  País
+                  Country
                 </label>
                 <MultiSelectFilter
-                  label="País"
+                  label="Country"
                   options={filterOptions.countries}
                   selectedValues={selectedCountries}
                   onSelectionChange={setSelectedCountries}
-                  placeholder="Seleccionar países..."
-                  searchPlaceholder="Buscar países..."
+                  placeholder="Select countries..."
+                  searchPlaceholder="Search countries..."
                   maxDisplayTags={1}
                 />
               </div>
@@ -574,32 +575,32 @@ export default function ScoutsPage() {
               {/* Expertise */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Especialización
+                  Expertise
                 </label>
                 <MultiSelectFilter
-                  label="Especialización"
+                  label="Expertise"
                   options={filterOptions.expertise}
                   selectedValues={selectedExpertise}
                   onSelectionChange={setSelectedExpertise}
-                  placeholder="Seleccionar especialización..."
-                  searchPlaceholder="Buscar especialización..."
+                  placeholder="Select expertise..."
+                  searchPlaceholder="Search expertise..."
                   maxDisplayTags={1}
                 />
               </div>
             </div>
 
-            {/* Filtros adicionales */}
+            {/* Additional filters */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200">
-              {/* Disponibilidad */}
+              {/* Availability */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Disponibilidad
+                  Availability
                 </label>
                 <ToggleFilter
-                  label="Disponibilidad"
+                  label="Availability"
                   options={[
-                    { value: true, label: 'Disponible' },
-                    { value: false, label: 'No Disponible' }
+                    { value: true, label: 'Available' },
+                    { value: false, label: 'Not Available' }
                   ]}
                   selectedValue={activeFilters.open_to_work as string | number | boolean | undefined}
                   onSelectionChange={(value) =>{
@@ -611,13 +612,13 @@ export default function ScoutsPage() {
                     }
                     applyFilters(newFilters)
                   }}
-                  placeholder="Seleccionar disponibilidad..."/>
+                  placeholder="Select availability..."/>
               </div>
 
-              {/* Rango de ELO */}
+              {/* ELO Range */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Rango de ELO
+                  ELO Range
                 </label>
                 <RangeFilter
                   label="ELO"
@@ -637,16 +638,16 @@ export default function ScoutsPage() {
                     }
                     applyFilters(newFilters)
                   }}
-                  placeholder="Seleccionar rango de ELO..." step="1" />
+                  placeholder="Select ELO range..." step="1" />
               </div>
 
-              {/* Rango de Edad */}
+              {/* Age Range */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Rango de Edad
+                  Age Range
                 </label>
                 <RangeFilter
-                  label="Edad"
+                  label="Age"
                   minValue={activeFilters.min_age as number | undefined}
                   maxValue={activeFilters.max_age as number | undefined}
                   onRangeChange={(min, max) =>{
@@ -663,7 +664,7 @@ export default function ScoutsPage() {
                     }
                     applyFilters(newFilters)
                   }}
-                  placeholder="Seleccionar rango de edad..." step="1" suffix=" años" />
+                  placeholder="Select age range..." step="1" suffix=" years" />
               </div>
             </div>
           </div>
@@ -811,7 +812,7 @@ export default function ScoutsPage() {
                               {scout.scout_name || scout.name || 'Unknown Scout'}
                             </h3>
                             <p className="text-[#6d6d6d] text-sm">
-                              {scout.age ? `${scout.age} años` : 'Age N/A'}
+                              {scout.age ? `${scout.age} years` : 'Age N/A'}
                             </p>
                             {scout.scout_level && (
                               <p className="text-[#8c1a10] text-xs font-medium mt-1">

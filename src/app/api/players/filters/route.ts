@@ -7,8 +7,71 @@ import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 import { cachedQuery, cache as memoryCache, MemoryCacheService } from '@/lib/cache/memory-cache'
-import { PlayerService } from '@/lib/services/player-service'
-import type { FilterOptions } from '@/types/player'
+import { prisma } from '@/lib/db'
+
+// Define FilterOption interface locally
+interface FilterOption {
+  value: string
+  label: string
+  count: number
+}
+
+interface FilterOptions {
+  positions: FilterOption[]
+  nationalities: FilterOption[]
+  teams: FilterOption[]
+  competitions: FilterOption[]
+}
+
+// Get available filters from database
+async function getAvailableFilters(): Promise<FilterOptions> {
+  // Fetch distinct values
+  const [positions, nationalities, teams, competitions] = await Promise.all([
+    prisma.jugador.findMany({
+      select: { position_player: true },
+      distinct: ['position_player'],
+      where: { position_player: { not: null } }
+    }),
+    prisma.jugador.findMany({
+      select: { nationality_1: true },
+      distinct: ['nationality_1'],
+      where: { nationality_1: { not: null } }
+    }),
+    prisma.jugador.findMany({
+      select: { team_name: true },
+      distinct: ['team_name'],
+      where: { team_name: { not: null } }
+    }),
+    prisma.jugador.findMany({
+      select: { team_competition: true },
+      distinct: ['team_competition'],
+      where: { team_competition: { not: null } }
+    })
+  ])
+
+  return {
+    positions: positions.map(p => ({
+      value: p.position_player || '',
+      label: p.position_player || '',
+      count: 1 // Count not available with distinct
+    })),
+    nationalities: nationalities.map(n => ({
+      value: n.nationality_1 || '',
+      label: n.nationality_1 || '',
+      count: 1
+    })),
+    teams: teams.map(t => ({
+      value: t.team_name || '',
+      label: t.team_name || '',
+      count: 1
+    })),
+    competitions: competitions.map(c => ({
+      value: c.team_competition || '',
+      label: c.team_competition || '',
+      count: 1
+    }))
+  }
+}
 
 /**
  * 🔧 GET /api/players/filters - OBTENER OPCIONES DISPONIBLES PARA FILTROS
@@ -62,9 +125,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<FilterOpti
     const startTime = Date.now()
 
     // 🚀 OBTENER OPCIONES DE FILTROS DEL SERVICIO (CON CACHÉ)
-    const filterOptions = await cachedQuery(
+    const filterOptions = await cachedQuery<FilterOptions>(
       'filters:all',
-      () => PlayerService.getAvailableFilters(),
+      () => getAvailableFilters(),
       MemoryCacheService.TTL.FILTERS
     )
 
@@ -213,7 +276,7 @@ export async function POST(_request: NextRequest): Promise<NextResponse<FilterOp
     const startTime = Date.now()
 
     // 🚀 GENERAR FILTROS FRESCOS (sin caché, se volverá a cachear en el próximo GET)
-    const freshFilters = await PlayerService.getAvailableFilters()
+    const freshFilters = await getAvailableFilters()
 
     const responseTime = Date.now() - startTime
 

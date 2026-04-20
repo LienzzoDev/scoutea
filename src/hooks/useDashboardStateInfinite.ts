@@ -1,6 +1,7 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 
-import { DASHBOARD_CATEGORY_GROUPS } from '@/constants/dashboard-categories';
+import { DASHBOARD_CATEGORY_GROUPS, getDashboardCategoryGroups } from '@/constants/dashboard-categories';
+import type { StatsPeriod } from '@/lib/utils/stats-period-utils';
 import type { PlayerFilters, Category } from '@/types/dashboard';
 
 import { useInfiniteDashboardScroll } from './member/useInfiniteDashboardScroll';
@@ -16,6 +17,29 @@ export const useDashboardStateInfinite = () => {
     resetToDefaults: resetCategories,
     loading: preferencesLoading
   } = useUserPreferences();
+
+  // Stats periods (empty = no stats columns, max 2 allowed)
+  const [statsPeriods, setStatsPeriods] = useState<StatsPeriod[]>([]);
+
+  // Natural order used to keep statsPeriods stable
+  const PERIOD_ORDER: StatsPeriod[] = ['3m', '6m', '1y', '2y'];
+
+  // One-shot migration: strip legacy period suffixes from persisted category keys
+  useEffect(() => {
+    if (preferencesLoading) return;
+    const legacySuffixes = ['_3m', '_6m', '_1y', '_2y'];
+    const migrated = selectedCategories.map(key => {
+      const match = legacySuffixes.find(s => key.endsWith(s));
+      return match ? key.slice(0, -match.length) : key;
+    });
+    // Deduplicate after stripping
+    const deduped = Array.from(new Set(migrated));
+    const changed =
+      deduped.length !== selectedCategories.length ||
+      deduped.some((k, i) => k !== selectedCategories[i]);
+    if (changed) setSelectedCategories(deduped);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preferencesLoading]);
 
   // Estados básicos
   const [showFilters, setShowFilters] = useState(false);
@@ -107,8 +131,32 @@ export const useDashboardStateInfinite = () => {
     minValue: activeFilters.min_value,
     // @ts-expect-error - Ignoring strict type check for optional properties
     maxValue: activeFilters.max_value,
+    period: statsPeriods[0] ?? undefined,
+    hasMarketValue: activeFilters.has_market_value,
+    hasAttributes: activeFilters.has_attributes,
+    hasStats: activeFilters.has_stats,
+    hasTextReport: activeFilters.has_text_report,
+    hasVideoReport: activeFilters.has_video_report,
+    isYouthDiscovery: activeFilters.is_youth_discovery,
+    isEmergingTalent: activeFilters.is_emerging_talent,
+    isProfessional: activeFilters.is_professional,
+    isTopLeagues: activeFilters.is_top_leagues,
+    isBigFive: activeFilters.is_big_five,
+    // When on the favourites tab, restrict the server query to the user's favourite ids.
+    // If the user has no favourites we leave playerIds undefined and short-circuit in
+    // `baseFilteredPlayers` to avoid an unnecessary round-trip.
+    playerIds:
+      activeTab === 'favourites' && playerList.length > 0 ? playerList : undefined,
     limit: 50
   });
+
+  // Cache the "All" tab total count so switching to favourites doesn't overwrite it
+  const allTabTotalRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (activeTab !== 'favourites' && typeof totalCount === 'number') {
+      allTabTotalRef.current = totalCount;
+    }
+  }, [activeTab, totalCount]);
 
   // Helper to flatten categories from groups (moved up for use in sorting)
   const flattenCategories = useCallback((groups: typeof DASHBOARD_CATEGORY_GROUPS): Category[] => {
@@ -124,15 +172,13 @@ export const useDashboardStateInfinite = () => {
     return flattened
   }, [])
 
-  // Get all categories for sorting lookup
-  const allCategories = useMemo(() => flattenCategories(DASHBOARD_CATEGORY_GROUPS), [flattenCategories])
-
-  // Filtrar jugadores según tab (client-side para favourites)
+  // Filtrar jugadores según tab. Para 'favourites', el servidor ya filtra por
+  // player_ids, así que allPlayers ya son exactamente los favoritos. Si el usuario
+  // no tiene favoritos, devolvemos [] sin tocar allPlayers.
   const baseFilteredPlayers = useMemo(() => {
     if (activeTab === 'favourites') {
-      return allPlayers.filter(player =>
-        playerList.includes(player.id_player || player.id)
-      )
+      if (playerList.length === 0) return []
+      return allPlayers
     }
     if (activeTab === 'news') {
       const sevenDaysAgo = new Date()
@@ -144,72 +190,6 @@ export const useDashboardStateInfinite = () => {
     }
     return allPlayers
   }, [allPlayers, activeTab, playerList])
-
-  // Apply sorting to filtered players
-  const filteredPlayers = useMemo(() => {
-    if (!sortBy || sortBy === 'name') {
-      // Sort by name (player_name)
-      const sorted = [...baseFilteredPlayers].sort((a, b) => {
-        const nameA = (a.player_name || '').toLowerCase()
-        const nameB = (b.player_name || '').toLowerCase()
-        return sortOrder === 'asc'
-          ? nameA.localeCompare(nameB)
-          : nameB.localeCompare(nameA)
-      })
-      return sorted
-    }
-
-    // Find the category to get its getValue function
-    const category = allCategories.find(cat => cat.key === sortBy)
-
-    const sorted = [...baseFilteredPlayers].sort((a, b) => {
-      let valueA: unknown
-      let valueB: unknown
-
-      if (category?.getValue) {
-        // @ts-expect-error - Ignoring strict type check for now
-        valueA = category.getValue(a)
-        // @ts-expect-error - Ignoring strict type check for now
-        valueB = category.getValue(b)
-      } else {
-        // Fallback: direct property access
-        valueA = (a as unknown as Record<string, unknown>)[sortBy]
-        valueB = (b as unknown as Record<string, unknown>)[sortBy]
-      }
-
-      // Handle N/A values - push them to the end
-      const isNaA = valueA === 'N/A' || valueA === null || valueA === undefined
-      const isNaB = valueB === 'N/A' || valueB === null || valueB === undefined
-
-      if (isNaA && isNaB) return 0
-      if (isNaA) return 1 // A goes to end
-      if (isNaB) return -1 // B goes to end
-
-      // Compare based on type
-      if (typeof valueA === 'number' && typeof valueB === 'number') {
-        return sortOrder === 'asc' ? valueA - valueB : valueB - valueA
-      }
-
-      // String comparison (including formatted values like "€10.00M", "180 cm")
-      const strA = String(valueA).toLowerCase()
-      const strB = String(valueB).toLowerCase()
-
-      // Try to extract numbers from formatted strings
-      const numA = parseFloat(strA.replace(/[^0-9.-]/g, ''))
-      const numB = parseFloat(strB.replace(/[^0-9.-]/g, ''))
-
-      if (!isNaN(numA) && !isNaN(numB)) {
-        return sortOrder === 'asc' ? numA - numB : numB - numA
-      }
-
-      // Fallback to string comparison
-      return sortOrder === 'asc'
-        ? strA.localeCompare(strB)
-        : strB.localeCompare(strA)
-    })
-
-    return sorted
-  }, [baseFilteredPlayers, sortBy, sortOrder, allCategories])
 
   // Opciones de filtros (usar las del servidor si están disponibles, sino fallback a las locales)
   const filterOptions = useMemo(() => {
@@ -247,15 +227,93 @@ export const useDashboardStateInfinite = () => {
     }
   }, [allPlayers, serverFilterOptions])
 
-  // Contadores de tabs
-  const tabCounts = useMemo(() => ({
-    all: totalCount || allPlayers.length,
-    favourites: playerList.length,
-    news: 0
-  }), [totalCount, allPlayers.length, playerList.length])
+  // Contadores de tabs.
+  // En la pestaña 'favourites' el `totalCount` del servidor corresponde a los
+  // favoritos, así que usamos el snapshot cacheado del total de 'All' para no
+  // perder el número al cambiar de pestaña.
+  const tabCounts = useMemo(() => {
+    const allTotal =
+      activeTab === 'favourites'
+        ? allTabTotalRef.current ?? allPlayers.length
+        : totalCount ?? allPlayers.length
+    return {
+      all: allTotal,
+      favourites: playerList.length,
+      news: 0,
+    }
+  }, [activeTab, totalCount, allPlayers.length, playerList.length])
 
-  // Categorías disponibles
-  const AVAILABLE_CATEGORIES = useMemo(() => DASHBOARD_CATEGORY_GROUPS, [])
+  // Categorías disponibles (dynamic based on stats periods)
+  const AVAILABLE_CATEGORIES = useMemo(
+    () => getDashboardCategoryGroups(statsPeriods),
+    [statsPeriods]
+  )
+
+  // Get all categories for sorting lookup (must update with period)
+  const allCategories = useMemo(() => flattenCategories(AVAILABLE_CATEGORIES), [flattenCategories, AVAILABLE_CATEGORIES])
+
+  // Apply sorting to filtered players
+  const filteredPlayers = useMemo(() => {
+    if (!sortBy || sortBy === 'name') {
+      const sorted = [...baseFilteredPlayers].sort((a, b) => {
+        const nameA = (a.player_name || '').toLowerCase()
+        const nameB = (b.player_name || '').toLowerCase()
+        return sortOrder === 'asc'
+          ? nameA.localeCompare(nameB)
+          : nameB.localeCompare(nameA)
+      })
+      return sorted
+    }
+
+    const category = allCategories.find(cat => cat.key === sortBy)
+
+    const sorted = [...baseFilteredPlayers].sort((a, b) => {
+      let valueA: unknown
+      let valueB: unknown
+
+      if (category?.getSortValue) {
+        // @ts-expect-error - Ignoring strict type check for now
+        valueA = category.getSortValue(a)
+        // @ts-expect-error - Ignoring strict type check for now
+        valueB = category.getSortValue(b)
+      } else if (category?.getValue) {
+        // @ts-expect-error - Ignoring strict type check for now
+        valueA = category.getValue(a)
+        // @ts-expect-error - Ignoring strict type check for now
+        valueB = category.getValue(b)
+      } else {
+        valueA = (a as unknown as Record<string, unknown>)[sortBy]
+        valueB = (b as unknown as Record<string, unknown>)[sortBy]
+      }
+
+      const isNaA = valueA === 'N/A' || valueA === null || valueA === undefined
+      const isNaB = valueB === 'N/A' || valueB === null || valueB === undefined
+
+      if (isNaA && isNaB) return 0
+      if (isNaA) return 1
+      if (isNaB) return -1
+
+      if (typeof valueA === 'number' && typeof valueB === 'number') {
+        return sortOrder === 'asc' ? valueA - valueB : valueB - valueA
+      }
+
+      const strA = String(valueA).toLowerCase()
+      const strB = String(valueB).toLowerCase()
+
+      const numA = parseFloat(strA.replace(/[^0-9.-]/g, ''))
+      const numB = parseFloat(strB.replace(/[^0-9.-]/g, ''))
+
+      if (!isNaN(numA) && !isNaN(numB)) {
+        return sortOrder === 'asc' ? numA - numB : numB - numA
+      }
+
+      return sortOrder === 'asc'
+        ? strA.localeCompare(strB)
+        : strB.localeCompare(strA)
+    })
+
+    return sorted
+  }, [baseFilteredPlayers, sortBy, sortOrder, allCategories])
 
   // Datos de categorías seleccionadas
   const selectedCategoriesData = useMemo(() => {
@@ -302,6 +360,23 @@ export const useDashboardStateInfinite = () => {
     }
   }, [sortBy])
 
+  // Toggle a period in the statsPeriods array. Max 2 simultaneous, order fixed by PERIOD_ORDER.
+  // Category keys are stable (no period suffix), so no selection migration is needed.
+  const handleStatsPeriodToggle = useCallback((period: StatsPeriod) => {
+    setStatsPeriods(prev => {
+      if (prev.includes(period)) {
+        return prev.filter(p => p !== period)
+      }
+      if (prev.length >= 2) {
+        return prev // cap reached, no-op
+      }
+      const next = [...prev, period]
+      next.sort((a, b) => PERIOD_ORDER.indexOf(a) - PERIOD_ORDER.indexOf(b))
+      return next
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   return {
     // Estados
     showFilters,
@@ -310,6 +385,8 @@ export const useDashboardStateInfinite = () => {
     activeTab,
     paymentSuccess: false,
     selectedCategories,
+    statsPeriods,
+    handleStatsPeriodToggle,
     activeFilters,
     selectedNationalities,
     selectedPositions,
