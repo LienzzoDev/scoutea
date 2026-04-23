@@ -37,6 +37,9 @@ export default function PlayerProfilePage() {
     selectedPeriod,
     setSelectedPeriod,
     statsLoading,
+    statsSampleSize,
+    statsFilters,
+    setStatsFilters,
 
     // Derived state
     isPlayerInList,
@@ -167,6 +170,9 @@ export default function PlayerProfilePage() {
                 onPeriodChange={setSelectedPeriod}
                 statsLoading={statsLoading}
                 getStatValue={getStatValue}
+                sampleSize={statsSampleSize}
+                statsFilters={statsFilters}
+                onStatsFiltersChange={setStatsFilters}
               />
             )}
             {activeTab === "features" && (

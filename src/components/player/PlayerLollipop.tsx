@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { usePlayerLollipop, type LollipopData } from '@/hooks/player/usePlayerLollipop';
 
 import ChartFilters, { EMPTY_FILTERS, type ChartFilterValues } from './stats/ChartFilters';
+import CohortHeader from './stats/CohortHeader';
 
 interface PlayerLollipopProps {
   playerId?: string; // Optional: highlight specific player
@@ -17,7 +18,6 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
   const [chartFilters, setChartFilters] = useState<ChartFilterValues>(EMPTY_FILTERS);
   const [topN, setTopN] = useState(20);
   const [showMax, setShowMax] = useState(false);
-  const [showMin, setShowMin] = useState(false);
   const [showAvg, setShowAvg] = useState(true);
   const [showNorm, setShowNorm] = useState(false);
   const [showRaw, setShowRaw] = useState(true);
@@ -37,11 +37,11 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
     { value: 'effectiveness', label: 'Effectiveness %' },
   ];
 
-  // Get filtered data
+  // Get filtered data (arrays = multi-select)
   const filteredData = getFilteredData({
-    position: chartFilters.position,
-    nationality: chartFilters.nationality,
-    competition: chartFilters.competition,
+    positions: chartFilters.positions,
+    nationalities: chartFilters.nationalities,
+    competitions: chartFilters.competitions,
     ageMin: chartFilters.ageMin,
     ageMax: chartFilters.ageMax,
     limit: topN
@@ -148,32 +148,17 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#2e3138] mb-3">
+            <span className="block text-sm font-medium text-[#2e3138] mb-3">
               Value Type
-            </label>
+            </span>
             <div className="space-y-2">
+              {/* Etiquetas alineadas con Beeswarm/Radar: "P90" y "Total (Norm 0-1)" */}
               <div className="flex items-center gap-2">
-                <input 
-                  type="radio" 
-                  id="raw-values" 
+                <input
+                  type="radio"
+                  id="norm-values"
                   name="valueType"
-                  className="rounded" 
-                  checked={showRaw}
-                  onChange={() => {
-                    setShowRaw(true);
-                    setShowNorm(false);
-                  }}
-                />
-                <label htmlFor="raw-values" className="text-sm text-[#2e3138]">
-                  Raw Values
-                </label>
-              </div>
-              <div className="flex items-center gap-2">
-                <input 
-                  type="radio" 
-                  id="norm-values" 
-                  name="valueType"
-                  className="rounded" 
+                  className="rounded"
                   checked={showNorm}
                   onChange={() => {
                     setShowNorm(true);
@@ -181,22 +166,38 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
                   }}
                 />
                 <label htmlFor="norm-values" className="text-sm text-[#2e3138]">
-                  Normalized Values (0-100)
+                  P90
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  id="raw-values"
+                  name="valueType"
+                  className="rounded"
+                  checked={showRaw}
+                  onChange={() => {
+                    setShowRaw(true);
+                    setShowNorm(false);
+                  }}
+                />
+                <label htmlFor="raw-values" className="text-sm text-[#2e3138]">
+                  Total (Norm 0-1)
                 </label>
               </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#2e3138] mb-3">
+            <span className="block text-sm font-medium text-[#2e3138] mb-3">
               Show Lines
-            </label>
+            </span>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <input 
-                  type="checkbox" 
-                  id="avg-line" 
-                  className="rounded" 
+                <input
+                  type="checkbox"
+                  id="avg-line"
+                  className="rounded"
                   checked={showAvg}
                   onChange={(e) => setShowAvg(e.target.checked)}
                 />
@@ -216,18 +217,6 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
                   Maximum
                 </label>
               </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="min-line"
-                  className="rounded"
-                  checked={showMin}
-                  onChange={(e) => setShowMin(e.target.checked)}
-                />
-                <label htmlFor="min-line" className="text-sm text-[#2e3138]">
-                  Minimum
-                </label>
-              </div>
             </div>
           </div>
         </div>
@@ -241,6 +230,9 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
         />
         </div>
       )}
+
+      {/* Cohort header */}
+      <CohortHeader sampleSize={stats.count} loading={loading} />
 
       {/* Lollipop Chart */}
       <div className="border-2 border-[#8c1a10] rounded-lg p-6">
@@ -264,11 +256,10 @@ export default function PlayerLollipop({ playerId }: PlayerLollipopProps) {
           </div>
         ) : (
           <div className="relative w-full h-96">
-            <LollipopChart 
+            <LollipopChart
               data={filteredData}
               stats={stats}
               showMax={showMax}
-              showMin={showMin}
               showAvg={showAvg}
               showNorm={showNorm}
               showRaw={showRaw}
@@ -318,7 +309,6 @@ interface LollipopChartProps {
   data: LollipopData[];
   stats: { min: number; max: number; avg: number; count: number };
   showMax: boolean;
-  showMin: boolean;
   showAvg: boolean;
   showNorm: boolean;
   showRaw: boolean;
@@ -327,17 +317,16 @@ interface LollipopChartProps {
   metrics: Array<{ value: string; label: string }>;
 }
 
-function LollipopChart({ 
-  data, 
-  stats, 
-  showMax, 
-  showMin, 
-  showAvg, 
-  showNorm, 
+function LollipopChart({
+  data,
+  stats,
+  showMax,
+  showAvg,
+  showNorm,
   showRaw,
   highlightPlayerId,
   metric,
-  metrics 
+  metrics
 }: LollipopChartProps) {
   const width = 800;
   const height = Math.max(400, data.length * 25 + 100); // Dynamic height based on data
@@ -368,9 +357,8 @@ function LollipopChart({
     return isFinite(scaledValue) ? Math.max(0, scaledValue) : 0;
   };
 
-  // Calculate reference lines
+  // Calculate reference lines (Min no se renderiza: siempre sería 0 en el eje).
   const avgX = valueScale(showNorm ? 50 : (stats.avg || 0));
-  const minX = valueScale(showNorm ? 0 : (stats.min || 0));
   const maxX = valueScale(showNorm ? 100 : (stats.max || 100));
 
   const rowHeight = Math.max(20, chartHeight / Math.max(data.length, 1));
@@ -381,28 +369,6 @@ function LollipopChart({
       <rect x={margin.left} y={margin.top} width={chartWidth} height={chartHeight} fill="#f9fafb" stroke="#e5e7eb" />
 
       {/* Reference lines */}
-      {showMin && (
-        <g>
-          <line
-            x1={margin.left + minX}
-            y1={margin.top}
-            x2={margin.left + minX}
-            y2={margin.top + chartHeight}
-            stroke="#ef4444"
-            strokeWidth="2"
-            strokeDasharray="4 4"
-          />
-          <text
-            x={margin.left + minX}
-            y={margin.top - 5}
-            textAnchor="middle"
-            className="text-xs fill-red-600 font-medium"
-          >
-            Min
-          </text>
-        </g>
-      )}
-      
       {showAvg && (
         <g>
           <line

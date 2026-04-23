@@ -9,7 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { LoadingPage } from '@/components/ui/loading-spinner'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
+import {
+  TOURNAMENT_CATEGORIES,
+  TOURNAMENT_MODES,
+  TOURNAMENT_REGIONS,
+} from '@/constants/tournament-form'
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 import { useTournaments } from '@/hooks/tournament/useTournaments'
 
@@ -21,13 +25,14 @@ export default function EditarTorneoPage() {
 
   const [formData, setFormData] = useState({
     nombre: '',
-    descripcion: '',
     pais: '',
-    ciudad: '',
     fecha_inicio: '',
     fecha_fin: '',
     pdf_url: '',
-    id_competition: ''
+    // Nuevos desplegables (sustituyen a descripcion, ciudad y id_competition).
+    mode: '',
+    region: '',
+    categoria: '',
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -37,8 +42,6 @@ export default function EditarTorneoPage() {
   const [isDragOver, setIsDragOver] = useState(false)
   const [torneo, setTorneo] = useState<any>(null)
   const [loadingTorneo, setLoadingTorneo] = useState(true)
-  const [competiciones, setCompeticiones] = useState<any[]>([])
-  const [loadingCompeticiones, setLoadingCompeticiones] = useState(true)
 
   // Cargar datos del torneo
   useEffect(() => {
@@ -50,13 +53,13 @@ export default function EditarTorneoPage() {
           setTorneo(data)
           setFormData({
             nombre: data.nombre || '',
-            descripcion: data.descripcion || '',
             pais: data.pais || '',
-            ciudad: data.ciudad || '',
             fecha_inicio: data.fecha_inicio ? new Date(data.fecha_inicio).toISOString().slice(0, 16) : '',
             fecha_fin: data.fecha_fin ? new Date(data.fecha_fin).toISOString().slice(0, 16) : '',
             pdf_url: data.pdf_url || '',
-            id_competition: data.id_competition || ''
+            mode: data.mode || '',
+            region: data.region || '',
+            categoria: data.categoria || '',
           })
           if (data.pdf_url) {
             setPdfPreview(data.pdf_url)
@@ -75,24 +78,6 @@ export default function EditarTorneoPage() {
       loadTorneo()
     }
   }, [params.id])
-
-  // Cargar competiciones
-  useEffect(() => {
-    const loadCompeticiones = async () => {
-      try {
-        const response = await fetch('/api/competiciones')
-        if (response.ok) {
-          const data = await response.json()
-          setCompeticiones(data)
-        }
-      } catch (err) {
-        console.error('Error loading competiciones:', err)
-      } finally {
-        setLoadingCompeticiones(false)
-      }
-    }
-    loadCompeticiones()
-  }, [])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -212,8 +197,13 @@ export default function EditarTorneoPage() {
       return
     }
 
+    // Enviamos null cuando el select queda sin valor para que el PUT limpie la
+    // columna (las 3 columnas son String? en Prisma).
     const torneoData = {
       ...formData,
+      mode: formData.mode || null,
+      region: formData.region || null,
+      categoria: formData.categoria || null,
       fecha_inicio: new Date(formData.fecha_inicio),
       fecha_fin: new Date(formData.fecha_fin),
       tipo_torneo: 'nacional',
@@ -221,7 +211,7 @@ export default function EditarTorneoPage() {
       estado: 'planificado',
       es_publico: true,
       es_gratuito: true,
-      moneda: 'EUR'
+      moneda: 'EUR',
     }
 
     console.log('🔍 Debug - Datos del torneo a actualizar:', torneoData)
@@ -306,61 +296,82 @@ export default function EditarTorneoPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Descripción
+                  País
                 </label>
-                <Textarea
-                  value={formData.descripcion}
-                  onChange={(e) =>handleInputChange('descripcion', e.target.value)}
-                  className="bg-[#1F2937] border-slate-600 text-white" placeholder="Describe el torneo, sus objetivos y características especiales..." rows={3}
+                <Input
+                  value={formData.pais}
+                  onChange={(e) => handleInputChange('pais', e.target.value)}
+                  className="bg-[#1F2937] border-slate-600 text-white"
+                  placeholder="Ej: España"
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Mode */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
-                    País
+                    Mode
                   </label>
-                  <Input
-                    value={formData.pais}
-                    onChange={(e) =>handleInputChange('pais', e.target.value)}
-                    className="bg-[#1F2937] border-slate-600 text-white" placeholder="Ej: España"/>
+                  <Select
+                    value={formData.mode || ''}
+                    onValueChange={(value) => handleInputChange('mode', value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Opcional" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TOURNAMENT_MODES.map((m) => (
+                        <SelectItem key={m} value={m}>
+                          {m}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Ciudad
-                  </label>
-                  <Input
-                    value={formData.ciudad}
-                    onChange={(e) =>handleInputChange('ciudad', e.target.value)}
-                    className="bg-[#1F2937] border-slate-600 text-white" placeholder="Ej: Madrid"/>
-                </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Competición Asociada
-                </label>
-                <Select
-                  value={formData.id_competition || ""}
-                  onValueChange={(value) => handleInputChange('id_competition', value)}
-                  disabled={loadingCompeticiones}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Seleccionar competición (opcional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {competiciones.map((comp) => (
-                      <SelectItem key={comp.id_competition} value={comp.id_competition}>
-                        {comp.competition_name}
-                        {comp.competition_country && ` - ${comp.competition_country}`}
-                        {comp.competition_tier && ` (${comp.competition_tier})`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {loadingCompeticiones && (
-                  <p className="text-gray-400 text-sm mt-1">Cargando competiciones...</p>
-                )}
+                {/* Region */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Region
+                  </label>
+                  <Select
+                    value={formData.region || ''}
+                    onValueChange={(value) => handleInputChange('region', value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Opcional" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TOURNAMENT_REGIONS.map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {r}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Category
+                  </label>
+                  <Select
+                    value={formData.categoria || ''}
+                    onValueChange={(value) => handleInputChange('categoria', value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Opcional" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TOURNAMENT_CATEGORIES.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardContent>
           </Card>

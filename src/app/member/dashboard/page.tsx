@@ -368,7 +368,7 @@ export default function MemberDashboard() {
               </div>
             </div>
 
-            {/* Data availability filters */}
+            {/* Data availability + player category filters (single row) */}
             <div className="flex flex-wrap gap-3 mt-6 pt-6 border-t border-gray-200">
               {[
                 { key: 'has_market_value' as const, label: 'With Market Value' },
@@ -376,32 +376,6 @@ export default function MemberDashboard() {
                 { key: 'has_stats' as const, label: 'With Stats' },
                 { key: 'has_text_report' as const, label: 'With Text' },
                 { key: 'has_video_report' as const, label: 'With Video' },
-              ].map(({ key, label }) => (
-                <button
-                  key={key}
-                  onClick={() => {
-                    const newFilters = { ...activeFilters }
-                    if (newFilters[key]) {
-                      delete newFilters[key]
-                    } else {
-                      newFilters[key] = true
-                    }
-                    applyFilters(newFilters)
-                  }}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors cursor-pointer ${
-                    activeFilters[key]
-                      ? 'bg-[#8c1a10] text-white border-[#8c1a10]'
-                      : 'bg-white text-[#6d6d6d] border-[#e7e7e7] hover:bg-[#f0f0f0]'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {/* Player category filters */}
-            <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t border-gray-200">
-              {[
                 { key: 'is_youth_discovery' as const, label: 'Youth Discovery' },
                 { key: 'is_emerging_talent' as const, label: 'Emerging Talent' },
                 { key: 'is_professional' as const, label: 'Professional' },

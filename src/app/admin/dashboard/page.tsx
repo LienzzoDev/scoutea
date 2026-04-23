@@ -3,14 +3,13 @@
 import { useAuth } from '@clerk/nextjs'
 import {
   AlertTriangle,
+  MessageSquare,
   RefreshCw,
-  CheckCircle2,
   Trash2
 } from "lucide-react"
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useCallback } from 'react'
 
-import { ApprovalDashboard } from "@/components/admin/ApprovalDashboard"
 import { GrowthChart } from "@/components/admin/dashboard/GrowthChart"
 import { StatsBlock } from "@/components/admin/dashboard/StatsBlock"
 import { Button } from "@/components/ui/button"
@@ -57,7 +56,6 @@ export default function DashboardPage() {
   const _router = useRouter()
   const [hasRedirected, setHasRedirected] = useState(false)
   const [scrapingStatus, setScrapingStatus] = useState<'idle' | 'running' | 'completed' | 'error'>('idle')
-  const [showApprovalsDialog, setShowApprovalsDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleteStatus, setDeleteStatus] = useState<'idle' | 'deleting' | 'completed' | 'error'>('idle')
   const [confirmText, setConfirmText] = useState('')
@@ -230,18 +228,18 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Solicitudes */}
+        {/* Trabajos On Demand recibidos */}
         <Card className="bg-[#131921] border-slate-700">
           <CardContent className="p-6 flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold mb-1 text-[#D6DDE6]">Solicitudes</h2>
-              <p className="text-sm text-gray-400">Edición y eliminación de reportes</p>
+              <h2 className="text-lg font-semibold mb-1 text-[#D6DDE6]">Trabajos On Demand</h2>
+              <p className="text-sm text-gray-400">Solicitudes recibidas desde la sección On Demand</p>
             </div>
             <Button
-              onClick={() => setShowApprovalsDialog(true)}
+              onClick={() => _router.push('/admin/jobs#on-demand-messages')}
               className="bg-[#FF5733] hover:bg-[#E64A2B] text-white"
             >
-              <CheckCircle2 className="h-4 w-4 mr-2" />
+              <MessageSquare className="h-4 w-4 mr-2" />
               Ver Solicitudes
             </Button>
           </CardContent>
@@ -297,14 +295,6 @@ export default function DashboardPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showApprovalsDialog} onOpenChange={setShowApprovalsDialog}>
-        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto bg-[#080F17] border-slate-700">
-          <DialogHeader>
-            <DialogTitle className="text-[#D6DDE6]">Solicitudes de Edición/Eliminación</DialogTitle>
-          </DialogHeader>
-          <ApprovalDashboard />
-        </DialogContent>
-      </Dialog>
     </main>
   )
 }

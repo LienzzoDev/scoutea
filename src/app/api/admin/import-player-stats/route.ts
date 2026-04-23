@@ -267,6 +267,14 @@ function mapRowToStatsData(row: PlayerStatsImportRow, period: StatsPeriod): Reco
     [`aerials_duels_p90_${suffix}`]: aerialsDuelsP90,
     [`aerials_duels_tot_${suffix}`]: aerialsDuelsTot,
     [`aerials_duels_won_percent_${suffix}`]: parseDecimal(row[`aerials_duels_won_percent_${suffix}`]) || null,
+
+    // Físico (tracking)
+    [`total_meters_${suffix}`]: parseDecimal(row[`total_meters_${suffix}`]) || null,
+    [`max_speed_${suffix}`]: parseDecimal(row[`max_speed_${suffix}`]) || null,
+    [`meters_per_min_${suffix}`]: parseDecimal(row[`meters_per_min_${suffix}`]) || null,
+    [`over_15kmh_${suffix}`]: parseDecimal(row[`over_15kmh_${suffix}`]) || null,
+    [`over_20kmh_${suffix}`]: parseDecimal(row[`over_20kmh_${suffix}`]) || null,
+    [`over_25kmh_${suffix}`]: parseDecimal(row[`over_25kmh_${suffix}`]) || null,
   }
 
   return statsData
@@ -619,6 +627,13 @@ export async function POST(request: NextRequest) {
         'Porterías imbatidas en los 90': `clean_sheets_percent_${period}`,
         'Paradas, %': `save_rate_percent_${period}`,
         'Goles evitados/90': `prevented_goals_p90_${period}`,
+        // Físico (tracking)
+        'Metros totales': `total_meters_${period}`,
+        'Velocidad máxima': `max_speed_${period}`,
+        'Metros/minuto': `meters_per_min_${period}`,
+        'Metros > 15 km/h': `over_15kmh_${period}`,
+        'Metros > 20 km/h': `over_20kmh_${period}`,
+        'Metros > 25 km/h': `over_25kmh_${period}`,
         // Variantes alternativas
         'Jugador': 'player_name'
       }

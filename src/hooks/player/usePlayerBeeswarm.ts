@@ -22,9 +22,9 @@ export interface FilterOptions {
 }
 
 export interface BeeswarmFilters {
-  position?: string;
-  nationality?: string;
-  competition?: string;
+  positions?: string[];
+  nationalities?: string[];
+  competitions?: string[];
   ageMin?: string;
   ageMax?: string;
 }
@@ -105,55 +105,40 @@ export const usePlayerBeeswarm = (metric: string) => {
     loadData(metric);
   }, [metric, loadData]);
 
-  // Filter data function
+  // Filter data function.
+  // Array vacío o undefined = sin filtro para ese campo.
   const getFilteredData = useCallback((filters: BeeswarmFilters) => {
-    console.log('🔍 Applying filters:', filters);
+    const positions = filters.positions ?? [];
+    const nationalities = filters.nationalities ?? [];
+    const competitions = filters.competitions ?? [];
 
     const filtered = data.filter(player => {
-      // Position filter - strict match with normalized values
-      if (filters.position && player.position !== filters.position) {
-        return false;
+      if (positions.length > 0 && !positions.includes(player.position)) return false;
+
+      if (nationalities.length > 0) {
+        const lower = player.nationality?.toLowerCase() ?? '';
+        const match = nationalities.some(n => lower.includes(n.toLowerCase()));
+        if (!match) return false;
       }
 
-      // Nationality filter - case insensitive and partial match
-      if (filters.nationality) {
-        const nationalityMatch = player.nationality?.toLowerCase().includes(filters.nationality.toLowerCase());
-        if (!nationalityMatch) {
-          console.log('❌ Nationality filter rejected:', player.name, player.nationality, 'vs', filters.nationality);
-          return false;
-        }
+      if (competitions.length > 0) {
+        const lower = player.team?.toLowerCase() ?? '';
+        const match = competitions.some(c => lower.includes(c.toLowerCase()));
+        if (!match) return false;
       }
 
-      // Competition filter - check team name (since we don't have competition in BeeswarmData)
-      if (filters.competition) {
-        const competitionMatch = player.team?.toLowerCase().includes(filters.competition.toLowerCase());
-        if (!competitionMatch) {
-          console.log('❌ Competition filter rejected:', player.name, player.team, 'vs', filters.competition);
-          return false;
-        }
-      }
-
-      // Age range filters
       if (filters.ageMin) {
         const minAge = parseInt(filters.ageMin);
-        if (!isNaN(minAge) && player.age < minAge) {
-          console.log('❌ Age min filter rejected:', player.name, player.age, '<', minAge);
-          return false;
-        }
+        if (!isNaN(minAge) && player.age < minAge) return false;
       }
-
       if (filters.ageMax) {
         const maxAge = parseInt(filters.ageMax);
-        if (!isNaN(maxAge) && player.age > maxAge) {
-          console.log('❌ Age max filter rejected:', player.name, player.age, '>', maxAge);
-          return false;
-        }
+        if (!isNaN(maxAge) && player.age > maxAge) return false;
       }
 
       return true;
     });
 
-    console.log('✅ Filtered data:', filtered.length, 'of', data.length, 'players');
     return filtered;
   }, [data]);
 

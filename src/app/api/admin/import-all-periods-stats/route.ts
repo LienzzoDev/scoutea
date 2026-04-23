@@ -266,6 +266,14 @@ function mapRowToStatsData(row: PlayerStatsImportRow, period: StatsPeriod): Reco
     [`aerials_duels_won_percent_${suffix}`]: parseDecimal(row[`aerials_duels_won%${suffix}`]),
     [`aerials_duels_won_percent_${suffix}_norm`]: parseDecimal(row[`aerials_duels_won%${suffix}_norm`]),
     [`aerials_duels_won_percent_${suffix}_rank`]: parseInteger(row[`aerials_duels_won%_${suffix}_rank`]),
+
+    // Físico (tracking)
+    [`total_meters_${suffix}`]: parseDecimal(row[`total_meters_${suffix}`]),
+    [`max_speed_${suffix}`]: parseDecimal(row[`max_speed_${suffix}`]),
+    [`meters_per_min_${suffix}`]: parseDecimal(row[`meters_per_min_${suffix}`]),
+    [`over_15kmh_${suffix}`]: parseDecimal(row[`over_15kmh_${suffix}`]),
+    [`over_20kmh_${suffix}`]: parseDecimal(row[`over_20kmh_${suffix}`]),
+    [`over_25kmh_${suffix}`]: parseDecimal(row[`over_25kmh_${suffix}`]),
   }
 
   return statsData

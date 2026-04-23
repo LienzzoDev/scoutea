@@ -28,11 +28,17 @@ export async function GET(
     }
     console.log('🔍 Radar Compare API: Filters:', Object.fromEntries(searchParams.entries()));
 
-    // Parse filters from query parameters
+    // Parse filters from query parameters.
+    // Multi-select: positions/nationalities/competitions vienen como CSV (p.ej. "CB,CM").
+    // Array vacío o ausente = sin filtro para ese campo.
+    const parseCsv = (v: string | null): string[] => {
+      if (!v) return [];
+      return v.split(',').map(s => s.trim()).filter(Boolean);
+    };
     const filters = {
-      position: searchParams.get('position') || undefined,
-      nationality: searchParams.get('nationality') || undefined,
-      competition: searchParams.get('competition') || undefined,
+      positions: parseCsv(searchParams.get('positions')),
+      nationalities: parseCsv(searchParams.get('nationalities')),
+      competitions: parseCsv(searchParams.get('competitions')),
       ageMin: searchParams.get('ageMin') ? parseInt(searchParams.get('ageMin')!) : undefined,
       ageMax: searchParams.get('ageMax') ? parseInt(searchParams.get('ageMax')!) : undefined,
       ratingMin: searchParams.get('ratingMin') ? parseFloat(searchParams.get('ratingMin')!) : undefined,
@@ -70,27 +76,27 @@ export async function GET(
     const baseRadarData = await RadarCalculationService.calculatePlayerRadar(playerIdParam);
     console.log('✅ Radar Compare API: Base radar data:', baseRadarData);
 
-    // Build comparison group query
+    // Build comparison group query. Cada array no vacío se traduce a `{ in: [...] }`.
     const whereConditions: any = {};
-    
-    if (filters.position) {
-      whereConditions.position_player = filters.position;
+
+    if (filters.positions.length > 0) {
+      whereConditions.position_player = { in: filters.positions };
     }
-    
-    if (filters.nationality) {
-      whereConditions.nationality_1 = filters.nationality;
+
+    if (filters.nationalities.length > 0) {
+      whereConditions.nationality_1 = { in: filters.nationalities };
     }
-    
-    if (filters.competition) {
-      whereConditions.team_country = filters.competition;
+
+    if (filters.competitions.length > 0) {
+      whereConditions.team_country = { in: filters.competitions };
     }
-    
+
     if (filters.ageMin || filters.ageMax) {
       whereConditions.age = {};
       if (filters.ageMin) whereConditions.age.gte = filters.ageMin;
       if (filters.ageMax) whereConditions.age.lte = filters.ageMax;
     }
-    
+
     if (filters.ratingMin || filters.ratingMax) {
       whereConditions.player_rating = {};
       if (filters.ratingMin) whereConditions.player_rating.gte = filters.ratingMin;
@@ -180,8 +186,24 @@ export async function GET(
       filters,
       metadata: {
         generatedAt: new Date().toISOString(),
-        filtersApplied: Object.values(filters).some(v => v !== undefined),
-        comparisonType: Object.values(filters).some(v => v !== undefined) ? 'filtered_group' : 'all_players'
+        filtersApplied:
+          filters.positions.length > 0 ||
+          filters.nationalities.length > 0 ||
+          filters.competitions.length > 0 ||
+          filters.ageMin !== undefined ||
+          filters.ageMax !== undefined ||
+          filters.ratingMin !== undefined ||
+          filters.ratingMax !== undefined,
+        comparisonType:
+          filters.positions.length > 0 ||
+          filters.nationalities.length > 0 ||
+          filters.competitions.length > 0 ||
+          filters.ageMin !== undefined ||
+          filters.ageMax !== undefined ||
+          filters.ratingMin !== undefined ||
+          filters.ratingMax !== undefined
+            ? 'filtered_group'
+            : 'all_players'
       }
     });
 

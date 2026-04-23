@@ -1,11 +1,11 @@
 'use client'
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import MultiSelectFilter from '@/components/filters/multi-select-filter'
 
 export interface ChartFilterValues {
-  position: string
-  nationality: string
-  competition: string
+  positions: string[]
+  nationalities: string[]
+  competitions: string[]
   ageMin: string
   ageMax: string
   trfmMin: string
@@ -32,9 +32,9 @@ interface ChartFiltersProps {
 }
 
 export const EMPTY_FILTERS: ChartFilterValues = {
-  position: '',
-  nationality: '',
-  competition: '',
+  positions: [],
+  nationalities: [],
+  competitions: [],
   ageMin: '',
   ageMax: '',
   trfmMin: '',
@@ -42,61 +42,53 @@ export const EMPTY_FILTERS: ChartFilterValues = {
 }
 
 export default function ChartFilters({ filters, onFilterChange, filterOptions, onClear }: ChartFiltersProps) {
-  const update = (key: keyof ChartFilterValues, value: string) => {
+  const update = <K extends keyof ChartFilterValues>(key: K, value: ChartFilterValues[K]) => {
     onFilterChange({ ...filters, [key]: value })
   }
 
+  const positionsOptions = (filterOptions?.positions || []).map(o => o.value)
+  const nationalitiesOptions = (filterOptions?.nationalities || []).map(o => o.value)
+  const competitionsOptions = (filterOptions?.competitions || []).map(o => o.value)
+
   return (
     <div className="space-y-4">
-      {/* Position */}
+      {/* Position (multi) */}
       <div>
-        <label className="block text-sm font-medium text-[#2e3138] mb-2">Position</label>
-        <Select value={filters.position} onValueChange={(val) => update('position', val)}>
-          <SelectTrigger className="w-full" aria-label="Select position">
-            <SelectValue placeholder="All Positions" />
-          </SelectTrigger>
-          <SelectContent>
-            {filterOptions?.positions.map((pos) => (
-              <SelectItem key={pos.value} value={pos.value}>
-                {pos.label} ({pos.count})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <span className="block text-sm font-medium text-[#2e3138] mb-2">Position</span>
+        <MultiSelectFilter
+          label="Position"
+          options={positionsOptions}
+          selectedValues={filters.positions}
+          onSelectionChange={(values) => update('positions', values)}
+          placeholder="All Positions"
+          searchPlaceholder="Search positions..."
+        />
       </div>
 
-      {/* Nationality */}
+      {/* Nationality (multi) */}
       <div>
-        <label className="block text-sm font-medium text-[#2e3138] mb-2">Nationality</label>
-        <Select value={filters.nationality} onValueChange={(val) => update('nationality', val)}>
-          <SelectTrigger className="w-full" aria-label="Select nationality">
-            <SelectValue placeholder="All Nationalities" />
-          </SelectTrigger>
-          <SelectContent>
-            {filterOptions?.nationalities.map((nat) => (
-              <SelectItem key={nat.value} value={nat.value}>
-                {nat.label} ({nat.count})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <span className="block text-sm font-medium text-[#2e3138] mb-2">Nationality</span>
+        <MultiSelectFilter
+          label="Nationality"
+          options={nationalitiesOptions}
+          selectedValues={filters.nationalities}
+          onSelectionChange={(values) => update('nationalities', values)}
+          placeholder="All Nationalities"
+          searchPlaceholder="Search nationalities..."
+        />
       </div>
 
-      {/* Competition */}
+      {/* Competition (multi) */}
       <div>
-        <label className="block text-sm font-medium text-[#2e3138] mb-2">Competition</label>
-        <Select value={filters.competition} onValueChange={(val) => update('competition', val)}>
-          <SelectTrigger className="w-full" aria-label="Select competition">
-            <SelectValue placeholder="All Competitions" />
-          </SelectTrigger>
-          <SelectContent>
-            {filterOptions?.competitions.map((comp) => (
-              <SelectItem key={comp.value} value={comp.value}>
-                {comp.label} ({comp.count})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <span className="block text-sm font-medium text-[#2e3138] mb-2">Competition</span>
+        <MultiSelectFilter
+          label="Competition"
+          options={competitionsOptions}
+          selectedValues={filters.competitions}
+          onSelectionChange={(values) => update('competitions', values)}
+          placeholder="All Competitions"
+          searchPlaceholder="Search competitions..."
+        />
       </div>
 
       {/* Age Range */}

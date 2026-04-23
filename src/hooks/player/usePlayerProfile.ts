@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 
+import { EMPTY_FILTERS, type ChartFilterValues } from '@/components/player/stats/ChartFilters';
 import type { PlayerStatsByField } from '@/lib/services/player-stats-service';
 import type { StatsPeriod } from '@/lib/utils/stats-period-utils';
 import type { Player } from '@/types/player';
@@ -19,6 +20,9 @@ export const usePlayerProfile = (playerId: string) => {
   const [selectedPeriod, setSelectedPeriod] = useState<StatsPeriod>('3m');
   const [periodStats, setPeriodStats] = useState<Record<string, PlayerStatsByField>>({});
   const [statsLoading, setStatsLoading] = useState(false);
+  const [statsSampleSize, setStatsSampleSize] = useState<number | null>(null);
+  // Filtros multi-select aplicados al cohort del "By Period".
+  const [statsFilters, setStatsFilters] = useState<ChartFilterValues>(EMPTY_FILTERS);
 
   // Hook para manejar la lista de jugadores
   const { 
@@ -107,14 +111,25 @@ export const usePlayerProfile = (playerId: string) => {
     fetchPlayer();
   }, [playerId]);
 
-  // Fetch period stats when period changes
+  // Fetch period stats when period or filters change.
+  // Los filtros multi-select se serializan como CSV.
   const fetchPeriodStats = async () => {
     if (!playerId) return;
 
     setStatsLoading(true);
     try {
       const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-      const url = `${baseUrl}/api/players/${playerId}/stats-by-period?period=${selectedPeriod}`;
+      const params = new URLSearchParams();
+      params.append('period', selectedPeriod);
+      if (statsFilters.positions.length > 0) params.append('positions', statsFilters.positions.join(','));
+      if (statsFilters.nationalities.length > 0) params.append('nationalities', statsFilters.nationalities.join(','));
+      if (statsFilters.competitions.length > 0) params.append('competitions', statsFilters.competitions.join(','));
+      if (statsFilters.ageMin) params.append('ageMin', statsFilters.ageMin);
+      if (statsFilters.ageMax) params.append('ageMax', statsFilters.ageMax);
+      if (statsFilters.trfmMin) params.append('trfmMin', statsFilters.trfmMin);
+      if (statsFilters.trfmMax) params.append('trfmMax', statsFilters.trfmMax);
+
+      const url = `${baseUrl}/api/players/${playerId}/stats-by-period?${params.toString()}`;
 
       const response = await fetch(url, {
         method: 'GET',
@@ -131,6 +146,7 @@ export const usePlayerProfile = (playerId: string) => {
       const data = await response.json();
       if (data.success) {
         setPeriodStats(data.data);
+        setStatsSampleSize(typeof data.sampleSize === 'number' ? data.sampleSize : null);
       }
     } catch (err) {
       console.error('Error fetching period stats:', err);
@@ -143,7 +159,8 @@ export const usePlayerProfile = (playerId: string) => {
     if (activeTab === 'stats' && activeStatsTab === 'period') {
       fetchPeriodStats();
     }
-  }, [playerId, selectedPeriod, activeTab, activeStatsTab]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playerId, selectedPeriod, activeTab, activeStatsTab, statsFilters]);
 
   const refreshPlayer = () => {
     fetchPlayer();
@@ -152,17 +169,19 @@ export const usePlayerProfile = (playerId: string) => {
   // Función para manejar toggle de lista (añadir/remover jugador)
   const handleToggleList = async () => {
     if (!player?.id_player) return;
-    
+
+    // playerList IDs se normalizan a string en usePlayerList.
+    const idStr = String(player.id_player);
     setIsSaving(true);
     try {
-      const isCurrentlyInList = isInList(player.id_player);
-      
+      const isCurrentlyInList = isInList(idStr);
+
       if (isCurrentlyInList) {
-        console.log('🚀 Removing player from list:', player.id_player);
-        await removeFromList(player.id_player);
+        console.log('🚀 Removing player from list:', idStr);
+        await removeFromList(idStr);
       } else {
-        console.log('🚀 Adding player to list:', player.id_player);
-        await addToList(player.id_player);
+        console.log('🚀 Adding player to list:', idStr);
+        await addToList(idStr);
       }
     } catch (error) {
       console.error('❌ Error toggling player list:', error);
@@ -172,7 +191,7 @@ export const usePlayerProfile = (playerId: string) => {
   };
 
   // Verificar si el jugador está en la lista
-  const isPlayerInList = player?.id_player ? isInList(player.id_player) : false;
+  const isPlayerInList = player?.id_player ? isInList(String(player.id_player)) : false;
 
   const getStatValue = (
     metricName: string,
@@ -201,6 +220,9 @@ export const usePlayerProfile = (playerId: string) => {
     setSelectedPeriod,
     periodStats,
     statsLoading,
+    statsSampleSize,
+    statsFilters,
+    setStatsFilters,
 
     // Derived state
     isPlayerInList,

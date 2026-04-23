@@ -2,13 +2,17 @@
 
 import { ArrowLeft, Save, X, Upload, FileText } from "lucide-react"
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Textarea } from "@/components/ui/textarea"
+import {
+  TOURNAMENT_CATEGORIES,
+  TOURNAMENT_MODES,
+  TOURNAMENT_REGIONS,
+} from "@/constants/tournament-form"
 import { useAuthRedirect } from '@/hooks/auth/use-auth-redirect'
 import { useTournaments } from "@/hooks/tournament/useTournaments"
 
@@ -19,13 +23,14 @@ export default function NuevoTorneoPage() {
 
   const [formData, setFormData] = useState({
     nombre: '',
-    descripcion: '',
     pais: '',
-    ciudad: '',
     fecha_inicio: '',
     fecha_fin: '',
     pdf_url: '',
-    id_competition: ''
+    // Nuevos desplegables (sustituyen a descripcion, ciudad y id_competition).
+    mode: '',
+    region: '',
+    categoria: '',
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -33,26 +38,6 @@ export default function NuevoTorneoPage() {
   const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [pdfPreview, setPdfPreview] = useState<string | null>(null)
   const [isDragOver, setIsDragOver] = useState(false)
-  const [competiciones, setCompeticiones] = useState<any[]>([])
-  const [loadingCompeticiones, setLoadingCompeticiones] = useState(true)
-
-  // Cargar competiciones al montar el componente
-  useEffect(() => {
-    const loadCompeticiones = async () => {
-      try {
-        const response = await fetch('/api/competiciones')
-        if (response.ok) {
-          const data = await response.json()
-          setCompeticiones(data)
-        }
-      } catch (err) {
-        console.error('Error loading competiciones:', err)
-      } finally {
-        setLoadingCompeticiones(false)
-      }
-    }
-    loadCompeticiones()
-  }, [])
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -180,8 +165,14 @@ export default function NuevoTorneoPage() {
       return
     }
 
+    // Los 3 desplegables opcionales: si el usuario no seleccionó nada los mandamos
+    // como null (la columna Prisma es String?). Parity con el resto de campos
+    // opcionales ya existentes en el formulario.
     const torneoData = {
       ...formData,
+      mode: formData.mode || null,
+      region: formData.region || null,
+      categoria: formData.categoria || null,
       fecha_inicio: formData.fecha_inicio,
       fecha_fin: formData.fecha_fin,
       tipo_torneo: 'nacional',
@@ -189,7 +180,7 @@ export default function NuevoTorneoPage() {
       estado: 'planificado',
       es_publico: true,
       es_gratuito: true,
-      moneda: 'EUR'
+      moneda: 'EUR',
     }
 
     const success = await createTorneo(torneoData)
@@ -254,61 +245,82 @@ export default function NuevoTorneoPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Descripción
+                  País
                 </label>
-                <Textarea
-                  value={formData.descripcion}
-                  onChange={(e) =>handleInputChange('descripcion', e.target.value)}
-                  className="bg-[#1F2937] border-slate-600 text-white" placeholder="Describe el torneo, sus objetivos y características especiales..." rows={3}
+                <Input
+                  value={formData.pais}
+                  onChange={(e) => handleInputChange('pais', e.target.value)}
+                  className="bg-[#1F2937] border-slate-600 text-white"
+                  placeholder="Ej: España"
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Mode */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
-                    País
+                    Mode
                   </label>
-                  <Input
-                    value={formData.pais}
-                    onChange={(e) =>handleInputChange('pais', e.target.value)}
-                    className="bg-[#1F2937] border-slate-600 text-white" placeholder="Ej: España"/>
+                  <Select
+                    value={formData.mode || ''}
+                    onValueChange={(value) => handleInputChange('mode', value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Opcional" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TOURNAMENT_MODES.map((m) => (
+                        <SelectItem key={m} value={m}>
+                          {m}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Ciudad
-                  </label>
-                  <Input
-                    value={formData.ciudad}
-                    onChange={(e) =>handleInputChange('ciudad', e.target.value)}
-                    className="bg-[#1F2937] border-slate-600 text-white" placeholder="Ej: Madrid"/>
-                </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Competición Asociada
-                </label>
-                <Select
-                  value={formData.id_competition || ""}
-                  onValueChange={(value) => handleInputChange('id_competition', value)}
-                  disabled={loadingCompeticiones}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Seleccionar competición (opcional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {competiciones.map((comp) => (
-                      <SelectItem key={comp.id_competition} value={comp.id_competition}>
-                        {comp.competition_name}
-                        {comp.competition_country && ` - ${comp.competition_country}`}
-                        {comp.competition_tier && ` (${comp.competition_tier})`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {loadingCompeticiones && (
-                  <p className="text-gray-400 text-sm mt-1">Cargando competiciones...</p>
-                )}
+                {/* Region */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Region
+                  </label>
+                  <Select
+                    value={formData.region || ''}
+                    onValueChange={(value) => handleInputChange('region', value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Opcional" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TOURNAMENT_REGIONS.map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {r}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Category
+                  </label>
+                  <Select
+                    value={formData.categoria || ''}
+                    onValueChange={(value) => handleInputChange('categoria', value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Opcional" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TOURNAMENT_CATEGORIES.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardContent>
           </Card>

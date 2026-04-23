@@ -6,11 +6,11 @@ import { handleApiResponse } from '@/lib/utils/api-response';
 interface PlayerListItem {
   id: string;
   userId: string;
-  playerId: string;
+  playerId: number;
   createdAt: string;
   updatedAt: string;
   player: {
-    id_player: string;
+    id_player: number;
     player_name: string;
     team_name: string | null;
     position_player: string | null;
@@ -44,7 +44,11 @@ export const usePlayerList = () => {
       const result = await handleApiResponse(response);
 
       if (result.success) {
-        const playerIds = result.data?.playerList?.map((item: PlayerListItem) => item.playerId) || [];
+        // Prisma devuelve playerId como Int (number); normalizamos a string para que
+        // isInList(String(player.id_player)) funcione de forma consistente.
+        const playerIds: string[] = result.data?.playerList?.map(
+          (item: PlayerListItem) => String(item.playerId)
+        ) || [];
         console.log('✅ usePlayerList: Loaded player list:', playerIds.length);
         setPlayerList(playerIds);
       } else {

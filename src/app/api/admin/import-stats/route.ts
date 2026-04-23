@@ -821,7 +821,15 @@ export async function POST(request: NextRequest) {
                         shots_against_p90_3m: parseNumber(row['Shots against per 90'] as number | undefined),
                         clean_sheets_tot_3m: toInt(row['Clean sheets']),
                         save_rate_percent_3m: parseNumber(row['Save rate, %'] as number | undefined),
-                        prevented_goals_p90_3m: parseNumber(row['Prevented goals per 90'] as number | undefined)
+                        prevented_goals_p90_3m: parseNumber(row['Prevented goals per 90'] as number | undefined),
+
+                        // Físico (tracking)
+                        total_meters_3m: parseNumber(row['Total meters'] as number | undefined),
+                        max_speed_3m: parseNumber(row['Max speed'] as number | undefined),
+                        meters_per_min_3m: parseNumber(row['Meters per minute'] as number | undefined),
+                        over_15kmh_3m: parseNumber(row['Meters over 15 km/h'] as number | undefined),
+                        over_20kmh_3m: parseNumber(row['Meters over 20 km/h'] as number | undefined),
+                        over_25kmh_3m: parseNumber(row['Meters over 25 km/h'] as number | undefined)
                       },
                       create: {
                         id_player: player.id_player,
@@ -869,7 +877,15 @@ export async function POST(request: NextRequest) {
                         shots_against_p90_3m: parseNumber(row['Shots against per 90'] as number | undefined),
                         clean_sheets_tot_3m: toInt(row['Clean sheets']),
                         save_rate_percent_3m: parseNumber(row['Save rate, %'] as number | undefined),
-                        prevented_goals_p90_3m: parseNumber(row['Prevented goals per 90'] as number | undefined)
+                        prevented_goals_p90_3m: parseNumber(row['Prevented goals per 90'] as number | undefined),
+
+                        // Físico (tracking)
+                        total_meters_3m: parseNumber(row['Total meters'] as number | undefined),
+                        max_speed_3m: parseNumber(row['Max speed'] as number | undefined),
+                        meters_per_min_3m: parseNumber(row['Meters per minute'] as number | undefined),
+                        over_15kmh_3m: parseNumber(row['Meters over 15 km/h'] as number | undefined),
+                        over_20kmh_3m: parseNumber(row['Meters over 20 km/h'] as number | undefined),
+                        over_25kmh_3m: parseNumber(row['Meters over 25 km/h'] as number | undefined)
                       }
                     })
                   } catch {

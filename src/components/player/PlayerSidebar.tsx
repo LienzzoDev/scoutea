@@ -4,6 +4,7 @@ import { Facebook, Twitter, Linkedin, Send, Instagram } from "lucide-react";
 import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
+import TeamBadge from "@/components/ui/team-badge";
 import { formatMoneyFull } from "@/lib/utils/format-money";
 import { getValidImageUrl } from "@/lib/utils/image-utils";
 import type { Player } from "@/types/player";
@@ -58,9 +59,7 @@ export default function PlayerSidebar({ player }: PlayerSidebarProps) {
           {/* Team badge overlay - Top */}
           {player.team_name && (
             <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/80 text-white px-3 py-2 rounded-full">
-              <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-xs font-bold">{player.team_name.charAt(0).toUpperCase()}</span>
-              </div>
+              <TeamBadge teamName={player.team_name} size="sm" className="flex-shrink-0" />
               <span className="text-sm font-medium">{player.team_name}</span>
             </div>
           )}

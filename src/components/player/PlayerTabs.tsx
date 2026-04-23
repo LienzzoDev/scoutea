@@ -11,7 +11,7 @@ export default function PlayerTabs({ activeTab, onTabChange }: PlayerTabsProps) 
     { id: "reports", label: "Reports" },
     { id: "stats", label: "Stats"},
     { id: "features", label: "Features"},
-    { id: "scouting", label: "Scouting"},
+    { id: "scouting", label: "Evolution"},
   ];
 
   return (

@@ -36,6 +36,9 @@ export interface Torneo {
   es_publico?: boolean;
   es_gratuito?: boolean;
   moneda?: string | null;
+  // Campos nuevos (reemplazan a descripcion/ciudad/id_competition en la UI).
+  mode?: string | null;
+  region?: string | null;
 }
 
 export type TorneoCreateInput = Omit<Torneo, 'id_torneo' | 'equipos_inscritos' | 'competition'>;

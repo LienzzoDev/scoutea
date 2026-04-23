@@ -93,6 +93,29 @@ export const useDashboardStateInfinite = () => {
     error: playerListError
   } = usePlayerList();
 
+  // Snapshot de favoritos usado como filtro del servidor. Se toma UNA vez por
+  // entrada a la pestaña 'favourites' y se mantiene estable ante mutaciones de
+  // `playerList`, para que (des)marcar un favorito no dispare el reset + refetch
+  // de infinite-scroll. El filtro cliente-side en `baseFilteredPlayers` ajusta
+  // las filas visibles al vuelo.
+  const [favouritesQueryIds, setFavouritesQueryIds] = useState<string[] | undefined>(undefined);
+  const favSnapshotTakenRef = useRef(false);
+  useEffect(() => {
+    if (activeTab === 'favourites') {
+      // Toma la foto la primera vez que entramos con datos disponibles.
+      // Si playerList aún no cargó, esperamos a que lo haga (el efecto re-corre
+      // cuando cambia playerList) y snapshot una sola vez.
+      if (!favSnapshotTakenRef.current && playerList.length > 0) {
+        setFavouritesQueryIds([...playerList]);
+        favSnapshotTakenRef.current = true;
+      }
+    } else {
+      // Al salir del tab, permitimos que la próxima entrada vuelva a snapshot.
+      favSnapshotTakenRef.current = false;
+      setFavouritesQueryIds(undefined);
+    }
+  }, [activeTab, playerList]);
+
   // Convertir rangos de edad a min/max
   const getAgeRange = useCallback(() => {
     // Si alguno de los dos está definido, devolvemos el objeto
@@ -142,11 +165,11 @@ export const useDashboardStateInfinite = () => {
     isProfessional: activeFilters.is_professional,
     isTopLeagues: activeFilters.is_top_leagues,
     isBigFive: activeFilters.is_big_five,
-    // When on the favourites tab, restrict the server query to the user's favourite ids.
-    // If the user has no favourites we leave playerIds undefined and short-circuit in
-    // `baseFilteredPlayers` to avoid an unnecessary round-trip.
-    playerIds:
-      activeTab === 'favourites' && playerList.length > 0 ? playerList : undefined,
+    // Al estar en la pestaña 'favourites' usamos un snapshot congelado de playerList
+    // (favouritesQueryIds). Toggle de favoritos actualiza playerList pero no este
+    // snapshot, así evitamos el reset + refetch del infinite-scroll. El filtro local
+    // en `baseFilteredPlayers` se encarga de ocultar/mostrar filas en tiempo real.
+    playerIds: activeTab === 'favourites' ? favouritesQueryIds : undefined,
     limit: 50
   });
 
@@ -172,13 +195,18 @@ export const useDashboardStateInfinite = () => {
     return flattened
   }, [])
 
-  // Filtrar jugadores según tab. Para 'favourites', el servidor ya filtra por
-  // player_ids, así que allPlayers ya son exactamente los favoritos. Si el usuario
-  // no tiene favoritos, devolvemos [] sin tocar allPlayers.
+  // Filtrar jugadores según tab. Para 'favourites', el servidor devuelve el snapshot
+  // (favouritesQueryIds) que se congeló al entrar al tab. Cuando el usuario
+  // (des)marca un favorito, `playerList` cambia pero no re-consultamos: filtramos
+  // `allPlayers` cliente-side contra la `playerList` actual. Quitar un favorito
+  // elimina la fila al instante; añadir uno nuevo desde otra pestaña/pantalla se
+  // verá al volver a entrar al tab (el snapshot se refresca por el useEffect de
+  // activeTab).
+  const playerListSet = useMemo(() => new Set(playerList), [playerList])
   const baseFilteredPlayers = useMemo(() => {
     if (activeTab === 'favourites') {
       if (playerList.length === 0) return []
-      return allPlayers
+      return allPlayers.filter(p => playerListSet.has(String(p.id_player)))
     }
     if (activeTab === 'news') {
       const sevenDaysAgo = new Date()
@@ -189,7 +217,7 @@ export const useDashboardStateInfinite = () => {
       })
     }
     return allPlayers
-  }, [allPlayers, activeTab, playerList])
+  }, [allPlayers, activeTab, playerList, playerListSet])
 
   // Opciones de filtros (usar las del servidor si están disponibles, sino fallback a las locales)
   const filterOptions = useMemo(() => {

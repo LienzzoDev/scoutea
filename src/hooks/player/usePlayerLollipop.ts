@@ -23,9 +23,9 @@ export interface FilterOptions {
 }
 
 export interface LollipopFilters {
-  position?: string;
-  nationality?: string;
-  competition?: string;
+  positions?: string[];
+  nationalities?: string[];
+  competitions?: string[];
   ageMin?: string;
   ageMax?: string;
   limit?: number;
@@ -111,11 +111,19 @@ export const usePlayerLollipop = (metric: string) => {
     loadData(metric);
   }, [metric, loadData]);
 
-  // Filter data function
+  // Filter data function. Array vacío = sin filtro.
   const getFilteredData = useCallback((filters: LollipopFilters) => {
+    const positions = filters.positions ?? [];
+    const nationalities = filters.nationalities ?? [];
+    const competitions = filters.competitions ?? [];
+
     let filtered = data.filter(player => {
-      if (filters.position && player.position !== filters.position) return false;
-      if (filters.nationality && player.nationality !== filters.nationality) return false;
+      if (positions.length > 0 && !positions.includes(player.position)) return false;
+      if (nationalities.length > 0 && !nationalities.includes(player.nationality)) return false;
+      if (competitions.length > 0) {
+        const lower = player.team?.toLowerCase() ?? '';
+        if (!competitions.some(c => lower.includes(c.toLowerCase()))) return false;
+      }
       if (filters.ageMin && player.age < parseInt(filters.ageMin)) return false;
       if (filters.ageMax && player.age > parseInt(filters.ageMax)) return false;
       return true;

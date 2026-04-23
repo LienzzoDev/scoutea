@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { usePlayerRadar } from '@/hooks/player/usePlayerRadar';
 
 import ChartFilters, { EMPTY_FILTERS, type ChartFilterValues } from './stats/ChartFilters';
+import CohortHeader from './stats/CohortHeader';
 
 
 
@@ -55,12 +56,12 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
   const [showRaw, setShowRaw] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
-  // Apply filters when they change
+  // Apply filters when they change (arrays se envían como CSV al backend).
   useEffect(() => {
     applyFilters({
-      position: chartFilters.position,
-      nationality: chartFilters.nationality,
-      competition: chartFilters.competition,
+      positions: chartFilters.positions,
+      nationalities: chartFilters.nationalities,
+      competitions: chartFilters.competitions,
       ageMin: chartFilters.ageMin,
       ageMax: chartFilters.ageMax,
       ratingMin: chartFilters.trfmMin,
@@ -329,6 +330,13 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
       </div>
       )}
 
+      {/* Cohort header — el backend devuelve totalPlayers por categoría; tomamos el valor
+          más frecuente (todas las categorías comparten cohort en el endpoint /compare). */}
+      <CohortHeader
+        sampleSize={radarData[0]?.totalPlayers ?? null}
+        loading={loading}
+      />
+
       {/* Radar Chart */}
       <div className="border-2 border-[#8c1a10] rounded-lg p-6">
         <h4 className="text-lg font-semibold text-[#2e3138] mb-4 text-center">
@@ -427,7 +435,13 @@ export default function PlayerRadar({ playerId }: PlayerRadarProps) {
                   </div>
                 </div>
                 <p className="text-xs text-[#6d6d6d]">
-                  {Math.round(Number(item.percentile) || 50)}% | #{Number(item.rank) || 1}/{Number(item.totalPlayers) || 1}
+                  <span title="Percentile within the comparison cohort (higher = better)">
+                    Pct {Math.round(Number(item.percentile) || 50)}%
+                  </span>
+                  {' · '}
+                  <span title="Player rank / cohort size">
+                    #{Number(item.rank) || 1}/{Number(item.totalPlayers) || 1}
+                  </span>
                 </p>
                 {item.dataCompleteness && item.dataCompleteness < 100 && (
                   <p className="text-xs text-orange-600 mt-1">

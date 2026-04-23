@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
+import TeamBadge from "@/components/ui/team-badge";
 import { useBreadcrumbNavigation } from "@/hooks/useBreadcrumbNavigation";
 import { getValidImageUrl } from "@/lib/utils/image-utils";
 import type { Player } from "@/types/player";
@@ -65,7 +66,7 @@ export default function PlayerHeader({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          {/* Profile Photo */}
+          {/* Profile Photo — fallback al escudo del equipo si no hay foto del jugador */}
           {validProfilePhoto ? (
             <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200 shadow-sm">
               <Image
@@ -76,6 +77,10 @@ export default function PlayerHeader({
                 sizes="80px"
                 priority
               />
+            </div>
+          ) : player.team_name ? (
+            <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center border-2 border-gray-200 shadow-sm overflow-hidden">
+              <TeamBadge teamName={player.team_name} size="lg" />
             </div>
           ) : (
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center border-2 border-gray-200 shadow-sm">

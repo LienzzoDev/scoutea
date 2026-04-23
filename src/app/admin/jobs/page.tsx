@@ -135,7 +135,7 @@ export default function AdminJobsPage() {
         <div className="border-t border-slate-700 my-10" />
 
         {/* On Demand Messages Section */}
-        <div className="mb-8">
+        <div id="on-demand-messages" className="mb-8 scroll-mt-24">
           <div className="flex items-center gap-3 mb-2">
             <MessageSquare className="w-6 h-6 text-[#FF5733]" />
             <h2 className="text-2xl font-bold text-[#D6DDE6]">Solicitudes On Demand</h2>

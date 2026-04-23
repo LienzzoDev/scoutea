@@ -14,9 +14,9 @@ export interface RadarData {
 }
 
 export interface RadarFilters {
-  position?: string;
-  nationality?: string;
-  competition?: string;
+  positions?: string[];
+  nationalities?: string[];
+  competitions?: string[];
   ageMin?: string;
   ageMax?: string;
   ratingMin?: string;
@@ -146,11 +146,14 @@ export const usePlayerRadar = (playerId: string) => {
     try {
       console.log('🔍 usePlayerRadar: Applying filters:', filters);
       
-      // Build query parameters
+      // Build query parameters. Arrays se serializan como CSV (position=CB,CM).
+      // Strings vacíos / arrays vacíos se omiten → equivale a "sin filtro".
       const params = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
-        if (value && value !== '') {
-          params.append(key, value);
+        if (Array.isArray(value)) {
+          if (value.length > 0) params.append(key, value.join(','));
+        } else if (value !== undefined && value !== null && value !== '') {
+          params.append(key, String(value));
         }
       });
       

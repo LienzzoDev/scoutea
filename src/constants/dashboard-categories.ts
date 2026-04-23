@@ -27,11 +27,16 @@ const ensureGetValue = (category: Category): Category => {
 };
 
 // Helper to process groups recursively
-const processGroup = (group: CategoryGroup): CategoryGroup => ({
-  ...group,
-  categories: group.categories.map(ensureGetValue),
-  subgroups: group.subgroups?.map(processGroup)
-});
+const processGroup = (group: CategoryGroup): CategoryGroup => {
+  const processed: CategoryGroup = {
+    ...group,
+    categories: group.categories.map(ensureGetValue),
+  }
+  if (group.subgroups) {
+    processed.subgroups = group.subgroups.map(processGroup)
+  }
+  return processed
+};
 
 // Format a numeric stat value for display (round to 2 decimals if non-integer)
 const formatStatValue = (v: unknown): string => {
@@ -68,25 +73,15 @@ function buildStatsGroups(periods: StatsPeriod[]): CategoryGroup[] {
   const periodLabel = periods.map(x => x.toUpperCase()).join(' · ')
   return [
     {
-      groupName: '1. General',
-      categories: [],
-      subgroups: [
-        {
-          groupName: `1.1 General Stats (${periodLabel})`,
-          categories: [
-            statCat('matches_played_tot', 'Matches played (TOT)', p),
-            statCat('minutes_played_tot', 'Minutes played (TOT)', p),
-            statCat('goals_p90', 'Goals (P90)', p),
-            statCat('goals_tot', 'Goals (TOT)', p),
-            statCat('assists_p90', 'Assists (P90)', p),
-            statCat('assists_tot', 'Assists (TOT)', p),
-            statCat('yellow_cards_p90', 'Yellow cards (P90)', p),
-            statCat('yellow_cards_tot', 'Yellow cards (TOT)', p),
-            statCat('red_cards_p90', 'Red cards (P90)', p),
-            statCat('red_cards_tot', 'Red cards (TOT)', p),
-          ]
-        },
-      ]
+      groupName: `1. General (${periodLabel})`,
+      categories: [
+        statCat('matches_played_tot', 'Matches played (TOT)', p),
+        statCat('minutes_played_tot', 'Minutes played (TOT)', p),
+        statCat('yellow_cards_p90', 'Yellow cards (P90)', p),
+        statCat('yellow_cards_tot', 'Yellow cards (TOT)', p),
+        statCat('red_cards_p90', 'Red cards (P90)', p),
+        statCat('red_cards_tot', 'Red cards (TOT)', p),
+      ],
     },
     {
       groupName: '2. Goalkeeping',
@@ -150,12 +145,12 @@ function buildStatsGroups(periods: StatsPeriod[]): CategoryGroup[] {
     {
       groupName: '7. Physical',
       categories: [
-        { key: 'sprinter', label: 'Sprinter' },
-        { key: 'marathonian', label: 'Marathonian' },
-        { key: 'bomberman', label: 'Bomberman' },
-        { key: 'three_sixty', label: '360º' },
-        { key: 'the_rock', label: 'The Rock' },
-        { key: 'air_flyer', label: 'Air Flyer' },
+        statCat('total_meters', 'Total Met', p),
+        statCat('max_speed', 'Max Speed', p),
+        statCat('meters_per_min', 'Met/Min', p),
+        statCat('over_15kmh', 'Over 15km/h', p),
+        statCat('over_20kmh', 'Over 20km/h', p),
+        statCat('over_25kmh', 'Over 25km/h', p),
       ]
     },
   ]
@@ -446,7 +441,7 @@ export const DASHBOARD_CATEGORY_GROUPS: CategoryGroup[] = [
 
   // EVOLUTION
   {
-    groupName: 'EVOLUTION',
+    groupName: 'EVO',
     categories: [
       {
         key: 'transfer_team_pts',
@@ -457,6 +452,22 @@ export const DASHBOARD_CATEGORY_GROUPS: CategoryGroup[] = [
         key: 'transfer_competition_pts',
         label: 'Transfer Competition Pts',
         getValue: (player: Record<string, unknown>) => player.transfer_competition_pts ?? 'N/A'
+      },
+      {
+        key: 'initial_player_trfm_value',
+        label: 'Total Investment',
+        getValue: (player: Record<string, unknown>) => {
+          const value = player.initial_player_trfm_value;
+          return value != null ? formatMoney(value as number | string | null) : 'N/A';
+        }
+      },
+      {
+        key: 'profit',
+        label: 'Net Profit',
+        getValue: (player: Record<string, unknown>) => {
+          const value = player.profit;
+          return value != null ? formatMoney(value as number | string | null) : 'N/A';
+        }
       },
       {
         key: 'roi',
@@ -471,19 +482,18 @@ export const DASHBOARD_CATEGORY_GROUPS: CategoryGroup[] = [
  * Generate dashboard category groups for a specific stats period.
  * Non-stats groups (PASSPORT, CONTRACT, etc.) stay the same.
  * Only the STATS group is regenerated with the appropriate period suffix.
+ * When no period is selected, the STATS group defaults to '3m' so the
+ * section is always visible in Customize Display.
  */
 export function getDashboardCategoryGroups(periods: StatsPeriod[]): CategoryGroup[] {
+  const effectivePeriods: StatsPeriod[] = periods.length === 0 ? ['3m'] : periods
   return DASHBOARD_CATEGORY_GROUPS.map(group => {
     if (group.groupName === 'STATS') {
-      if (periods.length === 0) {
-        // Hide STATS group entirely when no period is selected
-        return null
-      }
       return processGroup({
         ...group,
-        subgroups: buildStatsGroups(periods),
+        subgroups: buildStatsGroups(effectivePeriods),
       })
     }
     return group
-  }).filter((g): g is CategoryGroup => g !== null)
+  })
 }

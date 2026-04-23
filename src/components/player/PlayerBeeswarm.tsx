@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { usePlayerBeeswarm, BeeswarmData } from '@/hooks/player/usePlayerBeeswarm';
 
 import ChartFilters, { EMPTY_FILTERS, type ChartFilterValues } from './stats/ChartFilters';
+import CohortHeader from './stats/CohortHeader';
 
 interface PlayerBeeswarmProps {
   playerId?: string; // Optional: highlight specific player
@@ -37,11 +38,11 @@ export default function PlayerBeeswarm({ playerId }: PlayerBeeswarmProps) {
     { value: 'goals', label: 'Goals' },
   ];
 
-  // Get filtered data
+  // Get filtered data (arrays = multi-select)
   const filteredData = getFilteredData({
-    position: chartFilters.position,
-    nationality: chartFilters.nationality,
-    competition: chartFilters.competition,
+    positions: chartFilters.positions,
+    nationalities: chartFilters.nationalities,
+    competitions: chartFilters.competitions,
     ageMin: chartFilters.ageMin,
     ageMax: chartFilters.ageMax,
   });
@@ -217,6 +218,9 @@ export default function PlayerBeeswarm({ playerId }: PlayerBeeswarmProps) {
         />
       </div>
       )}
+
+      {/* Cohort header */}
+      <CohortHeader sampleSize={filteredData.length} loading={loading} />
 
       {/* Beeswarm Chart */}
       <div className="border-2 border-[#8c1a10] rounded-lg p-6">
