@@ -230,7 +230,9 @@ async function main(): Promise<void> {
     lists = all.filter((l) => l.id === args.listId)
     if (!lists.length) throw new Error(`Lista ${args.listId} no encontrada en el grupo`)
   } else {
-    lists = all.filter((l) => l.count === 100)
+    // Se descargan TODAS las listas con al menos 1 jugador (antes solo las de exactamente 100).
+    // Las vacías se omiten en el bucle.
+    lists = all.filter((l) => l.count > 0)
   }
   console.log(`  ${all.length} listas totales, ${lists.length} seleccionadas`)
   if (args.limit) lists = lists.slice(0, args.limit)
@@ -254,10 +256,6 @@ async function main(): Promise<void> {
     const playerIds = listPlayerIds(list)
     if (playerIds.length === 0) {
       console.log('  ✗ sin IDs de jugador, se omite')
-      continue
-    }
-    if (playerIds.length !== 100 && !args.listId) {
-      console.log(`  ⚠ ${playerIds.length} IDs (≠100), se omite`)
       continue
     }
 

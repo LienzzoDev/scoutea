@@ -131,7 +131,8 @@ export function fluidExportBody(
     from,
     to,
     competition_types: '',
-    count: 100,
+    // Tamaño de página = nº de jugadores de la lista (mín. 100) para no truncar listas grandes.
+    count: Math.max(100, playerIds.length),
     page: 0,
     sort: EXPORT_SORT,
     columns: FLUID_COLUMNS,

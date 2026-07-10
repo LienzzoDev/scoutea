@@ -165,9 +165,15 @@ export async function openWyscoutSession(opts: BrowserAuthOpts): Promise<Wyscout
 
     // Paso 3 — esperar el token; por el camino, pulsar "Forzar la sesión" si aparece, y abortar
     // pronto si detectamos credenciales incorrectas.
+    // OJO: el patrón debe casar SOLO mensajes de error reales, nunca la etiqueta "Contraseña" del
+    // formulario (que siempre está visible en la página de login en español y provocaba un falso
+    // rechazo inmediato). Damos además unos segundos de gracia para no leer la página en transición.
     const forceBtn = page.getByRole('button', { name: /forzar|force/i })
-    const credError = page.getByText(/incorrect|contraseña|wrong email|invalid|no coincide/i)
+    const credError = page.getByText(
+      /incorrect|no coincide|inv[aá]lid|wrong|didn'?t recognize|no reconoc|incorrecta|inténta/i
+    )
     const deadline = Date.now() + timeoutMs
+    const checkErrorsAfter = Date.now() + 4000 // gracia: evita la página de contraseña en tránsito
     let forced = false
 
     while (Date.now() < deadline && !token) {
@@ -176,13 +182,23 @@ export async function openWyscoutSession(opts: BrowserAuthOpts): Promise<Wyscout
         await forceBtn.click().catch(() => {})
         forced = true
       }
-      if (page.url().includes('identity.hudl.com') && (await credError.isVisible().catch(() => false))) {
-        throw new Error('Login rechazado (credenciales incorrectas o MFA requerido).')
+      if (
+        Date.now() > checkErrorsAfter &&
+        page.url().includes('identity.hudl.com') &&
+        (await credError.isVisible().catch(() => false))
+      ) {
+        const errText = await credError.innerText().catch(() => '')
+        await page.screenshot({ path: 'exports/wyscout/login-fail.png', fullPage: true }).catch(() => {})
+        throw new Error(
+          `Login rechazado. Texto en pantalla: "${errText.replace(/\s+/g, ' ').slice(0, 200)}" ` +
+            `(url: ${page.url()}, captura: exports/wyscout/login-fail.png)`
+        )
       }
       await page.waitForTimeout(1000)
     }
 
     if (!token) {
+      await page.screenshot({ path: 'exports/wyscout/login-fail.png', fullPage: true }).catch(() => {})
       throw new Error(
         `No se capturó el token tras el login (url actual: ${page.url()}). Posible MFA/anti-bot o cambio del flujo.`
       )

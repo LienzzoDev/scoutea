@@ -537,27 +537,11 @@ export async function POST(request: NextRequest) {
             message: '🔍 Cargando jugadores existentes en la base de datos...'
           })
 
-          const allWyscoutIds = data
-            .map(row => parseString(row['wyscout_id 1'] || row.id))
-            .filter(Boolean) as string[]
-
-          // También cargar jugadores por nombre para matching sin Wyscout ID
-          const allPlayerNames = data
-            .map(row => parseString(row.player_name || row.Player || row['wyscout_name 1']))
-            .filter(Boolean) as string[]
-
+          // Cargar TODOS los jugadores existentes y matchear en memoria. Antes se filtraba con un
+          // OR/IN sobre los IDs+nombres del archivo, pero con archivos grandes eso genera decenas de
+          // miles de bind variables y supera el límite de Postgres (máx 32767 → error P2035). La BD
+          // ronda unos pocos miles de jugadores, así que traerlos todos (4 columnas) es barato.
           const existingPlayers = await prisma.jugador.findMany({
-            where: {
-              OR: [
-                ...(allWyscoutIds.length > 0 ? [
-                  { wyscout_id_1: { in: allWyscoutIds } },
-                  { wyscout_id_2: { in: allWyscoutIds } }
-                ] : []),
-                ...(allPlayerNames.length > 0 ? [
-                  { player_name: { in: allPlayerNames } }
-                ] : [])
-              ]
-            },
             select: {
               id_player: true,
               wyscout_id_1: true,
