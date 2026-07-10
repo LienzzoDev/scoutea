@@ -8,10 +8,16 @@
  */
 
 import { auth } from '@clerk/nextjs/server'
+import { del } from '@vercel/blob'
 import { NextRequest } from 'next/server'
 import * as XLSX from 'xlsx'
 
 import { prisma } from '@/lib/db'
+import {
+  mapRowToStatsData,
+  recalcPeriodNormalizations,
+  type NormalizedRow,
+} from '@/lib/services/period-stats-import'
 
 // ⏱️ Configuración del route: timeout extendido para importaciones masivas
 export const maxDuration = 300 // 5 minutos (máximo en Vercel Hobby plan)
@@ -154,10 +160,18 @@ interface PlayerImportRow {
 
 /**
  * Helper: Convertir valor a fecha si es válido
+ * Soporta strings ISO, Date, y numbers como serial date de Excel (días desde 1899-12-30)
  */
-function parseDate(value: string | Date | undefined | null): Date | null {
-  if (!value) return null
+function parseDate(value: string | number | Date | undefined | null): Date | null {
+  if (value === null || value === undefined || value === '') return null
   if (value instanceof Date) return value
+
+  // Excel serial date: número entero (días desde 1899-12-30)
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    const ms = (value - 25569) * 86400 * 1000
+    const d = new Date(ms)
+    return isNaN(d.getTime()) ? null : d
+  }
 
   try {
     const date = new Date(value)
@@ -205,6 +219,36 @@ function parseString(value: RowValue): string | null {
 }
 
 /**
+ * Helper: Normalizar clave para joins entre hojas (case/espacios-insensible)
+ */
+function normKey(value: RowValue): string {
+  return String(value ?? '').trim().toLowerCase()
+}
+
+/**
+ * Helper: Primer string no vacío de una lista. Trata "-" y "" como vacío
+ * (el dataset usa "-" como placeholder de "sin dato").
+ */
+function coalesceStr(...values: RowValue[]): string | null {
+  for (const v of values) {
+    const s = parseString(v)
+    if (s !== null && s !== '-') return s
+  }
+  return null
+}
+
+/**
+ * Helper: Primer número válido de una lista (ignora "-", "No", strings no numéricos).
+ */
+function coalesceNum(...values: RowValue[]): number | null {
+  for (const v of values) {
+    const n = parseNumber(v)
+    if (n !== null) return n
+  }
+  return null
+}
+
+/**
  * Helper: Enviar evento SSE
  */
 function sendSSE(controller: ReadableStreamDefaultController, data: Record<string, unknown>) {
@@ -243,37 +287,57 @@ export async function POST(request: NextRequest) {
     }
 
     // 📝 OBTENER ARCHIVO Y PARÁMETROS DEL BODY
-    const formData = await request.formData()
-    const file = formData.get('file') as File
-    const maxRowsParam = formData.get('maxRows') as string | null
-    const maxRows = maxRowsParam ? parseInt(maxRowsParam) : null
+    // Dos vías: (a) JSON { blobUrl } — el archivo ya se subió a Vercel Blob desde el navegador,
+    // saltándose el límite de 4.5 MB del body de las funciones; leemos los bytes desde la URL.
+    // (b) multipart/form-data con `file` — vía tradicional para archivos pequeños.
+    const contentType = request.headers.get('content-type') || ''
+    const jsonError = (msg: string, status = 400) =>
+      new Response(JSON.stringify({ error: msg }), { status, headers: { 'Content-Type': 'application/json' } })
 
-    if (!file) {
-      return new Response(
-        JSON.stringify({ error: 'No se proporcionó ningún archivo.' }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        }
-      )
+    let buffer: Buffer
+    let fileName: string
+    let maxRows: number | null
+    let skipExisting: boolean
+    // URL del blob a limpiar tras leerlo (solo en la vía blob).
+    let blobToDelete: string | null = null
+
+    if (contentType.includes('application/json')) {
+      const body = (await request.json().catch(() => null)) as
+        | { blobUrl?: string; filename?: string; maxRows?: number | null; skipExisting?: boolean }
+        | null
+      const blobUrl = body?.blobUrl
+      if (!blobUrl) return jsonError('Falta blobUrl en la petición.')
+      fileName = body?.filename || 'import.xlsx'
+      maxRows = typeof body?.maxRows === 'number' ? body.maxRows : null
+      skipExisting = body?.skipExisting === true
+      blobToDelete = blobUrl
+
+      const blobRes = await fetch(blobUrl).catch(() => null)
+      if (!blobRes || !blobRes.ok) return jsonError('No se pudo leer el archivo subido (blob).')
+      buffer = Buffer.from(await blobRes.arrayBuffer())
+    } else {
+      const formData = await request.formData()
+      const file = formData.get('file') as File | null
+      const maxRowsParam = formData.get('maxRows') as string | null
+      maxRows = maxRowsParam ? parseInt(maxRowsParam) : null
+      // Si está activo, los jugadores que ya existen en BD se saltan completamente
+      // (no se actualizan ni se reescriben sus stats). Pensado para retomar tras un cuelgue.
+      skipExisting = formData.get('skipExisting') === 'true'
+      if (!file) return jsonError('No se proporcionó ningún archivo.')
+      fileName = file.name
+      buffer = Buffer.from(await file.arrayBuffer())
     }
 
-    // Verificar que sea un archivo Excel
+    // Verificar que sea un archivo Excel/CSV (por la extensión del nombre original)
     const validExtensions = ['.xlsx', '.xls', '.csv']
-    const fileExtension = file.name.toLowerCase().match(/\.[^.]+$/)?.[0]
+    const fileExtension = fileName.toLowerCase().match(/\.[^.]+$/)?.[0]
     if (!fileExtension || !validExtensions.includes(fileExtension)) {
-      return new Response(
-        JSON.stringify({ error: 'El archivo debe ser un Excel (.xlsx, .xls) o CSV.' }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        }
-      )
+      if (blobToDelete) await del(blobToDelete).catch(() => {})
+      return jsonError('El archivo debe ser un Excel (.xlsx, .xls) o CSV.')
     }
 
-    // 📖 LEER ARCHIVO EXCEL
-    const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
+    // 📖 LEER ARCHIVO EXCEL. Ya leído a `buffer`; el blob (si lo hubo) puede borrarse.
+    if (blobToDelete) await del(blobToDelete).catch(() => {})
     const workbook = XLSX.read(buffer, { type: 'buffer' })
     const sheetName = workbook.SheetNames[0]
     if (!sheetName) {
@@ -348,18 +412,13 @@ export async function POST(request: NextRequest) {
     let data: PlayerImportRow[]
 
     if (hasHeaders) {
-      // ✅ TIENE ENCABEZADOS: Usar la fila de encabezados detectada
-      const headers = headerRow.map((cell) => String(cell ?? '').trim())
-
-      // Convertir las filas restantes a objetos usando los encabezados
-      data = allRows.slice(dataStartIndex).map((row) => {
-        const obj: PlayerImportRow = {}
-        headers.forEach((header, index) => {
-          if (header && row) {
-            obj[header] = row[index]
-          }
-        })
-        return obj
+      // ✅ TIENE ENCABEZADOS: usamos sheet_to_json con range apuntando a la fila de
+      // encabezados para que xlsx haga el auto-naming (`__EMPTY`, `__EMPTY_1`, ...).
+      // Esto es importante porque BASE DATOS.xlsx tiene columnas con header de imagen
+      // (URLs) que vienen sin texto y se perdían con el mapping manual previo.
+      data = XLSX.utils.sheet_to_json<PlayerImportRow>(worksheet, {
+        defval: null,
+        range: dataStartIndex - 1,
       })
     } else {
       // ❌ NO TIENE ENCABEZADOS: Usar las columnas generadas por XLSX
@@ -375,6 +434,64 @@ export async function POST(request: NextRequest) {
       data = data.slice(0, maxRows)
     }
 
+    // 🔗 CONSTRUIR MAPAS DE REFERENCIA DESDE LAS OTRAS HOJAS
+    // BASE DATOS.xlsx es relacional: la hoja PLAYERS solo trae el nombre del equipo,
+    // y los datos de equipo/competición/nación viven en hojas aparte. Sin este cruce,
+    // campos como team_elo, competition_tier, owner_club quedaban vacíos para casi
+    // todos los jugadores.
+    type RefRow = Record<string, RowValue>
+    const readSheet = (name: string): RefRow[] => {
+      const sheet = workbook.Sheets[name]
+      if (!sheet) return []
+      return XLSX.utils.sheet_to_json<RefRow>(sheet, { defval: null, range: 0 })
+    }
+
+    // TEAMS: clave por team_name y correct_team_name
+    const teamMap = new Map<string, RefRow>()
+    for (const t of readSheet('TEAMS')) {
+      const k1 = normKey(t.team_name)
+      const k2 = normKey(t.correct_team_name)
+      if (k1) teamMap.set(k1, t)
+      if (k2 && !teamMap.has(k2)) teamMap.set(k2, t)
+    }
+
+    // COMPETITIONS: clave por competition_name y correct_competition_name
+    const compMap = new Map<string, RefRow>()
+    for (const c of readSheet('COMPETITIONS')) {
+      const k1 = normKey(c.competition_name)
+      const k2 = normKey(c.correct_competition_name)
+      if (k1) compMap.set(k1, c)
+      if (k2 && !compMap.has(k2)) compMap.set(k2, c)
+    }
+
+    // NATIONS: clave por national_tier
+    const nationMap = new Map<string, RefRow>()
+    for (const n of readSheet('NATIONS')) {
+      const k = normKey(n.national_tier)
+      if (k) nationMap.set(k, n)
+    }
+
+    /**
+     * Resuelve los datos de equipo/competición/nación de un jugador cruzando
+     * las hojas de referencia. Devuelve también el nombre de competición resuelto.
+     */
+    const resolveReferences = (row: PlayerImportRow) => {
+      const teamKey = normKey(row.correct_team_name ?? row.team_name)
+      const team = teamKey ? teamMap.get(teamKey) : undefined
+
+      // La competición se toma de la fila del jugador o, si no, de la hoja TEAMS
+      const compName =
+        coalesceStr(
+          row.team_competition,
+          team?.correct_competition,
+          team?.competition
+        )
+      const comp = compName ? compMap.get(normKey(compName)) : undefined
+
+      const nation = nationMap.get(normKey(row.national_tier))
+      return { team, comp, compName, nation }
+    }
+
     // 🌊 CREAR STREAM PARA SSE
     const stream = new ReadableStream({
       async start(controller) {
@@ -383,9 +500,11 @@ export async function POST(request: NextRequest) {
           failed: 0,
           created: 0,
           updated: 0,
+          skipped: 0,
           errors: [] as string[],
           createdPlayers: [] as string[]
         }
+        let statsImported = 0
 
         try {
           // Enviar inicio
@@ -397,6 +516,19 @@ export async function POST(request: NextRequest) {
             type: 'start',
             total: data.length,
             message: startMessage
+          })
+
+          if (skipExisting) {
+            sendSSE(controller, {
+              type: 'info',
+              message: '⏭️ Modo retomar activo: los jugadores ya existentes se saltarán.'
+            })
+          }
+
+          // 🔗 Informar de las hojas de referencia cargadas para el cruce
+          sendSSE(controller, {
+            type: 'info',
+            message: `🔗 Hojas de referencia cargadas: TEAMS (${teamMap.size} claves), COMPETITIONS (${compMap.size}), NATIONS (${nationMap.size}). Se enriquecerán equipo/competición/club propietario.`
           })
 
           // 🚀 OPTIMIZACIÓN: Pre-cargar todos los jugadores existentes en memoria
@@ -590,9 +722,30 @@ export async function POST(request: NextRequest) {
                   existingPlayer = playerNameMap.get(playerName) || null
                 }
 
+                // ⏭️ SKIP-IF-EXISTS (modo retomar)
+                if (skipExisting && existingPlayer) {
+                  results.skipped++
+                  results.success++
+                  const currentProgress = (batchIndex * BATCH_SIZE) + rowIndex + 1
+                  if (currentProgress % 50 === 0 || currentProgress === data.length) {
+                    sendSSE(controller, {
+                      type: 'progress',
+                      current: currentProgress,
+                      total: data.length,
+                      percentage: Math.round((currentProgress / data.length) * 100)
+                    })
+                  }
+                  continue
+                }
+
+          // 🔗 ENRIQUECER CON DATOS DE LAS HOJAS DE REFERENCIA (TEAMS/COMPETITIONS/NATIONS)
+          const refs = resolveReferences(row)
+
           // 📦 PREPARAR DATOS DEL JUGADOR
           const playerData = {
             // Identificación y nombres
+            // old_id conserva el id_player original del Excel (la PK de BD es autoincremental)
+            old_id: parseString(row.id_player as string | number | undefined),
             player_name: playerName,
             complete_player_name: parseString(row.complete_player_name),
             wyscout_id_1: wyscoutId || null,
@@ -602,12 +755,14 @@ export async function POST(request: NextRequest) {
             id_fmi: parseString(row.id_fmi || row['ID_FMI'] || row['ID FMI'] || row['id FMI'] || row['Id FMI']),
 
             // URLs y referencias
+            // Nota: el Excel "BASE DATOS" envía las URLs en columnas con header de imagen,
+            // que xlsx parsea como `__EMPTY_*`. Hacemos fallback posicional a esos nombres.
             player_rating: parseNumber(row.player_rating),
             photo_coverage: parseString(row.photo_coverage),
             url_trfm_advisor: parseString(row.url_trfm_advisor),
-            url_trfm: parseString(row.url_trfm),
-            url_secondary: parseString(row.url_secondary),
-            url_instagram: parseString(row.url_instagram),
+            url_trfm: parseString(row.url_trfm ?? row['__EMPTY_1']),
+            url_secondary: parseString(row.url_secondary ?? row['__EMPTY_8']),
+            url_instagram: parseString(row.url_instagram ?? row['__EMPTY_7']),
             video: parseString(row.video),
 
             // Información personal
@@ -631,41 +786,45 @@ export async function POST(request: NextRequest) {
             correct_height: parseNumber(row.correct_height),
 
             // Nacionalidad
+            // correct_nationality_* es el campo que consumen los cálculos (nationality_value).
+            // El Excel no trae las columnas correct_*, así que hacemos fallback a nationality_*.
             nationality_1: parseString(row.nationality_1),
-            correct_nationality_1: parseString(row.correct_nationality_1),
+            correct_nationality_1: coalesceStr(row.correct_nationality_1, row.nationality_1),
             nationality_value: parseNumber(row.nationality_value),
             nationality_value_percent: parseNumber(row['nationality_value_%']),
             nationality_2: parseString(row.nationality_2),
-            correct_nationality_2: parseString(row.correct_nationality_2),
+            correct_nationality_2: coalesceStr(row.correct_nationality_2, row.nationality_2),
             national_tier: parseString(row.national_tier),
-            rename_national_tier: parseString(row.rename_national_tier),
+            // rename_national_tier: del jugador o, si falta, de la hoja NATIONS
+            rename_national_tier: coalesceStr(row.rename_national_tier, refs.nation?.rename_national_tier),
             correct_national_tier: parseString(row.correct_national_tier),
 
-            // Equipo
+            // Equipo (enriquecido desde la hoja TEAMS por team_name)
             pre_team: parseString(row.pre_team),
             team_name: parseString(row.team_name),
-            correct_team_name: parseString(row.correct_team_name),
-            team_country: parseString(row.team_country),
-            team_elo: parseNumber(row.team_elo),
-            team_level: parseString(row.team_level),
+            correct_team_name: coalesceStr(row.correct_team_name, refs.team?.correct_team_name),
+            team_country: coalesceStr(row.team_country, refs.team?.team_country),
+            team_elo: coalesceNum(row.team_elo, refs.team?.team_elo),
+            team_level: coalesceStr(row.team_level, refs.team?.team_level),
             team_level_value: parseNumber(row.team_level_value),
             team_level_value_percent: parseNumber(row['team_level_value_%']),
+            team_status: coalesceStr(row.team_status, refs.team?.status),
 
-            // Competición
-            team_competition: parseString(row.team_competition),
-            competition_country: parseString(row.competition_country),
+            // Competición (de TEAMS para el nombre, de COMPETITIONS para el detalle)
+            team_competition: coalesceStr(row.team_competition, refs.compName),
+            competition_country: coalesceStr(row.competition_country, refs.comp?.competition_country, refs.team?.competition_country),
             team_competition_value: parseNumber(row.team_competition_value),
             team_competition_value_percent: parseNumber(row['team_competition_value_%']),
-            competition_tier: parseString(row.competition_tier),
-            competition_confederation: parseString(row.competition_confederation),
-            competition_elo: parseNumber(row.competition_elo),
-            competition_level: parseString(row.competition_level),
+            competition_tier: coalesceStr(row.competition_tier, refs.comp?.competition_tier),
+            competition_confederation: coalesceStr(row.competition_confederation, refs.comp?.competition_confederation),
+            competition_elo: coalesceNum(row.competition_elo, refs.comp?.competition_elo),
+            competition_level: coalesceStr(row.competition_level, refs.comp?.competition_level),
             competition_level_value: parseNumber(row.competition_level_value),
             competition_level_value_percent: parseNumber(row['competition_level_value_%']),
 
-            // Club propietario y préstamo
-            owner_club: parseString(row.owner_club),
-            owner_club_country: parseString(row.owner_club_country),
+            // Club propietario y préstamo (enriquecido desde TEAMS)
+            owner_club: coalesceStr(row.owner_club, refs.team?.owner_club),
+            owner_club_country: coalesceStr(row.owner_club_country, refs.team?.owner_club_country),
             owner_club_value: parseNumber(row.owner_club_value),
             owner_club_value_percent: parseNumber(row['owner_club_value_%']),
             pre_team_loan_from: parseString(row.pre_team_loan_from),
@@ -690,6 +849,24 @@ export async function POST(request: NextRequest) {
             player_ranking: parseNumber(row.player_ranking) ? Math.round(parseNumber(row.player_ranking)!) : null,
             community_potential: parseNumber(row.community_potential),
             existing_club: parseString(row.existing_club),
+
+            // Reportes y estado
+            text_report: parseString(row.text_report),
+            video_report_1: parseString(row['video_report 1']),
+
+            // Estado inicial al ser añadido (para evolución / EVO)
+            // Nota: Excel usa `initial_team`, schema usa `initial_team_name`.
+            initial_player_trfm_value: parseNumber(row.initial_player_trfm_value),
+            initial_team_name: parseString(row.initial_team),
+            initial_team_level: parseString(row.initial_team_level),
+            initial_team_elo: parseNumber(row.initial_team_elo),
+            initial_competition: parseString(row.initial_competition),
+            initial_competition_level: parseString(row.initial_competition_level),
+            initial_competition_elo: parseNumber(row.initial_competition_elo),
+            transfer_team_pts: parseNumber(row.transfer_team_pts),
+            transfer_competition_pts: parseNumber(row.transfer_competition_pts),
+            roi: parseNumber(row.roi),
+            profit: parseNumber(row.profit),
           }
 
                 let player: { id_player: number } | null = null
@@ -768,128 +945,60 @@ export async function POST(request: NextRequest) {
                 if (!player) continue
 
                 // 🔄 ACTUALIZAR/CREAR ESTADÍSTICAS (solo si hay campos de stats en el XLS)
+                // Se traduce la fila inglesa a claves de campo y se pasa por el mismo
+                // núcleo que el importador de ZIP (mapRowToStatsData), que calcula
+                // también los _tot y effectiveness_percent — antes este importador
+                // guardaba solo los _p90 y el radar quedaba sin datos derivados.
                 if (row['Matches played'] || row['Goals per 90'] || row['Passes per 90']) {
                   try {
-                    // Helper to convert to integer
-                    const toInt = (val: unknown): number => Math.round(parseNumber(val as number | string | undefined | null) || 0)
+                    const normRow: NormalizedRow = {
+                      matches_played_tot_3m: row['Matches played'] as number | string,
+                      minutes_played_tot_3m: row['Minutes played'] as number | string,
+                      def_duels_p90_3m: row['Defensive duels per 90'] as number | string,
+                      def_duels_won_percent_3m: row['Defensive duels won, %'] as number | string,
+                      aerials_duels_p90_3m: row['Aerial duels per 90'] as number | string,
+                      aerials_duels_won_percent_3m: row['Aerial duels won, %'] as number | string,
+                      tackles_p90_3m: row['Sliding tackles per 90'] as number | string,
+                      interceptions_p90_3m: row['Interceptions per 90'] as number | string,
+                      fouls_p90_3m: row['Fouls per 90'] as number | string,
+                      yellow_cards_p90_3m: row['Yellow cards per 90'] as number | string,
+                      red_cards_p90_3m: row['Red cards per 90'] as number | string,
+                      goals_p90_3m: row['Goals per 90'] as number | string,
+                      shots_p90_3m: row['Shots per 90'] as number | string,
+                      assists_p90_3m: row['Assists per 90'] as number | string,
+                      crosses_p90_3m: row['Crosses per 90'] as number | string,
+                      off_duels_p90_3m: row['Offensive duels per 90'] as number | string,
+                      off_duels_won_percent_3m: row['Offensive duels won, %'] as number | string,
+                      passes_p90_3m: row['Passes per 90'] as number | string,
+                      accurate_passes_percent_3m: row['Accurate passes, %'] as number | string,
+                      forward_passes_p90_3m: row['Forward passes per 90'] as number | string,
+                      conceded_goals_p90_3m: row['Conceded goals per 90'] as number | string,
+                      shots_against_p90_3m: row['Shots against per 90'] as number | string,
+                      clean_sheets_tot_3m: row['Clean sheets'] as number | string,
+                      save_rate_percent_3m: row['Save rate, %'] as number | string,
+                      prevented_goals_p90_3m: row['Prevented goals per 90'] as number | string,
+                      total_meters_3m: row['Total meters'] as number | string,
+                      max_speed_3m: row['Max speed'] as number | string,
+                      meters_per_min_3m: row['Meters per minute'] as number | string,
+                      over_15kmh_3m: row['Meters over 15 km/h'] as number | string,
+                      over_20kmh_3m: row['Meters over 20 km/h'] as number | string,
+                      over_25kmh_3m: row['Meters over 25 km/h'] as number | string,
+                    }
+                    const statsData = mapRowToStatsData(normRow, '3m')
+                    // No pisar wyscout_id existente cuando la fila no lo trae
+                    if (statsData.wyscout_id == null) delete statsData.wyscout_id
 
                     await prisma.playerStats3m.upsert({
-                      where: {
-                        id_player: player.id_player
-                      },
-                      update: {
-                        // Partidos y minutos
-                        matches_played_tot_3m: toInt(row['Matches played']),
-                        minutes_played_tot_3m: toInt(row['Minutes played']),
-
-                        // Duelos defensivos
-                        def_duels_p90_3m: parseNumber(row['Defensive duels per 90'] as number | undefined),
-                        def_duels_won_percent_3m: parseNumber(row['Defensive duels won, %'] as number | undefined),
-
-                        // Duelos aéreos
-                        aerials_duels_p90_3m: parseNumber(row['Aerial duels per 90'] as number | undefined),
-                        aerials_duels_won_percent_3m: parseNumber(row['Aerial duels won, %'] as number | undefined),
-
-                        // Tackles e intercepciones
-                        tackles_p90_3m: parseNumber(row['Sliding tackles per 90'] as number | undefined),
-                        interceptions_p90_3m: parseNumber(row['Interceptions per 90'] as number | undefined),
-
-                        // Faltas y tarjetas
-                        fouls_p90_3m: parseNumber(row['Fouls per 90'] as number | undefined),
-                        yellow_cards_p90_3m: parseNumber(row['Yellow cards per 90'] as number | undefined),
-                        red_cards_p90_3m: parseNumber(row['Red cards per 90'] as number | undefined),
-
-                        // Goles y tiros
-                        goals_p90_3m: parseNumber(row['Goals per 90'] as number | undefined),
-                        shots_p90_3m: parseNumber(row['Shots per 90'] as number | undefined),
-
-                        // Asistencias y centros
-                        assists_p90_3m: parseNumber(row['Assists per 90'] as number | undefined),
-                        crosses_p90_3m: parseNumber(row['Crosses per 90'] as number | undefined),
-
-                        // Duelos ofensivos
-                        off_duels_p90_3m: parseNumber(row['Offensive duels per 90'] as number | undefined),
-                        off_duels_won_percent_3m: parseNumber(row['Offensive duels won, %'] as number | undefined),
-
-                        // Pases
-                        passes_p90_3m: parseNumber(row['Passes per 90'] as number | undefined),
-                        accurate_passes_percent_3m: parseNumber(row['Accurate passes, %'] as number | undefined),
-                        forward_passes_p90_3m: parseNumber(row['Forward passes per 90'] as number | undefined),
-
-                        // Porteros
-                        conceded_goals_p90_3m: parseNumber(row['Conceded goals per 90'] as number | undefined),
-                        shots_against_p90_3m: parseNumber(row['Shots against per 90'] as number | undefined),
-                        clean_sheets_tot_3m: toInt(row['Clean sheets']),
-                        save_rate_percent_3m: parseNumber(row['Save rate, %'] as number | undefined),
-                        prevented_goals_p90_3m: parseNumber(row['Prevented goals per 90'] as number | undefined),
-
-                        // Físico (tracking)
-                        total_meters_3m: parseNumber(row['Total meters'] as number | undefined),
-                        max_speed_3m: parseNumber(row['Max speed'] as number | undefined),
-                        meters_per_min_3m: parseNumber(row['Meters per minute'] as number | undefined),
-                        over_15kmh_3m: parseNumber(row['Meters over 15 km/h'] as number | undefined),
-                        over_20kmh_3m: parseNumber(row['Meters over 20 km/h'] as number | undefined),
-                        over_25kmh_3m: parseNumber(row['Meters over 25 km/h'] as number | undefined)
-                      },
-                      create: {
-                        id_player: player.id_player,
-
-                        // Partidos y minutos
-                        matches_played_tot_3m: toInt(row['Matches played']),
-                        minutes_played_tot_3m: toInt(row['Minutes played']),
-
-                        // Duelos defensivos
-                        def_duels_p90_3m: parseNumber(row['Defensive duels per 90'] as number | undefined),
-                        def_duels_won_percent_3m: parseNumber(row['Defensive duels won, %'] as number | undefined),
-
-                        // Duelos aéreos
-                        aerials_duels_p90_3m: parseNumber(row['Aerial duels per 90'] as number | undefined),
-                        aerials_duels_won_percent_3m: parseNumber(row['Aerial duels won, %'] as number | undefined),
-
-                        // Tackles e intercepciones
-                        tackles_p90_3m: parseNumber(row['Sliding tackles per 90'] as number | undefined),
-                        interceptions_p90_3m: parseNumber(row['Interceptions per 90'] as number | undefined),
-
-                        // Faltas y tarjetas
-                        fouls_p90_3m: parseNumber(row['Fouls per 90'] as number | undefined),
-                        yellow_cards_p90_3m: parseNumber(row['Yellow cards per 90'] as number | undefined),
-                        red_cards_p90_3m: parseNumber(row['Red cards per 90'] as number | undefined),
-
-                        // Goles y tiros
-                        goals_p90_3m: parseNumber(row['Goals per 90'] as number | undefined),
-                        shots_p90_3m: parseNumber(row['Shots per 90'] as number | undefined),
-
-                        // Asistencias y centros
-                        assists_p90_3m: parseNumber(row['Assists per 90'] as number | undefined),
-                        crosses_p90_3m: parseNumber(row['Crosses per 90'] as number | undefined),
-
-                        // Duelos ofensivos
-                        off_duels_p90_3m: parseNumber(row['Offensive duels per 90'] as number | undefined),
-                        off_duels_won_percent_3m: parseNumber(row['Offensive duels won, %'] as number | undefined),
-
-                        // Pases
-                        passes_p90_3m: parseNumber(row['Passes per 90'] as number | undefined),
-                        accurate_passes_percent_3m: parseNumber(row['Accurate passes, %'] as number | undefined),
-                        forward_passes_p90_3m: parseNumber(row['Forward passes per 90'] as number | undefined),
-
-                        // Porteros
-                        conceded_goals_p90_3m: parseNumber(row['Conceded goals per 90'] as number | undefined),
-                        shots_against_p90_3m: parseNumber(row['Shots against per 90'] as number | undefined),
-                        clean_sheets_tot_3m: toInt(row['Clean sheets']),
-                        save_rate_percent_3m: parseNumber(row['Save rate, %'] as number | undefined),
-                        prevented_goals_p90_3m: parseNumber(row['Prevented goals per 90'] as number | undefined),
-
-                        // Físico (tracking)
-                        total_meters_3m: parseNumber(row['Total meters'] as number | undefined),
-                        max_speed_3m: parseNumber(row['Max speed'] as number | undefined),
-                        meters_per_min_3m: parseNumber(row['Meters per minute'] as number | undefined),
-                        over_15kmh_3m: parseNumber(row['Meters over 15 km/h'] as number | undefined),
-                        over_20kmh_3m: parseNumber(row['Meters over 20 km/h'] as number | undefined),
-                        over_25kmh_3m: parseNumber(row['Meters over 25 km/h'] as number | undefined)
-                      }
+                      where: { id_player: player.id_player },
+                      update: statsData,
+                      create: { id_player: player.id_player, ...statsData },
                     })
-                  } catch {
-                    // No marcamos como error total, el jugador fue creado/actualizado correctamente
+                    statsImported++
+                  } catch (statsError) {
+                    sendSSE(controller, {
+                      type: 'warning',
+                      message: `⚠️ Stats no guardadas para ${playerName}: ${statsError instanceof Error ? statsError.message : 'error'}`
+                    })
                   }
                 }
 
@@ -928,6 +1037,24 @@ export async function POST(request: NextRequest) {
             })
           }
 
+          // 📊 Normalizar percentiles/rankings del periodo tras el import
+          // (mismo pipeline que el importador de ZIP): sin esto el radar lee
+          // los _norm antiguos o vacíos.
+          if (statsImported > 0) {
+            try {
+              sendSSE(controller, { type: 'info', message: '📊 Recalculando normalizaciones (percentiles/rankings 3m)...' })
+              const normalized = await recalcPeriodNormalizations('3m', (msg) =>
+                sendSSE(controller, { type: 'info', message: msg })
+              )
+              sendSSE(controller, { type: 'success', message: `✅ Normalizaciones recalculadas para ${normalized} jugadores` })
+            } catch (normError) {
+              sendSSE(controller, {
+                type: 'warning',
+                message: `⚠️ Error recalculando normalizaciones: ${normError instanceof Error ? normError.message : 'desconocido'}`
+              })
+            }
+          }
+
           // 📊 RESULTADO FINAL
           const messageParts = [`Importación completada: ${results.success} exitosos, ${results.failed} fallidos`]
           if (results.created > 0) {
@@ -935,6 +1062,9 @@ export async function POST(request: NextRequest) {
           }
           if (results.updated > 0) {
             messageParts.push(`${results.updated} jugadores actualizados`)
+          }
+          if (results.skipped > 0) {
+            messageParts.push(`${results.skipped} ya existentes saltados`)
           }
           const message = messageParts.join(' | ')
 
@@ -950,6 +1080,8 @@ export async function POST(request: NextRequest) {
             failed: results.failed,
             created: results.created,
             updated: results.updated,
+            skipped: results.skipped,
+            skipExisting,
             importedBy: userId,
             timestamp: new Date().toISOString()
           })

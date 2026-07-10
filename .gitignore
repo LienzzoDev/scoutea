@@ -78,3 +78,8 @@ jspm_packages/
 .sentryclirc
 .sentry-*
 sentry.properties
+
+# Wyscout automation
+.wyscout-tokens.json
+.wyscout-session.json
+exports/

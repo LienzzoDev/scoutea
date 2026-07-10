@@ -1,7 +1,7 @@
 "use client";
 
+import { upload } from "@vercel/blob/client";
 import { Upload, CheckCircle, XCircle, Loader2, Terminal, Download, RefreshCw, Settings, Copy } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 
 interface LogEntry {
@@ -19,14 +19,15 @@ export default function ImportStatsButton() {
   const [result, setResult] = useState<{
     success: boolean;
     message: string;
-    details?: { success: number; failed: number; created: number; updated: number; errors: string[]; createdPlayers: string[] };
+    details?: { success: number; failed: number; created: number; updated: number; skipped?: number; errors: string[]; createdPlayers: string[] };
   } | null>(null);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [maxRows, setMaxRows] = useState<number | null>(null);
   const [maxRowsInput, setMaxRowsInput] = useState<string>('');
+  const [skipExisting, setSkipExisting] = useState<boolean>(false);
+  const [logsCopied, setLogsCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logsEndRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
   // Auto-scroll logs to bottom
   useEffect(() => {
@@ -41,6 +42,67 @@ export default function ImportStatsButton() {
       type,
       message
     }]);
+  };
+
+  // 🔢 Recálculo automático de campos derivados (edad, nacionalidad, normalizaciones)
+  // Se dispara solo al terminar la importación, sin que el admin ejecute scripts.
+  const runRecalculation = async () => {
+    addLog('info', '🔢 Iniciando recálculo automático de campos derivados...');
+    setProgress({ current: 0, total: 0, percentage: 0 });
+
+    try {
+      const response = await fetch('/api/admin/recalculate', { method: 'POST' });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        addLog('error', `❌ Error al recalcular: ${errorData.error || 'Error desconocido'}`);
+        return;
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      if (!reader) return;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const data = JSON.parse(line.substring(6));
+
+            if (data.type === 'recalc_progress') {
+              setProgress({
+                current: data.current,
+                total: data.total,
+                percentage: data.percentage,
+              });
+            } else if (data.type === 'info') {
+              addLog('info', data.message);
+            } else if (data.type === 'success') {
+              addLog('success', data.message);
+            } else if (data.type === 'error') {
+              addLog('error', data.message);
+            } else if (data.type === 'recalc_complete') {
+              addLog('success', data.message);
+              addLog('info', '🎉 Todos los campos derivados se han completado automáticamente.');
+            }
+          } catch (e) {
+            console.error('Error parsing recalc SSE data:', e);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error during recalculation:', error);
+      addLog('error', `❌ Error en el recálculo: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    }
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,6 +121,17 @@ export default function ImportStatsButton() {
       return;
     }
 
+    // Validar tamaño antes de subir. La subida va vía Vercel Blob (no por el body de la función),
+    // así que el tope real lo pone el Blob Store; 100 MB cubre de sobra un export completo de la BD.
+    const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
+    if (file.size > MAX_FILE_SIZE) {
+      setResult({
+        success: false,
+        message: `El archivo pesa ${(file.size / 1024 / 1024).toFixed(1)} MB y el máximo es 100 MB`
+      });
+      return;
+    }
+
     setIsUploading(true);
     setResult(null);
     setLogs([]);
@@ -69,20 +142,33 @@ export default function ImportStatsButton() {
     addLog('info', '🔄 Iniciando importación...');
 
     try {
-      // Crear FormData para enviar el archivo
-      const formData = new FormData();
-      formData.append('file', file);
       if (maxRows !== null) {
-        formData.append('maxRows', maxRows.toString());
         addLog('info', `⚙️ Límite configurado: ${maxRows} filas máximo`);
       }
+      if (skipExisting) {
+        addLog('info', '⏭️ Modo retomar activo: los jugadores ya existentes se saltarán.');
+      }
 
-      addLog('info', '📤 Enviando archivo al servidor...');
+      // 1) Subir el archivo DIRECTAMENTE a Vercel Blob. Esto evita el límite de 4.5 MB del body de
+      //    las funciones serverless de Vercel (la causa del error "Request Entity Too Large").
+      addLog('info', '☁️ Subiendo archivo al almacenamiento...');
+      const blob = await upload(file.name, file, {
+        access: 'public',
+        handleUploadUrl: '/api/admin/blob-upload',
+        ...(file.type ? { contentType: file.type } : {}),
+      });
+      addLog('success', '✅ Archivo subido. Procesando en el servidor...');
 
-      // Enviar al endpoint con streaming habilitado
+      // 2) Disparar el import pasando solo la URL del blob (JSON pequeño, sin límite de tamaño).
       const response = await fetch('/api/admin/import-stats', {
         method: 'POST',
-        body: formData
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          blobUrl: blob.url,
+          filename: file.name,
+          maxRows,
+          skipExisting,
+        }),
       });
 
       if (!response.ok) {
@@ -106,6 +192,7 @@ export default function ImportStatsButton() {
         const reader = response.body?.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
+        let importCompleted = false;
 
         if (reader) {
           while (true) {
@@ -125,7 +212,7 @@ export default function ImportStatsButton() {
                     setProgress({
                       current: data.current,
                       total: data.total,
-                      percentage: Math.round((data.current / data.total) * 100)
+                      percentage: data.total > 0 ? Math.round((data.current / data.total) * 100) : 0
                     });
                     addLog('info', `📊 Progreso: ${data.current}/${data.total} jugadores procesados`);
                   } else if (data.type === 'batch') {
@@ -140,7 +227,6 @@ export default function ImportStatsButton() {
                     addLog('debug', data.message);
                   } else if (data.type === 'complete') {
                     addLog('success', '✅ Importación completada!');
-                    addLog('info', '💡 Revisa el resumen de resultados abajo');
                     setResult({
                       success: true,
                       message: data.message,
@@ -148,6 +234,7 @@ export default function ImportStatsButton() {
                     });
                     // Abrir el modal de logs automáticamente al finalizar
                     setShowLogs(true);
+                    importCompleted = true;
                   }
                 } catch (e) {
                   console.error('Error parsing SSE data:', e);
@@ -155,6 +242,20 @@ export default function ImportStatsButton() {
               }
             }
           }
+        }
+
+        // 🔢 Tras la importación, recalcular automáticamente los campos derivados
+        if (importCompleted) {
+          await runRecalculation();
+          addLog('info', '💡 Revisa el resumen de resultados abajo y recarga la página.');
+        } else {
+          // El stream terminó sin evento 'complete' (conexión cortada o error
+          // no reportado): antes esto se quedaba sin resultado ni error visible.
+          addLog('error', '❌ El stream terminó sin confirmar la importación.');
+          setResult({
+            success: false,
+            message: 'La importación se interrumpió antes de completarse. Revisa los logs y reintenta.'
+          });
         }
       } else {
         // Respuesta JSON tradicional
@@ -252,15 +353,9 @@ export default function ImportStatsButton() {
     const logsText = logs.map(log => `[${log.timestamp}] [${log.type.toUpperCase()}] ${log.message}`).join('\n');
     try {
       await navigator.clipboard.writeText(logsText);
-      // Mostrar feedback visual temporal
-      const button = document.getElementById('copy-logs-btn');
-      if (button) {
-        const originalText = button.innerHTML;
-        button.innerHTML = '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span>Copiado!</span>';
-        setTimeout(() => {
-          button.innerHTML = originalText;
-        }, 2000);
-      }
+      // Feedback vía estado React (manipular innerHTML choca con el render)
+      setLogsCopied(true);
+      setTimeout(() => setLogsCopied(false), 2000);
     } catch (err) {
       console.error('Error al copiar logs:', err);
       alert('Error al copiar los logs al portapapeles');
@@ -268,7 +363,6 @@ export default function ImportStatsButton() {
   };
 
   const handleReload = () => {
-    router.refresh();
     window.location.reload();
   };
 
@@ -300,6 +394,21 @@ export default function ImportStatsButton() {
                   Ej: 100 para importar solo las primeras 100 filas
                 </p>
               </div>
+
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={skipExisting}
+                  onChange={(e) => setSkipExisting(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-slate-600 bg-[#0a0e14] text-[#FF5733] focus:ring-[#FF5733]"
+                />
+                <span className="text-sm text-slate-300">
+                  Saltar jugadores ya importados
+                  <span className="block text-xs text-slate-400 mt-0.5">
+                    Útil para retomar tras un cuelgue: los jugadores ya existentes en BD no se vuelven a procesar.
+                  </span>
+                </span>
+              </label>
 
               <div className="flex justify-end gap-2 pt-2">
                 <button
@@ -352,6 +461,11 @@ export default function ImportStatsButton() {
         {maxRows !== null && !isUploading && (
           <span className="text-xs text-slate-400 px-2 py-1 bg-slate-800 rounded">
             Límite: {maxRows} filas
+          </span>
+        )}
+        {skipExisting && !isUploading && (
+          <span className="text-xs text-slate-400 px-2 py-1 bg-slate-800 rounded">
+            Saltar existentes ON
           </span>
         )}
         {logs.length > 0 && (
@@ -414,13 +528,12 @@ export default function ImportStatsButton() {
 
                 {/* Botón de copiar */}
                 <button
-                  id="copy-logs-btn"
                   onClick={copyLogsToClipboard}
                   className="flex items-center gap-2 px-3 py-1.5 bg-blue-700 text-white rounded hover:bg-blue-600 text-sm transition-colors"
                   title="Copiar logs al portapapeles"
                 >
                   <Copy className="h-4 w-4" />
-                  <span>Copiar</span>
+                  <span>{logsCopied ? '¡Copiado!' : 'Copiar'}</span>
                 </button>
 
                 {/* Botón de exportar */}
@@ -505,6 +618,9 @@ export default function ImportStatsButton() {
                           )}
                           {result.details.updated > 0 && (
                             <p>🔄 Jugadores actualizados: {result.details.updated}</p>
+                          )}
+                          {(result.details.skipped ?? 0) > 0 && (
+                            <p>⏭️ Saltados (ya existentes): {result.details.skipped}</p>
                           )}
 
                           {result.details.createdPlayers && result.details.createdPlayers.length > 0 && (
