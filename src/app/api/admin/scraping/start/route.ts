@@ -9,6 +9,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
+import { internalApiHeaders } from '@/lib/auth/api-auth'
 import { prisma } from '@/lib/db'
 import { addJobLog } from '@/lib/scraping/logs'
 
@@ -120,9 +121,7 @@ export async function POST() {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
     fetch(`${baseUrl}/api/admin/scraping/process-auto`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: internalApiHeaders(),
     }).catch(err => {
       console.error('⚠️ Error al iniciar auto-procesamiento:', err)
       addJobLog(playersJob.id, `⚠️ Error al iniciar auto-procesamiento: ${err.message}`)
@@ -138,11 +137,8 @@ export async function POST() {
         // No esperamos la respuesta para no bloquear
         fetch(`${baseUrl}/api/admin/scraping/teams/batch`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            // Pasar info de autorización en header custom
-            'x-admin-user-id': userId
-          }
+          headers: internalApiHeaders(),
+          body: JSON.stringify({ skip: 0 })
         }).catch(err => {
           console.error('⚠️ Error al iniciar scraping de equipos:', err)
         })

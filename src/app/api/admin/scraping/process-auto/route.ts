@@ -8,6 +8,7 @@
 
 import { NextResponse } from 'next/server'
 
+import { requireAdminOrInternal, internalApiHeaders } from '@/lib/auth/api-auth'
 import { prisma } from '@/lib/db'
 
 // ⏱️ Configuración: 5 minutos máximo (Vercel límite)
@@ -21,8 +22,12 @@ export const maxDuration = 300
  * 2. Si el job NO está completado, se auto-llama recursivamente
  * 3. Continúa hasta que el job se complete o se pause/cancele
  */
-export async function POST() {
+export async function POST(request: Request) {
   try {
+    const authResult = await requireAdminOrInternal(request)
+    if (!authResult.ok) {
+      return authResult.response
+    }
     console.log('🔄 [AUTO-PROCESS] Iniciando auto-procesamiento...')
 
     // 🔍 VERIFICAR SI HAY UN JOB ACTIVO (incluyendo pausado para verificar estado)
@@ -89,9 +94,7 @@ export async function POST() {
 
       const processResponse = await fetch(processUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: internalApiHeaders(),
         signal: controller.signal
       })
 
@@ -137,12 +140,10 @@ export async function POST() {
       // Pequeña pausa de 2 segundos entre batches
       await new Promise(resolve => setTimeout(resolve, 2000))
 
-      // Auto-llamada recursiva (no bloqueante) - no necesita API key ya que es público
+      // Auto-llamada recursiva (no bloqueante) autenticada con CRON_SECRET
       fetch(`${baseUrl}/api/admin/scraping/process-auto`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: internalApiHeaders(),
       }).catch(async (err) => {
         console.error('❌ [AUTO-PROCESS] Error en llamada recursiva:', err)
         // Marcar el job como failed

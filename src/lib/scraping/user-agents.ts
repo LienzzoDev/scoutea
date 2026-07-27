@@ -48,7 +48,7 @@ const USER_AGENTS = [
  */
 export function getRandomUserAgent(): string {
   const randomIndex = Math.floor(Math.random() * USER_AGENTS.length)
-  return USER_AGENTS[randomIndex]
+  return USER_AGENTS[randomIndex] ?? USER_AGENTS[0]!
 }
 
 /**
@@ -92,7 +92,7 @@ function getRandomAcceptLanguage(): string {
   ]
 
   const randomIndex = Math.floor(Math.random() * languages.length)
-  return languages[randomIndex]
+  return languages[randomIndex] ?? languages[0]!
 }
 
 /**

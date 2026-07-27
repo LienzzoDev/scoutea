@@ -78,12 +78,31 @@ export class RateLimiter {
 
           console.warn(`⚠️ Rate limit detectado (${this.consecutiveRateLimits} consecutivos)`)
 
-          // 🛑 Si hay demasiados rate limits consecutivos, lanzar error inmediatamente
+          // 🛑 Con demasiados rate limits consecutivos, dejar de reintentar y
+          // devolver el fallo: el caller comprueba getConsecutiveRateLimits()
+          // y pausa el job (lanzar aquí marcaría el job como "failed").
           if (this.consecutiveRateLimits >= 5) {
-            throw new Error('CRITICAL: Demasiados rate limits consecutivos. Pausar scraping.')
+            return {
+              success: false,
+              error: 'Demasiados rate limits consecutivos (429)',
+              retries: attempt,
+              wasRateLimited: true
+            }
           }
         } else {
           this.consecutiveRateLimits = 0
+        }
+
+        // ⛔ Errores permanentes: reintentar un 404/410 solo desperdicia
+        // tiempo de backoff (~35s por URL muerta)
+        const isPermanentError = /\b(404|410)\b/.test(errorMsg)
+        if (isPermanentError) {
+          return {
+            success: false,
+            error: lastError,
+            retries: attempt,
+            wasRateLimited: false
+          }
         }
 
         // Si no quedan más reintentos, retornar error

@@ -229,7 +229,7 @@ const COLUMN_DEFINITIONS = [
   { key: 'id_fmi', label: 'ID FMI', width: '100px' },
   { key: 'player_rating', label: 'Player Rating', width: '120px' },
   { key: 'photo_coverage', label: 'Photo Coverage', width: '130px' },
-  { key: 'url_trfm_broken', label: 'URL Broken', width: '100px' },
+  { key: 'url_trfm_broken', label: 'Scraping', width: '100px' },
   { key: 'url_trfm', label: 'URL TRFM', width: '120px' },
   { key: 'url_secondary', label: 'URL Secondary', width: '130px' },
   { key: 'url_instagram', label: 'URL Instagram', width: '130px' },
@@ -647,9 +647,21 @@ function AdminPlayerTableComponent({ players, hiddenColumns, onPlayerUpdate }: A
                             onSave={handleSaveField}
                           />
                         ) : col.key === 'url_trfm_broken' ? (
-                          // Mostrar icono de alerta si url_trfm está roto, o checkmark si está OK
-                          <div className="flex items-center justify-center" title={player.url_trfm_broken ? "URL TRFM roto - detectado en scraping" : "URL TRFM OK"}>
-                            {player.url_trfm_broken ? (
+                          // 🔴 Triángulo rojo: el scraping de este jugador falló (alerta pendiente)
+                          // 🟠 Triángulo ámbar: URL de Transfermarkt marcada como rota
+                          <div
+                            className="flex items-center justify-center"
+                            title={
+                              player.scraping_alert
+                                ? `Scraping fallido (${player.scraping_alert.errorType})${player.scraping_alert.errorMessage ? `: ${player.scraping_alert.errorMessage}` : ''}${player.scraping_alert.seenCount ? ` — visto ${player.scraping_alert.seenCount} ${player.scraping_alert.seenCount === 1 ? 'vez' : 'veces'}` : ''}`
+                                : player.url_trfm_broken
+                                  ? "URL TRFM roto - detectado en scraping"
+                                  : "Scraping OK"
+                            }
+                          >
+                            {player.scraping_alert ? (
+                              <AlertTriangle className="h-4 w-4 text-red-500 fill-red-500/20" />
+                            ) : player.url_trfm_broken ? (
                               <AlertTriangle className="h-5 w-5 text-amber-500" />
                             ) : (
                               <span className="text-slate-500">-</span>
@@ -657,7 +669,7 @@ function AdminPlayerTableComponent({ players, hiddenColumns, onPlayerUpdate }: A
                           </div>
                         ) : isEditable ? (
                           <EditableCell
-                            value={value ?? null}
+                            value={(value ?? null) as string | number | boolean | Date | null}
                             playerId={player.id_player}
                             fieldName={col.key}
                             onSave={handleSaveField}
@@ -735,6 +747,10 @@ function AdminPlayerTableComponent({ players, hiddenColumns, onPlayerUpdate }: A
           <div className="flex items-center gap-1.5">
             <span className="font-bold text-white">Negrita</span>
             <span>- Valor duplicado en múltiples jugadores</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <AlertTriangle className="h-3.5 w-3.5 text-red-500 fill-red-500/20" />
+            <span>Scraping fallido (pendiente de resolver)</span>
           </div>
         </div>
       </div>

@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
 /**
  * 🕷️ FUNCIÓN DE SCRAPING DE JUGADOR
  */
-async function scrapePlayerData(url: string): Promise<Record<string, any>> {
+async function scrapePlayerData(url: string): Promise<Record<string, unknown>> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 25000)
 
@@ -110,7 +110,7 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
     const $ = cheerio.load(html)
 
     // 📊 EXTRAER DATOS
-    const data: Record<string, any> = {}
+    const data: Record<string, unknown> = {}
 
     // 1. Nombre del jugador
     const nameElement = $('h1[class*="data-header__headline"]').first()
@@ -145,7 +145,7 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
     if (heightElement.length > 0) {
       const heightText = heightElement.text().trim()
       const heightMatch = heightText.match(/(\d+,\d+)\s*m/)
-      if (heightMatch) {
+      if (heightMatch?.[1]) {
         const heightInMeters = parseFloat(heightMatch[1].replace(',', '.'))
         data.height = Math.round(heightInMeters * 100) // Convertir a cm
       }
@@ -190,8 +190,8 @@ async function scrapePlayerData(url: string): Promise<Record<string, any>> {
 
     return data
 
-  } catch (error: any) {
-    if (error.name === 'AbortError') {
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
       throw new Error('Timeout: La petición tardó más de 25 segundos')
     }
     throw error

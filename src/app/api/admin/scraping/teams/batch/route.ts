@@ -4,14 +4,18 @@
  * ✅ PROPÓSITO: Ejecutar scraping de todos los equipos en batches
  * ✅ BENEFICIO: Actualizar datos de equipos desde Transfermarkt
  * ✅ RUTA: POST /api/admin/scraping/teams/batch
+ *
+ * Body opcional: { skip?: number } — offset del batch. Al terminar un batch,
+ * el endpoint se encadena a sí mismo (server-to-server con CRON_SECRET)
+ * hasta cubrir todos los equipos.
  */
 
-import { auth } from '@clerk/nextjs/server'
-import * as cheerio from 'cheerio'
 import { NextResponse } from 'next/server'
 
+import { requireAdminOrInternal, internalApiHeaders } from '@/lib/auth/api-auth'
 import { prisma } from '@/lib/db'
-import { getRealisticHeaders, randomSleep } from '@/lib/scraping/user-agents'
+import { scrapeTeamData } from '@/lib/scraping/scraper'
+import { randomSleep } from '@/lib/scraping/user-agents'
 
 // ⏱️ Configuración: 5 minutos máximo (Vercel límite)
 export const maxDuration = 300
@@ -29,8 +33,7 @@ interface TeamScrapingResult {
 const SCRAPING_CONFIG = {
   MIN_DELAY_BETWEEN_TEAMS: 3000,  // 3 segundos mínimo
   MAX_DELAY_BETWEEN_TEAMS: 8000,  // 8 segundos máximo
-  REQUEST_TIMEOUT: 30000,          // 30 segundos timeout
-  BATCH_SIZE: 50,                  // 50 equipos por batch (hay menos equipos que jugadores)
+  BATCH_SIZE: 30,                 // 30 equipos ≈ 30×(delay medio 5,5s + fetch) < 300s
 }
 
 /**
@@ -57,9 +60,6 @@ const COUNTRY_CORRECTIONS: Record<string, string> = {
   'Korea, South': 'South Korea'
 }
 
-/**
- * 🌍 CORREGIR Y NORMALIZAR PAÍS
- */
 function correctCountry(country: string | null): string | null {
   if (!country || country.trim() === '') {
     return null
@@ -67,12 +67,10 @@ function correctCountry(country: string | null): string | null {
 
   const trimmedCountry = country.trim()
 
-  // Búsqueda exacta en el mapeo
   if (COUNTRY_CORRECTIONS[trimmedCountry]) {
     return COUNTRY_CORRECTIONS[trimmedCountry]
   }
 
-  // Búsqueda case-insensitive como fallback
   const lowerCountry = trimmedCountry.toLowerCase()
   for (const [incorrect, correct] of Object.entries(COUNTRY_CORRECTIONS)) {
     if (incorrect.toLowerCase() === lowerCountry) {
@@ -85,7 +83,6 @@ function correctCountry(country: string | null): string | null {
 
 /**
  * 🏆 MAPEO DE COMPETICIONES DUPLICADAS POR PAÍS
- * Formato: { 'Nombre Genérico': { 'País': 'Nombre Correcto' } }
  */
 const DUPLICATE_COMPETITION_MAPPINGS: Record<string, Record<string, string>> = {
   '1.Division': {
@@ -147,9 +144,6 @@ const DUPLICATE_COMPETITION_MAPPINGS: Record<string, Record<string, string>> = {
   }
 }
 
-/**
- * 🏆 RESOLVER NOMBRE DE COMPETICIÓN BASADO EN EL PAÍS
- */
 function resolveCompetitionByCountry(competition: string, teamCountry: string): string {
   const normalizedCompetition = competition.trim()
   const mapping = DUPLICATE_COMPETITION_MAPPINGS[normalizedCompetition]
@@ -169,66 +163,64 @@ function resolveCompetitionByCountry(competition: string, teamCountry: string): 
  */
 export async function POST(request: Request) {
   try {
-    // 🔐 VERIFICAR AUTENTICACIÓN Y PERMISOS
-    // Permitir llamadas internas desde el servidor (header especial)
-    const adminUserId = request.headers.get('x-admin-user-id')
-    const isInternalCall = !!adminUserId
-
-    if (!isInternalCall) {
-      // Si no es llamada interna, verificar autenticación normal
-      const { userId, sessionClaims } = await auth()
-
-      if (!userId) {
-        return NextResponse.json(
-          { error: 'No autorizado. Debes iniciar sesión.' },
-          { status: 401 }
-        )
-      }
-
-      // 👮‍♂️ VERIFICAR PERMISOS DE ADMIN
-      const userRole = (sessionClaims?.public_metadata as { role?: string })?.role
-      if (userRole !== 'admin') {
-        return NextResponse.json(
-          { error: 'Acceso denegado. Solo los administradores pueden ejecutar scraping.' },
-          { status: 403 }
-        )
-      }
-    } else {
-      console.log(`🔑 Llamada interna autorizada desde usuario: ${adminUserId}`)
+    // 🔐 VERIFICAR AUTENTICACIÓN: admin autenticado o llamada interna con
+    // CRON_SECRET. (Antes se aceptaba un header x-admin-user-id sin verificar,
+    // lo que permitía saltarse la autenticación por completo.)
+    const authResult = await requireAdminOrInternal(request)
+    if (!authResult.ok) {
+      return authResult.response
     }
 
-    console.log('\n🏟️ INICIANDO SCRAPING DE EQUIPOS...')
+    // 📄 OFFSET DEL BATCH (para encadenar hasta cubrir todos los equipos)
+    let skip = 0
+    try {
+      const body = await request.json()
+      if (typeof body?.skip === 'number' && body.skip >= 0) {
+        skip = Math.floor(body.skip)
+      }
+    } catch {
+      // Sin body o body inválido → primer batch
+    }
 
-    // 📊 OBTENER EQUIPOS CON URL DE TRANSFERMARKT
+    console.log(`\n🏟️ INICIANDO SCRAPING DE EQUIPOS (skip=${skip})...`)
+
+    const teamFilter = {
+      AND: [
+        { url_trfm_advisor: { not: null } },
+        { url_trfm_advisor: { not: '' } }
+      ]
+    }
+
+    const totalTeams = await prisma.equipo.count({ where: teamFilter })
+
+    // 📊 OBTENER BATCH DE EQUIPOS (orden estable por PK)
     const teams = await prisma.equipo.findMany({
-      where: {
-        AND: [
-          { url_trfm_advisor: { not: null } },
-          { url_trfm_advisor: { not: '' } }
-        ]
-      },
+      where: teamFilter,
       select: {
         id_team: true,
         team_name: true,
         url_trfm_advisor: true
       },
+      skip,
       take: SCRAPING_CONFIG.BATCH_SIZE,
-      orderBy: {
-        team_name: 'asc'
-      }
+      orderBy: [
+        { team_name: 'asc' },
+        { id_team: 'asc' }
+      ]
     })
 
     if (teams.length === 0) {
-      console.log('ℹ️ No hay equipos para procesar')
+      console.log('ℹ️ No hay más equipos para procesar')
       return NextResponse.json({
         success: true,
-        message: 'No hay equipos para procesar',
+        message: 'No hay más equipos para procesar',
         processed: 0,
-        total: 0
+        total: totalTeams,
+        skip
       })
     }
 
-    console.log(`📦 Procesando ${teams.length} equipos`)
+    console.log(`📦 Procesando ${teams.length} equipos (${skip + 1}-${skip + teams.length} de ${totalTeams})`)
 
     const results: TeamScrapingResult[] = []
     let successCount = 0
@@ -239,22 +231,38 @@ export async function POST(request: Request) {
       const team = teams[i]
       if (!team) continue
 
-      console.log(`[${i + 1}/${teams.length}] ${team.team_name || team.id_team}`)
+      console.log(`[${skip + i + 1}/${totalTeams}] ${team.team_name || team.id_team}`)
 
       try {
-        // 🌐 HACER SCRAPING DEL EQUIPO
-        const {
-          data: scrapedData,
-          countryWasCorrected,
-          originalCountry,
-          correctedCountry,
-          competitionWasCorrected,
-          originalCompetition,
-          correctedCompetition
-        } = await scrapeTeamData(team.url_trfm_advisor!)
+        const rawData = await scrapeTeamData(team.url_trfm_advisor!)
+        const scrapedData: Record<string, unknown> = { ...rawData }
 
-        if (scrapedData && Object.keys(scrapedData).length > 0) {
-          // Actualizar en base de datos
+        // 🌍 Correcciones de país
+        if (typeof scrapedData.team_country === 'string') {
+          const corrected = correctCountry(scrapedData.team_country)
+          if (corrected && corrected !== scrapedData.team_country) {
+            console.log(`  🌍 País corregido: "${scrapedData.team_country}" → "${corrected}"`)
+          }
+          if (corrected) {
+            scrapedData.team_country = corrected
+          } else {
+            delete scrapedData.team_country
+          }
+        }
+
+        // 🏆 Correcciones de competición (usando el país ya corregido)
+        if (typeof scrapedData.competition === 'string') {
+          const countryForResolution = typeof scrapedData.team_country === 'string'
+            ? scrapedData.team_country
+            : ''
+          const resolved = resolveCompetitionByCountry(scrapedData.competition, countryForResolution)
+          if (resolved !== scrapedData.competition) {
+            console.log(`  🏆 Competición corregida: "${scrapedData.competition}" → "${resolved}"`)
+          }
+          scrapedData.competition = resolved
+        }
+
+        if (Object.keys(scrapedData).length > 0) {
           await prisma.equipo.update({
             where: { id_team: team.id_team },
             data: scrapedData
@@ -272,16 +280,6 @@ export async function POST(request: Request) {
 
           successCount++
           console.log(`  ✅ Actualizado: ${fieldsUpdated.length} campos`)
-
-          // Log de corrección de país si aplica
-          if (countryWasCorrected && originalCountry && correctedCountry) {
-            console.log(`  🌍 País corregido: "${originalCountry}" → "${correctedCountry}"`)
-          }
-
-          // Log de corrección de competición si aplica
-          if (competitionWasCorrected && originalCompetition && correctedCompetition) {
-            console.log(`  🏆 Competición corregida: "${originalCompetition}" → "${correctedCompetition}"`)
-          }
         } else {
           results.push({
             teamId: team.id_team,
@@ -317,15 +315,30 @@ export async function POST(request: Request) {
       }
     }
 
-    console.log(`\n✅ Scraping de equipos completado:`)
-    console.log(`   - Exitosos: ${successCount}`)
-    console.log(`   - Errores: ${errorCount}`)
+    console.log(`\n✅ Batch de equipos completado: ${successCount} exitosos, ${errorCount} errores`)
+
+    // 🔗 ENCADENAR SIGUIENTE BATCH SI QUEDAN EQUIPOS
+    const nextSkip = skip + teams.length
+    const hasMore = nextSkip < totalTeams
+    if (hasMore) {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+      console.log(`🔗 Encadenando siguiente batch de equipos (skip=${nextSkip})...`)
+      fetch(`${baseUrl}/api/admin/scraping/teams/batch`, {
+        method: 'POST',
+        headers: internalApiHeaders(),
+        body: JSON.stringify({ skip: nextSkip })
+      }).catch(err => {
+        console.error('⚠️ Error encadenando siguiente batch de equipos:', err)
+      })
+    }
 
     return NextResponse.json({
       success: true,
       message: `Scraping completado: ${successCount} exitosos, ${errorCount} errores`,
       processed: teams.length,
-      total: teams.length,
+      total: totalTeams,
+      skip,
+      nextSkip: hasMore ? nextSkip : null,
       successCount,
       errorCount,
       results
@@ -337,156 +350,5 @@ export async function POST(request: Request) {
       { error: 'Error interno del servidor durante el scraping de equipos.' },
       { status: 500 }
     )
-  }
-}
-
-/**
- * 🕷️ FUNCIÓN DE SCRAPING DE UN EQUIPO
- */
-async function scrapeTeamData(url: string): Promise<{
-  data: Record<string, unknown>
-  countryWasCorrected: boolean
-  originalCountry?: string | undefined
-  correctedCountry?: string | undefined
-  competitionWasCorrected: boolean
-  originalCompetition?: string | undefined
-  correctedCompetition?: string | undefined
-}> {
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), SCRAPING_CONFIG.REQUEST_TIMEOUT)
-
-  try {
-    const response = await fetch(url, {
-      headers: getRealisticHeaders('https://www.transfermarkt.es/'),
-      signal: controller.signal
-    })
-
-    clearTimeout(timeoutId)
-
-    if (!response.ok) {
-      throw new Error(`HTTP Error ${response.status}: ${response.statusText}`)
-    }
-
-    const html = await response.text()
-    const $ = cheerio.load(html)
-    const data: Record<string, unknown> = {}
-    let countryWasCorrected = false
-    let originalCountry: string | undefined
-    let correctedCountry: string | undefined
-    let competitionWasCorrected = false
-    let originalCompetition: string | undefined
-    let correctedCompetition: string | undefined
-
-    // 1. Nombre del equipo
-    const teamNameElement = $('h1.data-header__headline-wrapper').first()
-    if (teamNameElement.length > 0) {
-      const teamName = teamNameElement.text().trim()
-      if (teamName && teamName !== '') {
-        data.team_name = teamName
-      }
-    }
-
-    // 2. País del equipo
-    const countryElement = $('span.data-header__club span[class*="flag"]').first()
-    if (countryElement.length > 0) {
-      const country = countryElement.attr('title')?.trim()
-      if (country && country !== '') {
-        // Aplicar correcciones de países
-        const corrected = correctCountry(country)
-        if (corrected) {
-          data.team_country = corrected
-
-          // Registrar si hubo corrección
-          if (corrected !== country) {
-            countryWasCorrected = true
-            originalCountry = country
-            correctedCountry = corrected
-          }
-        }
-      }
-    }
-
-    // 3. Competición
-    const competitionElement = $('span.data-header__club span.data-header__content').first()
-    if (competitionElement.length > 0) {
-      const competition = competitionElement.text().trim()
-      if (competition && competition !== '') {
-        // Resolver competición basada en el país del equipo
-        // Usar el país ya corregido (si existe en data.team_country)
-        const countryForResolution = typeof data.team_country === 'string' ? data.team_country : ''
-        const resolved = resolveCompetitionByCountry(competition, countryForResolution)
-
-        data.competition = resolved
-
-        // Registrar si hubo corrección
-        if (resolved !== competition) {
-          competitionWasCorrected = true
-          originalCompetition = competition
-          correctedCompetition = resolved
-        }
-      }
-    }
-
-    // 4. Valor de mercado del equipo
-    const teamValueElement = $('a.data-header__market-value-wrapper').first()
-    if (teamValueElement.length > 0) {
-      const valueText = teamValueElement.text().trim()
-      const valueMatch = valueText.match(/([0-9,.]+)\s*(mil|mill?\.?)\s*€/)
-
-      if (valueMatch?.[1] && valueMatch?.[2]) {
-        let cleanValue: string = valueMatch[1]
-
-        // Limpiar formato numérico
-        if (cleanValue.includes('.') && cleanValue.includes(',')) {
-          cleanValue = cleanValue.replace(/\./g, '').replace(',', '.')
-        } else if (cleanValue.includes('.') && !cleanValue.includes(',')) {
-          const dotCount = (cleanValue.match(/\./g) || []).length
-          if (dotCount > 1 || cleanValue.split('.')[1]?.length === 3) {
-            cleanValue = cleanValue.replace(/\./g, '')
-          }
-        } else if (cleanValue.includes(',')) {
-          cleanValue = cleanValue.replace(',', '.')
-        }
-
-        const value = parseFloat(cleanValue)
-        const multiplier = valueMatch[2].toLowerCase().includes('mill') ? 1000000 : 1000
-        data.team_trfm_value = value * multiplier
-      }
-    }
-
-    // 5. Rating del equipo (si existe)
-    const ratingElement = $('span.data-header__label').filter(function() {
-      return $(this).text().includes('Rating')
-    }).next('span.data-header__content')
-
-    if (ratingElement.length > 0) {
-      const ratingText = ratingElement.text().trim()
-      const rating = parseFloat(ratingText)
-      if (!isNaN(rating)) {
-        data.team_rating = rating
-      }
-    }
-
-    return {
-      data,
-      countryWasCorrected,
-      originalCountry,
-      correctedCountry,
-      competitionWasCorrected,
-      originalCompetition,
-      correctedCompetition
-    }
-
-  } catch (error) {
-    clearTimeout(timeoutId)
-
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        throw new Error(`Timeout después de ${SCRAPING_CONFIG.REQUEST_TIMEOUT / 1000}s`)
-      }
-      throw error
-    }
-
-    throw new Error('Error desconocido durante el scraping')
   }
 }

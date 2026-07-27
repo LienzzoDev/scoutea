@@ -35,7 +35,7 @@ function extractHeight($: cheerio.CheerioAPI) {
         }
         
         const cmMatch = heightText.match(/(\d+)\s*cm/)
-        if (cmMatch) {
+        if (cmMatch?.[1]) {
           return parseInt(cmMatch[1])
         }
       }
@@ -61,7 +61,7 @@ function extractHeight($: cheerio.CheerioAPI) {
     }
     
     return null
-  } catch (_error) {
+  } catch (error) {
     console.log('Error extrayendo altura:', error)
     return null
   }
@@ -99,7 +99,7 @@ function extractFoot($: cheerio.CheerioAPI) {
     
     for (const pattern of footPatterns) {
       const match = pageText.match(pattern)
-      if (match) {
+      if (match?.[1]) {
         console.log('Pie encontrado en patrón:', pattern, 'Match:', match)
         const footText = match[1].trim()
         if (footText && footText.length < 20) {
@@ -109,7 +109,7 @@ function extractFoot($: cheerio.CheerioAPI) {
     }
     
     return null
-  } catch (_error) {
+  } catch (error) {
     console.log('Error extrayendo pie preferido:', error)
     return null
   }
@@ -154,7 +154,7 @@ function extractAgency($: cheerio.CheerioAPI) {
       if (match) {
         console.log('Agencia encontrada en patrón:', pattern, 'Match:', match)
         if (pattern.source.includes('Agente:') || pattern.source.includes('Agent:') || pattern.source.includes('Berater:')) {
-          return match[1].trim()
+          return match[1]?.trim() ?? null
         } else {
           return match[0].trim()
         }
@@ -162,7 +162,7 @@ function extractAgency($: cheerio.CheerioAPI) {
     }
     
     return null
-  } catch (_error) {
+  } catch (error) {
     console.log('Error extrayendo agencia:', error)
     return null
   }
@@ -176,7 +176,7 @@ export async function POST(
     const { userId } = await auth()
 
     if (!userId) {
-      return NextResponse.json({ __error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     console.log('🔍 Iniciando API de scraping...')
@@ -185,7 +185,7 @@ export async function POST(
     const playerId = parseInt(playerIdStr, 10)
 
     if (isNaN(playerId)) {
-      return NextResponse.json({ __error: 'Invalid player ID' }, { status: 400 })
+      return NextResponse.json({ error: 'Invalid player ID' }, { status: 400 })
     }
 
     console.log('📝 Player ID:', playerId)
@@ -202,7 +202,7 @@ export async function POST(
 
     if (!player) {
       console.log('❌ Jugador no encontrado')
-      return NextResponse.json({ __error: 'Jugador no encontrado' }, { status: 404 })
+      return NextResponse.json({ error: 'Jugador no encontrado' }, { status: 404 })
     }
 
     console.log('✅ Jugador encontrado:', player)
@@ -238,7 +238,7 @@ export async function POST(
       if (playerLink.length === 0) {
         console.log('❌ No se encontró enlace del jugador')
         return NextResponse.json({ 
-          __error: 'No se encontró enlace del jugador' 
+          error: 'No se encontró enlace del jugador' 
         }, { status: 400 })
       }
       
@@ -258,7 +258,9 @@ export async function POST(
       
       // 4. Extraer datos del jugador
       const playerData = {
-        url_trfm_advisor: playerUrl,
+        // URL del perfil del jugador en Transfermarkt (antes se devolvía
+        // erróneamente como url_trfm_advisor, que es la URL del agente)
+        url_trfm: playerUrl,
         player_name: player.player_name,
         complete_player_name: player.complete_player_name,
         height: extractHeight($player),
@@ -283,15 +285,17 @@ export async function POST(
       
     } catch (scrapeError) {
       console.error('❌ Error en scraping:', scrapeError)
-      return NextResponse.json({ 
-        __error: 'Error en scraping: ' + scrapeError.message 
+      const scrapeErrorMsg = scrapeError instanceof Error ? scrapeError.message : 'Error desconocido'
+      return NextResponse.json({
+        error: 'Error en scraping: ' + scrapeErrorMsg
       }, { status: 500 })
     }
 
-  } catch (_error) {
+  } catch (error) {
     console.error('❌ Error en API:', error)
+    const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
     return NextResponse.json(
-      { __error: 'Internal server error: ' + error.message },
+      { error: 'Internal server error: ' + errorMsg },
       { status: 500 }
     )
   }

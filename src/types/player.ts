@@ -16,6 +16,13 @@ export interface Player {
   url_trfm_advisor?: string | null;
   url_trfm?: string | null;
   url_trfm_broken?: boolean | null;
+  /** Alerta de scraping pendiente (fallo persistente hasta que se resuelva) */
+  scraping_alert?: {
+    errorType: string;
+    errorMessage?: string | null;
+    lastSeenAt?: Date | string | null;
+    seenCount?: number;
+  } | null;
   url_secondary?: string | null;
   url_instagram?: string | null;
   complete_player_name?: string | null;

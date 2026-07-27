@@ -180,7 +180,7 @@ export async function POST(request: Request) {
 
         results.push({
           entityType: 'player',
-          entityId: player.id_player,
+          entityId: String(player.id_player),
           entityName: player.player_name,
           url: player.url_trfm!,
           success: true,
@@ -192,7 +192,7 @@ export async function POST(request: Request) {
 
         results.push({
           entityType: 'player',
-          entityId: player.id_player,
+          entityId: String(player.id_player),
           entityName: player.player_name,
           url: player.url_trfm!,
           success: false,
@@ -284,7 +284,7 @@ export async function POST(request: Request) {
     addJobLog(testId, `   • Total entidades: ${results.length}`)
     addJobLog(testId, `   • Exitosos: ${results.filter(r => r.success).length}`)
     addJobLog(testId, `   • Fallidos: ${results.filter(r => !r.success).length}`)
-    addJobLog(testId, `   • Campos actualizables: ${results.reduce((sum, r) => sum + r.fieldsUpdated.length, 0)}`)
+    addJobLog(testId, `   • Campos actualizables: ${results.reduce((sum, r) => sum + (r.fieldsUpdated?.length ?? 0), 0)}`)
     addJobLog(testId, '')
     addJobLog(testId, '💡 Test completado. Si todo funciona bien, usa "Iniciar Scraping" para el proceso completo.')
     addJobLog(testId, '⚠️ NOTA: Este test NO guarda cambios en la BD, solo muestra qué se actualizaría.')

@@ -7,6 +7,7 @@
  */
 
 import { auth } from '@clerk/nextjs/server'
+import type { Prisma } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/db'
@@ -86,7 +87,7 @@ export async function GET(request: NextRequest) {
     )
 
     // 🔍 CONSTRUIR FILTROS
-    const where: any = {}
+    const where: Prisma.JugadorWhereInput = {}
 
     // Filtro de búsqueda (busca en nombre y wyscout IDs)
     if (searchTerm && searchTerm.trim()) {
@@ -197,10 +198,8 @@ export async function GET(request: NextRequest) {
 
     // Añadir filtros de vacío/lleno al where
     if (emptyFilters.length > 0) {
-      if (!where.AND) {
-        where.AND = []
-      }
-      where.AND.push(...emptyFilters)
+      const existingAnd = Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : []
+      where.AND = [...existingAnd, ...emptyFilters] as Prisma.JugadorWhereInput[]
     }
 
     // 🎯 DETERMINAR SI SE NECESITAN TODOS LOS CAMPOS O SOLO LOS BÁSICOS
@@ -343,7 +342,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 📊 EJECUTAR QUERY CON CURSOR-BASED PAGINATION
-    const queryConfig: any = {
+    const queryConfig: Prisma.JugadorFindManyArgs = {
       where,
       take: limit + 1, // Tomar uno extra para saber si hay más
       ...(cursor ? {
@@ -366,8 +365,32 @@ export async function GET(request: NextRequest) {
 
     // 🔄 DETERMINAR SI HAY MÁS PÁGINAS
     const hasMore = players.length > limit
-    const returnPlayers = hasMore ? players.slice(0, limit) : players
-    const nextCursor = hasMore ? returnPlayers[returnPlayers.length - 1]?.id_player : null
+    const pagePlayers = hasMore ? players.slice(0, limit) : players
+    const nextCursor = hasMore ? pagePlayers[pagePlayers.length - 1]?.id_player : null
+
+    // 🚨 ADJUNTAR ALERTAS DE SCRAPING PENDIENTES (triángulo rojo en la tabla)
+    const playerIds = pagePlayers.map((p: { id_player: number }) => String(p.id_player))
+    const pendingAlerts = playerIds.length > 0
+      ? await prisma.scrapingAlert.findMany({
+          where: {
+            entityType: 'player',
+            entityId: { in: playerIds },
+            status: 'pending'
+          },
+          select: {
+            entityId: true,
+            errorType: true,
+            errorMessage: true,
+            lastSeenAt: true,
+            seenCount: true
+          }
+        })
+      : []
+    const alertsByPlayer = new Map(pendingAlerts.map(a => [a.entityId, a]))
+    const returnPlayers = pagePlayers.map((p: { id_player: number }) => ({
+      ...p,
+      scraping_alert: alertsByPlayer.get(String(p.id_player)) ?? null
+    }))
 
     // 📊 OBTENER CONTEO TOTAL (solo en la primera página para performance)
     let totalCount = null

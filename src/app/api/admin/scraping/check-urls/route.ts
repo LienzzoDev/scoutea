@@ -35,7 +35,10 @@ export async function POST(request: NextRequest) {
     if (type === 'instagram' || type === 'all') {
       const players = await prisma.jugador.findMany({
         where: {
-          url_instagram: { not: null, not: '' },
+          AND: [
+            { url_instagram: { not: null } },
+            { url_instagram: { not: '' } },
+          ],
         },
         select: {
           id_player: true,
@@ -81,7 +84,10 @@ export async function POST(request: NextRequest) {
     if (type === 'transfermarkt' || type === 'all') {
       const players = await prisma.jugador.findMany({
         where: {
-          url_trfm: { not: null, not: '' },
+          AND: [
+            { url_trfm: { not: null } },
+            { url_trfm: { not: '' } },
+          ],
         },
         select: {
           id_player: true,
@@ -172,8 +178,10 @@ async function checkUrlBroken(url: string): Promise<boolean> {
       return true
     }
 
-    // Any non-2xx status (except redirects which are followed)
-    if (!response.ok && response.status !== 429) {
+    // 401/403/429/5xx suelen ser bloqueos anti-bot o errores temporales del
+    // servidor, no enlaces rotos: no marcar como broken (falsos positivos)
+    const transientStatuses = [401, 403, 408, 429, 500, 502, 503, 504]
+    if (!response.ok && !transientStatuses.includes(response.status)) {
       return true
     }
 
