@@ -14,6 +14,12 @@ import { prisma } from '@/lib/db'
 // ⏱️ Configuración: 5 minutos máximo (Vercel límite)
 export const maxDuration = 300
 
+// Tras respuestas no-OK de /process (5xx transitorios: 504 timeout, blip DB/red)
+// se reintenta el batch. Si el job pasa este tiempo SIN ningún progreso pese a los
+// reintentos, se pausa (estado recuperable por el watchdog del cron) en lugar de
+// marcarlo 'failed' (terminal e irreversible, que mataba todo el barrido).
+const STALL_LIMIT_MS = 20 * 60 * 1000 // 20 min
+
 /**
  * POST /api/admin/scraping/process-auto - Procesar batches automáticamente
  *
@@ -102,23 +108,42 @@ export async function POST(request: Request) {
       console.log(`📡 [AUTO-PROCESS] Respuesta de /process: ${processResponse.status}`)
 
       if (!processResponse.ok) {
-        const errorData = await processResponse.json().catch(() => ({ error: 'No se pudo parsear respuesta' }))
-        console.error('❌ [AUTO-PROCESS] Error en /process:', errorData)
+        const errorData = await processResponse.json().catch(() => ({ error: `HTTP ${processResponse.status} (respuesta sin JSON)` }))
+        console.error('⚠️ [AUTO-PROCESS] /process respondió no-OK (probable 5xx transitorio):', errorData)
 
-        // Si hay error, marcar el job como failed
-        await prisma.scrapingJob.update({
+        // ⚠️ NO matar el job por un 5xx transitorio (504 timeout de función, blip de
+        // red/DB). Reintentar el mismo batch, salvo que llevemos demasiado tiempo sin
+        // progreso: en ese caso pausar (recuperable) en vez de fallar (terminal).
+        const fresh = await prisma.scrapingJob.findUnique({
           where: { id: job.id },
-          data: {
-            status: 'failed',
-            lastError: errorData.error || 'Error en auto-procesamiento'
-          }
+          select: { status: true, lastProcessedAt: true }
         })
+        if (!fresh || fresh.status !== 'running') {
+          return NextResponse.json({ success: true, message: `Job ${fresh?.status ?? 'ausente'}`, stopped: true })
+        }
+        const stale = fresh.lastProcessedAt
+          ? Date.now() - new Date(fresh.lastProcessedAt).getTime()
+          : Number.POSITIVE_INFINITY
+        if (stale > STALL_LIMIT_MS) {
+          await prisma.scrapingJob.update({
+            where: { id: job.id },
+            data: {
+              status: 'paused',
+              lastError: `Auto-pausado: sin progreso durante ${Math.round(stale / 60000)} min tras respuestas no-OK de /process (${errorData.error ?? processResponse.status})`
+            }
+          })
+          console.error('🛑 [AUTO-PROCESS] Sin progreso prolongado: job pausado (el cron lo reanudará).')
+          return NextResponse.json({ success: false, paused: true, stopped: true })
+        }
 
-        return NextResponse.json({
-          success: false,
-          error: 'Error procesando batch',
-          stopped: true
-        }, { status: 500 })
+        // 🔁 Reintentar el batch: esperar y re-encadenar (no bloqueante)
+        console.log('🔁 [AUTO-PROCESS] Reintentando batch tras respuesta no-OK...')
+        await new Promise(resolve => setTimeout(resolve, 15000))
+        fetch(`${baseUrl}/api/admin/scraping/process-auto`, {
+          method: 'POST',
+          headers: internalApiHeaders(),
+        }).catch(err => console.error('❌ [AUTO-PROCESS] Error re-encadenando tras no-OK:', err))
+        return NextResponse.json({ success: true, retrying: true })
       }
 
       const processData = await processResponse.json()
@@ -144,20 +169,10 @@ export async function POST(request: Request) {
       fetch(`${baseUrl}/api/admin/scraping/process-auto`, {
         method: 'POST',
         headers: internalApiHeaders(),
-      }).catch(async (err) => {
-        console.error('❌ [AUTO-PROCESS] Error en llamada recursiva:', err)
-        // Marcar el job como failed
-        try {
-          await prisma.scrapingJob.update({
-            where: { id: job.id },
-            data: {
-              status: 'failed',
-              lastError: `Error en llamada recursiva: ${err.message}`
-            }
-          })
-        } catch (updateError) {
-          console.error('❌ [AUTO-PROCESS] Error actualizando job tras error recursivo:', updateError)
-        }
+      }).catch((err) => {
+        // NO matar el job: si la auto-llamada falla, el job queda 'running' y el
+        // watchdog (cron) lo reanudará al detectar que lleva rato sin progresar.
+        console.error('❌ [AUTO-PROCESS] Error en llamada recursiva (el watchdog reanudará):', err)
       })
 
       return NextResponse.json({
@@ -171,14 +186,15 @@ export async function POST(request: Request) {
       console.error('❌ [AUTO-PROCESS] Error llamando a /process:', error)
       console.error('❌ [AUTO-PROCESS] Error stack:', error instanceof Error ? error.stack : 'N/A')
 
-      // Marcar job como failed
+      // NO marcar 'failed' (terminal e irreversible): pausar es recuperable por el
+      // watchdog (cron) y conserva el progreso ya guardado.
       await prisma.scrapingJob.update({
         where: { id: job.id },
         data: {
-          status: 'failed',
-          lastError: errorMessage
+          status: 'paused',
+          lastError: `Auto-pausado tras error llamando a /process: ${errorMessage}`
         }
-      })
+      }).catch(() => {})
 
       return NextResponse.json({
         success: false,
