@@ -121,14 +121,6 @@ async function databaseHealthCheck() {
     stats.push({ name: 'RadarMetrics', count: radarMetricsCount, hasData: radarMetricsCount > 0 })
     console.log(`🎯 Métricas Radar: ${radarMetricsCount} registros`)
 
-    const beeswarmDataCount = await prisma.beeswarmData.count()
-    stats.push({ name: 'BeeswarmData', count: beeswarmDataCount, hasData: beeswarmDataCount > 0 })
-    console.log(`🐝 Datos Beeswarm: ${beeswarmDataCount} registros`)
-
-    const lollipopDataCount = await prisma.lollipopData.count()
-    stats.push({ name: 'LollipopData', count: lollipopDataCount, hasData: lollipopDataCount > 0 })
-    console.log(`🍭 Datos Lollipop: ${lollipopDataCount} registros`)
-
     const atributosCount = await prisma.atributos.count()
     stats.push({ name: 'Atributos', count: atributosCount, hasData: atributosCount > 0 })
     console.log(`⚡ Atributos: ${atributosCount} registros`)

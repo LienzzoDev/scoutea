@@ -192,9 +192,7 @@ model Jugador {
   
   // RELACIONES EXISTENTES
   atributos                       Atributos?
-  beeswarmData                    BeeswarmData[]
   dataPopulationLogs              DataPopulationLog[]
-  lollipopData                    LollipopData[]
   playerLists                     PlayerList[]
   playerStats3m                   PlayerStats3m?
   playerStats6m                   PlayerStats6m?
@@ -627,54 +625,6 @@ model DataPopulationLog {
   @@index([createdAt])
   @@index([playerId, tableName], map: "idx_data_population_log_player_table")
   @@map("data_population_log")
-}
-
-model BeeswarmData {
-  id          String   @id @default(cuid())
-  metric      String
-  playerId    Int
-  playerName  String
-  value       Float
-  position    String
-  age         Int
-  nationality String
-  competition String
-  trfmValue   Float?
-  isSelected  Boolean  @default(false)
-  period      String
-  createdAt   DateTime @default(now())
-  player      Jugador  @relation(fields: [playerId], references: [id_player], onDelete: Cascade)
-
-  @@index([metric])
-  @@index([position])
-  @@index([age])
-  @@index([nationality])
-  @@index([competition])
-  @@index([period])
-  @@index([metric, position])
-  @@map("beeswarm_data")
-}
-
-model LollipopData {
-  id           String   @id @default(cuid())
-  playerId     Int
-  metricName   String
-  value        Float
-  rank         Int
-  totalPlayers Int
-  percentile   Float
-  category     String
-  period       String
-  position     String
-  createdAt    DateTime @default(now())
-  player       Jugador  @relation(fields: [playerId], references: [id_player], onDelete: Cascade)
-
-  @@index([playerId])
-  @@index([metricName])
-  @@index([category])
-  @@index([period])
-  @@index([playerId, period])
-  @@map("lollipop_data")
 }
 
 model PlayerList {
@@ -1359,6 +1309,13 @@ model Atributos {
   id_fmi                            Int?
   total_fmi_pts                     Int?
   total_fmi_pts_norm                Int?
+  // Valores brutos del export FMI (Football Manager)
+  ca_fmi                            Int?     // Current Ability
+  pa_fmi                            Int?     // Potential Ability
+  rca_fmi                           Int?     // Relative Current Ability
+  actual_rating_fmi                 Float?   // ActualRating (0-100)
+  potential_rating_fmi              Float?   // PotentialRating (0-100)
+  weight_fmi                        Int?     // Peso (kg)
   corners_fmi                       Int?
   crossing_fmi                      Int?
   dribbling_fmi                     Int?
@@ -1422,33 +1379,33 @@ model Atributos {
   temperament_fmi                   Int?
   controversy_fmi                   Int?
   goalkeeper_fmi                    Int?
-  gk_level                          Int?
+  gk_level                          String?
   defender_right_fmi                Int?
-  rb_level                          Int?
+  rb_level                          String?
   defender_central_fmi              Int?
-  cb_level                          Int?
+  cb_level                          String?
   defender_left_fmi                 Int?
-  lb_level                          Int?
+  lb_level                          String?
   wing_back_right_fmi               Int?
-  rwb_level                         Int?
+  rwb_level                         String?
   defensive_midfielder_fmi          Int?
-  dm_level                          Int?
+  dm_level                          String?
   wing_back_left_fmi                Int?
-  lwb_level                         Int?
+  lwb_level                         String?
   midfielder_right_fmi              Int?
-  rm_level                          Int?
+  rm_level                          String?
   midfielder_central_fmi            Int?
-  cm_level                          Int?
+  cm_level                          String?
   midfielder_left_fmi               Int?
-  lm_level                          Int?
+  lm_level                          String?
   attacking_mid_right_fmi           Int?
-  rw_level                          Int?
+  rw_level                          String?
   attacking_mid_central_fmi         Int?
-  am_level                          Int?
+  am_level                          String?
   attacking_mid_left_fmi            Int?
-  lw_level                          Int?
+  lw_level                          String?
   striker_fmi                       Int?
-  st_level                          Int?
+  st_level                          String?
   gk_dominator                      Int?
   gk_dominator_percent              Int?
   gk_reactive                       Int?
@@ -1492,95 +1449,96 @@ model Atributos {
   central_att_finisher              Int?
   central_att_finisher_percent      Int?
   sprinter                          Int?
-  sprinter_level                    Int?
+  sprinter_level                    String?
   marathonian                       Int?
-  marathonian_level                 Int?
+  marathonian_level                 String?
   bomberman                         Int?
-  bomberman_level                   Int?
+  bomberman_level                   String?
   three_sixty                       Int?
-  three_sixty_level                 Int?
+  three_sixty_level                 String?
   the_rock                          Int?
-  the_rock_level                    Int?
+  the_rock_level                    String?
   air_flyer                         Int?
-  air_flyer_level                   Int?
+  air_flyer_level                   String?
   one_vs_one_off                    Int?
-  one_vs_one_off_level              Int?
+  one_vs_one_off_level              String?
   intelligence                      Int?
-  intelligence_level                Int?
+  intelligence_level                String?
   game_pace                         Int?
-  game_pace_level                   Int?
+  game_pace_level                   String?
   striking                          Int?
-  striking_level                    Int?
+  striking_level                    String?
   ball_control                      Int?
-  ball_control_level                Int?
+  ball_control_level                String?
   creativity                        Int?
-  creativity_level                  Int?
+  creativity_level                  String?
   one_vs_one_def                    Int?
-  one_vs_one_def_level              Int?
+  one_vs_one_def_level              String?
   reliability                       Int?
-  reliability_level                 Int?
+  reliability_level                 String?
   competitiveness                   Int?
-  competitiveness_level             Int?
+  competitiveness_level             String?
   injury_resistance                 Int?
-  injury_resistance_level           Int?
+  injury_resistance_level           String?
   transition                        Int?
-  transition_level                  Int?
+  transition_level                  String?
   keeping_the_ball                  Int?
-  keeping_the_ball_level            Int?
+  keeping_the_ball_level            String?
   progression                       Int?
-  progression_level                 Int?
+  progression_level                 String?
   finishing_archetype               Int?
-  finishing_level                   Int?
+  finishing                         Int?
+  finishing_level                   String?
   set_piece                         Int?
-  set_piece_level                   Int?
+  set_piece_level                   String?
   aerial_play                       Int?
-  aerial_play_level                 Int?
+  aerial_play_level                 String?
   ball_recovery                     Int?
-  ball_recovery_level               Int?
+  ball_recovery_level               String?
   defensive_shape                   Int?
-  defensive_shape_level             Int?
+  defensive_shape_level             String?
   goal_saving                       Int?
-  goal_saving_level                 Int?
+  goal_saving_level                 String?
   positional_att_tendency           Int?
   positional_att_tendency_percent   Int?
   direct_att_tendency               Int?
   direct_att_tendency_percent       Int?
   positional_att_dominance          Int?
-  positional_att_dominance_level    Int?
+  positional_att_dominance_level    String?
   direct_att_dominance              Int?
-  direct_att_dominance_level        Int?
+  direct_att_dominance_level        String?
   low_block_def_tendency            Int?
   low_block_def_tendency_percent    Int?
   high_block_def_tendency           Int?
   high_block_def_tendency_percent   Int?
   low_block_def_dominance           Int?
-  low_block_def_dominance_level     Int?
+  low_block_def_dominance_level     String?
   high_block_def_dominance          Int?
-  high_block_def_dominance_level    Int?
+  high_block_def_dominance_level    String?
   influence_off_tendency            Int?
   influence_off_tendency_percent    Int?
   influence_def_tendency            Int?
   influence_def_tendency_percent    Int?
   influence_off_dominance           Int?
-  influence_off_dominance_level     Int?
+  influence_off_dominance_level     String?
   influence_def_dominance           Int?
-  influence_def_dominance_level     Int?
+  influence_def_dominance_level     String?
   open_spaces_tendency              Int?
   open_spaces_tendency_percent      Int?
   tight_spaces_tendency             Int?
   tight_spaces_tendency_percent     Int?
   open_spaces_dominance             Int?
-  open_spaces_dominance_level       Int?
+  open_spaces_dominance_level       String?
   tight_spaces_dominance            Int?
-  tight_spaces_dominance_level      Int?
+  tight_spaces_dominance_level      String?
   right_foot_tendency               Int?
   right_foot_tendency_percent       Int?
   left_foot_tendency                Int?
   left_foot_tendency_percent        Int?
   right_foot_dominance              Int?
-  right_foot_dominance_level        Int?
+  right_foot_dominance_level        String?
   left_foot_dominance               Int?
-  left_foot_dominance_level         Int?
+  left_foot_dominance_level         String?
   createdAt                         DateTime @default(now())
   updatedAt                         DateTime @updatedAt
   player                            Jugador  @relation(fields: [id_player], references: [id_player], onDelete: Cascade)

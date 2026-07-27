@@ -1,0 +1,1895 @@
+{
+  "levels": [
+    {
+      "target": "gk_level",
+      "source": "goalkeeper_fmi"
+    },
+    {
+      "target": "rb_level",
+      "source": "defender_right_fmi"
+    },
+    {
+      "target": "cb_level",
+      "source": "defender_central_fmi"
+    },
+    {
+      "target": "lb_level",
+      "source": "defender_left_fmi"
+    },
+    {
+      "target": "rwb_level",
+      "source": "wing_back_right_fmi"
+    },
+    {
+      "target": "dm_level",
+      "source": "defensive_midfielder_fmi"
+    },
+    {
+      "target": "lwb_level",
+      "source": "wing_back_left_fmi"
+    },
+    {
+      "target": "rm_level",
+      "source": "midfielder_right_fmi"
+    },
+    {
+      "target": "cm_level",
+      "source": "midfielder_central_fmi"
+    },
+    {
+      "target": "lm_level",
+      "source": "midfielder_left_fmi"
+    },
+    {
+      "target": "rw_level",
+      "source": "attacking_mid_right_fmi"
+    },
+    {
+      "target": "am_level",
+      "source": "attacking_mid_central_fmi"
+    },
+    {
+      "target": "lw_level",
+      "source": "attacking_mid_left_fmi"
+    },
+    {
+      "target": "st_level",
+      "source": "striker_fmi"
+    },
+    {
+      "target": "sprinter_level",
+      "source": "sprinter"
+    },
+    {
+      "target": "marathonian_level",
+      "source": "marathonian"
+    },
+    {
+      "target": "bomberman_level",
+      "source": "bomberman"
+    },
+    {
+      "target": "three_sixty_level",
+      "source": "three_sixty"
+    },
+    {
+      "target": "the_rock_level",
+      "source": "the_rock"
+    },
+    {
+      "target": "air_flyer_level",
+      "source": "air_flyer"
+    },
+    {
+      "target": "one_vs_one_off_level",
+      "source": "one_vs_one_off"
+    },
+    {
+      "target": "intelligence_level",
+      "source": "intelligence"
+    },
+    {
+      "target": "game_pace_level",
+      "source": "game_pace"
+    },
+    {
+      "target": "striking_level",
+      "source": "striking"
+    },
+    {
+      "target": "ball_control_level",
+      "source": "ball_control"
+    },
+    {
+      "target": "creativity_level",
+      "source": "creativity"
+    },
+    {
+      "target": "one_vs_one_def_level",
+      "source": "one_vs_one_def"
+    },
+    {
+      "target": "reliability_level",
+      "source": "reliability"
+    },
+    {
+      "target": "competitiveness_level",
+      "source": "competitiveness"
+    },
+    {
+      "target": "injury_resistance_level",
+      "source": "injury_resistance"
+    },
+    {
+      "target": "transition_level",
+      "source": "transition"
+    },
+    {
+      "target": "keeping_the_ball_level",
+      "source": "keeping_the_ball"
+    },
+    {
+      "target": "progression_level",
+      "source": "progression"
+    },
+    {
+      "target": "finishing_level",
+      "source": "finishing"
+    },
+    {
+      "target": "set_piece_level",
+      "source": "set_piece"
+    },
+    {
+      "target": "aerial_play_level",
+      "source": "aerial_play"
+    },
+    {
+      "target": "ball_recovery_level",
+      "source": "ball_recovery"
+    },
+    {
+      "target": "defensive_shape_level",
+      "source": "defensive_shape"
+    },
+    {
+      "target": "goal_saving_level",
+      "source": "goal_saving"
+    },
+    {
+      "target": "positional_att_dominance_level",
+      "source": "positional_att_dominance"
+    },
+    {
+      "target": "direct_att_dominance_level",
+      "source": "direct_att_dominance"
+    },
+    {
+      "target": "low_block_def_dominance_level",
+      "source": "low_block_def_dominance"
+    },
+    {
+      "target": "high_block_def_dominance_level",
+      "source": "high_block_def_dominance"
+    },
+    {
+      "target": "influence_off_dominance_level",
+      "source": "influence_off_dominance"
+    },
+    {
+      "target": "influence_def_dominance_level",
+      "source": "influence_def_dominance"
+    },
+    {
+      "target": "open_spaces_dominance_level",
+      "source": "open_spaces_dominance"
+    },
+    {
+      "target": "tight_spaces_dominance_level",
+      "source": "tight_spaces_dominance"
+    },
+    {
+      "target": "right_foot_dominance_level",
+      "source": "right_foot_dominance"
+    },
+    {
+      "target": "left_foot_dominance_level",
+      "source": "left_foot_dominance"
+    }
+  ],
+  "rolesBase": [
+    {
+      "target": "gk_dominator",
+      "inputs": [
+        "first_touch_fmi",
+        "aerial_ability_fmi",
+        "handling_fmi",
+        "leadership_fmi",
+        "command_of_area_fmi",
+        "anticipation_fmi"
+      ]
+    },
+    {
+      "target": "gk_reactive",
+      "inputs": [
+        "reflexes_fmi",
+        "tendency_to_punch_fmi",
+        "bravery_fmi",
+        "rushing_out_fmi",
+        "agility_fmi",
+        "one_on_ones_fmi"
+      ]
+    },
+    {
+      "target": "gk_initiator",
+      "inputs": [
+        "kicking_fmi",
+        "vision_fmi",
+        "passing_fmi",
+        "decisions_fmi",
+        "throwing_fmi",
+        "composure_fmi"
+      ]
+    },
+    {
+      "target": "central_def_aggressor",
+      "inputs": [
+        "tackling_fmi",
+        "marking_fmi",
+        "bravery_fmi",
+        "jumping_fmi",
+        "aggression_fmi",
+        "determination_fmi"
+      ]
+    },
+    {
+      "target": "central_def_spreader",
+      "inputs": [
+        "tackling_fmi",
+        "marking_fmi",
+        "bravery_fmi",
+        "jumping_fmi",
+        "balance_fmi",
+        "anticipation_fmi"
+      ]
+    },
+    {
+      "target": "central_def_anchor",
+      "inputs": [
+        "tackling_fmi",
+        "marking_fmi",
+        "bravery_fmi",
+        "jumping_fmi",
+        "leadership_fmi",
+        "strength_fmi"
+      ]
+    },
+    {
+      "target": "wide_def_overlapper",
+      "inputs": [
+        "crossing_fmi",
+        "pace_fmi",
+        "long_throws_fmi",
+        "work_rate_fmi",
+        "acceleration_fmi",
+        "determination_fmi"
+      ]
+    },
+    {
+      "target": "wide_def_progressor",
+      "inputs": [
+        "crossing_fmi",
+        "pace_fmi",
+        "long_throws_fmi",
+        "work_rate_fmi",
+        "technique_fmi",
+        "first_touch_fmi"
+      ]
+    },
+    {
+      "target": "wide_def_safety",
+      "inputs": [
+        "crossing_fmi",
+        "pace_fmi",
+        "long_throws_fmi",
+        "work_rate_fmi",
+        "tackling_fmi",
+        "marking_fmi"
+      ]
+    },
+    {
+      "target": "deep_mid_box_to_box",
+      "inputs": [
+        "stamina_fmi",
+        "natural_fitness_fmi",
+        "anticipation_fmi",
+        "team_work_fmi",
+        "work_rate_fmi",
+        "aggression_fmi"
+      ]
+    },
+    {
+      "target": "deep_mid_distributor",
+      "inputs": [
+        "stamina_fmi",
+        "natural_fitness_fmi",
+        "anticipation_fmi",
+        "team_work_fmi",
+        "passing_fmi",
+        "vision_fmi"
+      ]
+    },
+    {
+      "target": "deep_mid_builder",
+      "inputs": [
+        "stamina_fmi",
+        "natural_fitness_fmi",
+        "anticipation_fmi",
+        "team_work_fmi",
+        "positioning_fmi",
+        "decisions_fmi"
+      ]
+    },
+    {
+      "target": "advanced_mid_box_crasher",
+      "inputs": [
+        "passing_fmi",
+        "technique_fmi",
+        "first_touch_fmi",
+        "vision_fmi",
+        "pace_fmi",
+        "dribbling_fmi"
+      ]
+    },
+    {
+      "target": "advanced_mid_creator",
+      "inputs": [
+        "passing_fmi",
+        "technique_fmi",
+        "first_touch_fmi",
+        "vision_fmi",
+        "natural_fitness_fmi",
+        "long_shots_fmi"
+      ]
+    },
+    {
+      "target": "advanced_mid_orchestrator",
+      "inputs": [
+        "passing_fmi",
+        "technique_fmi",
+        "first_touch_fmi",
+        "vision_fmi",
+        "work_rate_fmi",
+        "aggression_fmi"
+      ]
+    },
+    {
+      "target": "wide_att_outlet",
+      "inputs": [
+        "acceleration_fmi",
+        "flair_fmi",
+        "agility_fmi",
+        "dribbling_fmi",
+        "vision_fmi",
+        "passing_fmi"
+      ]
+    },
+    {
+      "target": "wide_att_unlocker",
+      "inputs": [
+        "acceleration_fmi",
+        "flair_fmi",
+        "agility_fmi",
+        "dribbling_fmi",
+        "stamina_fmi",
+        "technique_fmi"
+      ]
+    },
+    {
+      "target": "wide_att_threat",
+      "inputs": [
+        "acceleration_fmi",
+        "flair_fmi",
+        "agility_fmi",
+        "dribbling_fmi",
+        "finishing_fmi",
+        "pace_fmi"
+      ]
+    },
+    {
+      "target": "central_att_roamer",
+      "inputs": [
+        "finishing_fmi",
+        "long_shots_fmi",
+        "off_the_ball_fmi",
+        "heading_fmi",
+        "vision_fmi",
+        "technique_fmi"
+      ]
+    },
+    {
+      "target": "central_att_target",
+      "inputs": [
+        "finishing_fmi",
+        "long_shots_fmi",
+        "off_the_ball_fmi",
+        "heading_fmi",
+        "jumping_fmi",
+        "bravery_fmi"
+      ]
+    },
+    {
+      "target": "central_att_finisher",
+      "inputs": [
+        "finishing_fmi",
+        "long_shots_fmi",
+        "off_the_ball_fmi",
+        "heading_fmi",
+        "pace_fmi",
+        "determination_fmi"
+      ]
+    }
+  ],
+  "rolesPct": [
+    {
+      "target": "gk_dominator_percent",
+      "numerator": "gk_dominator",
+      "denominators": [
+        "gk_dominator",
+        "gk_reactive",
+        "gk_initiator",
+        "central_def_aggressor",
+        "central_def_spreader",
+        "central_def_anchor",
+        "wide_def_overlapper",
+        "wide_def_progressor",
+        "wide_def_safety",
+        "deep_mid_box_to_box",
+        "deep_mid_distributor",
+        "deep_mid_builder",
+        "advanced_mid_box_crasher",
+        "advanced_mid_creator",
+        "advanced_mid_orchestrator",
+        "wide_att_outlet",
+        "wide_att_unlocker",
+        "wide_att_threat",
+        "central_att_roamer",
+        "central_att_target",
+        "central_att_finisher"
+      ]
+    },
+    {
+      "target": "gk_reactive_percent",
+      "numerator": "gk_reactive",
+      "denominators": [
+        "gk_dominator",
+        "gk_reactive",
+        "gk_initiator",
+        "central_def_aggressor",
+        "central_def_spreader",
+        "central_def_anchor",
+        "wide_def_overlapper",
+        "wide_def_progressor",
+        "wide_def_safety",
+        "deep_mid_box_to_box",
+        "deep_mid_distributor",
+        "deep_mid_builder",
+        "advanced_mid_box_crasher",
+        "advanced_mid_creator",
+        "advanced_mid_orchestrator",
+        "wide_att_outlet",
+        "wide_att_unlocker",
+        "wide_att_threat",
+        "central_att_roamer",
+        "central_att_target",
+        "central_att_finisher"
+      ]
+    },
+    {
+      "target": "gk_initiator_percent",
+      "numerator": "gk_initiator",
+      "denominators": [
+        "gk_dominator",
+        "gk_reactive",
+        "gk_initiator",
+        "central_def_aggressor",
+        "central_def_spreader",
+        "central_def_anchor",
+        "wide_def_overlapper",
+        "wide_def_progressor",
+        "wide_def_safety",
+        "deep_mid_box_to_box",
+        "deep_mid_distributor",
+        "deep_mid_builder",
+        "advanced_mid_box_crasher",
+        "advanced_mid_creator",
+        "advanced_mid_orchestrator",
+        "wide_att_outlet",
+        "wide_att_unlocker",
+        "wide_att_threat",
+        "central_att_roamer",
+        "central_att_target",
+        "central_att_finisher"
+      ]
+    },
+    {
+      "target": "central_def_aggressor_percent",
+      "numerator": "central_def_aggressor",
+      "denominators": [
+        "gk_dominator",
+        "gk_reactive",
+        "gk_initiator",
+        "central_def_aggressor",
+        "central_def_spreader",
+        "central_def_anchor",
+        "wide_def_overlapper",
+        "wide_def_progressor",
+        "wide_def_safety",
+        "deep_mid_box_to_box",
+        "deep_mid_distributor",
+        "deep_mid_builder",
+        "advanced_mid_box_crasher",
+        "advanced_mid_creator",
+        "advanced_mid_orchestrator",
+        "wide_att_outlet",
+        "wide_att_unlocker",
+        "wide_att_threat",
+        "central_att_roamer",
+        "central_att_target",
+        "central_att_finisher"
+      ]
+    },
+    {
+      "target": "central_def_spreader_percent",
+      "numerator": "central_def_spreader",
+      "denominators": [
+        "gk_dominator",
+        "gk_reactive",
+        "gk_initiator",
+        "central_def_aggressor",
+        "central_def_spreader",
+        "central_def_anchor",
+        "wide_def_overlapper",
+        "wide_def_progressor",
+        "wide_def_safety",
+        "deep_mid_box_to_box",
+        "deep_mid_distributor",
+        "deep_mid_builder",
+        "advanced_mid_box_crasher",
+        "advanced_mid_creator",
+        "advanced_mid_orchestrator",
+        "wide_att_outlet",
+        "wide_att_unlocker",
+        "wide_att_threat",
+        "central_att_roamer",
+        "central_att_target",
+        "central_att_finisher"
+      ]
+    },
+    {
+      "target": "central_def_anchor_percent",
+      "numerator": "central_def_anchor",
+      "denominators": [
+        "gk_dominator",
+        "gk_reactive",
+        "gk_initiator",
+        "central_def_aggressor",
+        "central_def_spreader",
+        "central_def_anchor",
+        "wide_def_overlapper",
+        "wide_def_progressor",
+        "wide_def_safety",
+        "deep_mid_box_to_box",
+        "deep_mid_distributor",
+        "deep_mid_builder",
+        "advanced_mid_box_crasher",
+        "advanced_mid_creator",
+        "advanced_mid_orchestrator",
+        "wide_att_outlet",
+        "wide_att_unlocker",
+        "wide_att_threat",
+        "central_att_roamer",
+        "central_att_target",
+        "central_att_finisher"
+      ]
+    },
+    {
+      "target": "wide_def_overlapper_percent",
+      "numerator": "wide_def_overlapper",
+      "denominators": [
+        "gk_dominator",
+        "gk_reactive",
+        "gk_initiator",
+        "central_def_aggressor",
+        "central_def_spreader",
+        "central_def_anchor",
+        "wide_def_overlapper",
+        "wide_def_progressor",
+        "wide_def_safety",
+        "deep_mid_box_to_box",
+        "deep_mid_distributor",
+        "deep_mid_builder",
+        "advanced_mid_box_crasher",
+        "advanced_mid_creator",
+        "advanced_mid_orchestrator",
+        "wide_att_outlet",
+        "wide_att_unlocker",
+        "wide_att_threat",
+        "central_att_roamer",
+        "central_att_target",
+        "central_att_finisher"
+      ]
+    },
+    {
+      "target": "wide_def_progressor_percent",
+      "numerator": "wide_def_progressor",
+      "denominators": [
+        "gk_dominator",
+        "gk_reactive",
+        "gk_initiator",
+        "central_def_aggressor",
+        "central_def_spreader",
+        "central_def_anchor",
+        "wide_def_overlapper",
+        "wide_def_progressor",
+        "wide_def_safety",
+        "deep_mid_box_to_box",
+        "deep_mid_distributor",
+        "deep_mid_builder",
+        "advanced_mid_box_crasher",
+        "advanced_mid_creator",
+        "advanced_mid_orchestrator",
+        "wide_att_outlet",
+        "wide_att_unlocker",
+        "wide_att_threat",
+        "central_att_roamer",
+        "central_att_target",
+        "central_att_finisher"
+      ]
+    },
+    {
+      "target": "wide_def_safety_percent",
+      "numerator": "wide_def_safety",
+      "denominators": [
+        "gk_dominator",
+        "gk_reactive",
+        "gk_initiator",
+        "central_def_aggressor",
+        "central_def_spreader",
+        "central_def_anchor",
+        "wide_def_overlapper",
+        "wide_def_progressor",
+        "wide_def_safety",
+        "deep_mid_box_to_box",
+        "deep_mid_distributor",
+        "deep_mid_builder",
+        "advanced_mid_box_crasher",
+        "advanced_mid_creator",
+        "advanced_mid_orchestrator",
+        "wide_att_outlet",
+        "wide_att_unlocker",
+        "wide_att_threat",
+        "central_att_roamer",
+        "central_att_target",
+        "central_att_finisher"
+      ]
+    },
+    {
+      "target": "deep_mid_box_to_box_percent",
+      "numerator": "deep_mid_box_to_box",
+      "denominators": [
+        "gk_dominator",
+        "gk_reactive",
+        "gk_initiator",
+        "central_def_aggressor",
+        "central_def_spreader",
+        "central_def_anchor",
+        "wide_def_overlapper",
+        "wide_def_progressor",
+        "wide_def_safety",
+        "deep_mid_box_to_box",
+        "deep_mid_distributor",
+        "deep_mid_builder",
+        "advanced_mid_box_crasher",
+        "advanced_mid_creator",
+        "advanced_mid_orchestrator",
+        "wide_att_outlet",
+        "wide_att_unlocker",
+        "wide_att_threat",
+        "central_att_roamer",
+        "central_att_target",
+        "central_att_finisher"
+      ]
+    },
+    {
+      "target": "deep_mid_distributor_percent",
+      "numerator": "deep_mid_distributor",
+      "denominators": [
+        "gk_dominator",
+        "gk_reactive",
+        "gk_initiator",
+        "central_def_aggressor",
+        "central_def_spreader",
+        "central_def_anchor",
+        "wide_def_overlapper",
+        "wide_def_progressor",
+        "wide_def_safety",
+        "deep_mid_box_to_box",
+        "deep_mid_distributor",
+        "deep_mid_builder",
+        "advanced_mid_box_crasher",
+        "advanced_mid_creator",
+        "advanced_mid_orchestrator",
+        "wide_att_outlet",
+        "wide_att_unlocker",
+        "wide_att_threat",
+        "central_att_roamer",
+        "central_att_target",
+        "central_att_finisher"
+      ]
+    },
+    {
+      "target": "deep_mid_builder_percent",
+      "numerator": "deep_mid_builder",
+      "denominators": [
+        "gk_dominator",
+        "gk_reactive",
+        "gk_initiator",
+        "central_def_aggressor",
+        "central_def_spreader",
+        "central_def_anchor",
+        "wide_def_overlapper",
+        "wide_def_progressor",
+        "wide_def_safety",
+        "deep_mid_box_to_box",
+        "deep_mid_distributor",
+        "deep_mid_builder",
+        "advanced_mid_box_crasher",
+        "advanced_mid_creator",
+        "advanced_mid_orchestrator",
+        "wide_att_outlet",
+        "wide_att_unlocker",
+        "wide_att_threat",
+        "central_att_roamer",
+        "central_att_target",
+        "central_att_finisher"
+      ]
+    },
+    {
+      "target": "advanced_mid_box_crasher_percent",
+      "numerator": "advanced_mid_box_crasher",
+      "denominators": [
+        "gk_dominator",
+        "gk_reactive",
+        "gk_initiator",
+        "central_def_aggressor",
+        "central_def_spreader",
+        "central_def_anchor",
+        "wide_def_overlapper",
+        "wide_def_progressor",
+        "wide_def_safety",
+        "deep_mid_box_to_box",
+        "deep_mid_distributor",
+        "deep_mid_builder",
+        "advanced_mid_box_crasher",
+        "advanced_mid_creator",
+        "advanced_mid_orchestrator",
+        "wide_att_outlet",
+        "wide_att_unlocker",
+        "wide_att_threat",
+        "central_att_roamer",
+        "central_att_target",
+        "central_att_finisher"
+      ]
+    },
+    {
+      "target": "advanced_mid_creator_percent",
+      "numerator": "advanced_mid_creator",
+      "denominators": [
+        "gk_dominator",
+        "gk_reactive",
+        "gk_initiator",
+        "central_def_aggressor",
+        "central_def_spreader",
+        "central_def_anchor",
+        "wide_def_overlapper",
+        "wide_def_progressor",
+        "wide_def_safety",
+        "deep_mid_box_to_box",
+        "deep_mid_distributor",
+        "deep_mid_builder",
+        "advanced_mid_box_crasher",
+        "advanced_mid_creator",
+        "advanced_mid_orchestrator",
+        "wide_att_outlet",
+        "wide_att_unlocker",
+        "wide_att_threat",
+        "central_att_roamer",
+        "central_att_target",
+        "central_att_finisher"
+      ]
+    },
+    {
+      "target": "advanced_mid_orchestrator_percent",
+      "numerator": "advanced_mid_orchestrator",
+      "denominators": [
+        "gk_dominator",
+        "gk_reactive",
+        "gk_initiator",
+        "central_def_aggressor",
+        "central_def_spreader",
+        "central_def_anchor",
+        "wide_def_overlapper",
+        "wide_def_progressor",
+        "wide_def_safety",
+        "deep_mid_box_to_box",
+        "deep_mid_distributor",
+        "deep_mid_builder",
+        "advanced_mid_box_crasher",
+        "advanced_mid_creator",
+        "advanced_mid_orchestrator",
+        "wide_att_outlet",
+        "wide_att_unlocker",
+        "wide_att_threat",
+        "central_att_roamer",
+        "central_att_target",
+        "central_att_finisher"
+      ]
+    },
+    {
+      "target": "wide_att_outlet_percent",
+      "numerator": "wide_att_outlet",
+      "denominators": [
+        "gk_dominator",
+        "gk_reactive",
+        "gk_initiator",
+        "central_def_aggressor",
+        "central_def_spreader",
+        "central_def_anchor",
+        "wide_def_overlapper",
+        "wide_def_progressor",
+        "wide_def_safety",
+        "deep_mid_box_to_box",
+        "deep_mid_distributor",
+        "deep_mid_builder",
+        "advanced_mid_box_crasher",
+        "advanced_mid_creator",
+        "advanced_mid_orchestrator",
+        "wide_att_outlet",
+        "wide_att_unlocker",
+        "wide_att_threat",
+        "central_att_roamer",
+        "central_att_target",
+        "central_att_finisher"
+      ]
+    },
+    {
+      "target": "wide_att_unlocker_percent",
+      "numerator": "wide_att_unlocker",
+      "denominators": [
+        "gk_dominator",
+        "gk_reactive",
+        "gk_initiator",
+        "central_def_aggressor",
+        "central_def_spreader",
+        "central_def_anchor",
+        "wide_def_overlapper",
+        "wide_def_progressor",
+        "wide_def_safety",
+        "deep_mid_box_to_box",
+        "deep_mid_distributor",
+        "deep_mid_builder",
+        "advanced_mid_box_crasher",
+        "advanced_mid_creator",
+        "advanced_mid_orchestrator",
+        "wide_att_outlet",
+        "wide_att_unlocker",
+        "wide_att_threat",
+        "central_att_roamer",
+        "central_att_target",
+        "central_att_finisher"
+      ]
+    },
+    {
+      "target": "wide_att_threat_percent",
+      "numerator": "wide_att_threat",
+      "denominators": [
+        "gk_dominator",
+        "gk_reactive",
+        "gk_initiator",
+        "central_def_aggressor",
+        "central_def_spreader",
+        "central_def_anchor",
+        "wide_def_overlapper",
+        "wide_def_progressor",
+        "wide_def_safety",
+        "deep_mid_box_to_box",
+        "deep_mid_distributor",
+        "deep_mid_builder",
+        "advanced_mid_box_crasher",
+        "advanced_mid_creator",
+        "advanced_mid_orchestrator",
+        "wide_att_outlet",
+        "wide_att_unlocker",
+        "wide_att_threat",
+        "central_att_roamer",
+        "central_att_target",
+        "central_att_finisher"
+      ]
+    },
+    {
+      "target": "central_att_roamer_percent",
+      "numerator": "central_att_roamer",
+      "denominators": [
+        "gk_dominator",
+        "gk_reactive",
+        "gk_initiator",
+        "central_def_aggressor",
+        "central_def_spreader",
+        "central_def_anchor",
+        "wide_def_overlapper",
+        "wide_def_progressor",
+        "wide_def_safety",
+        "deep_mid_box_to_box",
+        "deep_mid_distributor",
+        "deep_mid_builder",
+        "advanced_mid_box_crasher",
+        "advanced_mid_creator",
+        "advanced_mid_orchestrator",
+        "wide_att_outlet",
+        "wide_att_unlocker",
+        "wide_att_threat",
+        "central_att_roamer",
+        "central_att_target",
+        "central_att_finisher"
+      ]
+    },
+    {
+      "target": "central_att_target_percent",
+      "numerator": "central_att_target",
+      "denominators": [
+        "gk_dominator",
+        "gk_reactive",
+        "gk_initiator",
+        "central_def_aggressor",
+        "central_def_spreader",
+        "central_def_anchor",
+        "wide_def_overlapper",
+        "wide_def_progressor",
+        "wide_def_safety",
+        "deep_mid_box_to_box",
+        "deep_mid_distributor",
+        "deep_mid_builder",
+        "advanced_mid_box_crasher",
+        "advanced_mid_creator",
+        "advanced_mid_orchestrator",
+        "wide_att_outlet",
+        "wide_att_unlocker",
+        "wide_att_threat",
+        "central_att_roamer",
+        "central_att_target",
+        "central_att_finisher"
+      ]
+    },
+    {
+      "target": "central_att_finisher_percent",
+      "numerator": "central_att_finisher",
+      "denominators": [
+        "gk_dominator",
+        "gk_reactive",
+        "gk_initiator",
+        "central_def_aggressor",
+        "central_def_spreader",
+        "central_def_anchor",
+        "wide_def_overlapper",
+        "wide_def_progressor",
+        "wide_def_safety",
+        "deep_mid_box_to_box",
+        "deep_mid_distributor",
+        "deep_mid_builder",
+        "advanced_mid_box_crasher",
+        "advanced_mid_creator",
+        "advanced_mid_orchestrator",
+        "wide_att_outlet",
+        "wide_att_unlocker",
+        "wide_att_threat",
+        "central_att_roamer",
+        "central_att_target",
+        "central_att_finisher"
+      ]
+    }
+  ],
+  "stylesAvg": [
+    {
+      "target": "sprinter",
+      "inputs": [
+        "acceleration_fmi",
+        "pace_fmi"
+      ]
+    },
+    {
+      "target": "marathonian",
+      "inputs": [
+        "natural_fitness_fmi",
+        "stamina_fmi"
+      ]
+    },
+    {
+      "target": "three_sixty",
+      "inputs": [
+        "agility_fmi",
+        "work_rate_fmi"
+      ]
+    },
+    {
+      "target": "the_rock",
+      "inputs": [
+        "strength_fmi",
+        "balance_fmi"
+      ]
+    },
+    {
+      "target": "creativity",
+      "inputs": [
+        "dirtiness_fmi",
+        "flair_fmi",
+        "technique_fmi",
+        "vision_fmi"
+      ]
+    },
+    {
+      "target": "competitiveness",
+      "inputs": [
+        "jumping_fmi",
+        "important_matches_fmi",
+        "leadership_fmi",
+        "versality_fmi",
+        "temperament_fmi"
+      ]
+    },
+    {
+      "target": "keeping_the_ball",
+      "inputs": [
+        "first_touch_fmi",
+        "passing_fmi",
+        "composure_fmi",
+        "decisions_fmi"
+      ]
+    }
+  ],
+  "stylesGkCond": [
+    {
+      "target": "bomberman",
+      "kind": "avg",
+      "gk": [
+        "kicking_fmi",
+        "throwing_fmi"
+      ],
+      "field": [
+        "long_shots_fmi",
+        "long_throws_fmi"
+      ]
+    },
+    {
+      "target": "air_flyer",
+      "kind": "avg",
+      "gk": [
+        "aerial_ability_fmi",
+        "jumping_fmi"
+      ],
+      "field": [
+        "jumping_fmi",
+        "heading_fmi"
+      ]
+    },
+    {
+      "target": "one_vs_one_off",
+      "kind": "avg",
+      "gk": [
+        "acceleration_fmi",
+        "pace_fmi",
+        "balance_fmi",
+        "eccentricity_fmi"
+      ],
+      "field": [
+        "acceleration_fmi",
+        "pace_fmi",
+        "balance_fmi",
+        "finishing_fmi",
+        "dribbling_fmi"
+      ]
+    },
+    {
+      "target": "intelligence",
+      "kind": "avg",
+      "gk": [
+        "anticipation_fmi",
+        "communication_fmi",
+        "positioning_fmi",
+        "team_work_fmi"
+      ],
+      "field": [
+        "off_the_ball_fmi",
+        "anticipation_fmi",
+        "positioning_fmi",
+        "team_work_fmi"
+      ]
+    },
+    {
+      "target": "game_pace",
+      "kind": "avg",
+      "gk": [
+        "work_rate_fmi",
+        "agility_fmi",
+        "reflexes_fmi",
+        "determination_fmi"
+      ],
+      "field": [
+        "work_rate_fmi",
+        "agility_fmi",
+        "stamina_fmi",
+        "determination_fmi"
+      ]
+    },
+    {
+      "target": "striking",
+      "kind": "avg",
+      "gk": [
+        "kicking_fmi",
+        "throwing_fmi",
+        "tendency_to_punch_fmi",
+        "free_kick_taking_fmi",
+        "penalty_taking_fmi"
+      ],
+      "field": [
+        "long_shots_fmi",
+        "crossing_fmi",
+        "corners_fmi",
+        "free_kick_taking_fmi",
+        "penalty_taking_fmi"
+      ]
+    },
+    {
+      "target": "ball_control",
+      "kind": "avg",
+      "gk": [
+        "first_touch_fmi",
+        "passing_fmi",
+        "handling_fmi",
+        "left_foot_fmi",
+        "right_foot_fmi"
+      ],
+      "field": [
+        "heading_fmi",
+        "first_touch_fmi",
+        "passing_fmi",
+        "left_foot_fmi",
+        "right_foot_fmi"
+      ]
+    },
+    {
+      "target": "one_vs_one_def",
+      "kind": "avg",
+      "gk": [
+        "strength_fmi",
+        "bravery_fmi",
+        "one_on_ones_fmi",
+        "rushing_out_fmi",
+        "aggression_fmi"
+      ],
+      "field": [
+        "strength_fmi",
+        "bravery_fmi",
+        "aggression_fmi",
+        "tackling_fmi",
+        "marking_fmi"
+      ]
+    },
+    {
+      "target": "reliability",
+      "kind": "avg",
+      "gk": [
+        "aerial_ability_fmi",
+        "concentration_fmi",
+        "decisions_fmi",
+        "command_of_area_fmi",
+        "pressure_fmi"
+      ],
+      "field": [
+        "concentration_fmi",
+        "composure_fmi",
+        "decisions_fmi",
+        "consistency_fmi",
+        "pressure_fmi"
+      ]
+    },
+    {
+      "target": "transition",
+      "kind": "avg",
+      "gk": [
+        "throwing_fmi",
+        "acceleration_fmi",
+        "pace_fmi",
+        "determination_fmi"
+      ],
+      "field": [
+        "stamina_fmi",
+        "acceleration_fmi",
+        "pace_fmi",
+        "determination_fmi"
+      ]
+    },
+    {
+      "target": "progression",
+      "kind": "avg",
+      "gk": [
+        "kicking_fmi",
+        "eccentricity_fmi",
+        "technique_fmi",
+        "vision_fmi"
+      ],
+      "field": [
+        "dribbling_fmi",
+        "technique_fmi",
+        "vision_fmi",
+        "off_the_ball_fmi"
+      ]
+    },
+    {
+      "target": "set_piece",
+      "kind": "avg",
+      "gk": [
+        "free_kick_taking_fmi",
+        "penalty_taking_fmi"
+      ],
+      "field": [
+        "free_kick_taking_fmi",
+        "penalty_taking_fmi",
+        "long_throws_fmi",
+        "corners_fmi"
+      ]
+    },
+    {
+      "target": "aerial_play",
+      "kind": "avg",
+      "gk": [
+        "jumping_fmi",
+        "aerial_ability_fmi",
+        "strength_fmi",
+        "balance_fmi"
+      ],
+      "field": [
+        "heading_fmi",
+        "jumping_fmi",
+        "strength_fmi",
+        "balance_fmi"
+      ]
+    },
+    {
+      "target": "ball_recovery",
+      "kind": "avg",
+      "gk": [
+        "agility_fmi",
+        "handling_fmi",
+        "anticipation_fmi",
+        "command_of_area_fmi"
+      ],
+      "field": [
+        "agility_fmi",
+        "aggression_fmi",
+        "tackling_fmi",
+        "anticipation_fmi"
+      ]
+    },
+    {
+      "target": "defensive_shape",
+      "kind": "avg",
+      "gk": [
+        "communication_fmi",
+        "positioning_fmi",
+        "team_work_fmi",
+        "consistency_fmi"
+      ],
+      "field": [
+        "marking_fmi",
+        "positioning_fmi",
+        "team_work_fmi",
+        "consistency_fmi"
+      ]
+    },
+    {
+      "target": "goal_saving",
+      "kind": "avg",
+      "gk": [
+        "one_on_ones_fmi",
+        "rushing_out_fmi",
+        "tendency_to_punch_fmi",
+        "reflexes_fmi"
+      ],
+      "field": [
+        "work_rate_fmi",
+        "bravery_fmi",
+        "dirtiness_fmi",
+        "concentration_fmi"
+      ]
+    },
+    {
+      "target": "positional_att_dominance",
+      "kind": "avg",
+      "gk": [
+        "first_touch_fmi",
+        "passing_fmi",
+        "composure_fmi",
+        "decisions_fmi",
+        "technique_fmi",
+        "vision_fmi"
+      ],
+      "field": [
+        "first_touch_fmi",
+        "passing_fmi",
+        "composure_fmi",
+        "decisions_fmi",
+        "technique_fmi",
+        "vision_fmi",
+        "agility_fmi",
+        "flair_fmi",
+        "off_the_ball_fmi",
+        "team_work_fmi"
+      ]
+    },
+    {
+      "target": "direct_att_dominance",
+      "kind": "avg",
+      "gk": [
+        "jumping_fmi",
+        "kicking_fmi",
+        "throwing_fmi",
+        "acceleration_fmi",
+        "pace_fmi",
+        "determination_fmi"
+      ],
+      "field": [
+        "jumping_fmi",
+        "acceleration_fmi",
+        "pace_fmi",
+        "determination_fmi",
+        "heading_fmi",
+        "long_shots_fmi",
+        "stamina_fmi",
+        "finishing_fmi",
+        "crossing_fmi",
+        "dribbling_fmi"
+      ]
+    },
+    {
+      "target": "low_block_def_dominance",
+      "kind": "avg",
+      "gk": [
+        "jumping_fmi",
+        "agility_fmi",
+        "decisions_fmi",
+        "aerial_ability_fmi",
+        "strength_fmi",
+        "balance_fmi",
+        "tendency_to_punch_fmi",
+        "reflexes_fmi",
+        "concentration_fmi",
+        "handling_fmi",
+        "command_of_area_fmi",
+        "positioning_fmi"
+      ],
+      "field": [
+        "heading_fmi",
+        "jumping_fmi",
+        "agility_fmi",
+        "decisions_fmi",
+        "strength_fmi",
+        "balance_fmi",
+        "concentration_fmi",
+        "marking_fmi",
+        "positioning_fmi",
+        "consistency_fmi"
+      ]
+    },
+    {
+      "target": "high_block_def_dominance",
+      "kind": "avg",
+      "gk": [
+        "acceleration_fmi",
+        "pace_fmi",
+        "determination_fmi",
+        "team_work_fmi",
+        "work_rate_fmi",
+        "bravery_fmi",
+        "one_on_ones_fmi",
+        "rushing_out_fmi",
+        "dirtiness_fmi",
+        "aggression_fmi",
+        "anticipation_fmi",
+        "communication_fmi"
+      ],
+      "field": [
+        "stamina_fmi",
+        "acceleration_fmi",
+        "pace_fmi",
+        "determination_fmi",
+        "work_rate_fmi",
+        "bravery_fmi",
+        "dirtiness_fmi",
+        "aggression_fmi",
+        "tackling_fmi",
+        "anticipation_fmi"
+      ]
+    },
+    {
+      "target": "influence_off_dominance",
+      "kind": "avg",
+      "gk": [
+        "decisions_fmi",
+        "kicking_fmi",
+        "throwing_fmi",
+        "flair_fmi",
+        "first_touch_fmi",
+        "passing_fmi",
+        "composure_fmi",
+        "technique_fmi",
+        "vision_fmi",
+        "eccentricity_fmi",
+        "free_kick_taking_fmi",
+        "penalty_taking_fmi"
+      ],
+      "field": [
+        "long_shots_fmi",
+        "finishing_fmi",
+        "crossing_fmi",
+        "dribbling_fmi",
+        "flair_fmi",
+        "first_touch_fmi",
+        "passing_fmi",
+        "composure_fmi",
+        "technique_fmi",
+        "vision_fmi"
+      ]
+    },
+    {
+      "target": "influence_def_dominance",
+      "kind": "avg",
+      "gk": [
+        "aerial_ability_fmi",
+        "tendency_to_punch_fmi",
+        "reflexes_fmi",
+        "concentration_fmi",
+        "handling_fmi",
+        "command_of_area_fmi",
+        "positioning_fmi",
+        "bravery_fmi",
+        "one_on_ones_fmi",
+        "rushing_out_fmi",
+        "anticipation_fmi",
+        "communication_fmi"
+      ],
+      "field": [
+        "jumping_fmi",
+        "strength_fmi",
+        "concentration_fmi",
+        "marking_fmi",
+        "positioning_fmi",
+        "work_rate_fmi",
+        "bravery_fmi",
+        "aggression_fmi",
+        "anticipation_fmi",
+        "communication_fmi"
+      ]
+    },
+    {
+      "target": "open_spaces_dominance",
+      "kind": "avg",
+      "gk": [
+        "concentration_fmi",
+        "positioning_fmi",
+        "work_rate_fmi",
+        "bravery_fmi",
+        "one_on_ones_fmi",
+        "rushing_out_fmi",
+        "anticipation_fmi",
+        "kicking_fmi",
+        "stamina_fmi",
+        "acceleration_fmi",
+        "pace_fmi",
+        "determination_fmi"
+      ],
+      "field": [
+        "work_rate_fmi",
+        "bravery_fmi",
+        "tackling_fmi",
+        "anticipation_fmi",
+        "long_shots_fmi",
+        "crossing_fmi",
+        "stamina_fmi",
+        "acceleration_fmi",
+        "pace_fmi",
+        "determination_fmi"
+      ]
+    },
+    {
+      "target": "tight_spaces_dominance",
+      "kind": "avg",
+      "gk": [
+        "aerial_ability_fmi",
+        "tendency_to_punch_fmi",
+        "reflexes_fmi",
+        "handling_fmi",
+        "command_of_area_fmi",
+        "decisions_fmi",
+        "first_touch_fmi",
+        "passing_fmi",
+        "composure_fmi",
+        "technique_fmi",
+        "vision_fmi",
+        "agility_fmi"
+      ],
+      "field": [
+        "strength_fmi",
+        "marking_fmi",
+        "decisions_fmi",
+        "dribbling_fmi",
+        "first_touch_fmi",
+        "passing_fmi",
+        "composure_fmi",
+        "technique_fmi",
+        "vision_fmi",
+        "off_the_ball_fmi"
+      ]
+    }
+  ],
+  "tendency": [
+    {
+      "target": "positional_att_tendency",
+      "kind": "sum",
+      "gk": [
+        "first_touch_fmi",
+        "passing_fmi",
+        "composure_fmi",
+        "decisions_fmi",
+        "technique_fmi",
+        "vision_fmi"
+      ],
+      "field": [
+        "first_touch_fmi",
+        "passing_fmi",
+        "composure_fmi",
+        "decisions_fmi",
+        "technique_fmi",
+        "vision_fmi",
+        "agility_fmi",
+        "flair_fmi",
+        "off_the_ball_fmi",
+        "team_work_fmi"
+      ]
+    },
+    {
+      "target": "direct_att_tendency",
+      "kind": "sum",
+      "gk": [
+        "jumping_fmi",
+        "kicking_fmi",
+        "throwing_fmi",
+        "acceleration_fmi",
+        "pace_fmi",
+        "determination_fmi"
+      ],
+      "field": [
+        "jumping_fmi",
+        "acceleration_fmi",
+        "pace_fmi",
+        "determination_fmi",
+        "heading_fmi",
+        "long_shots_fmi",
+        "stamina_fmi",
+        "finishing_fmi",
+        "crossing_fmi",
+        "dribbling_fmi"
+      ]
+    },
+    {
+      "target": "low_block_def_tendency",
+      "kind": "sum",
+      "gk": [
+        "jumping_fmi",
+        "agility_fmi",
+        "decisions_fmi",
+        "aerial_ability_fmi",
+        "strength_fmi",
+        "balance_fmi",
+        "tendency_to_punch_fmi",
+        "reflexes_fmi",
+        "concentration_fmi",
+        "handling_fmi",
+        "command_of_area_fmi",
+        "positioning_fmi"
+      ],
+      "field": [
+        "heading_fmi",
+        "jumping_fmi",
+        "agility_fmi",
+        "decisions_fmi",
+        "strength_fmi",
+        "balance_fmi",
+        "concentration_fmi",
+        "marking_fmi",
+        "positioning_fmi",
+        "consistency_fmi"
+      ]
+    },
+    {
+      "target": "high_block_def_tendency",
+      "kind": "sum",
+      "gk": [
+        "acceleration_fmi",
+        "pace_fmi",
+        "determination_fmi",
+        "team_work_fmi",
+        "work_rate_fmi",
+        "bravery_fmi",
+        "one_on_ones_fmi",
+        "rushing_out_fmi",
+        "dirtiness_fmi",
+        "aggression_fmi",
+        "anticipation_fmi",
+        "communication_fmi"
+      ],
+      "field": [
+        "stamina_fmi",
+        "acceleration_fmi",
+        "pace_fmi",
+        "determination_fmi",
+        "work_rate_fmi",
+        "bravery_fmi",
+        "dirtiness_fmi",
+        "aggression_fmi",
+        "tackling_fmi",
+        "anticipation_fmi"
+      ]
+    },
+    {
+      "target": "influence_off_tendency",
+      "kind": "sum",
+      "gk": [
+        "decisions_fmi",
+        "kicking_fmi",
+        "throwing_fmi",
+        "flair_fmi",
+        "first_touch_fmi",
+        "passing_fmi",
+        "composure_fmi",
+        "technique_fmi",
+        "vision_fmi",
+        "eccentricity_fmi",
+        "free_kick_taking_fmi",
+        "penalty_taking_fmi"
+      ],
+      "field": [
+        "long_shots_fmi",
+        "finishing_fmi",
+        "crossing_fmi",
+        "dribbling_fmi",
+        "flair_fmi",
+        "first_touch_fmi",
+        "passing_fmi",
+        "composure_fmi",
+        "technique_fmi",
+        "vision_fmi"
+      ]
+    },
+    {
+      "target": "influence_def_tendency",
+      "kind": "sum",
+      "gk": [
+        "aerial_ability_fmi",
+        "tendency_to_punch_fmi",
+        "reflexes_fmi",
+        "concentration_fmi",
+        "handling_fmi",
+        "command_of_area_fmi",
+        "positioning_fmi",
+        "bravery_fmi",
+        "one_on_ones_fmi",
+        "rushing_out_fmi",
+        "anticipation_fmi",
+        "communication_fmi"
+      ],
+      "field": [
+        "jumping_fmi",
+        "strength_fmi",
+        "concentration_fmi",
+        "marking_fmi",
+        "positioning_fmi",
+        "work_rate_fmi",
+        "bravery_fmi",
+        "aggression_fmi",
+        "anticipation_fmi",
+        "communication_fmi"
+      ]
+    },
+    {
+      "target": "open_spaces_tendency",
+      "kind": "sum",
+      "gk": [
+        "concentration_fmi",
+        "positioning_fmi",
+        "work_rate_fmi",
+        "bravery_fmi",
+        "one_on_ones_fmi",
+        "rushing_out_fmi",
+        "anticipation_fmi",
+        "kicking_fmi",
+        "stamina_fmi",
+        "acceleration_fmi",
+        "pace_fmi",
+        "determination_fmi"
+      ],
+      "field": [
+        "work_rate_fmi",
+        "bravery_fmi",
+        "tackling_fmi",
+        "anticipation_fmi",
+        "long_shots_fmi",
+        "crossing_fmi",
+        "stamina_fmi",
+        "acceleration_fmi",
+        "pace_fmi",
+        "determination_fmi"
+      ]
+    },
+    {
+      "target": "tight_spaces_tendency",
+      "kind": "sum",
+      "gk": [
+        "aerial_ability_fmi",
+        "tendency_to_punch_fmi",
+        "reflexes_fmi",
+        "handling_fmi",
+        "command_of_area_fmi",
+        "decisions_fmi",
+        "first_touch_fmi",
+        "passing_fmi",
+        "composure_fmi",
+        "technique_fmi",
+        "vision_fmi",
+        "agility_fmi"
+      ],
+      "field": [
+        "strength_fmi",
+        "marking_fmi",
+        "decisions_fmi",
+        "dribbling_fmi",
+        "first_touch_fmi",
+        "passing_fmi",
+        "composure_fmi",
+        "technique_fmi",
+        "vision_fmi",
+        "off_the_ball_fmi"
+      ]
+    }
+  ],
+  "tendencyPct": [
+    {
+      "target": "positional_att_tendency_percent",
+      "numerator": "positional_att_tendency",
+      "pair": [
+        "positional_att_tendency",
+        "direct_att_tendency"
+      ]
+    },
+    {
+      "target": "direct_att_tendency_percent",
+      "numerator": "direct_att_tendency",
+      "pair": [
+        "positional_att_tendency",
+        "direct_att_tendency"
+      ]
+    },
+    {
+      "target": "low_block_def_tendency_percent",
+      "numerator": "low_block_def_tendency",
+      "pair": [
+        "low_block_def_tendency",
+        "high_block_def_tendency"
+      ]
+    },
+    {
+      "target": "high_block_def_tendency_percent",
+      "numerator": "high_block_def_tendency",
+      "pair": [
+        "low_block_def_tendency",
+        "high_block_def_tendency"
+      ]
+    },
+    {
+      "target": "influence_off_tendency_percent",
+      "numerator": "influence_off_tendency",
+      "pair": [
+        "influence_off_tendency",
+        "influence_def_tendency"
+      ]
+    },
+    {
+      "target": "influence_def_tendency_percent",
+      "numerator": "influence_def_tendency",
+      "pair": [
+        "influence_off_tendency",
+        "influence_def_tendency"
+      ]
+    },
+    {
+      "target": "open_spaces_tendency_percent",
+      "numerator": "open_spaces_tendency",
+      "pair": [
+        "open_spaces_tendency",
+        "tight_spaces_tendency"
+      ]
+    },
+    {
+      "target": "tight_spaces_tendency_percent",
+      "numerator": "tight_spaces_tendency",
+      "pair": [
+        "open_spaces_tendency",
+        "tight_spaces_tendency"
+      ]
+    },
+    {
+      "target": "right_foot_tendency_percent",
+      "numerator": "right_foot_tendency",
+      "pair": [
+        "right_foot_tendency",
+        "left_foot_tendency"
+      ]
+    },
+    {
+      "target": "left_foot_tendency_percent",
+      "numerator": "left_foot_tendency",
+      "pair": [
+        "right_foot_tendency",
+        "left_foot_tendency"
+      ]
+    }
+  ],
+  "specials": [
+    {
+      "target": "total_fmi_pts",
+      "kind": "total_fmi_pts"
+    },
+    {
+      "target": "total_fmi_pts_norm",
+      "kind": "total_fmi_pts_norm"
+    },
+    {
+      "target": "injury_resistance",
+      "kind": "injury_resistance"
+    },
+    {
+      "target": "finishing",
+      "kind": "finishing"
+    },
+    {
+      "target": "right_foot_tendency",
+      "kind": "passthrough",
+      "source": "right_foot_fmi"
+    },
+    {
+      "target": "left_foot_tendency",
+      "kind": "passthrough",
+      "source": "left_foot_fmi"
+    },
+    {
+      "target": "right_foot_dominance",
+      "kind": "passthrough",
+      "source": "right_foot_fmi"
+    },
+    {
+      "target": "left_foot_dominance",
+      "kind": "passthrough",
+      "source": "left_foot_fmi"
+    }
+  ]
+}

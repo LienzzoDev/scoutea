@@ -57,7 +57,6 @@ export const usePlayerLollipop = (metric: string) => {
     setError(null);
     
     try {
-      console.log('🔍 usePlayerLollipop: Loading data for metric:', currentMetric);
       
       // Load players data and filter options in parallel
       const [playersResponse, filtersResponse] = await Promise.all([
@@ -67,7 +66,6 @@ export const usePlayerLollipop = (metric: string) => {
       
       if (playersResponse.ok) {
         const playersResult = await playersResponse.json();
-        console.log('✅ usePlayerLollipop: Players data loaded:', playersResult.players?.length || 0, 'players');
         
         // Transform and sort data for lollipop (top performers first)
         const lollipopData: LollipopData[] = (playersResult.players || [])
@@ -93,7 +91,6 @@ export const usePlayerLollipop = (metric: string) => {
       
       if (filtersResponse.ok) {
         const filtersResult = await filtersResponse.json();
-        console.log('✅ usePlayerLollipop: Filter options loaded');
         setFilterOptions(filtersResult);
       }
       

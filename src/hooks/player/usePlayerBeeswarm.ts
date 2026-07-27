@@ -55,7 +55,6 @@ export const usePlayerBeeswarm = (metric: string) => {
     setError(null);
 
     try {
-      console.log('🔍 usePlayerBeeswarm: Loading data for metric:', currentMetric);
 
       // Load players data and filter options in parallel
       const [playersResponse, filtersResponse] = await Promise.all([
@@ -65,7 +64,6 @@ export const usePlayerBeeswarm = (metric: string) => {
 
       if (playersResponse.ok) {
         const playersResult = await playersResponse.json();
-        console.log('✅ usePlayerBeeswarm: Players data loaded:', playersResult.players?.length || 0, 'players');
 
         // Transform data for beeswarm using the current metric
         const beeswarmData: BeeswarmData[] = (playersResult.players || []).map((player: any) => ({
@@ -79,7 +77,6 @@ export const usePlayerBeeswarm = (metric: string) => {
           rating: player.player_rating || 0
         }));
 
-        console.log('📊 usePlayerBeeswarm: Sample data point:', beeswarmData[0]);
         setData(beeswarmData);
       } else {
         throw new Error(`Failed to load players data: ${playersResponse.status}`);
@@ -87,7 +84,6 @@ export const usePlayerBeeswarm = (metric: string) => {
 
       if (filtersResponse.ok) {
         const filtersResult = await filtersResponse.json();
-        console.log('✅ usePlayerBeeswarm: Filter options loaded');
         setFilterOptions(filtersResult);
       }
 

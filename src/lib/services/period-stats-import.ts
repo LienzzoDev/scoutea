@@ -13,6 +13,7 @@ import { Prisma } from '@prisma/client'
 import { Decimal } from '@prisma/client/runtime/library'
 
 import { prisma } from '@/lib/db'
+import { mergeRawStatsRows } from '@/lib/services/stats-merge'
 import { percentileRank, upperBound } from '@/lib/utils/percentile'
 import { positionGroup } from '@/lib/utils/position-group'
 import type { StatsPeriod } from '@/lib/utils/stats-period-utils'
@@ -410,9 +411,26 @@ export interface WyscoutMaps {
 }
 
 /**
+ * Parte un campo de Wyscout ID (`wyscout_id_1`/`wyscout_id_2`) en sus IDs individuales. Un jugador
+ * con perfiles duplicados guarda varios IDs separados por `/` como texto en UNA columna, p.ej.
+ * `"-719223 / -713992"`. Devuelve los IDs sueltos (trim, sin vacíos); `null`/`""` → `[]`.
+ */
+export function parseWyscoutIds(raw: string | number | null | undefined): string[] {
+  if (raw === null || raw === undefined || raw === '') return []
+  return String(raw)
+    .split('/')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
+}
+
+/**
  * Precarga los mapas de matching usados al importar stats: `wyscout_id → id_player`
  * (de wyscout_id_1/2) y el set de `id_player` existentes (para validar el fallback
  * por id_player explícito). Una sola vez por import; reutilizable por script y ruta.
+ *
+ * Cada columna puede contener VARIOS IDs `/`-separados (perfiles duplicados del mismo jugador):
+ * se registran como claves individuales, todas apuntando al mismo `id_player`. Así el export
+ * (que trae IDs sueltos) casa cada perfil y sus stats se pueden fusionar en importParsedRows.
  */
 export async function loadWyscoutMaps(): Promise<WyscoutMaps> {
   const players = await prisma.jugador.findMany({
@@ -421,8 +439,8 @@ export async function loadWyscoutMaps(): Promise<WyscoutMaps> {
   })
   const wyMap = new Map<string, number>()
   for (const p of players) {
-    if (p.wyscout_id_1) wyMap.set(String(p.wyscout_id_1).trim(), p.id_player)
-    if (p.wyscout_id_2) wyMap.set(String(p.wyscout_id_2).trim(), p.id_player)
+    for (const id of parseWyscoutIds(p.wyscout_id_1)) wyMap.set(id, p.id_player)
+    for (const id of parseWyscoutIds(p.wyscout_id_2)) wyMap.set(id, p.id_player)
   }
   const idPlayerSet = new Set(
     (await prisma.jugador.findMany({ select: { id_player: true } })).map((p) => p.id_player)
@@ -501,9 +519,15 @@ export async function importParsedRows(
     }
   }
 
-  // 1) Resolver matching y deduplicar por id_player (última fila gana).
-  //    Evita que dos filas del mismo jugador colisionen en la PK.
-  const matched = new Map<number, Record<string, unknown>>()
+  // 1) Resolver matching y AGRUPAR las filas crudas por id_player. Cuando un jugador tiene varios
+  //    Wyscout ID (perfiles duplicados) llegan varias filas para el mismo id_player; en vez de
+  //    "última fila gana" (que perdía datos), se fusionan con mergeRawStatsRows preservando los
+  //    valores reales (suma de conteos + recomposición ponderada de per-90/%).
+  //    Dentro de cada jugador se deduplica por wyscout id: el MISMO perfil puede llegar repetido si
+  //    el jugador está en varias listas (misma id en dos exports) y no debe contarse dos veces;
+  //    perfiles DISTINTOS (wyscout ids distintos) sí se fusionan.
+  const groups = new Map<number, Map<string, Record<string, unknown>>>()
+  let rowIdx = 0
   for (const raw of rows) {
     const norm = normalizeStatsRow(raw, period)
     const wyscoutId = parseString(norm.wyscout_id as string | number)
@@ -511,8 +535,8 @@ export async function importParsedRows(
 
     let idPlayer: number | undefined
     if (idPlayerRaw) {
-      const num = parseInt(idPlayerRaw, 10)
-      if (!isNaN(num) && ctx.idPlayerSet.has(num)) idPlayer = num
+      const n = parseInt(idPlayerRaw, 10)
+      if (!isNaN(n) && ctx.idPlayerSet.has(n)) idPlayer = n
     }
     if (idPlayer === undefined && wyscoutId) idPlayer = ctx.wyMap.get(wyscoutId)
 
@@ -521,7 +545,24 @@ export async function importParsedRows(
       result.failed++
       continue
     }
-    matched.set(idPlayer, mapRowToStatsData(norm, period))
+    // Clave de dedup: el wyscout id (mismo perfil repetido → una sola vez). Sin wyscout id, clave
+    // única por fila (no se puede deduplicar con seguridad, así que se conserva).
+    const dedupKey = wyscoutId ?? `__row_${rowIdx}`
+    let bucket = groups.get(idPlayer)
+    if (!bucket) {
+      bucket = new Map()
+      groups.set(idPlayer, bucket)
+    }
+    bucket.set(dedupKey, raw)
+    rowIdx++
+  }
+
+  // Fusionar los perfiles DISTINTOS de cada jugador (1 perfil = identidad) y mapear a campos de BD.
+  const matched = new Map<number, Record<string, unknown>>()
+  for (const [idPlayer, bucket] of groups) {
+    const groupRows = [...bucket.values()]
+    const mergedRaw = groupRows.length === 1 ? groupRows[0]! : mergeRawStatsRows(groupRows)
+    matched.set(idPlayer, mapRowToStatsData(normalizeStatsRow(mergedRaw, period), period))
   }
   result.matched = matched.size
 

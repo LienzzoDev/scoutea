@@ -12,6 +12,7 @@ import AdminPlayerFilters, {
 import AdminPlayerTable from '@/components/admin/AdminPlayerTable'
 import ImportFMIButton from '@/components/admin/ImportFMIButton'
 import ImportPlayerStatsButton from '@/components/admin/ImportPlayerStatsButton'
+import ImportPeriodStatsButton from '@/components/admin/ImportPeriodStatsButton'
 import ImportStatsButton from '@/components/admin/ImportStatsButton'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -40,6 +41,10 @@ export default function JugadoresPage() {
     return [] // Por defecto, ninguna columna está oculta (se muestran todas)
   })
 
+  // Evita re-guardar en DB lo que se acaba de leer del servidor: el efecto de
+  // guardado solo actúa tras la hidratación inicial de preferencias.
+  const preferencesHydrated = useRef(false)
+
   // Cargar preferencias del servidor al iniciar
   useEffect(() => {
     const loadPreferences = async () => {
@@ -59,6 +64,8 @@ export default function JugadoresPage() {
         }
       } catch (error) {
         console.error('Error loading preferences:', error)
+      } finally {
+        preferencesHydrated.current = true
       }
     }
 
@@ -67,6 +74,8 @@ export default function JugadoresPage() {
 
   // Guardar en localStorage y en DB cuando cambien las columnas ocultas
   useEffect(() => {
+    if (!preferencesHydrated.current) return
+
     if (typeof window !== 'undefined') {
       localStorage.setItem('admin-player-hidden-columns', JSON.stringify(hiddenColumns))
     }
@@ -217,10 +226,32 @@ export default function JugadoresPage() {
     try {
       setIsExporting(true)
 
-      // Construir URL con filtros actuales
+      // Construir URL con TODOS los filtros activos, para que el CSV refleje
+      // exactamente lo que el usuario está viendo en la tabla
       const params = new URLSearchParams()
       if (debouncedSearch) {
         params.append('search', debouncedSearch)
+      }
+      const exportFilters: Record<string, unknown> = {
+        nationality: debouncedFilters.nationality,
+        position: debouncedFilters.position,
+        team: debouncedFilters.team,
+        competition: debouncedFilters.competition,
+        foot: debouncedFilters.foot,
+        onLoan: debouncedFilters.onLoan,
+        ageMin: debouncedFilters.ageMin,
+        ageMax: debouncedFilters.ageMax,
+        valueMin: debouncedFilters.valueMin,
+        valueMax: debouncedFilters.valueMax,
+        ratingMin: debouncedFilters.ratingMin,
+        ratingMax: debouncedFilters.ratingMax,
+        heightMin: debouncedFilters.heightMin,
+        heightMax: debouncedFilters.heightMax,
+      }
+      for (const [key, value] of Object.entries(exportFilters)) {
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, String(value))
+        }
       }
 
       const url = `/api/admin/players/export?${params.toString()}`
@@ -281,6 +312,7 @@ export default function JugadoresPage() {
         <ImportFMIButton />
         <ImportStatsButton />
         <ImportPlayerStatsButton />
+        <ImportPeriodStatsButton />
         <Button
           variant='outline'
           className='border-slate-700 bg-[#131921] text-white hover:bg-slate-700'
