@@ -45,9 +45,9 @@ describe('parsePlayerHtml (fixture real de transfermarkt.es)', () => {
     expect(data.national_tier).toBe('España')
   })
 
-  it('extrae agencia y advisor del bloque "Agente:"', () => {
+  it('extrae la agencia del bloque "Agente:" (Jugador no tiene columna advisor)', () => {
     expect(data.agency).toBe('Gestifute')
-    expect(data.advisor).toBe('Gestifute')
+    expect(data.advisor).toBeUndefined()
   })
 
   it('extrae la URL del advisor (link /berater/) con el dominio de la URL fuente', () => {

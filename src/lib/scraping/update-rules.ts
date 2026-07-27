@@ -608,12 +608,9 @@ export function applyScrapedDataRules(
     const { shouldUpdate, finalAgency } = shouldUpdateAgency(player.agency, scraped)
     if (!shouldUpdate) {
       delete data.agency
-      // El advisor viene del mismo bloque: si la agencia es genérica, tampoco escribirlo
-      if (data.advisor !== undefined) delete data.advisor
       say('⚠️ Agencia genérica o vacía ignorada')
     } else if (finalAgency && finalAgency !== data.agency) {
       data.agency = finalAgency
-      if (data.advisor !== undefined) data.advisor = finalAgency
       say(`🔄 Agencia limpiada: "${finalAgency}"`)
     }
   }

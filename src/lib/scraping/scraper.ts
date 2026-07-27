@@ -248,7 +248,9 @@ export function parsePlayerHtml(html: string, sourceUrl?: string): Record<string
     data.national_tier = nationalTeamMatch[1].trim()
   }
 
-  // 10-12. Agencia / advisor — bloque "Agente:"/"Player agent:" del info-table
+  // 10-12. Agencia — bloque "Agente:"/"Player agent:" del info-table
+  // El nombre del agente se guarda en `agency` (Jugador no tiene columna `advisor`;
+  // sólo `agency` + `url_trfm_advisor`).
   const agentBlockMatch = html.match(
     /(?:Agente|Player agent):\s*<\/span>\s*<span[^>]*info-table__content--bold[^>]*>([\s\S]*?)<\/span>/
   )
@@ -257,7 +259,6 @@ export function parsePlayerHtml(html: string, sourceUrl?: string): Record<string
     if (linkMatch?.[2]) {
       const agentName = linkMatch[2].trim()
       data.agency = agentName
-      data.advisor = agentName
       if (linkMatch[1] && linkMatch[1].includes('berater')) {
         data.url_trfm_advisor = linkMatch[1].startsWith('http')
           ? linkMatch[1]
