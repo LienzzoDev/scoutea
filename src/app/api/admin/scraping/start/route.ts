@@ -9,7 +9,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
-import { internalApiHeaders } from '@/lib/auth/api-auth'
+import { triggerInternalPost } from '@/lib/auth/api-auth'
 import { prisma } from '@/lib/db'
 import { addJobLog } from '@/lib/scraping/logs'
 
@@ -119,13 +119,7 @@ export async function POST() {
     // Esto es seguro porque /process-auto solo puede procesar jobs activos,
     // y los jobs solo pueden ser creados por administradores autenticados.
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-    fetch(`${baseUrl}/api/admin/scraping/process-auto`, {
-      method: 'POST',
-      headers: internalApiHeaders(),
-    }).catch(err => {
-      console.error('⚠️ Error al iniciar auto-procesamiento:', err)
-      addJobLog(playersJob.id, `⚠️ Error al iniciar auto-procesamiento: ${err.message}`)
-    })
+    await triggerInternalPost(`${baseUrl}/api/admin/scraping/process-auto`)
 
     console.log(`📡 Auto-procesamiento iniciado en el backend`)
 
@@ -135,13 +129,7 @@ export async function POST() {
         console.log(`🚀 Iniciando scraping de ${totalTeams} equipos en background...`)
         // Hacer una llamada asíncrona al endpoint de equipos
         // No esperamos la respuesta para no bloquear
-        fetch(`${baseUrl}/api/admin/scraping/teams/batch`, {
-          method: 'POST',
-          headers: internalApiHeaders(),
-          body: JSON.stringify({ skip: 0 })
-        }).catch(err => {
-          console.error('⚠️ Error al iniciar scraping de equipos:', err)
-        })
+        await triggerInternalPost(`${baseUrl}/api/admin/scraping/teams/batch`, { skip: 0 })
       } catch (error) {
         console.error('⚠️ Error al ejecutar scraping de equipos:', error)
       }

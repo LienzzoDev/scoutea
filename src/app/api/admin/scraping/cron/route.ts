@@ -11,7 +11,7 @@
 
 import { NextResponse } from 'next/server'
 
-import { internalApiHeaders } from '@/lib/auth/api-auth'
+import { triggerInternalPost } from '@/lib/auth/api-auth'
 import { prisma } from '@/lib/db'
 
 // ⏱️ Configuración: 5 minutos máximo (Vercel límite). El watchdog es instantáneo.
@@ -96,10 +96,7 @@ export async function GET(request: Request) {
       data: { status: 'running', lastError: null }
     })
     const revivalBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-    fetch(`${revivalBaseUrl}/api/admin/scraping/process-auto`, {
-      method: 'POST',
-      headers: internalApiHeaders(),
-    }).catch(err => console.error('❌ [CRON] Error relanzando process-auto:', err))
+    await triggerInternalPost(`${revivalBaseUrl}/api/admin/scraping/process-auto`)
 
     return NextResponse.json({
       success: true,

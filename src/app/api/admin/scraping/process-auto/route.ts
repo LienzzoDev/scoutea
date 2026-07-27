@@ -8,7 +8,7 @@
 
 import { NextResponse } from 'next/server'
 
-import { requireAdminOrInternal, internalApiHeaders } from '@/lib/auth/api-auth'
+import { requireAdminOrInternal, internalApiHeaders, triggerInternalPost } from '@/lib/auth/api-auth'
 import { prisma } from '@/lib/db'
 
 // ⏱️ Configuración: 5 minutos máximo (Vercel límite)
@@ -136,13 +136,10 @@ export async function POST(request: Request) {
           return NextResponse.json({ success: false, paused: true, stopped: true })
         }
 
-        // 🔁 Reintentar el batch: esperar y re-encadenar (no bloqueante)
+        // 🔁 Reintentar el batch: esperar y re-encadenar (trigger fiable)
         console.log('🔁 [AUTO-PROCESS] Reintentando batch tras respuesta no-OK...')
         await new Promise(resolve => setTimeout(resolve, 15000))
-        fetch(`${baseUrl}/api/admin/scraping/process-auto`, {
-          method: 'POST',
-          headers: internalApiHeaders(),
-        }).catch(err => console.error('❌ [AUTO-PROCESS] Error re-encadenando tras no-OK:', err))
+        await triggerInternalPost(`${baseUrl}/api/admin/scraping/process-auto`)
         return NextResponse.json({ success: true, retrying: true })
       }
 
@@ -159,21 +156,15 @@ export async function POST(request: Request) {
       }
 
       // 🔄 SI NO ESTÁ COMPLETADO, CONTINUAR PROCESANDO
-      // Hacer una llamada recursiva asíncrona (sin esperar respuesta)
       console.log('🔄 [AUTO-PROCESS] Continuando con siguiente batch...')
 
       // Pequeña pausa de 2 segundos entre batches
       await new Promise(resolve => setTimeout(resolve, 2000))
 
-      // Auto-llamada recursiva (no bloqueante) autenticada con CRON_SECRET
-      fetch(`${baseUrl}/api/admin/scraping/process-auto`, {
-        method: 'POST',
-        headers: internalApiHeaders(),
-      }).catch((err) => {
-        // NO matar el job: si la auto-llamada falla, el job queda 'running' y el
-        // watchdog (cron) lo reanudará al detectar que lleva rato sin progresar.
-        console.error('❌ [AUTO-PROCESS] Error en llamada recursiva (el watchdog reanudará):', err)
-      })
+      // 🔗 Auto-llamada recursiva FIABLE (await-flush): en serverless un fetch sin
+      // await a menudo no se envía antes de que la instancia se congele, dejando la
+      // cadena parada en silencio. triggerInternalPost lo evita.
+      await triggerInternalPost(`${baseUrl}/api/admin/scraping/process-auto`)
 
       return NextResponse.json({
         success: true,

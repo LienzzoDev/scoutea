@@ -86,3 +86,37 @@ export function internalApiHeaders(): Record<string, string> {
     ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
   }
 }
+
+/**
+ * Dispara de forma FIABLE un POST interno a otra ruta (p.ej. encadenar batches
+ * de scraping).
+ *
+ * ⚠️ En serverless (Vercel/Lambda) la instancia se congela en cuanto la función
+ * devuelve la respuesta; un `fetch(...)` "fire-and-forget" sin await a menudo NO
+ * llega a enviarse por la red -> la cadena se detiene EN SILENCIO. Aquí await-eamos
+ * con un abort corto: da tiempo a que la petición salga y la invocación hija
+ * arranque, pero sin bloquear los minutos que tarde su trabajo (Vercel no mata la
+ * función hija por desconexión del cliente, así que sigue por su cuenta).
+ *
+ * @param url URL absoluta a invocar (POST)
+ * @param body Cuerpo JSON opcional
+ * @param flushMs Tiempo máximo de espera para asegurar el envío (por defecto 4s)
+ */
+export async function triggerInternalPost(
+  url: string,
+  body?: unknown,
+  flushMs = 4000
+): Promise<void> {
+  try {
+    await fetch(url, {
+      method: 'POST',
+      headers: internalApiHeaders(),
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      signal: AbortSignal.timeout(flushMs),
+    })
+  } catch {
+    // AbortError esperado (la hija tarda más que flushMs) o error de red puntual:
+    // la petición ya se intentó enviar. El watchdog del cron cubre el caso raro
+    // de que la vuelta hija no llegase a arrancar.
+  }
+}
