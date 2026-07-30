@@ -308,6 +308,37 @@ export async function scrapePlayerData(url: string): Promise<Record<string, unkn
 }
 
 /**
+ * 🔎 Clasificar POR QUÉ una página de Transfermarkt no devolvió datos de jugador.
+ *
+ * Casos habituales (verificados analizando fallos reales):
+ *  - Perfil inexistente: el id de jugador ya no existe → TM NO da 404, redirige a
+ *    una landing genérica ("Most valuable players"). La página carga (HTTP 200)
+ *    pero no tiene la ficha del jugador.
+ *  - URL incorrecta: la url_trfm apunta a un club (/verein/…) en vez de a un jugador.
+ *  - Sin datos: la página es de jugador pero no se reconoció ningún campo.
+ */
+export function classifyEmptyTmPage(html: string, url: string): { errorType: string; message: string } {
+  const title = (html.match(/<title>([^<]*)/i)?.[1] ?? '').toLowerCase()
+  const isClubUrl = /\/verein\//i.test(url) || /\/startseite\/verein\//i.test(url)
+  if (isClubUrl || /club profile|vereinsprofil|perfil del club|perfil do clube/i.test(title)) {
+    return {
+      errorType: 'url_incorrecta',
+      message: 'La URL de Transfermarkt apunta a un club, no a un jugador',
+    }
+  }
+  if (/most valuable players|jugadores más valiosos|wertvollste spieler|meistwertvoll/i.test(title)) {
+    return {
+      errorType: 'perfil_inexistente',
+      message: 'El perfil de Transfermarkt ya no existe (la URL redirige a una página genérica)',
+    }
+  }
+  return {
+    errorType: 'sin_datos',
+    message: 'Transfermarkt no devolvió datos reconocibles del jugador',
+  }
+}
+
+/**
  * 🛟 Scrapear un jugador con fallback a PlaymakerStats
  *
  * 1. Intenta Transfermarkt con la URL del jugador.
@@ -321,11 +352,13 @@ export async function scrapePlayerWithFallback(params: {
   let transfermarktError: string | undefined
 
   try {
-    const data = await scrapePlayerData(params.url)
+    // Fetch + parse en línea para poder clasificar el motivo si no hay datos.
+    const html = await fetchHtml(params.url, 'https://www.transfermarkt.es/')
+    const data = parsePlayerHtml(html, params.url)
     if (Object.keys(data).length > 0) {
       return { data, source: 'transfermarkt', fallbackUsed: false }
     }
-    transfermarktError = 'Transfermarkt no devolvió ningún campo reconocible'
+    transfermarktError = classifyEmptyTmPage(html, params.url).message
   } catch (error) {
     // Un 429 es temporal: debe propagarse para que el rate limiter haga
     // backoff/pausa en vez de camuflarse con el fallback.

@@ -91,6 +91,16 @@ export function classifyScrapingError(errorMsg: string): { errorType: string; ht
   if (statusMatch?.[1]) {
     return { errorType: statusMatch[1], httpStatus: parseInt(statusMatch[1]) }
   }
+  // Motivos precisos detectados al analizar la página de Transfermarkt
+  if (/ya no existe|redirige a una página genérica/i.test(errorMsg)) {
+    return { errorType: 'perfil_inexistente' }
+  }
+  if (/apunta a un club/i.test(errorMsg)) {
+    return { errorType: 'url_incorrecta' }
+  }
+  if (/no devolvió datos reconocibles/i.test(errorMsg)) {
+    return { errorType: 'sin_datos' }
+  }
   if (errorMsg.toLowerCase().includes('timeout')) {
     return { errorType: 'timeout' }
   }

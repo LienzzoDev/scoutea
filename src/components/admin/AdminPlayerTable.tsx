@@ -34,6 +34,21 @@ interface AdminPlayerTableProps {
 type SortField = keyof Player | null;
 type SortOrder = 'asc' | 'desc';
 
+// Etiqueta legible del motivo de fallo de scraping (para el hover del triángulo)
+const scrapingAlertLabel = (errorType: string): string => {
+  const map: Record<string, string> = {
+    perfil_inexistente: 'El perfil de Transfermarkt ya no existe',
+    url_incorrecta: 'La URL apunta a un club, no a un jugador',
+    sin_datos: 'Transfermarkt no devolvió datos del jugador',
+    timeout: 'Transfermarkt tardó demasiado (timeout)',
+    '429': 'Límite de peticiones de Transfermarkt (429)',
+    '404': 'Página no encontrada en Transfermarkt (404)',
+    '410': 'Página eliminada en Transfermarkt (410)',
+    unknown: 'Error de scraping',
+  };
+  return map[errorType] ?? `Error de scraping (${errorType})`;
+};
+
 // Función para determinar el tipo de campo automáticamente
 const getFieldType = (fieldName: string): 'text' | 'number' | 'boolean' | 'url' | 'date' => {
   // Campos de URL (photo_coverage es solo texto, no link)
@@ -660,20 +675,20 @@ function AdminPlayerTableComponent({ players, hiddenColumns, onPlayerUpdate, scr
                             onSave={handleSaveField}
                           />
                         ) : col.key === 'url_trfm_broken' ? (
-                          // 🔴 Triángulo rojo: el scraping de este jugador falló (alerta pendiente)
-                          // 🟠 Triángulo ámbar: URL de Transfermarkt marcada como rota
+                          // 🟠 Triángulo naranja: el scraping de este jugador falló (alerta pendiente)
+                          // 🟡 Triángulo ámbar: URL de Transfermarkt marcada como rota
                           <div
                             className="flex items-center justify-center"
                             title={
                               player.scraping_alert
-                                ? `Scraping fallido (${player.scraping_alert.errorType})${player.scraping_alert.errorMessage ? `: ${player.scraping_alert.errorMessage}` : ''}${player.scraping_alert.seenCount ? ` — visto ${player.scraping_alert.seenCount} ${player.scraping_alert.seenCount === 1 ? 'vez' : 'veces'}` : ''}`
+                                ? `⚠️ ${scrapingAlertLabel(player.scraping_alert.errorType)}${player.scraping_alert.seenCount && player.scraping_alert.seenCount > 1 ? ` (visto ${player.scraping_alert.seenCount} veces)` : ''}`
                                 : player.url_trfm_broken
                                   ? "URL TRFM roto - detectado en scraping"
                                   : "Scraping OK"
                             }
                           >
                             {player.scraping_alert ? (
-                              <AlertTriangle className="h-4 w-4 text-red-500 fill-red-500/20" />
+                              <AlertTriangle className="h-4 w-4 text-orange-500 fill-orange-500/20" />
                             ) : player.url_trfm_broken ? (
                               <AlertTriangle className="h-5 w-5 text-amber-500" />
                             ) : (
@@ -762,7 +777,7 @@ function AdminPlayerTableComponent({ players, hiddenColumns, onPlayerUpdate, scr
             <span>- Valor duplicado en múltiples jugadores</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <AlertTriangle className="h-3.5 w-3.5 text-red-500 fill-red-500/20" />
+            <AlertTriangle className="h-3.5 w-3.5 text-orange-500 fill-orange-500/20" />
             <span>Scraping fallido (pendiente de resolver)</span>
           </div>
         </div>
