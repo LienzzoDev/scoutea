@@ -114,7 +114,8 @@ export function useInfiniteScroll<T = any, F = Record<string, any>>({
   // Reset cuando cambian los filtros
   useEffect(() => {
     console.log('🔄 Filters changed, resetting infinite scroll...')
-    setItems([])
+    // No vaciamos items aquí: en la carga fresca (cursor null) el fetch los REEMPLAZA.
+    // Así la tabla no parpadea a vacío al cambiar un filtro (se percibía como recarga).
     setNextCursor(null)
     setHasMore(true)
     setTotalCount(null)
@@ -189,8 +190,8 @@ export function useInfiniteScroll<T = any, F = Record<string, any>>({
           const errorData = await response.json()
           if (errorData.error) {
             errorMessage = errorData.error
-          } else if (errorData.__error) {
-            errorMessage = errorData.__error
+          } else if (errorData.error) {
+            errorMessage = errorData.error
           }
         } catch {
           // Si no se puede parsear el JSON, usar mensaje genérico
@@ -222,6 +223,18 @@ export function useInfiniteScroll<T = any, F = Record<string, any>>({
 
       // Deduplicar items por ID
       setItems(prev => {
+        // Carga fresca (cambio de filtro o inicial, cursor null): REEMPLAZAR la lista
+        // en vez de appendear, evitando el parpadeo a vacío del reset.
+        if (!currentCursor) {
+          const seen = new Set<string>()
+          return newItems.filter(item => {
+            const id = getItemId(item)
+            if (seen.has(id)) return false
+            seen.add(id)
+            return true
+          })
+        }
+        // Paginación: appendear los nuevos deduplicando contra los ya cargados
         const existingIds = new Set(prev.map(getItemId))
         const uniqueNewItems = newItems.filter(item => !existingIds.has(getItemId(item)))
         console.log('📊 Deduplicated:', uniqueNewItems.length, 'new items')
