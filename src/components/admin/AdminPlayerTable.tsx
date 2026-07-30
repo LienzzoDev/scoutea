@@ -25,6 +25,10 @@ interface AdminPlayerTableProps {
   players: Player[];
   hiddenColumns: string[];
   onPlayerUpdate?: (id: string | number, updates: Partial<Player>) => void;
+  /** Si el filtro "solo con alerta de scraping" está activo (columna Scraping). */
+  scrapingAlertFilter?: boolean;
+  /** Alterna el filtro server-side de alertas al clicar la cabecera de la columna Scraping. */
+  onToggleScrapingAlertFilter?: () => void;
 }
 
 type SortField = keyof Player | null;
@@ -307,7 +311,7 @@ const COLUMN_DEFINITIONS = [
   { key: 'profit', label: 'Profit', width: '110px' },
 ] as const;
 
-function AdminPlayerTableComponent({ players, hiddenColumns, onPlayerUpdate }: AdminPlayerTableProps) {
+function AdminPlayerTableComponent({ players, hiddenColumns, onPlayerUpdate, scrapingAlertFilter, onToggleScrapingAlertFilter }: AdminPlayerTableProps) {
   const router = useRouter();
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
@@ -565,9 +569,14 @@ function AdminPlayerTableComponent({ players, hiddenColumns, onPlayerUpdate }: A
                 return (
                   <th
                     key={col.key}
+                    title={col.key === 'url_trfm_broken' && onToggleScrapingAlertFilter
+                      ? (scrapingAlertFilter ? 'Mostrando solo jugadores con alerta de scraping — clic para quitar el filtro' : 'Clic para ver solo los jugadores con alerta de scraping (de todas las páginas)')
+                      : undefined}
                     className="p-4 text-left border-r border-slate-700 cursor-pointer hover:bg-slate-700/50 transition-colors relative"
                     style={{ minWidth: col.width }}
-                    onClick={() => handleSort(col.key as keyof Player)}
+                    onClick={() => (col.key === 'url_trfm_broken' && onToggleScrapingAlertFilter)
+                      ? onToggleScrapingAlertFilter()
+                      : handleSort(col.key as keyof Player)}
                   >
                     {/* Indicadores en la esquina superior derecha - todos en la misma posición */}
                     <div className="absolute top-1 right-1 flex gap-0.5">
@@ -595,11 +604,15 @@ function AdminPlayerTableComponent({ players, hiddenColumns, onPlayerUpdate }: A
                     </div>
                     <div className="flex items-center gap-2 whitespace-nowrap">
                       <span className={`font-semibold text-sm ${
-                        sortField === col.key ? 'text-[#FF5733]' : 'text-slate-300'
+                        (sortField === col.key || (col.key === 'url_trfm_broken' && scrapingAlertFilter)) ? 'text-[#FF5733]' : 'text-slate-300'
                       }`}>
                         {col.label}
                       </span>
-                      {renderSortIcon(col.key as keyof Player)}
+                      {col.key === 'url_trfm_broken' && scrapingAlertFilter ? (
+                        <span className="text-[#FF5733]" title="Filtro de alertas activo">▾</span>
+                      ) : (
+                        renderSortIcon(col.key as keyof Player)
+                      )}
                     </div>
                   </th>
                 );
@@ -783,6 +796,11 @@ const arePropsEqual = (
 
   // Comparar onPlayerUpdate por referencia
   if (prevProps.onPlayerUpdate !== nextProps.onPlayerUpdate) {
+    return false
+  }
+
+  // Re-render inmediato al alternar el filtro de alertas de scraping
+  if (prevProps.scrapingAlertFilter !== nextProps.scrapingAlertFilter) {
     return false
   }
 

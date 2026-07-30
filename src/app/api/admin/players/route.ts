@@ -79,6 +79,8 @@ export async function GET(request: NextRequest) {
     const urlTrfmAdvisor = searchParams.get('urlTrfmAdvisor')
     const urlTrfm = searchParams.get('urlTrfm')
     const urlInstagram = searchParams.get('urlInstagram')
+    // Filtro "solo con alerta de scraping" (clic en la columna Scraping)
+    const hasScrapingAlert = searchParams.get('hasScrapingAlert')
 
     // Validar y parsear limit
     const limit = Math.min(
@@ -339,6 +341,21 @@ export async function GET(request: NextRequest) {
       // Timestamps
       createdAt: true,
       updatedAt: true
+    }
+
+    // 🚨 FILTRO: solo jugadores con alerta de scraping pendiente (clic en columna Scraping).
+    // Las alertas viven en otra tabla, así que resolvemos los id_player alertados y
+    // restringimos la query. Compatible con la paginación por cursor (ordena por id_player).
+    if (hasScrapingAlert === 'true') {
+      const alerted = await prisma.scrapingAlert.findMany({
+        where: { entityType: 'player', status: 'pending' },
+        select: { entityId: true }
+      })
+      const alertedIds = alerted
+        .map(a => Number(a.entityId))
+        .filter(n => Number.isFinite(n))
+      // Si no hay alertas, forzar resultado vacío en vez de ignorar el filtro
+      where.id_player = { in: alertedIds.length > 0 ? alertedIds : [-1] }
     }
 
     // 📊 EJECUTAR QUERY CON CURSOR-BASED PAGINATION

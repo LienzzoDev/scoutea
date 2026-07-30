@@ -130,6 +130,8 @@ export default function JugadoresPage() {
   // Estado para filtros avanzados
   const [filters, setFilters] = useState<PlayerFilters>(DEFAULT_FILTERS)
   const [debouncedFilters, setDebouncedFilters] = useState<PlayerFilters>(DEFAULT_FILTERS)
+  // Filtro "solo con alerta de scraping" (se activa al clicar la columna Scraping)
+  const [scrapingAlertFilter, setScrapingAlertFilter] = useState(false)
 
   // Ref para preservar posición del scroll
   const previousPlayersCount = useRef(0)
@@ -173,6 +175,7 @@ export default function JugadoresPage() {
     urlTrfmAdvisor: debouncedFilters.urlTrfmAdvisor,
     urlTrfm: debouncedFilters.urlTrfm,
     urlInstagram: debouncedFilters.urlInstagram,
+    hasScrapingAlert: scrapingAlertFilter ? 'true' : '',
     limit: 50
   })
 
@@ -387,6 +390,8 @@ export default function JugadoresPage() {
               players={filteredPlayers as unknown as Player[]}
               hiddenColumns={hiddenColumns}
               onPlayerUpdate={updatePlayer}
+              scrapingAlertFilter={scrapingAlertFilter}
+              onToggleScrapingAlertFilter={() => setScrapingAlertFilter((v) => !v)}
             />
           </div>
 

@@ -45,6 +45,7 @@ interface UseInfinitePlayersScrollParams {
   urlTrfmAdvisor?: string // 'all' | 'has' | 'empty'
   urlTrfm?: string // 'all' | 'has' | 'empty'
   urlInstagram?: string // 'all' | 'has' | 'empty'
+  hasScrapingAlert?: string // 'true' → solo jugadores con alerta de scraping pendiente
   limit?: number
 }
 
@@ -89,6 +90,7 @@ export function useInfinitePlayersScroll({
   urlTrfmAdvisor = 'all',
   urlTrfm = 'all',
   urlInstagram = 'all',
+  hasScrapingAlert = '',
   limit = 50
 }: UseInfinitePlayersScrollParams = {}): UseInfinitePlayersScrollReturn {
   const {
@@ -132,7 +134,8 @@ export function useInfinitePlayersScroll({
       photoCoverage,
       urlTrfmAdvisor,
       urlTrfm,
-      urlInstagram
+      urlInstagram,
+      hasScrapingAlert
     },
     limit,
     rootMargin: '100px' // Empezar a cargar 100px antes de llegar al final
